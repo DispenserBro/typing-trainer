@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Electron Builder output
+release/
+out/
+
+# IDE / Editor
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+
+# Lock file (optional — remove this line if you want to track it)
+package-lock.json
