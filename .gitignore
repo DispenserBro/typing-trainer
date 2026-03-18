@@ -22,6 +22,3 @@ Desktop.ini
 # Logs
 *.log
 npm-debug.log*
-
-# Lock file (optional — remove this line if you want to track it)
-package-lock.json
