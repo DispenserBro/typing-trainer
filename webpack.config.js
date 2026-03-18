@@ -1,4 +1,5 @@
 const path = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
   mode: 'development',
@@ -37,6 +38,13 @@ module.exports = {
       },
     ],
   },
+  plugins: [
+    new HtmlWebpackPlugin({
+      template: './src/renderer/index.html',
+      filename: 'index.html',
+      inject: 'body',
+    }),
+  ],
   devtool: 'source-map',
   target: 'web',
 };
