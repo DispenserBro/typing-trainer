@@ -11,8 +11,8 @@
     "rebuild": "npm run clean && npm run build",
     "start": "npm run build && electron .",
     "dev": "npm run build && electron .",
-    "build:win": "npm run build && electron-builder --win",
-    "build:linux": "npm run build && electron-builder --linux"
+    "build:win": "npm run build && electron-builder --win --publish never",
+    "build:linux": "npm run build && electron-builder --linux --publish never"
   },
   "build": {
     "appId": "com.typing-trainer.app",
