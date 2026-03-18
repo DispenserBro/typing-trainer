@@ -3,6 +3,7 @@ import { useApp } from '../contexts/AppContext';
 import { useTypingSession } from '../hooks/useTypingSession';
 import { TextDisplay } from '../components/TextDisplay';
 import { generateExerciseText, EXERCISE_NAMES, EXERCISE_COUNT, filterYoKeys } from '../engine';
+import { Check, Play, ArrowLeft, ArrowRight } from 'lucide-react';
 
 /* ─── helpers ────────────────────────────────────────── */
 function keysLabel(keys: string[]): string {
@@ -58,7 +59,7 @@ export function LessonsPage() {
     setResult({ wpm, acc, passed });
   }, [activeLesson, activeExercise, currentLayout, progress, saveProgress, saveHistory]);
 
-  const { session, start, stop, handleKey, wpm, acc } = useTypingSession({
+  const { session, start, stop, handleKey, wpm, acc, waitingForSpace } = useTypingSession({
     mode: 'lesson', onFinish,
   });
 
@@ -158,6 +159,7 @@ export function LessonsPage() {
           text={session.active ? session.text : exerciseText}
           pos={session.active ? session.pos : 0}
           errPositions={session.active ? session.errPositions : new Set()}
+          waitingForSpace={waitingForSpace}
           overlay={showOverlay && !session.active && !result ? 'Нажмите здесь, чтобы начать' : null}
           onOverlayClick={startExercise}
         />
@@ -167,23 +169,23 @@ export function LessonsPage() {
             <div className="result-big">{fmtSpeed(result.wpm)} {spdLabel}</div>
             <p>Точность: <b>{Math.round(result.acc)}%</b></p>
             <p>{result.passed
-              ? <span style={{ color: 'var(--green)' }}>✓ Пройдено!</span>
+              ? <span style={{ color: 'var(--green)' }}><Check size={16} style={{ verticalAlign: 'middle' }} /> Пройдено!</span>
               : 'Нужна точность ≥ 80%'}
             </p>
             <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
               <button className="btn-secondary" onClick={retryExercise}>Повторить</button>
               {result.passed && activeExercise + 1 < EXERCISE_COUNT && (
-                <button className="btn-accent" onClick={nextExercise}>Далее →</button>
+                <button className="btn-accent" onClick={nextExercise}>Далее <ArrowRight size={14} style={{ verticalAlign: 'middle' }} /></button>
               )}
               {result.passed && activeExercise + 1 >= EXERCISE_COUNT && (
                 <button className="btn-accent" onClick={() => { setActiveLesson(null); setActiveExercise(null); }}>
-                  Готово ✓
+                  Готово <Check size={14} style={{ verticalAlign: 'middle' }} />
                 </button>
               )}
             </div>
           </div>
         )}
-        <button className="btn-secondary mt-12" onClick={goBack}>← Назад</button>
+        <button className="btn-secondary mt-12" onClick={goBack}><ArrowLeft size={14} style={{ verticalAlign: 'middle' }} /> Назад</button>
       </section>
     );
   }
@@ -211,8 +213,8 @@ export function LessonsPage() {
               >
                 <div className="exercise-info">
                   <span className="exercise-name">{EXERCISE_NAMES[i]}</span>
-                  {status === 'done' && <span className="exercise-check">✓</span>}
-                  {status === 'current' && <span className="exercise-play">▶</span>}
+                  {status === 'done' && <span className="exercise-check"><Check size={16} /></span>}
+                  {status === 'current' && <span className="exercise-play"><Play size={16} /></span>}
                 </div>
                 <div className="exercise-progress-bar">
                   {Array.from({ length: EXERCISE_COUNT }, (_, j) => (
@@ -226,7 +228,7 @@ export function LessonsPage() {
             );
           })}
         </div>
-        <button className="btn-secondary mt-12" onClick={goBack}>← Назад</button>
+        <button className="btn-secondary mt-12" onClick={goBack}><ArrowLeft size={14} style={{ verticalAlign: 'middle' }} /> Назад</button>
       </section>
     );
   }

@@ -30,6 +30,7 @@ function defaultSettings(s?: Partial<UserSettings>): UserSettings {
     layout: s?.layout ?? '',
     useYo: s?.useYo ?? false,
     showKeyboard: s?.showKeyboard ?? true,
+    endWithSpace: s?.endWithSpace ?? true,
   };
 }
 

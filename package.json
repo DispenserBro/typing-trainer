@@ -1,6 +1,6 @@
 {
   "name": "typing-trainer",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Клавиатурный тренажёр с поддержкой русского и английского языков",
   "main": "dist/main/main.js",
   "scripts": {
@@ -48,6 +48,7 @@
   },
   "dependencies": {
     "chart.js": "^4.5.1",
+    "lucide-react": "^0.577.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   }

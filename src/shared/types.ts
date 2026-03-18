@@ -67,6 +67,7 @@ export interface UserSettings {
   layout: string;      // layout id, e.g. "qwerty", "йцукен"
   useYo: boolean;      // include ё (Russian only)
   showKeyboard: boolean;
+  endWithSpace: boolean;
 }
 
 export type DailyGoalType = 'minutes' | 'sessions';

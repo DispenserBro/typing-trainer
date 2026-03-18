@@ -8,9 +8,10 @@ interface Props {
   running?: boolean;
   overlay?: string | null;
   onOverlayClick?: () => void;
+  waitingForSpace?: boolean;
 }
 
-export function TextDisplay({ text, pos, errPositions, running, overlay, onOverlayClick }: Props) {
+export function TextDisplay({ text, pos, errPositions, running, overlay, onOverlayClick, waitingForSpace }: Props) {
   const { settings } = useApp();
   const textRef = useRef<HTMLDivElement>(null);
   const parentRef = useRef<HTMLDivElement>(null);
@@ -41,8 +42,16 @@ export function TextDisplay({ text, pos, errPositions, running, overlay, onOverl
       }
     }
     if (current.length) result.push(current);
+
+    // Append trailing space cursor when waiting for final space
+    if (waitingForSpace) {
+      let cls = `char-current cursor-${curStyle}`;
+      if (curSmooth === 'smooth') cls += ' cursor-smooth';
+      result.push([{ ch: '\u00A0', cls, idx: text.length }]);
+    }
+
     return result;
-  }, [text, pos, errPositions, curStyle, curSmooth]);
+  }, [text, pos, errPositions, curStyle, curSmooth, waitingForSpace]);
 
   // Scroll current char into view / running line shift
   useEffect(() => {
@@ -80,7 +89,11 @@ export function TextDisplay({ text, pos, errPositions, running, overlay, onOverl
       </div>
       {overlay && (
         <div className="text-overlay" onClick={onOverlayClick}>
-          <span className="start-hint">{overlay}</span>
+          <span className="start-hint">
+            {overlay.split('\n').map((line, i) => (
+              <span key={i}>{i > 0 && <br />}{line}</span>
+            ))}
+          </span>
         </div>
       )}
     </div>

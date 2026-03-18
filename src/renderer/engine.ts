@@ -70,10 +70,33 @@ function filterByChars(words: string[], chars: string[]): string[] {
 }
 
 /**
+ * Adapt a word: replace chars not in allowed set with random allowed chars.
+ * Returns null if the word is too short or >60% of chars need replacing.
+ */
+function adaptWord(word: string, charSet: Set<string>, charArr: string[]): string | null {
+  if (word.length < 4 || charArr.length < 2) return null;
+  const lower = word.toLowerCase();
+  let replaced = 0;
+  let result = '';
+  for (const ch of lower) {
+    if (charSet.has(ch)) {
+      result += ch;
+    } else {
+      result += charArr[Math.floor(Math.random() * charArr.length)];
+      replaced++;
+    }
+  }
+  // reject if more than 60% of the word was replaced — too synthetic
+  if (replaced / word.length > 0.6) return null;
+  return result;
+}
+
+/**
  * Build a word pool ensuring:
  *  - Real dictionary words are preferred
- *  - If not enough real words, pad with pseudo-words (2-5 chars)
- *  - Single-char "words" are capped at ~10%
+ *  - Adapted long words (with some chars swapped) for variety
+ *  - Pseudo-words as fallback (2-5 chars)
+ *  - Single-char "words" capped at ~10%
  */
 function buildPool(
   allWords: string[],
@@ -81,45 +104,85 @@ function buildPool(
   count: number,
   preferChars?: string | null,
 ): string[] {
-  // Step 1: filter dictionary by allowed chars
-  let dictPool = filterByChars(allWords, chars);
-  const multiCharPool = dictPool.filter(w => w.length >= 2);
+  const charSet = new Set(chars.map(c => c.toLowerCase()));
+  const charArr = chars.filter(c => c.length === 1 && c !== ' ').map(c => c.toLowerCase());
+
+  // Step 1: exact-match dictionary words
+  const exactPool = filterByChars(allWords, chars);
+  const exactMulti = exactPool.filter(w => w.length >= 2);
+
+  // Step 2: adapted words — longer words with some chars replaced
+  // Only words 5+ chars where ≤60% chars need replacing
+  const longWords = allWords.filter(w => w.length >= 5);
+  const adaptedPool: string[] = [];
+  // Pre-generate a pool of adapted words (up to 200 candidates)
+  const adaptedAttempts = Math.min(longWords.length, 800);
+  for (let i = 0; i < adaptedAttempts; i++) {
+    const src = longWords[Math.floor(Math.random() * longWords.length)];
+    const adapted = adaptWord(src, charSet, charArr);
+    if (adapted && !exactMulti.includes(adapted)) {
+      adaptedPool.push(adapted);
+    }
+  }
 
   // If there is a preferred char (weak char), boost words containing it
-  let preferPool: string[] = [];
+  let preferExact: string[] = [];
+  let preferAdapted: string[] = [];
   if (preferChars) {
-    preferPool = multiCharPool.filter(w => w.toLowerCase().includes(preferChars));
+    preferExact = exactMulti.filter(w => w.toLowerCase().includes(preferChars));
+    preferAdapted = adaptedPool.filter(w => w.includes(preferChars));
   }
 
   const result: string[] = [];
-  const maxSingleChar = Math.max(1, Math.floor(count * 0.1)); // ≤10% single-char
+  const maxSingleChar = Math.max(1, Math.floor(count * 0.1));
   let singleCharCount = 0;
+
+  // Decide mix: if few exact words, lean heavier on adapted
+  const hasGoodExact = exactMulti.length >= 15;
 
   for (let i = 0; i < count; i++) {
     let word: string | null = null;
 
-    // 30% chance to use preferPool word if available
-    if (preferPool.length > 0 && Math.random() < 0.3) {
-      word = pick(preferPool);
+    // 30% chance to use preferred word
+    if (preferChars && Math.random() < 0.3) {
+      if (preferExact.length > 0 && Math.random() < 0.6) {
+        word = pick(preferExact);
+      } else if (preferAdapted.length > 0) {
+        word = pick(preferAdapted);
+      }
     }
 
-    // Try real multi-char words
-    if (!word && multiCharPool.length >= 3) {
-      word = pick(multiCharPool);
-    }
-
-    // If very few real words, generate pseudo-words from chars
+    // Main selection
     if (!word) {
-      const availableChars = chars.filter(c => c.length === 1 && c !== ' ');
-      if (availableChars.length >= 2) {
-        word = makePseudoWord(availableChars, 2, Math.min(5, availableChars.length));
-      } else if (availableChars.length === 1) {
-        // Only 1 char available — limit repeats
+      const r = Math.random();
+      if (hasGoodExact) {
+        // plenty of exact words: 70% exact, 30% adapted
+        if (r < 0.7 || adaptedPool.length === 0) {
+          word = exactMulti.length > 0 ? pick(exactMulti) : null;
+        } else {
+          word = pick(adaptedPool);
+        }
+      } else {
+        // few exact words: 40% exact, 40% adapted, 20% pseudo
+        if (r < 0.4 && exactMulti.length > 0) {
+          word = pick(exactMulti);
+        } else if (r < 0.8 && adaptedPool.length > 0) {
+          word = pick(adaptedPool);
+        }
+        // else fall through to pseudo-word
+      }
+    }
+
+    // Fallback: pseudo-words from allowed chars
+    if (!word) {
+      if (charArr.length >= 2) {
+        word = makePseudoWord(charArr, 3, Math.min(6, charArr.length + 1));
+      } else if (charArr.length === 1) {
         if (singleCharCount < maxSingleChar) {
-          word = availableChars[0].repeat(2 + Math.floor(Math.random() * 3));
+          word = charArr[0].repeat(2 + Math.floor(Math.random() * 3));
           singleCharCount++;
         } else {
-          word = availableChars[0].repeat(3); // at least fill something
+          word = charArr[0].repeat(3);
         }
       }
     }
@@ -127,17 +190,15 @@ function buildPool(
     // Reject single-char results above quota
     if (word && word.length === 1) {
       if (singleCharCount >= maxSingleChar) {
-        // Replace with pseudo-word if possible
-        const availableChars = chars.filter(c => c.length === 1 && c !== ' ');
-        if (availableChars.length >= 2) {
-          word = makePseudoWord(availableChars, 2, 4);
+        if (charArr.length >= 2) {
+          word = makePseudoWord(charArr, 2, 4);
         }
       } else {
         singleCharCount++;
       }
     }
 
-    result.push(word || chars.filter(c => c !== ' ').slice(0, 2).join(''));
+    result.push(word || charArr.slice(0, 2).join(''));
   }
   return result;
 }

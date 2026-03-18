@@ -511,8 +511,8 @@ $titlebar-h: 34px;
   align-items: center;
   justify-content: center;
   border-radius: var(--radius);
-  background: rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(2px);
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(1px);
   z-index: 2;
   cursor: pointer;
 }
@@ -526,6 +526,8 @@ $titlebar-h: 34px;
   border-radius: var(--radius-sm);
   border: 1px dashed var(--accent);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  line-height: 1.6;
 }
 
 /* character spans */
@@ -673,6 +675,43 @@ $titlebar-h: 34px;
   text-align: center;
   min-width: 32px;
   color: var(--text);
+}
+
+/* ── Segmented toggle buttons ─────────────────────────── */
+.seg-group {
+  display: inline-flex;
+  background: var(--surface2);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--surface3);
+  width: fit-content;
+}
+.seg-btn {
+  background: transparent;
+  color: var(--subtext);
+  border: none;
+  padding: 6px 10px;
+  font-size: 0.82rem;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  white-space: nowrap;
+  &:not(:last-child) {
+    border-right: 1px solid var(--surface3);
+  }
+  &:hover:not(.active) {
+    background: var(--surface3);
+    color: var(--text);
+  }
+  &.active {
+    background: var(--accent);
+    color: var(--accent-text, #fff);
+    font-weight: 600;
+  }
 }
 
 /* ── Settings ─────────────────────────────────────────── */
@@ -883,6 +922,7 @@ $titlebar-h: 34px;
 .settings-card {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 8px;
 }
 

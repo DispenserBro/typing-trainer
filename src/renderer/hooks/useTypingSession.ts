@@ -17,6 +17,7 @@ export function useTypingSession({ mode, noStepBack, onFinish }: UseTypingSessio
     return s;
   });
   const [renderTick, setRenderTick] = useState(0);
+  const [waitingForSpace, setWaitingForSpace] = useState(false);
   const sessionRef = useRef(session);
   sessionRef.current = session;
 
@@ -26,6 +27,7 @@ export function useTypingSession({ mode, noStepBack, onFinish }: UseTypingSessio
     const s = createSession(text, mode, lessonIdx);
     setSession(s);
     sessionRef.current = s;
+    setWaitingForSpace(false);
     if (text.length) setActiveChar(text[0]);
     rerender();
   }, [mode, setActiveChar, rerender]);
@@ -35,6 +37,7 @@ export function useTypingSession({ mode, noStepBack, onFinish }: UseTypingSessio
       if (prev.timer) clearInterval(prev.timer);
       return { ...prev, active: false, timer: null };
     });
+    setWaitingForSpace(false);
     setActiveChar(undefined);
   }, [setActiveChar]);
 
@@ -45,6 +48,7 @@ export function useTypingSession({ mode, noStepBack, onFinish }: UseTypingSessio
     s.active = false;
     s.timer = null;
     setSession({ ...s });
+    setWaitingForSpace(false);
 
     const elapsed = (performance.now() - s.startTime) / 1000;
     const wpm = (s.totalChars / 5) / (elapsed / 60);
@@ -66,6 +70,15 @@ export function useTypingSession({ mode, noStepBack, onFinish }: UseTypingSessio
     e.preventDefault();
 
     const now = performance.now();
+
+    // Waiting for trailing space — only accept space
+    if (s.pos >= s.text.length && settings.endWithSpace) {
+      if (e.key === ' ') {
+        finish();
+      }
+      return;
+    }
+
     const expected = s.text[s.pos];
 
     if (e.key === 'Backspace') {
@@ -73,6 +86,7 @@ export function useTypingSession({ mode, noStepBack, onFinish }: UseTypingSessio
       if (s.pos > 0) {
         s.pos--;
         s.errPositions.delete(s.pos);
+        setWaitingForSpace(false);
       }
       setSession({ ...s });
       setActiveChar(s.text[s.pos]);
@@ -99,11 +113,20 @@ export function useTypingSession({ mode, noStepBack, onFinish }: UseTypingSessio
     }
 
     setSession({ ...s });
-    if (s.pos < s.text.length) setActiveChar(s.text[s.pos]);
+    if (s.pos < s.text.length) {
+      setActiveChar(s.text[s.pos]);
+    }
     rerender();
 
-    if (s.pos >= s.text.length) finish();
-  }, [noStepBack, setActiveChar, finish, rerender]);
+    if (s.pos >= s.text.length) {
+      if (settings.endWithSpace) {
+        setWaitingForSpace(true);
+        setActiveChar(' ');
+      } else {
+        finish();
+      }
+    }
+  }, [noStepBack, settings.endWithSpace, setActiveChar, finish, rerender]);
 
   // live stats
   const elapsed = session.active
@@ -123,5 +146,6 @@ export function useTypingSession({ mode, noStepBack, onFinish }: UseTypingSessio
     wpm,
     acc,
     renderTick,
+    waitingForSpace,
   };
 }

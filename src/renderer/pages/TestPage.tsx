@@ -21,7 +21,7 @@ export function TestPage() {
     setResult({ wpm, acc, elapsed, chars: ses.totalChars, errors: ses.errors });
   }, [saveHistory]);
 
-  const { session, start, stop, handleKey, wpm, acc } = useTypingSession({ mode: 'test', onFinish });
+  const { session, start, stop, handleKey, wpm, acc, waitingForSpace } = useTypingSession({ mode: 'test', onFinish });
 
   const startTest = useCallback(() => {
     const lay = layouts.layouts[currentLayout];
@@ -96,6 +96,7 @@ export function TestPage() {
         text={session.active ? session.text : ''}
         pos={session.active ? session.pos : 0}
         errPositions={session.active ? session.errPositions : new Set()}
+        waitingForSpace={waitingForSpace}
         overlay={showOverlay ? 'Нажмите здесь или «Начать» для старта' : null}
         onOverlayClick={startTest}
       />

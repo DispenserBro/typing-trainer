@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useApp, BUILT_IN_THEMES } from '../contexts/AppContext';
 import { ThemeModal } from '../components/ThemeModal';
 import type { SpeedUnit } from '../../shared/types';
+import { Pencil, Trash2, Minus, Square, Tally1 } from 'lucide-react';
 
 export function SettingsPage() {
   const {
@@ -62,14 +63,13 @@ export function SettingsPage() {
         {/* Speed unit */}
         <div className="card settings-card">
           <h4>Единица скорости</h4>
-          <div className="radio-group">
+          <div className="seg-group">
             {(['wpm', 'cpm', 'cps'] as SpeedUnit[]).map(u => (
-              <label className="radio-label" key={u}>
-                <input type="radio" name="speedUnit" value={u}
-                  checked={settings.speedUnit === u}
-                  onChange={() => saveSetting('speedUnit', u)} />
+              <button key={u}
+                className={`seg-btn${settings.speedUnit === u ? ' active' : ''}`}
+                onClick={() => saveSetting('speedUnit', u)}>
                 {u.toUpperCase()}
-              </label>
+              </button>
             ))}
           </div>
         </div>
@@ -78,12 +78,15 @@ export function SettingsPage() {
         <div className="card settings-card">
           <h4>Курсор</h4>
           <div className="poption-row">
-            <select className="select-minimal" value={settings.cursorStyle}
-              onChange={e => saveSetting('cursorStyle', e.target.value as any)}>
-              <option value="underline">Подчёркивание</option>
-              <option value="block">Блок</option>
-              <option value="line">Линия</option>
-            </select>
+            <div className="seg-group">
+              {([['underline', Minus, 'Подчёркивание'], ['block', Square, 'Блок'], ['line', Tally1, 'Линия']] as const).map(([val, Icon, title]) => (
+                <button key={val} title={title}
+                  className={`seg-btn${settings.cursorStyle === val ? ' active' : ''}`}
+                  onClick={() => saveSetting('cursorStyle', val)}>
+                  <Icon size={16} />
+                </button>
+              ))}
+            </div>
             <label className="poption-toggle">
               <input type="checkbox" checked={settings.cursorSmooth === 'smooth'}
                 onChange={e => saveSetting('cursorSmooth', e.target.checked ? 'smooth' : 'instant')} />
@@ -107,7 +110,7 @@ export function SettingsPage() {
               ))}
             </select>
             <button className="btn-secondary btn-sm" onClick={() => setShowThemeModal(true)}>
-              ✏️ Редактор
+              <Pencil size={14} style={{ verticalAlign: 'middle' }} /> Редактор
             </button>
           </div>
         </div>
@@ -123,11 +126,22 @@ export function SettingsPage() {
           </label>
         </div>
 
+        {/* End with space */}
+        <div className="card settings-card">
+          <h4>Ввод</h4>
+          <label className="poption-toggle" title="При включении для завершения ввода в тренировке, тесте и уроках нужно нажать пробел">
+            <input type="checkbox" checked={settings.endWithSpace}
+              onChange={e => saveSetting('endWithSpace', e.target.checked)} />
+            <span className="toggle-switch" />
+            <span className="poption-toggle-text">Заканчивать пробелом</span>
+          </label>
+        </div>
+
         {/* Reset */}
         <div className="card settings-card">
           <h4>Прогресс</h4>
           <button className="btn-danger" onClick={handleReset}>
-            🗑️ Сбросить прогресс
+            <Trash2 size={14} style={{ verticalAlign: 'middle' }} /> Сбросить прогресс
           </button>
         </div>
       </div>

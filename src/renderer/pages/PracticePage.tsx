@@ -4,6 +4,7 @@ import { useTypingSession } from '../hooks/useTypingSession';
 import { TextDisplay } from '../components/TextDisplay';
 import { generatePracticeText, getWorstChar, formatSpeed, speedLabel, filterYoWords, filterYoKeys } from '../engine';
 import type { DailyGoalType, TextDisplayMode, CharStat } from '../../shared/types';
+import { AlignJustify, MoveRight } from 'lucide-react';
 
 export function PracticePage() {
   const app = useApp();
@@ -67,7 +68,7 @@ export function PracticePage() {
     setResult({ wpm, acc, newLetter: canUnlock });
   }, [pr, layout, currentLayout, progress, saveProgress, saveHistory]);
 
-  const { session, start, stop, handleKey, wpm, acc, renderTick } = useTypingSession({
+  const { session, start, stop, handleKey, wpm, acc, renderTick, waitingForSpace } = useTypingSession({
     mode: 'practice',
     noStepBack: practiceSettings.noStepBack,
     onFinish,
@@ -81,15 +82,39 @@ export function PracticePage() {
     start(practiceText);
   }, [session.active, practiceText, start]);
 
+  // Retry + immediately start (used when typing after result)
+  const retryAndStart = useCallback(() => {
+    const ul = practiceUnlockOrder.slice(0, pr.unlocked);
+    const w = getWorstChar(progress.keyStats?.[currentLayout], ul);
+    const text = generatePracticeText(words, ul, w);
+    setPracticeText(text);
+    setShowOverlay(false);
+    setResult(null);
+    stop();
+    start(text);
+  }, [practiceUnlockOrder, pr.unlocked, progress, currentLayout, words, stop, start]);
+
   // keydown listener
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (!session.active) return; // don't auto-start — need click
-      handleKey(e);
+      const isPrintable = e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey;
+      const isBackspace = e.key === 'Backspace';
+      // If result is shown — start new practice on printable key
+      if (!session.active && result && isPrintable) {
+        retryAndStart();
+        return;
+      }
+      // If overlay is shown (first start) — start practice by typing
+      if (!session.active && showOverlay && practiceText && isPrintable) {
+        startPractice();
+        return;
+      }
+      if (!session.active) return;
+      if (isPrintable || isBackspace) handleKey(e);
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [session.active, handleKey]);
+  }, [session.active, result, showOverlay, practiceText, handleKey, retryAndStart, startPractice]);
 
   // Live stats update interval
   const [, setTick] = useState(0);
@@ -123,7 +148,7 @@ export function PracticePage() {
   if (practiceHist.length >= 2) {
     const prev = practiceHist[practiceHist.length - 2];
     const curr = practiceHist[practiceHist.length - 1];
-    speedDelta = Number(fmtSpeed(curr.wpm)) - Number(fmtSpeed(prev.wpm));
+    speedDelta = Math.round((Number(fmtSpeed(curr.wpm)) - Number(fmtSpeed(prev.wpm))) * 10) / 10;
     accDelta = Math.round(curr.acc - prev.acc);
   }
 
@@ -211,17 +236,11 @@ export function PracticePage() {
           </div>
           <div className="poption">
             <span className="poption-label">Вид текста</span>
-            <div className="radio-group">
-              <label className="radio-label">
-                <input type="radio" name="textDisplay" value="block"
-                  checked={practiceSettings.textDisplay === 'block'}
-                  onChange={() => savePracticeSetting('textDisplay', 'block')} /> Блок
-              </label>
-              <label className="radio-label">
-                <input type="radio" name="textDisplay" value="running"
-                  checked={practiceSettings.textDisplay === 'running'}
-                  onChange={() => savePracticeSetting('textDisplay', 'running')} /> Бегущая строка
-              </label>
+            <div className="seg-group">
+              <button title="Блок" className={`seg-btn${practiceSettings.textDisplay === 'block' ? ' active' : ''}`}
+                onClick={() => savePracticeSetting('textDisplay', 'block')}><AlignJustify size={16} /></button>
+              <button title="Бегущая строка" className={`seg-btn${practiceSettings.textDisplay === 'running' ? ' active' : ''}`}
+                onClick={() => savePracticeSetting('textDisplay', 'running')}><MoveRight size={16} /></button>
             </div>
           </div>
         </div>
@@ -307,20 +326,14 @@ export function PracticePage() {
         pos={session.active ? session.pos : 0}
         errPositions={session.active ? session.errPositions : new Set()}
         running={practiceSettings.textDisplay === 'running'}
-        overlay={showOverlay && !session.active && !result ? 'Нажмите здесь, чтобы начать' : null}
-        onOverlayClick={startPractice}
+        waitingForSpace={waitingForSpace}
+        overlay={!session.active ? (
+          result
+            ? `${fmtSpeed(result.wpm)} ${spdLabel} · ${Math.round(result.acc)}% · Букв: ${pr.unlocked}${result.newLetter ? ' · +1 буква!' : ''}\nНажмите или начните печатать`
+            : (showOverlay ? 'Нажмите здесь или начните печатать' : null)
+        ) : null}
+        onOverlayClick={result ? retryAndStart : startPractice}
       />
-
-      {/* Result */}
-      {result && (
-        <div className="result-card">
-          <h3>Результат</h3>
-          <div className="result-big">{fmtSpeed(result.wpm)} {spdLabel}</div>
-          <p>Точность: <b>{Math.round(result.acc)}%</b> · Открыто букв: <b>{pr.unlocked}</b></p>
-          {result.newLetter && <p style={{ color: 'var(--green)' }}>🔓 Новая буква!</p>}
-          <button className="btn-accent" onClick={retry}>Ещё раз</button>
-        </div>
-      )}
     </section>
   );
 }
