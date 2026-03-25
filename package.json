@@ -2,6 +2,10 @@
   "name": "typing-trainer",
   "version": "2.2.0",
   "description": "Клавиатурный тренажёр с поддержкой русского и английского языков",
+  "author": {
+    "name": "DispenserBro",
+    "email": "maze3290@gmail.com"
+  },
   "main": "dist/main/main.js",
   "scripts": {
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
@@ -32,7 +36,9 @@
         "deb",
         "rpm"
       ],
-      "icon": "data/app-icon.png"
+      "icon": "data/app-icon.png",
+      "category": "Education",
+      "maintainer": "DispenserBro <dispenserbro@users.noreply.github.com>"
     }
   },
   "devDependencies": {
