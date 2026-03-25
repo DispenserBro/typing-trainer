@@ -281,6 +281,21 @@ $titlebar-h: 34px;
   gap: 10px;
   align-items: center;
 }
+.game-header-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.game-achievements-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.game-achievements-count {
+  font-size: 0.72rem;
+  color: var(--subtext);
+}
 
 /* ── Cards ────────────────────────────────────────────── */
 .card {
@@ -347,10 +362,17 @@ $titlebar-h: 34px;
 .stats-bar .metric b { color: var(--accent); }
 
 /* ── Game ────────────────────────────────────────────── */
+.game-status-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
 .game-lives-row {
   display: flex;
   gap: 8px;
-  margin-bottom: 14px;
+  flex-shrink: 0;
 }
 .game-heart {
   display: inline-flex;
@@ -369,6 +391,457 @@ $titlebar-h: 34px;
   display: flex;
   justify-content: center;
   margin-top: 14px;
+}
+.game-items-card {
+  margin-bottom: 14px;
+  padding-top: 12px;
+}
+.game-items-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  color: var(--text);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.game-items-summary::-webkit-details-marker {
+  display: none;
+}
+.game-items-summary::after {
+  content: '›';
+  margin-left: auto;
+  color: var(--subtext);
+  font-size: 1.1rem;
+  transition: transform 0.2s ease;
+}
+.game-items-card[open] .game-items-summary::after {
+  transform: rotate(90deg);
+}
+.game-items-summary small {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--subtext);
+}
+.game-equipped-inline {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  flex: 1;
+}
+.game-inline-slot,
+.game-inventory-card {
+  background: var(--surface2);
+  border: 1px solid var(--surface3);
+  border-radius: var(--radius);
+}
+.game-inline-slot {
+  min-width: 170px;
+  padding: 10px 12px;
+}
+.game-inline-slot.filled {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--surface3));
+}
+.game-inline-slot.broken,
+.game-inventory-card.broken {
+  border-color: color-mix(in srgb, var(--red) 45%, var(--surface3));
+}
+.game-inline-slot-label,
+.game-item-meta {
+  font-size: 0.76rem;
+  color: var(--subtext);
+}
+.game-item-meta {
+  letter-spacing: 0.02em;
+}
+.game-inline-slot-body {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+.game-inline-slot-body .game-item-badge {
+  width: 34px;
+  height: 34px;
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+.game-inline-slot-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.game-inline-slot-text strong {
+  font-size: 0.84rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.game-inline-slot-text small {
+  font-size: 0.72rem;
+  color: var(--subtext);
+}
+.game-inline-slot-empty {
+  margin-top: 6px;
+  color: var(--subtext);
+  font-size: 0.82rem;
+}
+.game-inventory-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  margin-top: 12px;
+}
+.game-inventory-card {
+  padding: 14px;
+}
+.game-inventory-card.rarity-2,
+.game-reward-card.rarity-2,
+.game-inline-slot-body.rarity-2 {
+  border-color: rgba(100, 181, 246, 0.28);
+}
+.game-inventory-card.rarity-3,
+.game-reward-card.rarity-3,
+.game-inline-slot-body.rarity-3 {
+  border-color: rgba(255, 193, 7, 0.3);
+}
+.game-slot-name {
+  font-size: 0.94rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.game-slot-desc {
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+.game-item-badge {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: var(--surface3);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  margin-bottom: 10px;
+}
+.game-item-badge.letter {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+}
+.game-inventory-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.game-inventory-head .game-item-badge {
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+.game-item-effects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.game-item-effect-chip {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: var(--text-dim);
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 0.74rem;
+}
+.game-item-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+.game-durability {
+  margin-top: 10px;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+.game-durability b {
+  color: var(--accent);
+  font-family: var(--font-mono);
+}
+.game-durability.broken,
+.game-durability.risky {
+  color: var(--red);
+}
+.game-durability.broken b,
+.game-durability.risky b {
+  color: var(--red);
+}
+.game-items-empty {
+  min-height: 140px;
+  border: 1px dashed var(--surface3);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  text-align: center;
+  color: var(--subtext);
+  background: rgba(255,255,255,0.02);
+}
+.rarity-1 .game-item-badge,
+.game-inventory-card.rarity-1 .game-item-badge {
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.9);
+}
+.rarity-2 .game-item-badge,
+.game-inventory-card.rarity-2 .game-item-badge {
+  background: rgba(33, 150, 243, 0.16);
+  color: #90caf9;
+}
+.rarity-3 .game-item-badge,
+.game-inventory-card.rarity-3 .game-item-badge {
+  background: rgba(255, 193, 7, 0.16);
+  color: #ffd54f;
+}
+.game-inventory-card.rarity-3,
+.game-reward-card.rarity-3 {
+  box-shadow: inset 0 0 0 1px rgba(255, 193, 7, 0.08);
+}
+.game-reward-block {
+  margin-top: 16px;
+  text-align: left;
+}
+.game-reward-title {
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+}
+.game-reward-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+.game-reward-card {
+  background: var(--surface2);
+  border: 1px solid var(--surface3);
+  border-radius: var(--radius);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+}
+.game-reward-card.disabled {
+  opacity: 0.6;
+}
+.game-reward-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.game-reward-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.game-reward-rarity {
+  font-size: 1rem;
+  line-height: 1.1;
+  letter-spacing: 0.08em;
+  font-weight: 800;
+  color: #fff;
+}
+.game-reward-rarity.special {
+  font-size: 0.82rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, #fff 80%, var(--accent));
+}
+.game-reward-name {
+  font-size: 0.98rem;
+  line-height: 1.2;
+  font-weight: 700;
+  color: #fff;
+}
+.game-reward-kind {
+  font-size: 0.72rem;
+  line-height: 1.2;
+  color: var(--subtext);
+}
+.game-reward-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+.game-reward-body .game-slot-desc {
+  min-height: 48px;
+}
+.game-reward-card .btn-accent {
+  margin-top: auto;
+}
+.game-reward-picked {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  color: var(--text);
+}
+.game-breakage-note b {
+  color: var(--red);
+}
+.game-boss-timer {
+  background: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--red) 30%, var(--surface2));
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin-bottom: 14px;
+}
+.game-boss-timer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.86rem;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+.game-boss-timer-row b {
+  color: var(--red);
+  font-family: var(--font-mono);
+}
+.game-boss-timer-bar {
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--surface2);
+}
+.game-boss-timer-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), #ffb347);
+  transition: width 0.15s linear, background 0.2s ease;
+}
+.game-boss-timer-fill.danger {
+  background: linear-gradient(90deg, #ff9800, var(--red));
+}
+.game-achievements-modal {
+  max-width: 700px;
+}
+.game-achievements-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.game-achievement-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--surface3);
+  background: var(--surface2);
+  opacity: 0.72;
+}
+.game-achievement-card.unlocked {
+  opacity: 1;
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--surface3));
+  background: color-mix(in srgb, var(--surface2) 92%, var(--accent) 8%);
+}
+.game-achievement-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.06);
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+.game-achievement-card.unlocked .game-achievement-icon {
+  background: rgba(232, 117, 26, 0.16);
+  color: var(--accent);
+}
+.game-achievement-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.game-achievement-name {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.game-achievement-description {
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+.game-achievement-state {
+  font-size: 0.72rem;
+  color: var(--subtext);
+  flex-shrink: 0;
+}
+.game-achievement-card.unlocked .game-achievement-state {
+  color: var(--accent);
+}
+.game-achievement-toast-stack {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 260;
+  pointer-events: none;
+}
+.game-achievement-toast {
+  width: min(320px, calc(100vw - 40px));
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--surface3));
+  background:
+    linear-gradient(180deg, rgba(232,117,26,0.12), transparent 55%),
+    color-mix(in srgb, var(--surface) 95%, #000 5%);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.28);
+}
+.game-achievement-toast-title {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+.game-achievement-toast-name {
+  font-size: 0.94rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+}
+.game-achievement-toast-description {
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--text-dim);
 }
 
 /* ── Practice ─────────────────────────────────────────── */
@@ -525,6 +998,12 @@ $titlebar-h: 34px;
   user-select: none;
   margin-bottom: 16px;
 }
+.text-display.overlay-cover {
+  min-height: 140px;
+}
+.text-display.overlay-cover.overlay-content {
+  min-height: 260px;
+}
 .typing-text {
   white-space: pre-wrap;
   word-break: normal;
@@ -548,6 +1027,10 @@ $titlebar-h: 34px;
   z-index: 2;
   cursor: pointer;
 }
+.text-overlay.cover {
+  background: color-mix(in srgb, var(--surface) 92%, #000 8%);
+  backdrop-filter: none;
+}
 .text-overlay.hidden { display: none; }
 .start-hint {
   font-family: var(--font-mono);
@@ -560,6 +1043,85 @@ $titlebar-h: 34px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
   text-align: center;
   line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.start-hint-line {
+  display: block;
+}
+.start-hint.cover {
+  width: min(520px, calc(100% - 40px));
+  min-height: 112px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 28px;
+  background: color-mix(in srgb, var(--surface2) 98%, #000 2%);
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--surface3));
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+  font-size: 0.96rem;
+}
+.text-display.overlay-cover .typing-text {
+  opacity: 0;
+}
+.game-start-panel {
+  width: min(440px, calc(100% - 48px));
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px;
+  border-radius: var(--radius);
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--surface3));
+  background: color-mix(in srgb, var(--surface2) 98%, #000 2%);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+}
+.game-start-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+}
+.game-start-subtitle {
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: var(--text-dim);
+  text-align: center;
+}
+.game-start-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.game-start-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+}
+.game-start-input-row .input-minimal {
+  width: 132px;
+  text-align: center;
+}
+.game-start-input-row small {
+  color: var(--subtext);
+  font-size: 0.78rem;
+}
+.game-start-panel .btn-accent {
+  width: 100%;
+}
+.text-display.running-line.overlay-cover {
+  min-height: 140px;
+  max-height: none;
+  padding: 24px 28px;
+}
+.text-display.running-line.overlay-cover.overlay-content {
+  min-height: 260px;
 }
 
 /* character spans */
@@ -580,6 +1142,13 @@ $titlebar-h: 34px;
   border-radius: var(--radius);
   padding: 28px;
   text-align: center;
+}
+.game-result-card {
+  position: relative;
+  z-index: 4;
+  margin-top: -128px;
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--surface3));
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.24);
 }
 .result-card h3 { color: var(--accent); margin-bottom: 12px; font-size: 1.1rem; }
 .result-card .result-big { font-size: 2.2rem; font-weight: 700; color: var(--accent); font-family: var(--font-mono); }
@@ -683,7 +1252,15 @@ $titlebar-h: 34px;
   grid-template-columns: 1fr 1fr;
   gap: 14px;
 }
-.card canvas { width: 100% !important; max-height: 220px; }
+.stats-chart-wrap {
+  position: relative;
+  height: 220px;
+}
+.stats-chart-wrap canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
 
 /* worst keys */
 .worst-keys-grid { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -752,6 +1329,25 @@ $titlebar-h: 34px;
 .radio-label input { accent-color: var(--accent); }
 .settings-row { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
 .settings-row label { display: flex; gap: 6px; align-items: center; font-size: 0.85rem; }
+.settings-beta-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+  color: var(--accent);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.settings-beta-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
 
 /* ── Practice options (collapsible) ───────────────────── */
 .practice-options {
@@ -1016,6 +1612,18 @@ $titlebar-h: 34px;
 .color-grid input[type="color"] { width: 32px; height: 24px; border: none; background: none; cursor: pointer; }
 .modal-actions { display: flex; gap: 8px; margin-top: 16px; }
 .modal-actions button { flex: 1; }
+.reset-progress-note {
+  margin-top: 14px;
+  font-size: 0.84rem;
+  color: var(--text-dim);
+}
+.reset-progress-list {
+  margin: 8px 0 0 18px;
+  color: var(--text);
+}
+.reset-progress-list li + li {
+  margin-top: 6px;
+}
 .unlock-letter-card {
   background:
     radial-gradient(circle at top, rgba(232, 117, 26, 0.22), transparent 62%),
@@ -1193,6 +1801,9 @@ $titlebar-h: 34px;
     line-height: 1.85;
     min-height: 120px;
   }
+  .game-result-card {
+    margin-top: -110px;
+  }
 
   .practice-metrics {
     gap: 10px;
@@ -1218,6 +1829,15 @@ $titlebar-h: 34px;
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
+  }
+
+  .game-status-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .game-equipped-inline {
+    justify-content: flex-start;
   }
 
   #keyboard-wrap {
@@ -1318,6 +1938,9 @@ $titlebar-h: 34px;
     min-height: 100px;
     border-radius: var(--radius-sm);
   }
+  .game-result-card {
+    margin-top: -92px;
+  }
   .text-display.running-line {
     min-height: 50px;
     max-height: 50px;
@@ -1371,6 +1994,15 @@ $titlebar-h: 34px;
   }
   .result-card .result-big {
     font-size: 1.8rem;
+  }
+
+  .game-inline-slot,
+  .game-inventory-card {
+    padding: 12px;
+  }
+
+  .game-inline-slot {
+    min-width: 100%;
   }
 
   .lesson-grid {

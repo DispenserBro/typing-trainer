@@ -1,4 +1,4 @@
-import { useRef, useEffect, useMemo, type CSSProperties } from 'react';
+import { useRef, useEffect, useMemo, type CSSProperties, type ReactNode } from 'react';
 import { useApp } from '../contexts/AppContext';
 
 interface Props {
@@ -10,10 +10,12 @@ interface Props {
   onOverlayClick?: () => void;
   waitingForSpace?: boolean;
   fontSizeRem?: number;
+  overlayCover?: boolean;
+  overlayContent?: ReactNode;
 }
 
 export function TextDisplay({
-  text, pos, errPositions, running, overlay, onOverlayClick, waitingForSpace, fontSizeRem,
+  text, pos, errPositions, running, overlay, onOverlayClick, waitingForSpace, fontSizeRem, overlayCover, overlayContent,
 }: Props) {
   const { settings } = useApp();
   const textRef = useRef<HTMLDivElement>(null);
@@ -99,7 +101,7 @@ export function TextDisplay({
   return (
     <div
       ref={parentRef}
-      className={`text-display${resolvedRunning ? ' running-line' : ''}`}
+      className={`text-display${resolvedRunning ? ' running-line' : ''}${(overlay || overlayContent) && overlayCover ? ' overlay-cover' : ''}${overlayContent ? ' overlay-content' : ''}`}
       style={displayStyle}
     >
       <div ref={textRef} className="typing-text">
@@ -111,13 +113,18 @@ export function TextDisplay({
           </span>
         ))}
       </div>
-      {overlay && (
-        <div className="text-overlay" onClick={onOverlayClick}>
-          <span className="start-hint">
-            {overlay.split('\n').map((line, i) => (
-              <span key={i}>{i > 0 && <br />}{line}</span>
-            ))}
-          </span>
+      {(overlay || overlayContent) && (
+        <div
+          className={`text-overlay${overlayCover ? ' cover' : ''}`}
+          onClick={overlayContent ? undefined : onOverlayClick}
+        >
+          {overlayContent ?? (
+            <div className={`start-hint${overlayCover ? ' cover' : ''}`}>
+              {overlay?.split('\n').map((line, i) => (
+                <span key={i} className="start-hint-line">{line}</span>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

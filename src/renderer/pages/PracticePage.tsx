@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { useTypingSession } from '../hooks/useTypingSession';
 import { TextDisplay } from '../components/TextDisplay';
@@ -61,6 +61,7 @@ export function PracticePage() {
   const [unlockModalLetter, setUnlockModalLetter] = useState<string | null>(null);
 
   const [practiceText, setPracticeText] = useState('');
+  const previewKeyRef = useRef<string>('');
   const goalCPM = Math.max(1, practiceSettings.goalSpeedCpm || 150);
 
   // Convert CPM to display unit and back
@@ -75,16 +76,29 @@ export function PracticePage() {
     : val;
   const goalDisplay = cpmToDisplay(goalCPM);
 
-  // Generate / regenerate text when layout or allWords change
+  const buildPracticePreview = useCallback(() => {
+    const currentUnlocked = practiceUnlockOrder.slice(0, layoutProgress.unlocked);
+    const worstChar = getWorstChar(progress.keyStats?.[currentLayout], currentUnlocked);
+    return generatePracticeText(words, currentUnlocked, worstChar, 25, ngramModel ?? undefined);
+  }, [practiceUnlockOrder, layoutProgress.unlocked, progress.keyStats, currentLayout, words, ngramModel]);
+
+  // Generate / regenerate text only when preview conditions actually change
   useEffect(() => {
     if (!layout || !words.length) return;
-    const ul = practiceUnlockOrder.slice(0, layoutProgress.unlocked);
-    const w = getWorstChar(progress.keyStats?.[currentLayout], ul);
-    setPracticeText(generatePracticeText(words, ul, w, 25, ngramModel ?? undefined));
+    const previewKey = [
+      currentLayout,
+      layoutProgress.unlocked,
+      useYo ? 'yo' : 'no-yo',
+      words.length,
+      practiceUnlockOrder.join(''),
+    ].join('|');
+    if (previewKeyRef.current === previewKey) return;
+    previewKeyRef.current = previewKey;
+    setPracticeText(buildPracticePreview());
     setShowOverlay(true);
     setResult(null);
     setUnlockModalLetter(null);
-  }, [currentLayout, layout, words, useYo, practiceUnlockOrder, layoutProgress.unlocked, progress.keyStats, ngramModel]);
+  }, [currentLayout, layout, words.length, useYo, practiceUnlockOrder, layoutProgress.unlocked, buildPracticePreview]);
 
   const onFinish = useCallback((wpm: number, acc: number, elapsed: number, ses: any) => {
     const goalAcc = 95;
@@ -151,6 +165,7 @@ export function PracticePage() {
     const ul = practiceUnlockOrder.slice(0, layoutProgress.unlocked);
     const w = getWorstChar(progress.keyStats?.[currentLayout], ul);
     const text = generatePracticeText(words, ul, w, 25, ngramModel ?? undefined);
+    previewKeyRef.current = '';
     setPracticeText(text);
     setShowOverlay(false);
     setResult(null);
@@ -200,6 +215,7 @@ export function PracticePage() {
     const ul = practiceUnlockOrder.slice(0, layoutProgress.unlocked);
     const w = getWorstChar(progress.keyStats?.[currentLayout], ul);
     const text = generatePracticeText(words, ul, w, 25, ngramModel ?? undefined);
+    previewKeyRef.current = '';
     setPracticeText(text);
     setShowOverlay(true);
     setResult(null);

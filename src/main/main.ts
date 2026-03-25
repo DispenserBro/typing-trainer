@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, nativeImage } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import type { Progress, CustomThemes } from '../shared/types';
@@ -52,6 +52,9 @@ ipcMain.on('win-close', () => win?.close());
 let win: BrowserWindow | null = null;
 
 function createWindow(): void {
+  const iconPath = path.join(__dirname, '..', '..', 'data', 'app-icon.png');
+  const appIcon = nativeImage.createFromPath(iconPath);
+
   win = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -65,12 +68,16 @@ function createWindow(): void {
     },
     title: 'Typing Trainer',
     backgroundColor: '#181818',
+    icon: appIcon.isEmpty() ? undefined : appIcon,
   });
   win.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
   // win.webContents.openDevTools();
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  app.setAppUserModelId('com.typing-trainer.app');
+  createWindow();
+});
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });

@@ -10,18 +10,25 @@ export function SettingsPage() {
     currentLanguage, setCurrentLanguage,
     languages, layoutsForLanguage,
     settings, saveSetting,
-    progress, saveProgress,
+    progress, saveProgress, resetGameProgress,
     customThemes, applyTheme,
   } = useApp();
 
   const [showThemeModal, setShowThemeModal] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [showResetGameModal, setShowResetGameModal] = useState(false);
 
   const allThemes = [...BUILT_IN_THEMES, ...Object.keys(customThemes)];
 
   const handleReset = () => {
-    if (!confirm('Сбросить весь прогресс? Это действие необратимо.')) return;
     const empty = { settings: progress.settings, practiceSettings: progress.practiceSettings };
     saveProgress(empty);
+    setShowResetModal(false);
+  };
+
+  const handleResetGameProgress = () => {
+    resetGameProgress();
+    setShowResetGameModal(false);
   };
 
   return (
@@ -133,6 +140,20 @@ export function SettingsPage() {
             <span className="toggle-switch" />
             <span className="poption-toggle-text">Показывать клавиатуру</span>
           </label>
+          {settings.showKeyboard && (
+            <label className="poption-toggle" style={{ marginTop: 10 }}>
+              <input
+                type="checkbox"
+                checked={settings.showHands}
+                onChange={e => saveSetting('showHands', e.target.checked)}
+              />
+              <span className="toggle-switch" />
+              <span className="settings-beta-row">
+                <span className="poption-toggle-text">Показывать пальцы</span>
+                <span className="settings-beta-tag">Beta</span>
+              </span>
+            </label>
+          )}
         </div>
 
         {/* End with space */}
@@ -190,13 +211,61 @@ export function SettingsPage() {
         {/* Reset */}
         <div className="card settings-card">
           <h4>Прогресс</h4>
-          <button className="btn-danger" onClick={handleReset}>
+          <button className="btn-secondary" onClick={() => setShowResetGameModal(true)}>
+            <Trash2 size={14} style={{ verticalAlign: 'middle' }} /> Сбросить игровой прогресс
+          </button>
+          <button className="btn-danger" onClick={() => setShowResetModal(true)}>
             <Trash2 size={14} style={{ verticalAlign: 'middle' }} /> Сбросить прогресс
           </button>
         </div>
       </div>
 
       {showThemeModal && <ThemeModal onClose={() => setShowThemeModal(false)} />}
+      {showResetGameModal && (
+        <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) setShowResetGameModal(false); }}>
+          <div className="modal">
+            <h3>Сброс игрового прогресса</h3>
+            <p className="card-desc">
+              Это действие необратимо. После подтверждения приложение очистит только прогресс игрового режима.
+            </p>
+            <div className="reset-progress-note">
+              Будет сброшено:
+              <ul className="reset-progress-list">
+                <li>текущий забег и достигнутый уровень</li>
+                <li>все достижения игрового режима</li>
+                <li>все собранные предметы и экипировка</li>
+              </ul>
+            </div>
+            <div className="modal-actions">
+              <button className="btn-danger" onClick={handleResetGameProgress}>Сбросить</button>
+              <button className="btn-secondary" onClick={() => setShowResetGameModal(false)}>Отмена</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showResetModal && (
+        <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) setShowResetModal(false); }}>
+          <div className="modal">
+            <h3>Сброс прогресса</h3>
+            <p className="card-desc">
+              Это действие необратимо. После подтверждения приложение очистит весь накопленный прогресс, но сохранит ваши текущие настройки.
+            </p>
+            <div className="reset-progress-note">
+              Будет сброшено:
+              <ul className="reset-progress-list">
+                <li>статистика по клавишам и история результатов</li>
+                <li>прогресс уроков и практики</li>
+                <li>открытые буквы и прогресс открытия</li>
+                <li>весь игровой прогресс, предметы и текущий забег</li>
+              </ul>
+            </div>
+            <div className="modal-actions">
+              <button className="btn-danger" onClick={handleReset}>Сбросить</button>
+              <button className="btn-secondary" onClick={() => setShowResetModal(false)}>Отмена</button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

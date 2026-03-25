@@ -17,15 +17,22 @@
   "build": {
     "appId": "com.typing-trainer.app",
     "productName": "Typing Trainer",
+    "icon": "data/app-icon.png",
     "files": [
       "dist/**",
       "data/**"
     ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "data/app-icon.ico"
     },
     "linux": {
-      "target": "AppImage"
+      "target": [
+        "AppImage",
+        "deb",
+        "rpm"
+      ],
+      "icon": "data/app-icon.png"
     }
   },
   "devDependencies": {

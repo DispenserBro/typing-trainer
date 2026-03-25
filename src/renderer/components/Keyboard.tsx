@@ -136,6 +136,7 @@ export function Keyboard() {
 
   const hidden = !settings.showKeyboard
     || currentMode === 'stats' || currentMode === 'settings';
+  const showHands = settings.showHands;
 
   const fingerMap = useMemo(() => {
     if (!layout) return {} as Record<string, FingerName>;
@@ -228,7 +229,7 @@ export function Keyboard() {
   return (
     <div id="keyboard-wrap">
       <div className="keyboard-stage static-hands" ref={stageRef}>
-        {handGuides && (
+        {showHands && handGuides && (
           <>
             <div className="keyboard-palms-layer" aria-hidden="true">
               <div

@@ -1,5 +1,8 @@
 name: Build & Release
 
+env:
+  APP_NAME_SLUG: typing-trainer
+
 on:
   push:
     tags:
@@ -26,13 +29,39 @@ jobs:
           node-version: 22
           cache: npm
 
+      - name: Install Linux packaging dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rpm
+
       - run: npm ci
       - run: ${{ matrix.cmd }}
 
       - uses: actions/upload-artifact@v4
+        if: matrix.os == 'windows-latest'
         with:
-          name: dist-${{ matrix.os }}
-          path: |
-            dist/*.exe
-            dist/*.AppImage
+          name: dist-${{ env.APP_NAME_SLUG }}-exe
+          path: dist/*.exe
+          if-no-files-found: ignore
+
+      - uses: actions/upload-artifact@v4
+        if: matrix.os == 'ubuntu-latest'
+        with:
+          name: dist-${{ env.APP_NAME_SLUG }}-appimage
+          path: dist/*.AppImage
+          if-no-files-found: ignore
+
+      - uses: actions/upload-artifact@v4
+        if: matrix.os == 'ubuntu-latest'
+        with:
+          name: dist-${{ env.APP_NAME_SLUG }}-deb
+          path: dist/*.deb
+          if-no-files-found: ignore
+
+      - uses: actions/upload-artifact@v4
+        if: matrix.os == 'ubuntu-latest'
+        with:
+          name: dist-${{ env.APP_NAME_SLUG }}-rpm
+          path: dist/*.rpm
           if-no-files-found: ignore

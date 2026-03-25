@@ -62,6 +62,109 @@ export interface LayoutProgressState {
   unlockProgress: number;
 }
 
+export type GameItemRarity = 1 | 2 | 3;
+export type GameItemSlotType = 'trinket';
+export type GameEquipmentSlot = 'slotA' | 'slotB' | 'slotC';
+export type GameItemEffectKind = 'speed' | 'accuracy' | 'timer' | 'lives' | 'reward';
+export type GameItemRewardKind = 'simple' | 'durable';
+
+export interface GameItemEffect {
+  kind: GameItemEffectKind;
+  value: number;
+  unit: 'flat' | 'percent' | 'seconds';
+  description: string;
+}
+
+export interface GameDurabilityRules {
+  normalPass: number;
+  normalFail: number;
+  bossPass: number;
+  bossFail: number;
+}
+
+export interface GameItemDefinition {
+  id: string;
+  name: string;
+  shortName: string;
+  description: string;
+  rarity: GameItemRarity;
+  slotType: GameItemSlotType;
+  icon: string;
+  rewardKind: GameItemRewardKind;
+  bossOnly?: boolean;
+  speedRequirementReductionPercent?: number;
+  accuracyRequirementReduction?: number;
+  bossTimerBonusSeconds?: number;
+  maxDurability?: number | null;
+  durabilityRules?: GameDurabilityRules | null;
+  effects: GameItemEffect[];
+}
+
+export interface GameInventoryItem {
+  id: string;
+  itemId: string;
+  durability: number | null;
+  maxDurability: number | null;
+}
+
+export interface GameEquipmentState {
+  slotA: string | null;
+  slotB: string | null;
+  slotC: string | null;
+}
+
+export interface GameAchievementDefinition {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export interface GameRunRewardChoice {
+  id: string;
+  kind: 'letter' | 'simple' | 'durable';
+  title: string;
+  flavor: string;
+  description: string;
+  itemId?: string;
+  letter?: string | null;
+  disabled?: boolean;
+}
+
+export interface GameRunResult {
+  wpm: number;
+  acc: number;
+  passed: boolean;
+  livesLeft: number;
+  level: number;
+  isBoss: boolean;
+  minAccuracy: number;
+  timedOut: boolean;
+  elapsed: number;
+  timeLimitSeconds: number | null;
+  victory: boolean;
+  brokenItems: string[];
+}
+
+export interface GameRunState {
+  level: number;
+  lives: number;
+  completedLevels: number;
+  targetSpeedCpm: number;
+  levelText: string;
+  result: GameRunResult | null;
+  rewardChoices: GameRunRewardChoice[] | null;
+  selectedRewardMessage: string | null;
+}
+
+export interface GameState {
+  highestLevel: number;
+  inventory: GameInventoryItem[];
+  discoveredItemIds: string[];
+  achievements: string[];
+  equipped: GameEquipmentState;
+  currentRun?: GameRunState | null;
+}
+
 export interface UserSettings {
   speedUnit: 'wpm' | 'cpm' | 'cps';
   cursorStyle: 'underline' | 'block' | 'line';
@@ -73,6 +176,7 @@ export interface UserSettings {
   layout: string;      // layout id, e.g. "qwerty", "йцукен"
   useYo: boolean;      // include ё (Russian only)
   showKeyboard: boolean;
+  showHands: boolean;
   endWithSpace: boolean;
   textFontSize: number;
 }
@@ -95,6 +199,7 @@ export interface Progress {
   lessons?: Record<string, Record<number, number>>;
   layoutProgress?: Record<string, LayoutProgressState>;
   practice?: Record<string, PracticeState>;
+  game?: GameState;
 }
 
 export interface CustomThemeColors {

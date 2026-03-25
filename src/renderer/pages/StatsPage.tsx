@@ -18,57 +18,72 @@ export function StatsPage() {
   const accRef = useRef<HTMLCanvasElement>(null);
   const speedChartRef = useRef<Chart | null>(null);
   const accChartRef = useRef<Chart | null>(null);
+  const chartLabels = useMemo(() => hist.map((_, i) => i + 1), [hist]);
+  const speedData = useMemo(() => hist.map(h => Number(formatSpeed(h.wpm, unit))), [hist, unit]);
+  const accData = useMemo(() => hist.map(h => h.acc), [hist]);
 
   useEffect(() => {
     const bodyStyles = getComputedStyle(document.body);
     const accent = bodyStyles.getPropertyValue('--accent').trim() || '#e8751a';
     const green = bodyStyles.getPropertyValue('--green').trim() || '#4caf50';
+    const gridColor = '#2a2a2a';
+    const tickColor = '#666';
 
-    // Speed chart
-    if (speedRef.current) {
-      if (speedChartRef.current) speedChartRef.current.destroy();
+    if (speedRef.current && !speedChartRef.current) {
       speedChartRef.current = new Chart(speedRef.current, {
         type: 'line',
         data: {
-          labels: hist.map((_, i) => i + 1),
+          labels: chartLabels,
           datasets: [{
             label: speedLabel(unit),
-            data: hist.map(h => Number(formatSpeed(h.wpm, unit))),
+            data: speedData,
             borderColor: accent,
-            tension: 0.3, fill: false, pointRadius: 2, borderWidth: 2,
+            backgroundColor: accent,
+            tension: 0.3,
+            fill: false,
+            pointRadius: 2,
+            pointHoverRadius: 3,
+            borderWidth: 2,
           }],
         },
         options: {
           responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
           plugins: { legend: { display: false } },
           scales: {
-            y: { beginAtZero: true, ticks: { color: '#666' }, grid: { color: '#2a2a2a' } },
-            x: { ticks: { color: '#666' }, grid: { color: '#2a2a2a' } },
+            y: { beginAtZero: true, ticks: { color: tickColor }, grid: { color: gridColor } },
+            x: { ticks: { color: tickColor }, grid: { color: gridColor } },
           },
         },
       });
     }
 
-    // Accuracy chart
-    if (accRef.current) {
-      if (accChartRef.current) accChartRef.current.destroy();
+    if (accRef.current && !accChartRef.current) {
       accChartRef.current = new Chart(accRef.current, {
         type: 'line',
         data: {
-          labels: hist.map((_, i) => i + 1),
+          labels: chartLabels,
           datasets: [{
             label: 'Accuracy %',
-            data: hist.map(h => h.acc),
+            data: accData,
             borderColor: green,
-            tension: 0.3, fill: false, pointRadius: 2, borderWidth: 2,
+            backgroundColor: green,
+            tension: 0.3,
+            fill: false,
+            pointRadius: 2,
+            pointHoverRadius: 3,
+            borderWidth: 2,
           }],
         },
         options: {
           responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
           plugins: { legend: { display: false } },
           scales: {
-            y: { min: 50, max: 100, ticks: { color: '#666' }, grid: { color: '#2a2a2a' } },
-            x: { ticks: { color: '#666' }, grid: { color: '#2a2a2a' } },
+            y: { min: 50, max: 100, ticks: { color: tickColor }, grid: { color: gridColor } },
+            x: { ticks: { color: tickColor }, grid: { color: gridColor } },
           },
         },
       });
@@ -76,9 +91,34 @@ export function StatsPage() {
 
     return () => {
       speedChartRef.current?.destroy();
+      speedChartRef.current = null;
       accChartRef.current?.destroy();
+      accChartRef.current = null;
     };
-  }, [hist, unit]);
+  }, []);
+
+  useEffect(() => {
+    const bodyStyles = getComputedStyle(document.body);
+    const accent = bodyStyles.getPropertyValue('--accent').trim() || '#e8751a';
+    const green = bodyStyles.getPropertyValue('--green').trim() || '#4caf50';
+
+    if (speedChartRef.current) {
+      speedChartRef.current.data.labels = chartLabels;
+      speedChartRef.current.data.datasets[0].label = speedLabel(unit);
+      speedChartRef.current.data.datasets[0].data = speedData;
+      speedChartRef.current.data.datasets[0].borderColor = accent;
+      speedChartRef.current.data.datasets[0].backgroundColor = accent;
+      speedChartRef.current.update('none');
+    }
+
+    if (accChartRef.current) {
+      accChartRef.current.data.labels = chartLabels;
+      accChartRef.current.data.datasets[0].data = accData;
+      accChartRef.current.data.datasets[0].borderColor = green;
+      accChartRef.current.data.datasets[0].backgroundColor = green;
+      accChartRef.current.update('none');
+    }
+  }, [accData, chartLabels, unit, speedData, settings.theme]);
 
   // Worst keys
   const worstKeys = useMemo(() => {
@@ -124,8 +164,18 @@ export function StatsPage() {
       <div className="panel-header"><h1>Статистика</h1></div>
 
       <div className="stats-grid">
-        <div className="card"><h4>Прогресс скорости</h4><canvas ref={speedRef} /></div>
-        <div className="card"><h4>Прогресс точности</h4><canvas ref={accRef} /></div>
+        <div className="card">
+          <h4>Прогресс скорости</h4>
+          <div className="stats-chart-wrap">
+            <canvas ref={speedRef} />
+          </div>
+        </div>
+        <div className="card">
+          <h4>Прогресс точности</h4>
+          <div className="stats-chart-wrap">
+            <canvas ref={accRef} />
+          </div>
+        </div>
       </div>
 
       <div className="card mt-16">
