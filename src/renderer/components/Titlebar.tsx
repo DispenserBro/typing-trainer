@@ -6,7 +6,7 @@ export function Titlebar() {
       <div className="titlebar-drag" />
       <span className="titlebar-title">
         <Keyboard size={16} className="titlebar-icon" />
-        Typing Trainer
+        Typing <span className="titlebar-highlight">Trainer</span>
       </span>
       <div className="titlebar-controls">
         <button className="tb-btn" title="Свернуть"

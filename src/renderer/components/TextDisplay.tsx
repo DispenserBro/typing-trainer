@@ -1,4 +1,4 @@
-import { useRef, useEffect, useMemo } from 'react';
+import { useRef, useEffect, useMemo, type CSSProperties } from 'react';
 import { useApp } from '../contexts/AppContext';
 
 interface Props {
@@ -9,15 +9,22 @@ interface Props {
   overlay?: string | null;
   onOverlayClick?: () => void;
   waitingForSpace?: boolean;
+  fontSizeRem?: number;
 }
 
-export function TextDisplay({ text, pos, errPositions, running, overlay, onOverlayClick, waitingForSpace }: Props) {
+export function TextDisplay({
+  text, pos, errPositions, running, overlay, onOverlayClick, waitingForSpace, fontSizeRem,
+}: Props) {
   const { settings } = useApp();
   const textRef = useRef<HTMLDivElement>(null);
   const parentRef = useRef<HTMLDivElement>(null);
 
   const curStyle = settings.cursorStyle;
   const curSmooth = settings.cursorSmooth;
+  const highlightCurrentChar = settings.highlightCurrentChar;
+  const resolvedRunning = running ?? settings.textDisplay === 'running';
+  const resolvedFontSize = fontSizeRem ?? settings.textFontSize;
+  const displayStyle = resolvedFontSize ? { fontSize: `${resolvedFontSize}rem` } as CSSProperties : undefined;
 
   /* Group characters into words so a word never splits across lines */
   const words = useMemo(() => {
@@ -29,7 +36,7 @@ export function TextDisplay({ text, pos, errPositions, running, overlay, onOverl
       if (i < pos) {
         cls = errPositions.has(i) ? 'char-err' : 'char-ok';
       } else if (i === pos) {
-        cls = `char-current cursor-${curStyle}`;
+        cls = `${highlightCurrentChar ? 'char-current ' : ''}cursor-${curStyle}`;
         if (curSmooth === 'smooth') cls += ' cursor-smooth';
       }
 
@@ -45,13 +52,13 @@ export function TextDisplay({ text, pos, errPositions, running, overlay, onOverl
 
     // Append trailing space cursor when waiting for final space
     if (waitingForSpace) {
-      let cls = `char-current cursor-${curStyle}`;
+      let cls = `${highlightCurrentChar ? 'char-current ' : ''}cursor-${curStyle}`;
       if (curSmooth === 'smooth') cls += ' cursor-smooth';
       result.push([{ ch: '\u00A0', cls, idx: text.length }]);
     }
 
     return result;
-  }, [text, pos, errPositions, curStyle, curSmooth, waitingForSpace]);
+  }, [text, pos, errPositions, curStyle, curSmooth, waitingForSpace, highlightCurrentChar]);
 
   // Scroll current char into view / running line shift
   useEffect(() => {
@@ -59,24 +66,41 @@ export function TextDisplay({ text, pos, errPositions, running, overlay, onOverl
     const parent = parentRef.current;
     if (!el || !parent) return;
 
-    const cur = el.querySelector('.char-current') as HTMLElement | null;
-    if (!cur) return;
-
-    if (running) {
+    if (resolvedRunning) {
       const parentW = parent.clientWidth;
-      const curOff = cur.offsetLeft;
-      const shift = Math.max(0, curOff - parentW * 0.3);
+      el.style.paddingLeft = `${parentW / 2}px`;
+      el.style.paddingRight = `${parentW / 2}px`;
+    } else {
+      el.style.paddingLeft = '';
+      el.style.paddingRight = '';
+    }
+
+    const cur = el.querySelector('.char-current, .cursor-underline, .cursor-block, .cursor-line') as HTMLElement | null;
+    if (!cur) {
+      if (!resolvedRunning) {
+        el.style.transform = '';
+      }
+      return;
+    }
+
+    if (resolvedRunning) {
+      const parentW = parent.clientWidth;
+      const curRect = cur.getBoundingClientRect();
+      const textRect = el.getBoundingClientRect();
+      const curCenter = (curRect.left - textRect.left) + curRect.width / 2;
+      const shift = curCenter - parentW / 2;
       el.style.transform = `translateX(-${shift}px)`;
     } else {
       el.style.transform = '';
       cur.scrollIntoView({ block: 'nearest', behavior: curSmooth === 'smooth' ? 'smooth' : 'auto' });
     }
-  }, [pos, running, curSmooth]);
+  }, [text, pos, resolvedRunning, curSmooth]);
 
   return (
     <div
       ref={parentRef}
-      className={`text-display${running ? ' running-line' : ''}`}
+      className={`text-display${resolvedRunning ? ' running-line' : ''}`}
+      style={displayStyle}
     >
       <div ref={textRef} className="typing-text">
         {words.map((word, wi) => (

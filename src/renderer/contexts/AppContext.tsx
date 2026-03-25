@@ -4,12 +4,13 @@ import {
 } from 'react';
 import type {
   LayoutsData, Layout, Progress, CustomThemes, Session, CharStat,
-  UserSettings, PracticeSettings, PracticeState, SpeedUnit,
+  UserSettings, PracticeSettings, PracticeState, LayoutProgressState, SpeedUnit,
   DailyGoalType, TextDisplayMode, LanguageInfo,
 } from '../../shared/types';
 import {
   createSession, generateText,
   generatePracticeText, formatSpeed, speedLabel, getWorstChar,
+  buildNgramModel, type NgramModel,
 } from '../engine';
 
 /* ════════════════════════════════════════════════════════
@@ -20,17 +21,27 @@ export const BUILT_IN_THEMES = ['dark-orange', 'catppuccin', 'nord', 'monokai', 
 /* ════════════════════════════════════════════════════════
    Defaults
    ════════════════════════════════════════════════════════ */
+function normalizeTextFontSize(value?: number): number {
+  if (typeof value !== 'number' || Number.isNaN(value) || value <= 0) return 1.125;
+  return value > 4 ? value / 16 : value;
+}
+
 function defaultSettings(s?: Partial<UserSettings>): UserSettings {
+  const legacyTextFontSize = (s as (Partial<UserSettings> & { gameTextFontSize?: number }) | undefined)?.gameTextFontSize;
+
   return {
     speedUnit: s?.speedUnit ?? 'cpm',
     cursorStyle: s?.cursorStyle ?? 'underline',
     cursorSmooth: s?.cursorSmooth ?? 'smooth',
+    highlightCurrentChar: s?.highlightCurrentChar ?? true,
+    textDisplay: s?.textDisplay ?? 'block',
     theme: s?.theme ?? 'dark-orange',
     language: s?.language ?? '',
     layout: s?.layout ?? '',
     useYo: s?.useYo ?? false,
     showKeyboard: s?.showKeyboard ?? true,
     endWithSpace: s?.endWithSpace ?? true,
+    textFontSize: normalizeTextFontSize(s?.textFontSize ?? legacyTextFontSize),
   };
 }
 
@@ -38,8 +49,18 @@ function defaultPracticeSettings(p?: Partial<PracticeSettings>): PracticeSetting
   return {
     dailyGoalType: p?.dailyGoalType ?? 'minutes',
     dailyGoalValue: p?.dailyGoalValue ?? 15,
+    goalSpeedCpm: p?.goalSpeedCpm ?? 150,
     noStepBack: p?.noStepBack ?? false,
-    textDisplay: p?.textDisplay ?? 'block',
+  };
+}
+
+function resolveSettings(progress: Progress): UserSettings {
+  const base = defaultSettings(progress.settings);
+  const legacyTextDisplay = (progress.practiceSettings as (Partial<PracticeSettings> & { textDisplay?: TextDisplayMode }) | undefined)?.textDisplay;
+
+  return {
+    ...base,
+    textDisplay: progress.settings?.textDisplay ?? legacyTextDisplay ?? base.textDisplay,
   };
 }
 
@@ -47,12 +68,11 @@ function getPracticeState(progress: Progress, layout: string): PracticeState {
   if (!progress.practice) progress.practice = {};
   if (!progress.practice[layout]) {
     progress.practice[layout] = {
-      unlocked: 2, worstChar: null,
+      worstChar: null,
       sessionsToday: 0, minutesToday: 0, lastDate: '',
     };
   }
   const ps = progress.practice[layout];
-  if (typeof ps.unlocked !== 'number' || isNaN(ps.unlocked)) ps.unlocked = 2;
   if (typeof ps.minutesToday !== 'number') ps.minutesToday = 0;
   const today = new Date().toISOString().slice(0, 10);
   if (ps.lastDate !== today) {
@@ -63,6 +83,28 @@ function getPracticeState(progress: Progress, layout: string): PracticeState {
   return ps;
 }
 
+function getLayoutProgress(progress: Progress, layout: string): LayoutProgressState {
+  if (!progress.layoutProgress) progress.layoutProgress = {};
+  const legacyUnlocked = (progress.practice?.[layout] as { unlocked?: number } | undefined)?.unlocked;
+
+  if (!progress.layoutProgress[layout]) {
+    progress.layoutProgress[layout] = {
+      unlocked: typeof legacyUnlocked === 'number' && !isNaN(legacyUnlocked) ? legacyUnlocked : 2,
+      unlockProgress: 0,
+    };
+  }
+
+  const lp = progress.layoutProgress[layout];
+  if (typeof lp.unlocked !== 'number' || isNaN(lp.unlocked)) {
+    lp.unlocked = typeof legacyUnlocked === 'number' && !isNaN(legacyUnlocked) ? legacyUnlocked : 2;
+  }
+  if (typeof lp.unlockProgress !== 'number' || isNaN(lp.unlockProgress)) {
+    lp.unlockProgress = 0;
+  }
+
+  return lp;
+}
+
 /* ════════════════════════════════════════════════════════
    Context value interface
    ════════════════════════════════════════════════════════ */
@@ -71,6 +113,7 @@ export interface AppContextValue {
   ready: boolean;
   layouts: LayoutsData;
   allWords: string[];
+  ngramModel: NgramModel | null;
   progress: Progress;
   customThemes: CustomThemes;
 
@@ -105,9 +148,10 @@ export interface AppContextValue {
   /* Helpers */
   fmtSpeed: (wpm: number) => string;
   spdLabel: string;
+  getLayoutProgress: () => LayoutProgressState;
   getPracticeState: () => PracticeState;
   saveCharStats: (cs: Record<string, CharStat>) => void;
-  saveHistory: (mode: 'test' | 'lesson' | 'practice', wpm: number, acc: number) => void;
+  saveHistory: (mode: 'test' | 'lesson' | 'practice' | 'game', wpm: number, acc: number) => void;
 }
 
 const AppContext = createContext<AppContextValue>(null!);
@@ -120,6 +164,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [layouts, setLayouts] = useState<LayoutsData>({ languages: [], layouts: {} });
   const [allWords, setAllWords] = useState<string[]>([]);
+
+  /* ── N-gram model — rebuilt when word list changes ─── */
+  const ngramModel = useMemo<NgramModel | null>(
+    () => (allWords.length > 0 ? buildNgramModel(allWords) : null),
+    [allWords],
+  );
+
   const [progress, setProgress] = useState<Progress>({});
   const [customThemes, setCustomThemes] = useState<CustomThemes>({});
   const [currentLayout, setCurrentLayoutState] = useState('');
@@ -132,7 +183,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   progressRef.current = progress;
 
   /* ── Derived ────────────────────────────────────────── */
-  const settings = defaultSettings(progress.settings);
+  const settings = resolveSettings(progress);
   const practiceSettings = defaultPracticeSettings(progress.practiceSettings);
 
   /* ── Computed: layouts filtered by current language ── */
@@ -156,7 +207,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setProgress(prog);
       setCustomThemes(ct);
 
-      const s = defaultSettings(prog.settings);
+      const s = resolveSettings(prog);
 
       // Determine language
       let lang = s.language;
@@ -229,7 +280,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const setCurrentLayout = useCallback((layout: string) => {
     setCurrentLayoutState(layout);
     setProgress(prev => {
-      const next = { ...prev, settings: { ...defaultSettings(prev.settings), layout } };
+      const next = { ...prev, settings: { ...resolveSettings(prev), layout } };
       window.api.saveProgress(next);
       return next;
     });
@@ -246,7 +297,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setProgress(prev => {
       const next = {
         ...prev,
-        settings: { ...defaultSettings(prev.settings), language: lang, layout: newLayout },
+        settings: { ...resolveSettings(prev), language: lang, layout: newLayout },
       };
       window.api.saveProgress(next);
       return next;
@@ -271,7 +322,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setProgress(prev => {
       const next = {
         ...prev,
-        settings: { ...defaultSettings(prev.settings), [key]: val },
+        settings: { ...resolveSettings(prev), [key]: val },
       };
       window.api.saveProgress(next);
       return next;
@@ -317,7 +368,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   }, [currentLayout]);
 
-  const saveHistory = useCallback((mode: 'test' | 'lesson' | 'practice', wpm: number, acc: number) => {
+  const saveHistory = useCallback((mode: 'test' | 'lesson' | 'practice' | 'game', wpm: number, acc: number) => {
     setProgress(prev => {
       const next = { ...prev };
       if (!next.history) next.history = {};
@@ -344,8 +395,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return getPracticeState(progressRef.current, currentLayout);
   }, [currentLayout]);
 
+  const getLayoutProgressCb = useCallback(() => {
+    return getLayoutProgress(progressRef.current, currentLayout);
+  }, [currentLayout]);
+
   const value: AppContextValue = {
-    ready, layouts, allWords, progress, customThemes,
+    ready, layouts, allWords, ngramModel, progress, customThemes,
     settings, practiceSettings, currentLayout, currentLanguage, currentMode,
     languages, layoutsForLanguage,
     session, setSession, activeChar, setActiveChar,
@@ -353,7 +408,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     saveSetting, savePracticeSetting, saveProgress: saveProgressCb,
     saveCustomThemes: saveCustomThemesCb,
     applyTheme, reloadWords,
-    fmtSpeed, spdLabel, getPracticeState: getPracticeStateCb,
+    fmtSpeed, spdLabel, getLayoutProgress: getLayoutProgressCb, getPracticeState: getPracticeStateCb,
     saveCharStats, saveHistory,
   };
 

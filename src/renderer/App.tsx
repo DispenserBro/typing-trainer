@@ -6,6 +6,7 @@ import { Keyboard } from './components/Keyboard';
 import { PracticePage } from './pages/PracticePage';
 import { TestPage } from './pages/TestPage';
 import { LessonsPage } from './pages/LessonsPage';
+import { GamePage } from './pages/GamePage';
 import { StatsPage } from './pages/StatsPage';
 import { SettingsPage } from './pages/SettingsPage';
 
@@ -32,6 +33,7 @@ function AppInner() {
   switch (currentMode) {
     case 'test':     page = <TestPage />;     break;
     case 'lessons':  page = <LessonsPage />;  break;
+    case 'game':     page = <GamePage />;     break;
     case 'stats':    page = <StatsPage />;    break;
     case 'settings': page = <SettingsPage />; break;
     default:         page = <PracticePage />; break;

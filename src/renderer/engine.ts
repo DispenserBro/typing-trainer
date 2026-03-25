@@ -52,12 +52,107 @@ function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-/* ── Helper: generate a pseudo-word from allowed chars ── */
-function makePseudoWord(chars: string[], minLen = 2, maxLen = 5): string {
-  const len = minLen + Math.floor(Math.random() * (maxLen - minLen + 1));
-  let w = '';
-  for (let i = 0; i < len; i++) w += pick(chars);
-  return w;
+/* ═══════════════════════════════════════════════════════════
+   N-gram (bigram) model for phonetically plausible pseudo-words
+   ═══════════════════════════════════════════════════════════ */
+
+/** Bigram frequency model built from a word list */
+export interface NgramModel {
+  /** start[ch] = how often ch appears as a word's first letter */
+  start: Record<string, number>;
+  /** bi[prev][next] = how often `next` follows `prev` */
+  bi: Record<string, Record<string, number>>;
+  /** end[ch] = how often ch appears as a word's last letter */
+  end: Record<string, number>;
+}
+
+/** Build a bigram frequency model from a word list (lowercased) */
+export function buildNgramModel(words: string[]): NgramModel {
+  const start: Record<string, number> = {};
+  const bi: Record<string, Record<string, number>> = {};
+  const end: Record<string, number> = {};
+
+  for (const raw of words) {
+    const w = raw.toLowerCase();
+    if (w.length < 2) continue;
+    // start
+    start[w[0]] = (start[w[0]] || 0) + 1;
+    // end
+    end[w[w.length - 1]] = (end[w[w.length - 1]] || 0) + 1;
+    // bigrams
+    for (let i = 0; i < w.length - 1; i++) {
+      const a = w[i], b = w[i + 1];
+      if (!bi[a]) bi[a] = {};
+      bi[a][b] = (bi[a][b] || 0) + 1;
+    }
+  }
+  return { start, bi, end };
+}
+
+/**
+ * Pick a character from a weighted distribution, restricted to `allowed`.
+ * Returns null if no allowed char has any weight.
+ */
+function weightedPick(
+  freqs: Record<string, number>,
+  allowed: Set<string>,
+): string | null {
+  let total = 0;
+  for (const ch of allowed) {
+    total += freqs[ch] || 0;
+  }
+  if (total === 0) return null;
+  let r = Math.random() * total;
+  for (const ch of allowed) {
+    const w = freqs[ch] || 0;
+    if (w === 0) continue;
+    r -= w;
+    if (r <= 0) return ch;
+  }
+  return null;
+}
+
+/**
+ * Generate a phonetically plausible pseudo-word using the bigram model.
+ * Only uses characters from `allowedChars`.
+ * Falls back to random pick if the model has no data for a transition.
+ */
+function generateNgramWord(
+  model: NgramModel,
+  allowedChars: string[],
+  minLen = 3,
+  maxLen = 7,
+): string {
+  const allowed = new Set(allowedChars);
+  const targetLen = minLen + Math.floor(Math.random() * (maxLen - minLen + 1));
+
+  // Pick start character weighted by start frequencies
+  let ch = weightedPick(model.start, allowed) ?? pick(allowedChars);
+  let word = ch;
+
+  for (let i = 1; i < targetLen; i++) {
+    const prev = word[word.length - 1];
+    const transitions = model.bi[prev];
+
+    // On the last character, bias towards common word-endings
+    if (i === targetLen - 1 && model.end) {
+      // Merge end-frequencies with bigram transitions
+      const merged: Record<string, number> = {};
+      for (const c of allowed) {
+        const biW = transitions?.[c] || 0;
+        const endW = model.end[c] || 0;
+        merged[c] = biW + endW * 0.5; // blend
+      }
+      const next = weightedPick(merged, allowed);
+      word += next ?? pick(allowedChars);
+    } else if (transitions) {
+      const next = weightedPick(transitions, allowed);
+      word += next ?? pick(allowedChars);
+    } else {
+      word += pick(allowedChars);
+    }
+  }
+  return word;
 }
 
 /* ── Filter words: ONLY those composed of allowed chars ── */
@@ -70,19 +165,36 @@ function filterByChars(words: string[], chars: string[]): string[] {
 }
 
 /**
- * Adapt a word: replace chars not in allowed set with random allowed chars.
+ * Adapt a word: replace chars not in allowed set with context-aware substitution.
+ * Uses bigram model to pick a replacement that sounds natural in context.
  * Returns null if the word is too short or >60% of chars need replacing.
  */
-function adaptWord(word: string, charSet: Set<string>, charArr: string[]): string | null {
+function adaptWord(
+  word: string,
+  charSet: Set<string>,
+  charArr: string[],
+  model?: NgramModel,
+): string | null {
   if (word.length < 4 || charArr.length < 2) return null;
   const lower = word.toLowerCase();
+  const allowed = new Set(charArr);
   let replaced = 0;
   let result = '';
-  for (const ch of lower) {
+  for (let i = 0; i < lower.length; i++) {
+    const ch = lower[i];
     if (charSet.has(ch)) {
       result += ch;
     } else {
-      result += charArr[Math.floor(Math.random() * charArr.length)];
+      // Context-aware replacement using bigram model
+      let sub: string | null = null;
+      if (model && result.length > 0) {
+        const prev = result[result.length - 1];
+        const transitions = model.bi[prev];
+        if (transitions) {
+          sub = weightedPick(transitions, allowed);
+        }
+      }
+      result += sub ?? charArr[Math.floor(Math.random() * charArr.length)];
       replaced++;
     }
   }
@@ -103,6 +215,7 @@ function buildPool(
   chars: string[],
   count: number,
   preferChars?: string | null,
+  model?: NgramModel,
 ): string[] {
   const charSet = new Set(chars.map(c => c.toLowerCase()));
   const charArr = chars.filter(c => c.length === 1 && c !== ' ').map(c => c.toLowerCase());
@@ -110,6 +223,13 @@ function buildPool(
   // Step 1: exact-match dictionary words
   const exactPool = filterByChars(allWords, chars);
   const exactMulti = exactPool.filter(w => w.length >= 2);
+
+  // Build a *local* n-gram model from exact-match words so that
+  // transitions are realistic for the allowed character set.
+  // Fall back to the global model only when we have very few matches.
+  const localNgram = exactMulti.length >= 10
+    ? buildNgramModel(exactMulti)
+    : (model ?? buildNgramModel(allWords));
 
   // Step 2: adapted words — longer words with some chars replaced
   // Only words 5+ chars where ≤60% chars need replacing
@@ -119,7 +239,7 @@ function buildPool(
   const adaptedAttempts = Math.min(longWords.length, 800);
   for (let i = 0; i < adaptedAttempts; i++) {
     const src = longWords[Math.floor(Math.random() * longWords.length)];
-    const adapted = adaptWord(src, charSet, charArr);
+    const adapted = adaptWord(src, charSet, charArr, localNgram);
     if (adapted && !exactMulti.includes(adapted)) {
       adaptedPool.push(adapted);
     }
@@ -173,10 +293,10 @@ function buildPool(
       }
     }
 
-    // Fallback: pseudo-words from allowed chars
+    // Fallback: n-gram pseudo-words from allowed chars
     if (!word) {
       if (charArr.length >= 2) {
-        word = makePseudoWord(charArr, 3, Math.min(6, charArr.length + 1));
+        word = generateNgramWord(localNgram, charArr, 3, Math.min(7, charArr.length + 2));
       } else if (charArr.length === 1) {
         if (singleCharCount < maxSingleChar) {
           word = charArr[0].repeat(2 + Math.floor(Math.random() * 3));
@@ -191,7 +311,7 @@ function buildPool(
     if (word && word.length === 1) {
       if (singleCharCount >= maxSingleChar) {
         if (charArr.length >= 2) {
-          word = makePseudoWord(charArr, 2, 4);
+          word = generateNgramWord(localNgram, charArr, 2, 4);
         }
       } else {
         singleCharCount++;
@@ -203,13 +323,30 @@ function buildPool(
   return result;
 }
 
-export function generateText(allWords: string[], chars: string[], wordCount = 30): string {
+export function generateText(
+  allWords: string[],
+  chars: string[],
+  wordCount = 30,
+  model?: NgramModel,
+): string {
   if (!chars.length) return 'the quick brown fox';
-  const pool = buildPool(allWords, chars, wordCount);
+  const pool = buildPool(allWords, chars, wordCount, null, model);
   return pool.join(' ');
 }
 
-export function generateLessonText(keys: string[], count = 50): string {
+export function generateLessonText(
+  keys: string[],
+  count = 50,
+  model?: NgramModel,
+): string {
+  if (model && keys.length >= 2) {
+    const words: string[] = [];
+    for (let i = 0; i < count; i++) {
+      words.push(generateNgramWord(model, keys, 2, Math.min(5, keys.length + 1)));
+    }
+    return words.join(' ');
+  }
+  // Fallback: random combos
   const combs: string[] = [];
   for (let i = 0; i < count; i++) {
     const len = 2 + Math.floor(Math.random() * 4);
@@ -233,6 +370,7 @@ export function generateExerciseText(
   keys: string[],
   exerciseIdx: number,
   wordCount = 20,
+  model?: NgramModel,
 ): string {
   if (!keys.length) return '';
 
@@ -273,27 +411,39 @@ export function generateExerciseText(
       break;
     }
     case 3: {
-      // Combos of 2-3 chars
-      for (let i = 0; i < wordCount; i++) {
-        const len = 2 + Math.floor(Math.random() * 2); // 2 or 3
-        let w = '';
-        for (let j = 0; j < len; j++) w += keys[Math.floor(Math.random() * keys.length)];
-        words.push(w);
+      // Combos of 2-3 chars — use n-gram model if available
+      if (model && keys.length >= 2) {
+        for (let i = 0; i < wordCount; i++) {
+          words.push(generateNgramWord(model, keys, 2, 3));
+        }
+      } else {
+        for (let i = 0; i < wordCount; i++) {
+          const len = 2 + Math.floor(Math.random() * 2);
+          let w = '';
+          for (let j = 0; j < len; j++) w += keys[Math.floor(Math.random() * keys.length)];
+          words.push(w);
+        }
       }
       break;
     }
     case 4: {
-      // Combos of 2-4 chars
-      for (let i = 0; i < wordCount; i++) {
-        const len = 2 + Math.floor(Math.random() * 3); // 2, 3 or 4
-        let w = '';
-        for (let j = 0; j < len; j++) w += keys[Math.floor(Math.random() * keys.length)];
-        words.push(w);
+      // Combos of 2-4 chars — use n-gram model if available
+      if (model && keys.length >= 2) {
+        for (let i = 0; i < wordCount; i++) {
+          words.push(generateNgramWord(model, keys, 2, 4));
+        }
+      } else {
+        for (let i = 0; i < wordCount; i++) {
+          const len = 2 + Math.floor(Math.random() * 3);
+          let w = '';
+          for (let j = 0; j < len; j++) w += keys[Math.floor(Math.random() * keys.length)];
+          words.push(w);
+        }
       }
       break;
     }
     default:
-      return generateLessonText(keys, wordCount);
+      return generateLessonText(keys, wordCount, model);
   }
 
   return words.join(' ');
@@ -314,8 +464,9 @@ export function generatePracticeText(
   unlocked: string[],
   weakChar: string | null,
   count = 25,
+  model?: NgramModel,
 ): string {
-  const pool = buildPool(allWords, unlocked, count, weakChar);
+  const pool = buildPool(allWords, unlocked, count, weakChar, model);
   return pool.join(' ');
 }
 

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useApp, BUILT_IN_THEMES } from '../contexts/AppContext';
 import { ThemeModal } from '../components/ThemeModal';
 import type { SpeedUnit } from '../../shared/types';
-import { Pencil, Trash2, Minus, Square, Tally1 } from 'lucide-react';
+import { Pencil, Trash2, Minus, Square, Tally1, AlignJustify, MoveRight } from 'lucide-react';
 
 export function SettingsPage() {
   const {
@@ -94,6 +94,15 @@ export function SettingsPage() {
               <span className="poption-toggle-text">Плавный</span>
             </label>
           </div>
+          <label className="poption-toggle" style={{ marginTop: 10 }}>
+            <input
+              type="checkbox"
+              checked={settings.highlightCurrentChar}
+              onChange={e => saveSetting('highlightCurrentChar', e.target.checked)}
+            />
+            <span className="toggle-switch" />
+            <span className="poption-toggle-text">Подсветка текущей буквы</span>
+          </label>
         </div>
 
         {/* Theme */}
@@ -135,6 +144,47 @@ export function SettingsPage() {
             <span className="toggle-switch" />
             <span className="poption-toggle-text">Заканчивать пробелом</span>
           </label>
+        </div>
+
+        <div className="card settings-card">
+          <h4>Текст</h4>
+          <div className="poption">
+            <span className="poption-label">Вид текста</span>
+            <div className="seg-group">
+              <button
+                title="Блок"
+                className={`seg-btn${settings.textDisplay === 'block' ? ' active' : ''}`}
+                onClick={() => saveSetting('textDisplay', 'block')}
+              >
+                <AlignJustify size={16} />
+              </button>
+              <button
+                title="Бегущая строка"
+                className={`seg-btn${settings.textDisplay === 'running' ? ' active' : ''}`}
+                onClick={() => saveSetting('textDisplay', 'running')}
+              >
+                <MoveRight size={16} />
+              </button>
+            </div>
+          </div>
+          <div className="poption">
+            <span className="poption-label">Размер текста для ввода</span>
+            <div className="poption-row">
+              <input
+                type="number"
+                className="input-minimal w60"
+                min={0.75}
+                max={2.5}
+                step={0.05}
+                value={settings.textFontSize}
+                onChange={e => {
+                  const next = Math.max(0.75, Math.min(2.5, parseFloat(e.target.value) || 1.125));
+                  saveSetting('textFontSize', next);
+                }}
+              />
+              <span className="poption-hint">rem</span>
+            </div>
+          </div>
         </div>
 
         {/* Reset */}

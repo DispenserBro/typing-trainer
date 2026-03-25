@@ -3,14 +3,33 @@ import { useApp } from '../contexts/AppContext';
 import { useTypingSession } from '../hooks/useTypingSession';
 import { TextDisplay } from '../components/TextDisplay';
 import { generatePracticeText, getWorstChar, formatSpeed, speedLabel, filterYoWords, filterYoKeys } from '../engine';
-import type { DailyGoalType, TextDisplayMode, CharStat } from '../../shared/types';
-import { AlignJustify, MoveRight } from 'lucide-react';
+import type { DailyGoalType, CharStat } from '../../shared/types';
+
+function mergeCharStats(
+  base: Record<string, CharStat> | undefined,
+  extra: Record<string, CharStat> | undefined,
+): Record<string, CharStat> {
+  const merged: Record<string, CharStat> = { ...(base ?? {}) };
+
+  for (const [ch, stat] of Object.entries(extra ?? {})) {
+    const prev = merged[ch] ?? { hits: 0, misses: 0, totalTime: 0 };
+    merged[ch] = {
+      hits: prev.hits + stat.hits,
+      misses: prev.misses + stat.misses,
+      totalTime: prev.totalTime + stat.totalTime,
+    };
+  }
+
+  return merged;
+}
+
+const PRACTICES_PER_UNLOCK = 3;
 
 export function PracticePage() {
   const app = useApp();
-  const { layouts, currentLayout, allWords, progress, settings,
+  const { layouts, currentLayout, allWords, ngramModel, progress, settings,
     practiceSettings, fmtSpeed, spdLabel, savePracticeSetting,
-    saveHistory, saveProgress, getPracticeState } = app;
+    saveHistory, saveProgress, getLayoutProgress, getPracticeState } = app;
 
   const layout = layouts.layouts[currentLayout];
   const useYo = settings.useYo;
@@ -22,51 +41,95 @@ export function PracticePage() {
     [layout, useYo],
   );
 
-  const pr = getPracticeState();
-  const unlocked = practiceUnlockOrder.slice(0, pr.unlocked);
+  const layoutProgress = getLayoutProgress();
+  const practiceState = getPracticeState();
+  const unlocked = practiceUnlockOrder.slice(0, layoutProgress.unlocked);
   const weak = getWorstChar(progress.keyStats?.[currentLayout], unlocked);
-  if (weak) pr.worstChar = weak;
+  if (weak) practiceState.worstChar = weak;
+  const fallbackWorstChar = weak ?? practiceState.worstChar ?? unlocked[0] ?? null;
 
   const [showOverlay, setShowOverlay] = useState(true);
-  const [result, setResult] = useState<{ wpm: number; acc: number; newLetter: boolean } | null>(null);
+  const [result, setResult] = useState<{
+    wpm: number;
+    acc: number;
+    newLetter: boolean;
+    openedLetter: string | null;
+    worstChar: string | null;
+    unlockProgress: number;
+  } | null>(null);
   const [lastCharStats, setLastCharStats] = useState<Record<string, CharStat>>({});
+  const [unlockModalLetter, setUnlockModalLetter] = useState<string | null>(null);
 
   const [practiceText, setPracticeText] = useState('');
+  const goalCPM = Math.max(1, practiceSettings.goalSpeedCpm || 150);
+
+  // Convert CPM to display unit and back
+  const unit = settings.speedUnit;
+  const cpmToDisplay = (cpm: number) =>
+    unit === 'wpm' ? Math.round(cpm / 5)
+    : unit === 'cps' ? +(cpm / 60).toFixed(1)
+    : Math.round(cpm);
+  const displayToCpm = (val: number) =>
+    unit === 'wpm' ? val * 5
+    : unit === 'cps' ? val * 60
+    : val;
+  const goalDisplay = cpmToDisplay(goalCPM);
 
   // Generate / regenerate text when layout or allWords change
   useEffect(() => {
     if (!layout || !words.length) return;
-    const ul = practiceUnlockOrder.slice(0, pr.unlocked);
+    const ul = practiceUnlockOrder.slice(0, layoutProgress.unlocked);
     const w = getWorstChar(progress.keyStats?.[currentLayout], ul);
-    setPracticeText(generatePracticeText(words, ul, w));
+    setPracticeText(generatePracticeText(words, ul, w, 25, ngramModel ?? undefined));
     setShowOverlay(true);
     setResult(null);
-  }, [currentLayout, layout, words, useYo]);
+    setUnlockModalLetter(null);
+  }, [currentLayout, layout, words, useYo, practiceUnlockOrder, layoutProgress.unlocked, progress.keyStats, ngramModel]);
 
   const onFinish = useCallback((wpm: number, acc: number, elapsed: number, ses: any) => {
-    const goalCPM = parseInt(
-      (document.getElementById('goalSpeed') as HTMLInputElement)?.value ?? '150', 10
-    ) || 150;
-    const goalAcc = parseInt(
-      (document.getElementById('goalAcc') as HTMLInputElement)?.value ?? '95', 10
-    ) || 95;
+    const goalAcc = 95;
     const goalWpm = goalCPM / 5;
+    const enoughForProgress = wpm >= goalWpm && acc >= goalAcc;
+    let unlockedNewLetter = false;
 
-    const canUnlock = wpm >= goalWpm && acc >= goalAcc;
-    if (canUnlock && pr.unlocked < practiceUnlockOrder.length) {
-      pr.unlocked++;
+    if (layoutProgress.unlocked < practiceUnlockOrder.length) {
+      if (enoughForProgress) {
+        layoutProgress.unlockProgress += 1;
+        if (layoutProgress.unlockProgress >= PRACTICES_PER_UNLOCK) {
+          layoutProgress.unlocked++;
+          layoutProgress.unlockProgress = 0;
+          unlockedNewLetter = true;
+        }
+      }
+    } else {
+      layoutProgress.unlockProgress = 0;
     }
 
     const today = new Date().toISOString().slice(0, 10);
-    if (pr.lastDate !== today) { pr.sessionsToday = 0; pr.minutesToday = 0; pr.lastDate = today; }
-    pr.sessionsToday++;
-    pr.minutesToday = (pr.minutesToday || 0) + elapsed / 60;
-    pr.worstChar = getWorstChar(progress.keyStats?.[currentLayout], unlocked);
+    if (practiceState.lastDate !== today) {
+      practiceState.sessionsToday = 0;
+      practiceState.minutesToday = 0;
+      practiceState.lastDate = today;
+    }
+    practiceState.sessionsToday++;
+    practiceState.minutesToday = (practiceState.minutesToday || 0) + elapsed / 60;
+    const mergedStats = mergeCharStats(progress.keyStats?.[currentLayout], ses?.charStats);
+    const worstCharAfterFinish = getWorstChar(mergedStats, unlocked) ?? fallbackWorstChar;
+    const openedLetter = unlockedNewLetter ? (practiceUnlockOrder[layoutProgress.unlocked - 1] ?? null) : null;
+    practiceState.worstChar = worstCharAfterFinish;
     saveProgress(progress);
     saveHistory('practice', wpm, acc);
     if (ses?.charStats) setLastCharStats(ses.charStats);
-    setResult({ wpm, acc, newLetter: canUnlock });
-  }, [pr, layout, currentLayout, progress, saveProgress, saveHistory]);
+    if (openedLetter) setUnlockModalLetter(openedLetter);
+    setResult({
+      wpm,
+      acc,
+      newLetter: unlockedNewLetter,
+      openedLetter,
+      worstChar: worstCharAfterFinish,
+      unlockProgress: layoutProgress.unlockProgress,
+    });
+  }, [layoutProgress, practiceUnlockOrder, practiceState, currentLayout, progress, saveProgress, saveHistory, goalCPM, unlocked, fallbackWorstChar]);
 
   const { session, start, stop, handleKey, wpm, acc, renderTick, waitingForSpace } = useTypingSession({
     mode: 'practice',
@@ -79,26 +142,35 @@ export function PracticePage() {
     if (session.active || !practiceText) return;
     setShowOverlay(false);
     setResult(null);
+    setUnlockModalLetter(null);
     start(practiceText);
   }, [session.active, practiceText, start]);
 
   // Retry + immediately start (used when typing after result)
   const retryAndStart = useCallback(() => {
-    const ul = practiceUnlockOrder.slice(0, pr.unlocked);
+    const ul = practiceUnlockOrder.slice(0, layoutProgress.unlocked);
     const w = getWorstChar(progress.keyStats?.[currentLayout], ul);
-    const text = generatePracticeText(words, ul, w);
+    const text = generatePracticeText(words, ul, w, 25, ngramModel ?? undefined);
     setPracticeText(text);
     setShowOverlay(false);
     setResult(null);
+    setUnlockModalLetter(null);
     stop();
     start(text);
-  }, [practiceUnlockOrder, pr.unlocked, progress, currentLayout, words, stop, start]);
+  }, [practiceUnlockOrder, layoutProgress.unlocked, progress, currentLayout, words, stop, start, ngramModel]);
 
   // keydown listener
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const isPrintable = e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey;
       const isBackspace = e.key === 'Backspace';
+      if (unlockModalLetter) {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
+          e.preventDefault();
+          setUnlockModalLetter(null);
+        }
+        return;
+      }
       // If result is shown — start new practice on printable key
       if (!session.active && result && isPrintable) {
         retryAndStart();
@@ -114,7 +186,7 @@ export function PracticePage() {
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [session.active, result, showOverlay, practiceText, handleKey, retryAndStart, startPractice]);
+  }, [session.active, result, showOverlay, practiceText, handleKey, retryAndStart, startPractice, unlockModalLetter]);
 
   // Live stats update interval
   const [, setTick] = useState(0);
@@ -125,18 +197,18 @@ export function PracticePage() {
   }, [session.active]);
 
   const retry = () => {
-    const ul = practiceUnlockOrder.slice(0, pr.unlocked);
+    const ul = practiceUnlockOrder.slice(0, layoutProgress.unlocked);
     const w = getWorstChar(progress.keyStats?.[currentLayout], ul);
-    const text = generatePracticeText(words, ul, w);
+    const text = generatePracticeText(words, ul, w, 25, ngramModel ?? undefined);
     setPracticeText(text);
     setShowOverlay(true);
     setResult(null);
+    setUnlockModalLetter(null);
     stop();
   };
 
   // Letter grid + goal
   const ks = progress.keyStats?.[currentLayout] || {};
-  const goalCPM = 150; // default
 
   // Overall history stats (for top metrics row)
   const hist = progress.history?.[currentLayout] || [];
@@ -154,8 +226,10 @@ export function PracticePage() {
 
   // Worst char stats helpers (for badge)
   const weakLower = weak ? weak.toLowerCase() : null;
-  const weakGlobal = weakLower ? (ks[weakLower] ?? null) : null;
-  const weakLast = weakLower ? (lastCharStats[weakLower] ?? null) : null;
+  const displayedWorstChar = result?.worstChar ?? fallbackWorstChar;
+  const displayedWorstLower = displayedWorstChar ? displayedWorstChar.toLowerCase() : null;
+  const weakGlobal = displayedWorstLower ? (ks[displayedWorstLower] ?? null) : null;
+  const weakLast = displayedWorstLower ? (lastCharStats[displayedWorstLower] ?? null) : null;
 
   function calcCPM(stat: CharStat | null): number {
     if (!stat || !stat.hits || !stat.totalTime) return 0;
@@ -181,20 +255,20 @@ export function PracticePage() {
           {practiceSettings.dailyGoalType === 'sessions' ? (
             <div className="daily-goal-bar segments">
               {Array.from({ length: goalVal }).map((_, i) => (
-                <span key={i} className={`daily-seg${i < pr.sessionsToday ? ' filled' : ''}`} />
+                <span key={i} className={`daily-seg${i < practiceState.sessionsToday ? ' filled' : ''}`} />
               ))}
             </div>
           ) : (
             <div className="daily-goal-bar smooth">
               <div className="daily-fill" style={{
-                width: `${Math.min(100, Math.round((pr.minutesToday || 0) / goalVal * 100))}%`
+                width: `${Math.min(100, Math.round((practiceState.minutesToday || 0) / goalVal * 100))}%`
               }} />
             </div>
           )}
           <span className="daily-goal-label">
             {practiceSettings.dailyGoalType === 'sessions'
-              ? `${pr.sessionsToday} / ${goalVal}`
-              : `${Math.round(pr.minutesToday || 0)} / ${goalVal} мин`
+              ? `${practiceState.sessionsToday} / ${goalVal}`
+              : `${Math.round(practiceState.minutesToday || 0)} / ${goalVal} мин`
             }
           </span>
         </div>
@@ -224,6 +298,18 @@ export function PracticePage() {
             </div>
           </div>
           <div className="poption">
+            <span className="poption-label">Целевая скорость</span>
+            <div className="poption-row">
+              <input type="number" className="input-minimal w60"
+                value={goalDisplay} min={1} max={9999}
+                onChange={e => {
+                  const v = Math.max(1, parseFloat(e.target.value) || 0);
+                  savePracticeSetting('goalSpeedCpm', Math.round(displayToCpm(v)));
+                }} />
+              <span className="poption-hint">{spdLabel}</span>
+            </div>
+          </div>
+          <div className="poption">
             <label className="poption-toggle">
               <input type="checkbox" checked={practiceSettings.noStepBack}
                 onChange={e => savePracticeSetting('noStepBack', e.target.checked)} />
@@ -233,15 +319,6 @@ export function PracticePage() {
                 <span className="poption-hint">Backspace отключён</span>
               </span>
             </label>
-          </div>
-          <div className="poption">
-            <span className="poption-label">Вид текста</span>
-            <div className="seg-group">
-              <button title="Блок" className={`seg-btn${practiceSettings.textDisplay === 'block' ? ' active' : ''}`}
-                onClick={() => savePracticeSetting('textDisplay', 'block')}><AlignJustify size={16} /></button>
-              <button title="Бегущая строка" className={`seg-btn${practiceSettings.textDisplay === 'running' ? ' active' : ''}`}
-                onClick={() => savePracticeSetting('textDisplay', 'running')}><MoveRight size={16} /></button>
-            </div>
           </div>
         </div>
       </details>
@@ -271,10 +348,10 @@ export function PracticePage() {
       {/* Summary badge — worst char */}
       <div className="practice-summary-row">
         <div className="summary-badge">
-          <span className="badge-label">{weak ? weak.toUpperCase() : '—'}</span>
-          <span>Last <b>{Math.round(weakLastCPM)}</b> <small className="speed-unit">CPM</small></span>
-          <span>Top <b>{Math.round(weakGlobalCPM)}</b> <small className="speed-unit">CPM</small></span>
-          <span>Goal <b>{goalCPM}</b> <small className="speed-unit">CPM</small></span>
+          <span className="badge-label">{displayedWorstChar ? displayedWorstChar.toUpperCase() : '—'}</span>
+          <span>Last <b>{cpmToDisplay(weakLastCPM)}</b> <small className="speed-unit">{spdLabel}</small></span>
+          <span>Top <b>{cpmToDisplay(weakGlobalCPM)}</b> <small className="speed-unit">{spdLabel}</small></span>
+          <span>Goal <b>{goalDisplay}</b> <small className="speed-unit">{spdLabel}</small></span>
         </div>
       </div>
 
@@ -291,9 +368,9 @@ export function PracticePage() {
             const ratio = goalCPM > 0 ? Math.min(1, charCPM / goalCPM) : 1;
             // If no stats yet, show full brightness; otherwise scale from 0.4→1.0
             const opacity = hasStats ? (0.4 + ratio * 0.6) : 1;
-            const isWeak = ch === weak;
-            const isUnlocked = i < pr.unlocked;
-            const isNext = i === pr.unlocked;
+            const isWeak = ch === displayedWorstChar;
+            const isUnlocked = i < layoutProgress.unlocked;
+            const isNext = i === layoutProgress.unlocked;
 
             let cls = 'letter-chip ';
             const style: React.CSSProperties = {};
@@ -312,7 +389,9 @@ export function PracticePage() {
 
             return (
               <span key={ch} className={cls} style={style}
-                title={isUnlocked ? (isWeak ? `Проблемная · ${Math.round(charCPM)} CPM` : `${Math.round(charCPM)} / ${goalCPM} CPM`) : ''}>
+                title={isUnlocked
+                  ? (isWeak ? `Проблемная · ${cpmToDisplay(charCPM)} ${spdLabel}` : `${cpmToDisplay(charCPM)} / ${goalDisplay} ${spdLabel}`)
+                  : (isNext ? `До открытия: ${layoutProgress.unlockProgress}/${PRACTICES_PER_UNLOCK}` : '')}>
                 {ch.toUpperCase()}
               </span>
             );
@@ -325,15 +404,30 @@ export function PracticePage() {
         text={session.active ? session.text : practiceText}
         pos={session.active ? session.pos : 0}
         errPositions={session.active ? session.errPositions : new Set()}
-        running={practiceSettings.textDisplay === 'running'}
         waitingForSpace={waitingForSpace}
         overlay={!session.active ? (
           result
-            ? `${fmtSpeed(result.wpm)} ${spdLabel} · ${Math.round(result.acc)}% · Букв: ${pr.unlocked}${result.newLetter ? ' · +1 буква!' : ''}\nНажмите или начните печатать`
+            ? `${fmtSpeed(result.wpm)} ${spdLabel} · ${Math.round(result.acc)}% · Хуже всего: ${result.worstChar?.toUpperCase() ?? '—'} · Букв: ${layoutProgress.unlocked}${result.newLetter ? ' · +1 буква!' : layoutProgress.unlocked < practiceUnlockOrder.length ? ` · До новой: ${result.unlockProgress}/${PRACTICES_PER_UNLOCK}` : ''}\nНажмите или начните печатать`
             : (showOverlay ? 'Нажмите здесь или начните печатать' : null)
         ) : null}
         onOverlayClick={result ? retryAndStart : startPractice}
       />
+
+      {unlockModalLetter && (
+        <div className="modal-overlay" onClick={() => setUnlockModalLetter(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <h3>Новая буква открыта</h3>
+            <div className="unlock-letter-card mt-12">
+              <div className="unlock-letter-value">{unlockModalLetter.toUpperCase()}</div>
+              <p>Эта буква теперь доступна в режиме практики.</p>
+              <p className="card-desc">Нажмите `Enter`, `Пробел` или кнопку ниже.</p>
+              <button className="btn-accent" onClick={() => setUnlockModalLetter(null)}>
+                Продолжить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

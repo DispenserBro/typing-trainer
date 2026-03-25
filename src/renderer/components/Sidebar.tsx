@@ -1,5 +1,5 @@
 import { useApp } from '../contexts/AppContext';
-import { Target, Clock, BookOpen, BarChart3, Settings, Keyboard } from 'lucide-react';
+import { Target, Clock, BookOpen, BarChart3, Settings, Keyboard, Gamepad2 } from 'lucide-react';
 
 const MODES = [
   {
@@ -13,6 +13,10 @@ const MODES = [
   {
     id: 'lessons', label: 'Уроки', group: 'top',
     icon: <BookOpen size={20} />,
+  },
+  {
+    id: 'game', label: 'Игра', group: 'top',
+    icon: <Gamepad2 size={20} />,
   },
   {
     id: 'stats', label: 'Статистика', group: 'bottom',

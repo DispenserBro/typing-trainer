@@ -45,29 +45,36 @@ export interface CharStat {
 
 export interface HistoryEntry {
   date: string;
-  mode: 'test' | 'lesson' | 'practice';
+  mode: 'test' | 'lesson' | 'practice' | 'game';
   wpm: number;
   acc: number;
 }
 
 export interface PracticeState {
-  unlocked: number;
   worstChar: string | null;
   sessionsToday: number;
   minutesToday: number;
   lastDate: string;
 }
 
+export interface LayoutProgressState {
+  unlocked: number;
+  unlockProgress: number;
+}
+
 export interface UserSettings {
   speedUnit: 'wpm' | 'cpm' | 'cps';
   cursorStyle: 'underline' | 'block' | 'line';
   cursorSmooth: 'smooth' | 'instant';
+  highlightCurrentChar: boolean;
+  textDisplay: TextDisplayMode;
   theme: string;
   language: string;    // language id, e.g. "en", "ru"
   layout: string;      // layout id, e.g. "qwerty", "йцукен"
   useYo: boolean;      // include ё (Russian only)
   showKeyboard: boolean;
   endWithSpace: boolean;
+  textFontSize: number;
 }
 
 export type DailyGoalType = 'minutes' | 'sessions';
@@ -76,8 +83,8 @@ export type TextDisplayMode = 'block' | 'running';
 export interface PracticeSettings {
   dailyGoalType: DailyGoalType;
   dailyGoalValue: number;
+  goalSpeedCpm: number;
   noStepBack: boolean;
-  textDisplay: TextDisplayMode;
 }
 
 export interface Progress {
@@ -86,6 +93,7 @@ export interface Progress {
   keyStats?: Record<string, Record<string, CharStat>>;
   history?: Record<string, HistoryEntry[]>;
   lessons?: Record<string, Record<number, number>>;
+  layoutProgress?: Record<string, LayoutProgressState>;
   practice?: Record<string, PracticeState>;
 }
 
@@ -114,7 +122,7 @@ export interface Session {
   lastKeyTime: number;
   timer: ReturnType<typeof setInterval> | null;
   timerValue: number;
-  mode: 'test' | 'lesson' | 'practice' | '';
+  mode: 'test' | 'lesson' | 'practice' | 'game' | '';
   lessonIdx: number;
   errPositions: Set<number>;
 }

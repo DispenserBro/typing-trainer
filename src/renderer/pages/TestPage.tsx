@@ -5,7 +5,7 @@ import { TextDisplay } from '../components/TextDisplay';
 import { generateText, filterYoWords, filterYoKeys } from '../engine';
 
 export function TestPage() {
-  const { layouts, currentLayout, allWords, settings, fmtSpeed, spdLabel, saveHistory } = useApp();
+  const { layouts, currentLayout, allWords, ngramModel, settings, fmtSpeed, spdLabel, saveHistory } = useApp();
   const useYo = settings.useYo;
 
   const words = useMemo(() => filterYoWords(allWords, useYo), [allWords, useYo]);
@@ -27,7 +27,7 @@ export function TestPage() {
     const lay = layouts.layouts[currentLayout];
     if (!lay) return;
     const allChars = filterYoKeys(Object.values(lay.fingers).flat(), useYo);
-    const text = generateText(words, allChars, 80);
+    const text = generateText(words, allChars, 80, ngramModel ?? undefined);
     setShowOverlay(false);
     setResult(null);
     setTimerValue(duration);

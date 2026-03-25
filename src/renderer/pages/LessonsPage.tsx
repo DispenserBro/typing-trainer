@@ -14,7 +14,7 @@ function keysLabel(keys: string[]): string {
 
 /* ═══════════════════════════════════════════════════════ */
 export function LessonsPage() {
-  const { layouts, currentLayout, settings, progress, fmtSpeed, spdLabel,
+  const { layouts, currentLayout, ngramModel, settings, progress, fmtSpeed, spdLabel,
     saveHistory, saveProgress } = useApp();
 
   const useYo = settings.useYo;
@@ -80,7 +80,7 @@ export function LessonsPage() {
     let keys: string[] = [];
     for (let i = 0; i <= activeLesson; i++) keys.push(...lessons[i].keys);
     keys = filterYoKeys(keys, useYo);
-    const text = generateExerciseText(keys, exIdx);
+    const text = generateExerciseText(keys, exIdx, 20, ngramModel ?? undefined);
     setActiveExercise(exIdx);
     setExerciseText(text);
     setShowOverlay(true);
