@@ -43,6 +43,15 @@ export interface CharStat {
   totalTime: number;
 }
 
+export interface SessionKeypress {
+  position: number;
+  expected: string;
+  actual: string;
+  correct: boolean;
+  interval: number;
+  timestamp: number;
+}
+
 export interface HistoryEntry {
   date: string;
   mode: 'test' | 'lesson' | 'practice' | 'game';
@@ -60,6 +69,42 @@ export interface PracticeState {
 export interface LayoutProgressState {
   unlocked: number;
   unlockProgress: number;
+}
+
+export type PracticeInsightRow = 'top' | 'middle' | 'bottom';
+
+export interface PracticeInsightAggregate {
+  hits: number;
+  misses: number;
+  totalTime: number;
+  weakness: number;
+}
+
+export interface PracticeBigramInsight {
+  hits: number;
+  misses: number;
+  totalTransitionTime: number;
+  weakness: number;
+}
+
+export interface PracticeRhythmInsight {
+  samples: number;
+  averageInterval: number;
+  averageDeviation: number;
+  weakness: number;
+}
+
+export interface LayoutPracticeInsights {
+  chars: Record<string, PracticeInsightAggregate>;
+  bigrams: Record<string, PracticeBigramInsight>;
+  fingers: Partial<Record<keyof FingerMap, PracticeInsightAggregate>>;
+  rows: Record<PracticeInsightRow, PracticeInsightAggregate>;
+  rhythm: PracticeRhythmInsight;
+  lastUpdated: string;
+}
+
+export interface PracticeInsightsState {
+  byLayout: Record<string, LayoutPracticeInsights>;
 }
 
 export type GameItemRarity = 1 | 2 | 3;
@@ -183,11 +228,18 @@ export interface UserSettings {
 
 export type DailyGoalType = 'minutes' | 'sessions';
 export type TextDisplayMode = 'block' | 'running';
+export type PracticeTrainingMode = 'normal' | 'rhythm';
+export type PracticeAdaptationStrength = 'low' | 'medium' | 'high';
+export type PracticeAdaptationFocus = 'balanced' | 'chars' | 'bigrams' | 'rhythm';
 
 export interface PracticeSettings {
   dailyGoalType: DailyGoalType;
   dailyGoalValue: number;
   goalSpeedCpm: number;
+  trainingMode: PracticeTrainingMode;
+  smartAdaptationEnabled: boolean;
+  smartAdaptationStrength: PracticeAdaptationStrength;
+  smartAdaptationFocus: PracticeAdaptationFocus;
   noStepBack: boolean;
 }
 
@@ -195,6 +247,7 @@ export interface Progress {
   settings?: UserSettings;
   practiceSettings?: PracticeSettings;
   keyStats?: Record<string, Record<string, CharStat>>;
+  practiceInsights?: PracticeInsightsState;
   history?: Record<string, HistoryEntry[]>;
   lessons?: Record<string, Record<number, number>>;
   layoutProgress?: Record<string, LayoutProgressState>;
@@ -230,6 +283,7 @@ export interface Session {
   mode: 'test' | 'lesson' | 'practice' | 'game' | '';
   lessonIdx: number;
   errPositions: Set<number>;
+  keypresses: SessionKeypress[];
 }
 
 export type SpeedUnit = 'wpm' | 'cpm' | 'cps';

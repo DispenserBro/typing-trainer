@@ -7,6 +7,8 @@ import type {
   UserSettings, PracticeSettings, PracticeState, LayoutProgressState,
   TextDisplayMode, LanguageInfo, GameState, GameItemDefinition,
   GameEquipmentSlot, GameInventoryItem, GameRunState, GameAchievementDefinition,
+  PracticeInsightsState, LayoutPracticeInsights, PracticeInsightAggregate,
+  PracticeBigramInsight, PracticeRhythmInsight,
 } from '../../shared/types';
 import {
   createSession, formatSpeed, speedLabel, filterYoKeys,
@@ -14,6 +16,7 @@ import {
 } from '../engine';
 import { GAME_ITEM_CATALOG, GAME_ITEM_MAP, isBrokenInventoryItem } from '../gameItems';
 import { GAME_ACHIEVEMENT_CATALOG, GAME_ACHIEVEMENT_MAP } from '../gameAchievements';
+import { createEmptyLayoutPracticeInsights } from '../practiceInsights';
 
 export const BUILT_IN_THEMES = ['dark-orange', 'catppuccin', 'nord', 'monokai', 'light'];
 
@@ -47,6 +50,10 @@ function defaultPracticeSettings(p?: Partial<PracticeSettings>): PracticeSetting
     dailyGoalType: p?.dailyGoalType ?? 'minutes',
     dailyGoalValue: p?.dailyGoalValue ?? 15,
     goalSpeedCpm: p?.goalSpeedCpm ?? 150,
+    trainingMode: p?.trainingMode ?? 'normal',
+    smartAdaptationEnabled: p?.smartAdaptationEnabled ?? true,
+    smartAdaptationStrength: p?.smartAdaptationStrength ?? 'medium',
+    smartAdaptationFocus: p?.smartAdaptationFocus ?? 'balanced',
     noStepBack: p?.noStepBack ?? false,
   };
 }
@@ -229,12 +236,104 @@ function getNextUnlockableLetter(
   return unlockOrder[layoutProgress.unlocked] ?? null;
 }
 
+function normalizePracticeInsightAggregate(
+  aggregate?: Partial<PracticeInsightAggregate>,
+): PracticeInsightAggregate {
+  return {
+    hits: Math.max(0, Math.floor(aggregate?.hits ?? 0)),
+    misses: Math.max(0, Math.floor(aggregate?.misses ?? 0)),
+    totalTime: Math.max(0, Number(aggregate?.totalTime ?? 0)),
+    weakness: Math.max(0, Number(aggregate?.weakness ?? 0)),
+  };
+}
+
+function normalizePracticeBigramInsight(
+  aggregate?: Partial<PracticeBigramInsight>,
+): PracticeBigramInsight {
+  return {
+    hits: Math.max(0, Math.floor(aggregate?.hits ?? 0)),
+    misses: Math.max(0, Math.floor(aggregate?.misses ?? 0)),
+    totalTransitionTime: Math.max(0, Number(aggregate?.totalTransitionTime ?? 0)),
+    weakness: Math.max(0, Number(aggregate?.weakness ?? 0)),
+  };
+}
+
+function normalizePracticeRhythmInsight(
+  rhythm?: Partial<PracticeRhythmInsight>,
+): PracticeRhythmInsight {
+  return {
+    samples: Math.max(0, Math.floor(rhythm?.samples ?? 0)),
+    averageInterval: Math.max(0, Number(rhythm?.averageInterval ?? 0)),
+    averageDeviation: Math.max(0, Number(rhythm?.averageDeviation ?? 0)),
+    weakness: Math.max(0, Number(rhythm?.weakness ?? 0)),
+  };
+}
+
+function normalizeLayoutPracticeInsights(
+  insights?: Partial<LayoutPracticeInsights>,
+): LayoutPracticeInsights {
+  const empty = createEmptyLayoutPracticeInsights();
+  const chars = Object.fromEntries(
+    Object.entries(insights?.chars ?? {}).map(([char, aggregate]) => [
+      char.toLowerCase(),
+      normalizePracticeInsightAggregate(aggregate),
+    ]),
+  );
+  const bigrams = Object.fromEntries(
+    Object.entries(insights?.bigrams ?? {}).map(([bigram, aggregate]) => [
+      bigram.toLowerCase(),
+      normalizePracticeBigramInsight(aggregate),
+    ]),
+  );
+  const fingers = Object.fromEntries(
+    Object.entries(insights?.fingers ?? {}).map(([finger, aggregate]) => [
+      finger,
+      normalizePracticeInsightAggregate(aggregate),
+    ]),
+  ) as LayoutPracticeInsights['fingers'];
+
+  return {
+    chars,
+    bigrams,
+    fingers,
+    rows: {
+      top: normalizePracticeInsightAggregate(insights?.rows?.top ?? empty.rows.top),
+      middle: normalizePracticeInsightAggregate(insights?.rows?.middle ?? empty.rows.middle),
+      bottom: normalizePracticeInsightAggregate(insights?.rows?.bottom ?? empty.rows.bottom),
+    },
+    rhythm: normalizePracticeRhythmInsight(insights?.rhythm ?? empty.rhythm),
+    lastUpdated: typeof insights?.lastUpdated === 'string' ? insights.lastUpdated : '',
+  };
+}
+
+function resolvePracticeInsights(progress: Progress): PracticeInsightsState {
+  return {
+    byLayout: Object.fromEntries(
+      Object.entries(progress.practiceInsights?.byLayout ?? {}).map(([layoutId, insights]) => [
+        layoutId,
+        normalizeLayoutPracticeInsights(insights),
+      ]),
+    ),
+  };
+}
+
+function getLayoutPracticeInsights(progress: Progress, layoutId: string): LayoutPracticeInsights {
+  if (!progress.practiceInsights) {
+    progress.practiceInsights = resolvePracticeInsights(progress);
+  }
+  if (!progress.practiceInsights.byLayout[layoutId]) {
+    progress.practiceInsights.byLayout[layoutId] = createEmptyLayoutPracticeInsights();
+  }
+  return normalizeLayoutPracticeInsights(progress.practiceInsights.byLayout[layoutId]);
+}
+
 export interface AppContextValue {
   ready: boolean;
   layouts: LayoutsData;
   allWords: string[];
   ngramModel: NgramModel | null;
   progress: Progress;
+  practiceInsights: PracticeInsightsState;
   customThemes: CustomThemes;
   gameState: GameState;
   gameItemCatalog: GameItemDefinition[];
@@ -268,6 +367,8 @@ export interface AppContextValue {
   spdLabel: string;
   getLayoutProgress: () => LayoutProgressState;
   getPracticeState: () => PracticeState;
+  getPracticeInsights: () => LayoutPracticeInsights;
+  savePracticeInsights: (insights: LayoutPracticeInsights) => void;
   saveCharStats: (cs: Record<string, CharStat>) => void;
   saveHistory: (mode: 'test' | 'lesson' | 'practice' | 'game', wpm: number, acc: number) => void;
   saveGameState: (game: GameState) => void;
@@ -310,6 +411,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const settings = resolveSettings(progress);
   const practiceSettings = defaultPracticeSettings(progress.practiceSettings);
+  const practiceInsights = resolvePracticeInsights(progress);
   const gameState = resolveGameState(progress);
 
   const layoutsForLanguage = useMemo<[string, Layout][]>(() => {
@@ -471,6 +573,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
         layoutStats[char].totalTime += data.totalTime;
       }
 
+      window.api.saveProgress(next);
+      return { ...next };
+    });
+  }, [currentLayout]);
+
+  const savePracticeInsights = useCallback((insights: LayoutPracticeInsights) => {
+    setProgress(prev => {
+      const next = { ...prev };
+      if (!next.practiceInsights) {
+        next.practiceInsights = resolvePracticeInsights(prev);
+      }
+      next.practiceInsights.byLayout[currentLayout] = normalizeLayoutPracticeInsights(insights);
       window.api.saveProgress(next);
       return { ...next };
     });
@@ -789,6 +903,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const getPracticeStateCb = useCallback(() => getPracticeState(progressRef.current, currentLayout), [currentLayout]);
   const getLayoutProgressCb = useCallback(() => getLayoutProgress(progressRef.current, currentLayout), [currentLayout]);
+  const getPracticeInsightsCb = useCallback(() => getLayoutPracticeInsights(progressRef.current, currentLayout), [currentLayout]);
 
   const value: AppContextValue = {
     ready,
@@ -796,6 +911,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     allWords,
     ngramModel,
     progress,
+    practiceInsights,
     customThemes,
     gameState,
     gameItemCatalog: GAME_ITEM_CATALOG,
@@ -824,6 +940,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     spdLabel,
     getLayoutProgress: getLayoutProgressCb,
     getPracticeState: getPracticeStateCb,
+    getPracticeInsights: getPracticeInsightsCb,
+    savePracticeInsights,
     saveCharStats,
     saveHistory,
     saveGameState,

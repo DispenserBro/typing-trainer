@@ -1,7 +1,10 @@
 /* ═══════════════════════════════════════════════════════════
    Typing Engine — session management, key handling, char stats
    ═══════════════════════════════════════════════════════════ */
-import type { Session, CharStat, Layout, SpeedUnit, UserSettings } from '../shared/types';
+import type {
+  Session, CharStat, Layout, SpeedUnit, UserSettings, LayoutPracticeInsights,
+  PracticeTrainingMode, PracticeAdaptationStrength, PracticeAdaptationFocus,
+} from '../shared/types';
 
 /* ── Ё helper: replace ё→е in words when useYo=false ─── */
 export function stripYo(text: string): string {
@@ -44,6 +47,7 @@ export function createSession(text: string, mode: Session['mode'], prevLessonIdx
     mode,
     lessonIdx: prevLessonIdx,
     errPositions: new Set(),
+    keypresses: [],
   };
 }
 
@@ -155,6 +159,145 @@ function generateNgramWord(
   return word;
 }
 
+function generateSeededNgramWord(
+  model: NgramModel,
+  allowedChars: string[],
+  seed: string,
+  minLen = 3,
+  maxLen = 7,
+): string {
+  const allowed = new Set(allowedChars);
+  const normalizedSeed = [...seed.toLowerCase()].filter(ch => allowed.has(ch)).join('');
+  if (!normalizedSeed) return generateNgramWord(model, allowedChars, minLen, maxLen);
+
+  const targetLen = Math.max(normalizedSeed.length, minLen) + Math.floor(Math.random() * Math.max(1, maxLen - Math.max(normalizedSeed.length, minLen) + 1));
+  let word = normalizedSeed;
+
+  while (word.length < targetLen) {
+    const prev = word[word.length - 1];
+    const transitions = model.bi[prev];
+    if (word.length === targetLen - 1 && model.end) {
+      const merged: Record<string, number> = {};
+      for (const c of allowed) {
+        const biW = transitions?.[c] || 0;
+        const endW = model.end[c] || 0;
+        merged[c] = biW + endW * 0.5;
+      }
+      word += weightedPick(merged, allowed) ?? pick(allowedChars);
+    } else if (transitions) {
+      word += weightedPick(transitions, allowed) ?? pick(allowedChars);
+    } else {
+      word += pick(allowedChars);
+    }
+  }
+
+  return word;
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+interface PracticeAdaptiveProfile {
+  wordCount: number;
+  focusStrength: number;
+  rankedChars: string[];
+  rankedBigrams: string[];
+  charPriority: number;
+  bigramPriority: number;
+  exactnessBias: number;
+}
+
+interface PracticeBuildOptions {
+  trainingMode?: PracticeTrainingMode;
+  smartAdaptationEnabled?: boolean;
+  smartAdaptationStrength?: PracticeAdaptationStrength;
+  smartAdaptationFocus?: PracticeAdaptationFocus;
+}
+
+function buildPracticeAdaptiveProfile(
+  insights: LayoutPracticeInsights | null | undefined,
+  allowedChars: string[],
+  baseCount: number,
+  options?: PracticeBuildOptions,
+): PracticeAdaptiveProfile {
+  const adaptationEnabled = options?.smartAdaptationEnabled ?? true;
+  const strength = options?.smartAdaptationStrength ?? 'medium';
+  const focus = options?.smartAdaptationFocus ?? 'balanced';
+
+  if (!adaptationEnabled || !insights) {
+    return {
+      wordCount: baseCount,
+      focusStrength: 0,
+      rankedChars: [],
+      rankedBigrams: [],
+      charPriority: 1,
+      bigramPriority: 1,
+      exactnessBias: 0,
+    };
+  }
+
+  const strengthFactorMap: Record<PracticeAdaptationStrength, number> = {
+    low: 0.7,
+    medium: 1,
+    high: 1.35,
+  };
+  const focusProfileMap: Record<PracticeAdaptationFocus, {
+    charWeight: number;
+    bigramWeight: number;
+    rhythmWeight: number;
+    exactnessBias: number;
+  }> = {
+    balanced: { charWeight: 1, bigramWeight: 1, rhythmWeight: 1, exactnessBias: 0.08 },
+    chars: { charWeight: 1.45, bigramWeight: 0.65, rhythmWeight: 0.75, exactnessBias: 0.04 },
+    bigrams: { charWeight: 0.7, bigramWeight: 1.5, rhythmWeight: 0.8, exactnessBias: 0.06 },
+    rhythm: { charWeight: 0.5, bigramWeight: 0.8, rhythmWeight: 1.45, exactnessBias: 0.16 },
+  };
+  const strengthFactor = strengthFactorMap[strength];
+  const focusProfile = focusProfileMap[focus];
+  const allowed = new Set(allowedChars.map(ch => ch.toLowerCase()));
+  const rankedChars = Object.entries(insights?.chars ?? {})
+    .filter(([char, aggregate]) => allowed.has(char) && aggregate.weakness > 0)
+    .sort((a, b) => b[1].weakness - a[1].weakness)
+    .slice(0, 4)
+    .map(([char]) => char);
+  const rankedBigrams = Object.entries(insights?.bigrams ?? {})
+    .filter(([bigram, aggregate]) => aggregate.weakness > 0 && [...bigram].every(ch => allowed.has(ch)))
+    .sort((a, b) => b[1].weakness - a[1].weakness)
+    .slice(0, 5)
+    .map(([bigram]) => bigram);
+
+  const topCharWeakness = rankedChars[0] ? insights?.chars?.[rankedChars[0]]?.weakness ?? 0 : 0;
+  const topBigramWeakness = rankedBigrams[0] ? insights?.bigrams?.[rankedBigrams[0]]?.weakness ?? 0 : 0;
+  const rhythmWeakness = insights?.rhythm?.weakness ?? 0;
+  const instability = Math.min(100, Math.max(
+    topCharWeakness * focusProfile.charWeight,
+    topBigramWeakness * focusProfile.bigramWeight,
+    rhythmWeakness * focusProfile.rhythmWeight,
+  ) * strengthFactor);
+
+  let wordCount = baseCount;
+  if (instability >= 60) {
+    wordCount = Math.round(baseCount * 0.64);
+  } else if (instability >= 42) {
+    wordCount = Math.round(baseCount * 0.8);
+  } else if (instability <= 16 && (rankedChars.length > 0 || rankedBigrams.length > 0)) {
+    wordCount = Math.round(baseCount * 1.24);
+  } else if (instability <= 24 && (rankedChars.length > 0 || rankedBigrams.length > 0)) {
+    wordCount = Math.round(baseCount * 1.08);
+  }
+
+  return {
+    wordCount: clamp(wordCount, 12, 36),
+    focusStrength: clamp(instability / 100, 0, 1),
+    rankedChars,
+    rankedBigrams,
+    charPriority: focusProfile.charWeight * strengthFactor,
+    bigramPriority: focusProfile.bigramWeight * strengthFactor,
+    exactnessBias: focusProfile.exactnessBias + (strength === 'high' ? 0.04 : strength === 'low' ? -0.02 : 0),
+  };
+}
+
 /* ── Filter words: ONLY those composed of allowed chars ── */
 function filterByChars(words: string[], chars: string[]): string[] {
   const charSet = new Set(chars.map(c => c.toLowerCase()));
@@ -216,9 +359,12 @@ function buildPool(
   count: number,
   preferChars?: string | null,
   model?: NgramModel,
+  insights?: LayoutPracticeInsights | null,
+  options?: PracticeBuildOptions,
 ): string[] {
   const charSet = new Set(chars.map(c => c.toLowerCase()));
   const charArr = chars.filter(c => c.length === 1 && c !== ' ').map(c => c.toLowerCase());
+  const trainingMode = options?.trainingMode ?? 'normal';
 
   // Step 1: exact-match dictionary words
   const exactPool = filterByChars(allWords, chars);
@@ -230,6 +376,19 @@ function buildPool(
   const localNgram = exactMulti.length >= 10
     ? buildNgramModel(exactMulti)
     : (model ?? buildNgramModel(allWords));
+
+  const adaptiveProfile = buildPracticeAdaptiveProfile(insights, charArr, count, options);
+  count = adaptiveProfile.wordCount;
+  if (trainingMode === 'rhythm') {
+    count = clamp(Math.round(count * 0.78), 10, 20);
+  }
+  const rankedChars = adaptiveProfile.rankedChars;
+  const rankedBigrams = adaptiveProfile.rankedBigrams;
+  const focusStrength = adaptiveProfile.focusStrength;
+  const charPriority = adaptiveProfile.charPriority;
+  const bigramPriority = adaptiveProfile.bigramPriority;
+  const exactnessBias = adaptiveProfile.exactnessBias;
+  const hasAdaptiveSignals = rankedChars.length > 0 || rankedBigrams.length > 0;
 
   // Step 2: adapted words — longer words with some chars replaced
   // Only words 5+ chars where ≤60% chars need replacing
@@ -253,6 +412,19 @@ function buildPool(
     preferAdapted = adaptedPool.filter(w => w.includes(preferChars));
   }
 
+  const charTargetedExact = rankedChars.length > 0
+    ? exactMulti.filter(word => rankedChars.some(char => word.includes(char)))
+    : [];
+  const charTargetedAdapted = rankedChars.length > 0
+    ? adaptedPool.filter(word => rankedChars.some(char => word.includes(char)))
+    : [];
+  const bigramTargetedExact = rankedBigrams.length > 0
+    ? exactMulti.filter(word => rankedBigrams.some(bigram => word.includes(bigram)))
+    : [];
+  const bigramTargetedAdapted = rankedBigrams.length > 0
+    ? adaptedPool.filter(word => rankedBigrams.some(bigram => word.includes(bigram)))
+    : [];
+
   const result: string[] = [];
   const maxSingleChar = Math.max(1, Math.floor(count * 0.1));
   let singleCharCount = 0;
@@ -275,18 +447,50 @@ function buildPool(
     // Main selection
     if (!word) {
       const r = Math.random();
-      if (hasGoodExact) {
+      if (hasAdaptiveSignals) {
+        const bigramThreshold = rankedBigrams.length > 0
+          ? clamp((0.12 + focusStrength * 0.18) * bigramPriority, 0, 0.45)
+          : 0;
+        const charThreshold = rankedChars.length > 0
+          ? clamp(bigramThreshold + (0.14 + focusStrength * 0.18) * charPriority, bigramThreshold, 0.82)
+          : bigramThreshold;
+
+        if (r < bigramThreshold && rankedBigrams.length > 0) {
+          const targetBigram = pick(rankedBigrams);
+          if (bigramTargetedExact.length > 0 && Math.random() < 0.65) {
+            word = pick(bigramTargetedExact);
+          } else if (bigramTargetedAdapted.length > 0) {
+            word = pick(bigramTargetedAdapted);
+          } else if (charArr.length >= 2) {
+            word = generateSeededNgramWord(localNgram, charArr, targetBigram, 3, Math.min(7, charArr.length + 2));
+          }
+        } else if (r < charThreshold && rankedChars.length > 0) {
+          const targetChar = pick(rankedChars);
+          if (charTargetedExact.length > 0 && Math.random() < 0.65) {
+            word = pick(charTargetedExact);
+          } else if (charTargetedAdapted.length > 0) {
+            word = pick(charTargetedAdapted);
+          } else if (charArr.length >= 2) {
+            word = generateSeededNgramWord(localNgram, charArr, targetChar, 3, Math.min(7, charArr.length + 2));
+          }
+        }
+      }
+
+      if (!word && hasGoodExact) {
         // plenty of exact words: 70% exact, 30% adapted
-        if (r < 0.7 || adaptedPool.length === 0) {
+        const exactShare = clamp((trainingMode === 'rhythm' ? 0.82 : 0.68) + exactnessBias, 0.55, 0.94);
+        if (r < exactShare || adaptedPool.length === 0) {
           word = exactMulti.length > 0 ? pick(exactMulti) : null;
         } else {
           word = pick(adaptedPool);
         }
       } else {
         // few exact words: 40% exact, 40% adapted, 20% pseudo
-        if (r < 0.4 && exactMulti.length > 0) {
+        const exactThreshold = clamp((trainingMode === 'rhythm' ? 0.52 : 0.38) + exactnessBias, 0.28, 0.72);
+        const adaptedThreshold = clamp((trainingMode === 'rhythm' ? 0.74 : 0.78) + exactnessBias * 0.35, exactThreshold + 0.1, 0.92);
+        if (r < exactThreshold && exactMulti.length > 0) {
           word = pick(exactMulti);
-        } else if (r < 0.8 && adaptedPool.length > 0) {
+        } else if (r < adaptedThreshold && adaptedPool.length > 0) {
           word = pick(adaptedPool);
         }
         // else fall through to pseudo-word
@@ -296,7 +500,10 @@ function buildPool(
     // Fallback: n-gram pseudo-words from allowed chars
     if (!word) {
       if (charArr.length >= 2) {
-        word = generateNgramWord(localNgram, charArr, 3, Math.min(7, charArr.length + 2));
+        const cleanerWords = trainingMode === 'rhythm' || (options?.smartAdaptationFocus ?? 'balanced') === 'rhythm';
+        const minLen = cleanerWords ? 2 : 3;
+        const maxLen = cleanerWords ? Math.min(5, charArr.length + 1) : Math.min(7, charArr.length + 2);
+        word = generateNgramWord(localNgram, charArr, minLen, maxLen);
       } else if (charArr.length === 1) {
         if (singleCharCount < maxSingleChar) {
           word = charArr[0].repeat(2 + Math.floor(Math.random() * 3));
@@ -465,8 +672,10 @@ export function generatePracticeText(
   weakChar: string | null,
   count = 25,
   model?: NgramModel,
+  insights?: LayoutPracticeInsights | null,
+  options?: PracticeBuildOptions,
 ): string {
-  const pool = buildPool(allWords, unlocked, count, weakChar, model);
+  const pool = buildPool(allWords, unlocked, count, weakChar, model, insights, options);
   return pool.join(' ');
 }
 

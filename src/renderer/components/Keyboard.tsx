@@ -1,8 +1,9 @@
 import {
-  useMemo, useRef, useState, useCallback, useLayoutEffect, type CSSProperties,
+  useMemo, useRef, useState, useLayoutEffect, useCallback, type CSSProperties,
 } from 'react';
 import type { FingerName } from '../../shared/types';
 import { useApp } from '../contexts/AppContext';
+import { KeyboardHands, hasKeyboardHandPose, type HandPoseSide } from './KeyboardHands';
 
 const KB_ROWS: Record<string, string[][]> = {
   qwerty: [
@@ -38,101 +39,37 @@ const FINGER_COLORS: Record<FingerName, string> = {
   pinky_right: 'var(--red, #f44336)',
 };
 
-const HOME_KEYS: Record<string, Record<FingerName, string>> = {
-  qwerty: {
-    pinky_left: 'a',
-    ring_left: 's',
-    middle_left: 'd',
-    index_left: 'f',
-    index_right: 'j',
-    middle_right: 'k',
-    ring_right: 'l',
-    pinky_right: ';',
-  },
-  dvorak: {
-    pinky_left: 'a',
-    ring_left: 'o',
-    middle_left: 'e',
-    index_left: 'u',
-    index_right: 'h',
-    middle_right: 't',
-    ring_right: 'n',
-    pinky_right: 's',
-  },
-  'йцукен': {
-    pinky_left: 'ф',
-    ring_left: 'ы',
-    middle_left: 'в',
-    index_left: 'а',
-    index_right: 'о',
-    middle_right: 'л',
-    ring_right: 'д',
-    pinky_right: 'ж',
-  },
-  'яверты': {
-    pinky_left: 'а',
-    ring_left: 'с',
-    middle_left: 'д',
-    index_left: 'ф',
-    index_right: 'й',
-    middle_right: 'к',
-    ring_right: 'л',
-    pinky_right: 'э',
-  },
-};
+const TOP_ROW_POSES = ['key-1', 'key-2', 'key-3', 'key-4', 'key-5', 'key-6', 'key-7', 'key-8', 'key-9', 'key-0', 'minus', 'equal'] as const;
+const SVG_EXACT_LAYOUTS = new Set(['йцукен', 'яверты']);
 
-const LEFT_FINGERS: FingerName[] = ['pinky_left', 'ring_left', 'middle_left', 'index_left'];
-const RIGHT_FINGERS: FingerName[] = ['index_right', 'middle_right', 'ring_right', 'pinky_right'];
+const HANDS_VIEWBOX_WIDTH = 716.3;
+const HANDS_VIEWBOX_HEIGHT = 380;
+const HANDS_WIDTH_RATIO = 1.06;
+const HANDS_HOME_ROW_RATIO = 0.41;
+const HANDS_CENTER_SHIFT_IN_KEYS = 1.2;
 
-type KeyPointMap = Record<string, { x: number; y: number }>;
-const PALM_RX = 70;
-const PALM_RY = 22;
-const FINGER_BASE_OFFSETS = [-54, -18, 18, 54] as const;
+function getExactSvgPoseKey(layoutName: string, key: string) {
+  if (!SVG_EXACT_LAYOUTS.has(layoutName)) return null;
 
-function averagePoints(points: Array<{ x: number; y: number }>) {
-  if (!points.length) return { x: 0, y: 0 };
-  return {
-    x: points.reduce((sum, p) => sum + p.x, 0) / points.length,
-    y: points.reduce((sum, p) => sum + p.y, 0) / points.length,
-  };
-}
+  if (/^[а-я]$/i.test(key)) {
+    const exactKey = `${key}${key.toUpperCase()}`;
+    return hasKeyboardHandPose(exactKey) ? exactKey : null;
+  }
 
-function pointOnEllipseTop(center: { x: number; y: number }, offsetX: number) {
-  const ratio = Math.max(-1, Math.min(1, offsetX / PALM_RX));
-  const yOffset = PALM_RY * Math.sqrt(1 - ratio * ratio);
-  return {
-    x: center.x + offsetX,
-    y: center.y - yOffset,
-  };
-}
+  if (key === '.') {
+    return hasKeyboardHandPose('.,') ? '.,' : null;
+  }
 
-function lerpPoint(a: { x: number; y: number }, b: { x: number; y: number }, t: number) {
-  return {
-    x: a.x + (b.x - a.x) * t,
-    y: a.y + (b.y - a.y) * t,
-  };
-}
-
-function buildFingerStyle(base: { x: number; y: number }, tip: { x: number; y: number }): CSSProperties {
-  const dx = tip.x - base.x;
-  const dy = tip.y - base.y;
-  const length = Math.max(16, Math.sqrt(dx * dx + dy * dy));
-  const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-
-  return {
-    left: `${base.x}px`,
-    top: `${base.y}px`,
-    width: `${length}px`,
-    transform: `translateY(-50%) rotate(${angle}deg)`,
-  };
+  return null;
 }
 
 export function Keyboard() {
   const { currentLayout, layouts, activeChar, currentMode, settings } = useApp();
   const layout = layouts.layouts[currentLayout];
   const stageRef = useRef<HTMLDivElement | null>(null);
+  const keyboardRef = useRef<HTMLDivElement | null>(null);
   const keyRefs = useRef<Record<string, HTMLSpanElement | null>>({});
-  const [keyPoints, setKeyPoints] = useState<KeyPointMap>({});
+  const [handsStyle, setHandsStyle] = useState<CSSProperties | undefined>(undefined);
 
   const hidden = !settings.showKeyboard
     || currentMode === 'stats' || currentMode === 'settings';
@@ -150,178 +87,113 @@ export function Keyboard() {
   const rows = KB_ROWS[currentLayout] || KB_ROWS.qwerty;
   const target = activeChar === ' ' ? ' ' : activeChar?.toLowerCase();
   const activeFinger = target && target !== ' ' ? fingerMap[target] : undefined;
-  const targetUsesThumb = target === ' ';
-  const homeKeys = HOME_KEYS[currentLayout] ?? HOME_KEYS.qwerty;
+  const activeHand: HandPoseSide | undefined = target === ' '
+    ? 'both'
+    : activeFinger?.endsWith('_left')
+      ? 'left'
+      : activeFinger?.endsWith('_right')
+        ? 'right'
+        : undefined;
 
-  const measureKeys = useCallback(() => {
-    const stage = stageRef.current;
-    if (!stage) return;
-    const stageRect = stage.getBoundingClientRect();
-    const next: KeyPointMap = {};
+  const activePose = useMemo(() => {
+    if (!target) return 'neutral';
+    if (target === ' ') return 'space';
+    if (target === '\\' || target === '|') return 'backslash';
+    if (target === '`' || target === '~') return 'tilda';
 
-    for (const [key, el] of Object.entries(keyRefs.current)) {
-      if (!el) continue;
-      const rect = el.getBoundingClientRect();
-      next[key] = {
-        x: rect.left - stageRect.left + rect.width / 2,
-        y: rect.top - stageRect.top + rect.height / 2,
-      };
+    const exactPoseKey = getExactSvgPoseKey(currentLayout, target);
+    if (exactPoseKey) return exactPoseKey;
+
+    for (let rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {
+      const keyIndex = rows[rowIndex].findIndex(key => key.toLowerCase() === target);
+      if (keyIndex === -1) continue;
+
+      if (rowIndex === 0) {
+        return TOP_ROW_POSES[keyIndex] ?? 'neutral';
+      }
+
+      if (rowIndex === 1) {
+        if (keyIndex === 0) return 'tab';
+        if (keyIndex === rows[rowIndex].length - 1) return 'enter';
+        return 'neutral';
+      }
+
+      if (rowIndex === 2) {
+        if (keyIndex === 0) return 'shift-left';
+        if (keyIndex === rows[rowIndex].length - 1) return 'shift-right';
+        return 'neutral';
+      }
     }
 
-    setKeyPoints(next);
-  }, []);
+    return 'neutral';
+  }, [currentLayout, rows, target]);
+
+  const measureHandsFrame = useCallback(() => {
+    const stage = stageRef.current;
+    const keyboard = keyboardRef.current;
+    if (!stage || !keyboard || rows.length < 2) return;
+
+    const middleRowKeys = rows[1]
+      .map(key => keyRefs.current[key])
+      .filter((el): el is HTMLSpanElement => Boolean(el));
+
+    if (!middleRowKeys.length) return;
+
+    const stageRect = stage.getBoundingClientRect();
+    const keyboardRect = keyboard.getBoundingClientRect();
+    const keyRects = middleRowKeys.map(el => el.getBoundingClientRect());
+    const averageKeyWidth = keyRects.reduce((sum, rect) => sum + rect.width, 0) / keyRects.length;
+    const middleRowCenterY = keyRects.reduce((sum, rect) => sum + rect.top + rect.height / 2, 0) / keyRects.length
+      - stageRect.top;
+
+    const keyboardCenterX = keyboardRect.left - stageRect.left + keyboardRect.width / 2;
+    const handsWidth = keyboardRect.width * HANDS_WIDTH_RATIO;
+    const handsHeight = handsWidth * (HANDS_VIEWBOX_HEIGHT / HANDS_VIEWBOX_WIDTH);
+    const top = middleRowCenterY - handsHeight * HANDS_HOME_ROW_RATIO;
+    const left = keyboardCenterX + averageKeyWidth * HANDS_CENTER_SHIFT_IN_KEYS;
+
+    setHandsStyle({
+      left: `${left}px`,
+      top: `${top}px`,
+      width: `${handsWidth}px`,
+      transform: 'translateX(-50%)',
+    });
+  }, [rows]);
 
   useLayoutEffect(() => {
-    measureKeys();
-    const stage = stageRef.current;
-    if (!stage) return undefined;
+    measureHandsFrame();
 
-    const onResize = () => measureKeys();
+    const stage = stageRef.current;
+    const keyboard = keyboardRef.current;
+    if (!stage || !keyboard) return undefined;
+
+    const onResize = () => measureHandsFrame();
     window.addEventListener('resize', onResize);
 
     let observer: ResizeObserver | null = null;
     if (typeof ResizeObserver !== 'undefined') {
-      observer = new ResizeObserver(() => measureKeys());
+      observer = new ResizeObserver(() => measureHandsFrame());
       observer.observe(stage);
+      observer.observe(keyboard);
+      Object.values(keyRefs.current).forEach((el) => {
+        if (el) observer?.observe(el);
+      });
     }
 
     return () => {
       window.removeEventListener('resize', onResize);
       observer?.disconnect();
     };
-  }, [measureKeys, currentLayout, rows.length]);
-
-  const handGuides = useMemo(() => {
-    const leftHomes = LEFT_FINGERS.map(finger => keyPoints[homeKeys[finger]]).filter(Boolean);
-    const rightHomes = RIGHT_FINGERS.map(finger => keyPoints[homeKeys[finger]]).filter(Boolean);
-    const spacePoint = keyPoints[' '];
-
-    if (leftHomes.length !== LEFT_FINGERS.length || rightHomes.length !== RIGHT_FINGERS.length || !spacePoint) {
-      return null;
-    }
-
-    const leftPalm = {
-      x: averagePoints(leftHomes).x + 12,
-      y: averagePoints(leftHomes).y + 66,
-    };
-    const rightPalm = {
-      x: averagePoints(rightHomes).x - 12,
-      y: averagePoints(rightHomes).y + 66,
-    };
-
-    const fingerTips = Object.fromEntries(
-      Object.entries(homeKeys).map(([finger, key]) => [finger, keyPoints[key]]),
-    ) as Record<FingerName, { x: number; y: number }>;
-
-    if (target && target !== ' ' && activeFinger && keyPoints[target]) {
-      fingerTips[activeFinger] = keyPoints[target];
-    }
-
-    return {
-      leftPalm,
-      rightPalm,
-      fingerTips,
-    };
-  }, [keyPoints, homeKeys, target, activeFinger]);
+  }, [measureHandsFrame, currentLayout]);
 
   if (hidden) return null;
 
   return (
     <div id="keyboard-wrap">
-      <div className="keyboard-stage static-hands" ref={stageRef}>
-        {showHands && handGuides && (
-          <>
-            <div className="keyboard-palms-layer" aria-hidden="true">
-              <div
-                className="keyboard-palm left"
-                style={{
-                  left: `${handGuides.leftPalm.x - PALM_RX}px`,
-                  top: `${handGuides.leftPalm.y - PALM_RY}px`,
-                  width: `${PALM_RX * 2}px`,
-                  height: `${PALM_RY * 2}px`,
-                }}
-              />
-              <div
-                className="keyboard-palm right"
-                style={{
-                  left: `${handGuides.rightPalm.x - PALM_RX}px`,
-                  top: `${handGuides.rightPalm.y - PALM_RY}px`,
-                  width: `${PALM_RX * 2}px`,
-                  height: `${PALM_RY * 2}px`,
-                }}
-              />
-            </div>
-            <div className="keyboard-finger-guides-layer" aria-hidden="true">
-              {LEFT_FINGERS.map((finger, index) => {
-                const base = pointOnEllipseTop(handGuides.leftPalm, FINGER_BASE_OFFSETS[index]);
-                return (
-                  <div
-                    key={finger}
-                    className={`keyboard-finger-guide${activeFinger === finger ? ' active' : ''}`}
-                    style={{
-                      ...buildFingerStyle(base, handGuides.fingerTips[finger]),
-                      '--finger-color': FINGER_COLORS[finger],
-                    } as CSSProperties}
-                  >
-                    <span className="keyboard-finger-guide-tip" />
-                  </div>
-                );
-              })}
-              {RIGHT_FINGERS.map((finger, index) => {
-                const base = pointOnEllipseTop(handGuides.rightPalm, FINGER_BASE_OFFSETS[index]);
-                return (
-                  <div
-                    key={finger}
-                    className={`keyboard-finger-guide${activeFinger === finger ? ' active' : ''}`}
-                    style={{
-                      ...buildFingerStyle(base, handGuides.fingerTips[finger]),
-                      '--finger-color': FINGER_COLORS[finger],
-                    } as CSSProperties}
-                  >
-                    <span className="keyboard-finger-guide-tip" />
-                  </div>
-                );
-              })}
-              {(() => {
-                const leftThumbBase = {
-                  x: handGuides.leftPalm.x + PALM_RX - 10,
-                  y: handGuides.leftPalm.y - 2,
-                };
-                const rightThumbBase = {
-                  x: handGuides.rightPalm.x - PALM_RX + 10,
-                  y: handGuides.rightPalm.y - 2,
-                };
-                const leftThumbTip = {
-                  x: keyPoints[' '].x - 28,
-                  y: keyPoints[' '].y + 7,
-                };
-                const rightThumbTip = {
-                  x: keyPoints[' '].x + 28,
-                  y: keyPoints[' '].y + 7,
-                };
+      <div className="keyboard-stage svg-hands" ref={stageRef}>
+        {showHands && <KeyboardHands poseKey={activePose} activeHand={activeHand} style={handsStyle} />}
 
-                return (
-                  <>
-                    <div
-                      className={`keyboard-thumb-guide left${targetUsesThumb ? ' active' : ''}`}
-                      style={buildFingerStyle(leftThumbBase, leftThumbTip)}
-                    >
-                      <span className="keyboard-finger-guide-tip" />
-                    </div>
-                    <div
-                      className={`keyboard-thumb-guide right${targetUsesThumb ? ' active' : ''}`}
-                      style={buildFingerStyle(rightThumbBase, rightThumbTip)}
-                    >
-                      <span className="keyboard-finger-guide-tip" />
-                    </div>
-                  </>
-                );
-              })()}
-            </div>
-          </>
-        )}
-
-        <div id="keyboard">
+        <div id="keyboard" ref={keyboardRef}>
           {rows.map((row, ri) => (
             <div className="kb-row" key={ri}>
               {row.map(key => {

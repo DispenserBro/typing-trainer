@@ -98,8 +98,18 @@ export function useTypingSession({ mode, noStepBack, onFinish }: UseTypingSessio
     s.lastKeyTime = now;
     const ch = expected ? expected.toLowerCase() : '';
     if (!s.charStats[ch]) s.charStats[ch] = { hits: 0, misses: 0, totalTime: 0 };
+    const correct = e.key === expected;
 
-    if (e.key === expected) {
+    s.keypresses.push({
+      position: s.pos,
+      expected,
+      actual: e.key,
+      correct,
+      interval: charTime,
+      timestamp: now,
+    });
+
+    if (correct) {
       s.charStats[ch].hits++;
       s.charStats[ch].totalTime += charTime;
       s.totalChars++;
