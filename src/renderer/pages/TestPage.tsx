@@ -17,7 +17,7 @@ export function TestPage() {
 
   const onFinish = useCallback((wpm: number, acc: number, elapsed: number, ses: any) => {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
-    saveHistory('test', wpm, acc);
+    saveHistory('test', wpm, acc, { charStats: ses?.charStats });
     setResult({ wpm, acc, elapsed, chars: ses.totalChars, errors: ses.errors });
   }, [saveHistory]);
 

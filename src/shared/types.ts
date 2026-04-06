@@ -13,15 +13,34 @@ export interface FingerMap {
   pinky_right: string[];
 }
 
+export type LessonType = 'keys' | 'row' | 'bigrams' | 'transitions' | 'rhythm';
+export type LayoutRow = 'top' | 'middle' | 'bottom';
+
+export interface LayoutRows {
+  top: string[];
+  middle: string[];
+  bottom: string[];
+}
+
 export interface Lesson {
+  id: string;
   name: string;
   keys: string[];
+  section?: string;
+  description?: string;
+  type?: LessonType;
+  row?: LayoutRow;
+  bigramSet?: string;
+  bigrams?: string[];
+  transitionRows?: LayoutRow[];
+  focusFingers?: FingerName[];
 }
 
 export interface Layout {
   label: string;
   lang: string;
   fingers: FingerMap;
+  rows: LayoutRows;
   lessonOrder: Lesson[];
   practiceUnlockOrder: string[];
 }
@@ -57,6 +76,22 @@ export interface HistoryEntry {
   mode: 'test' | 'lesson' | 'practice' | 'game';
   wpm: number;
   acc: number;
+  trainingMode?: PracticeTrainingMode;
+  charStats?: Record<string, CharStat>;
+}
+
+export interface PracticeRhythmSessionEntry {
+  id: string;
+  date: string;
+  trainingMode: PracticeTrainingMode;
+  wpm: number;
+  acc: number;
+  textLength: number;
+  intervals: number[];
+  averageInterval: number;
+  averageDeviation: number;
+  rhythmScore: number;
+  worstInterval: number;
 }
 
 export interface PracticeState {
@@ -224,6 +259,7 @@ export interface UserSettings {
   showHands: boolean;
   keyboardPanelHeight: number;
   keyboardPanelOffset: number;
+  keyboardPanelZoom: number;
   endWithSpace: boolean;
   textFontSize: number;
 }
@@ -250,6 +286,7 @@ export interface Progress {
   practiceSettings?: PracticeSettings;
   keyStats?: Record<string, Record<string, CharStat>>;
   practiceInsights?: PracticeInsightsState;
+  practiceRhythmHistory?: Record<string, PracticeRhythmSessionEntry[]>;
   history?: Record<string, HistoryEntry[]>;
   lessons?: Record<string, Record<number, number>>;
   layoutProgress?: Record<string, LayoutProgressState>;
@@ -294,6 +331,7 @@ export type FingerName = keyof FingerMap;
 export interface ElectronAPI {
   getLayouts(): Promise<LayoutsData>;
   getWords(lang: string): Promise<string[]>;
+  getLessonBigrams(lang: string): Promise<Record<string, string[]>>;
   getProgress(): Promise<Progress>;
   saveProgress(data: Progress): Promise<boolean>;
   getCustomThemes(): Promise<CustomThemes>;

@@ -178,6 +178,24 @@ export function SettingsPage() {
                   <span className="poption-hint">0 — по центру, отрицательное вниз, положительное вверх.</span>
                 </div>
 
+              <div className="poption" style={{ marginTop: 14 }}>
+                <span className="poption-label">Масштаб блока</span>
+                <div className="poption-row">
+                  <NumberInput
+                    value={settings.keyboardPanelZoom}
+                    min={10}
+                    max={300}
+                    step={1}
+                    emptyValue={100}
+                    className="w96"
+                    ariaLabel="Масштаб блока клавиатуры и рук"
+                    onChange={(next) => saveSetting('keyboardPanelZoom', Math.round(next))}
+                  />
+                  <span className="poption-hint">%</span>
+                </div>
+                <span className="poption-hint">100% — стандартный размер, от 10% до 300%.</span>
+              </div>
+
               <div className="settings-keyboard-actions">
                 <button
                   className={`btn-secondary btn-sm${keyboardPreviewActive ? ' active' : ''}`}

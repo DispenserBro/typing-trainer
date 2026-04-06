@@ -8,113 +8,660 @@
       "label": "QWERTY (English)",
       "lang": "en",
       "fingers": {
-        "index_left":  ["r","t","f","g","v","b","4","5"],
-        "index_right": ["y","u","h","j","n","m","6","7"],
-        "middle_left": ["e","d","c","3"],
-        "middle_right":["i","k",",","8"],
-        "ring_left":   ["w","s","x","2"],
-        "ring_right":  ["o","l",".","9"],
-        "pinky_left":  ["q","a","z","1","`"],
-        "pinky_right": ["p",";","/","'","[","]","0","-","="]
+        "index_left": ["r", "t", "f", "g", "v", "b", "4", "5"],
+        "index_right": ["y", "u", "h", "j", "n", "m", "6", "7"],
+        "middle_left": ["e", "d", "c", "3"],
+        "middle_right": ["i", "k", ",", "8"],
+        "ring_left": ["w", "s", "x", "2"],
+        "ring_right": ["o", "l", ".", "9"],
+        "pinky_left": ["q", "a", "z", "1", "`"],
+        "pinky_right": ["p", ";", "/", "'", "[", "]", "0", "-", "="]
+      },
+      "rows": {
+        "top": ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"],
+        "middle": ["a", "s", "d", "f", "g", "h", "j", "k", "l"],
+        "bottom": ["z", "x", "c", "v", "b", "n", "m"]
       },
       "lessonOrder": [
-        { "name": "указательные (левая)", "keys": ["f","g","r","t"] },
-        { "name": "указательные (правая)", "keys": ["j","h","u","y"] },
-        { "name": "указательные (низ)",    "keys": ["v","b","n","m"] },
-        { "name": "средний (левая)",        "keys": ["d","e","c"] },
-        { "name": "средний (правая)",       "keys": ["k","i",","] },
-        { "name": "безымянный (левая)",     "keys": ["s","w","x"] },
-        { "name": "безымянный (правая)",    "keys": ["l","o","."] },
-        { "name": "мизинец (левая)",        "keys": ["a","q","z"] },
-        { "name": "мизинец (правая)",       "keys": ["p",";","/","'"] }
+        {
+          "id": "qwerty-index-left",
+          "section": "База пальцев",
+          "name": "Указательные слева",
+          "description": "Клавиши левого указательного пальца.",
+          "type": "keys",
+          "keys": ["f", "g", "r", "t"]
+        },
+        {
+          "id": "qwerty-index-right",
+          "section": "База пальцев",
+          "name": "Указательные справа",
+          "description": "Клавиши правого указательного пальца.",
+          "type": "keys",
+          "keys": ["j", "h", "u", "y"]
+        },
+        {
+          "id": "qwerty-index-bottom",
+          "section": "База пальцев",
+          "name": "Указательные снизу",
+          "description": "Нижний сектор под указательными пальцами.",
+          "type": "keys",
+          "keys": ["v", "b", "n", "m"]
+        },
+        {
+          "id": "qwerty-middle-left",
+          "section": "База пальцев",
+          "name": "Средний слева",
+          "description": "Левый средний палец: верх, дом и низ.",
+          "type": "keys",
+          "keys": ["d", "e", "c"]
+        },
+        {
+          "id": "qwerty-middle-right",
+          "section": "База пальцев",
+          "name": "Средний справа",
+          "description": "Правый средний палец: верх, дом и низ.",
+          "type": "keys",
+          "keys": ["k", "i", ","]
+        },
+        {
+          "id": "qwerty-ring-left",
+          "section": "База пальцев",
+          "name": "Безымянный слева",
+          "description": "Связка клавиш под левым безымянным.",
+          "type": "keys",
+          "keys": ["s", "w", "x"]
+        },
+        {
+          "id": "qwerty-ring-right",
+          "section": "База пальцев",
+          "name": "Безымянный справа",
+          "description": "Связка клавиш под правым безымянным.",
+          "type": "keys",
+          "keys": ["l", "o", "."]
+        },
+        {
+          "id": "qwerty-pinky-left",
+          "section": "База пальцев",
+          "name": "Мизинец слева",
+          "description": "Базовые клавиши левого мизинца.",
+          "type": "keys",
+          "keys": ["a", "q", "z"]
+        },
+        {
+          "id": "qwerty-pinky-right",
+          "section": "База пальцев",
+          "name": "Мизинец справа",
+          "description": "Базовые клавиши правого мизинца.",
+          "type": "keys",
+          "keys": ["p", ";", "/", "'"]
+        },
+        {
+          "id": "qwerty-row-home",
+          "section": "Ряды",
+          "name": "Домашний ряд",
+          "description": "Фокус на средней линии и устойчивой посадке рук.",
+          "type": "row",
+          "row": "middle",
+          "keys": []
+        },
+        {
+          "id": "qwerty-row-top",
+          "section": "Ряды",
+          "name": "Верхний ряд",
+          "description": "Подъемы вверх без потери ритма.",
+          "type": "row",
+          "row": "top",
+          "keys": []
+        },
+        {
+          "id": "qwerty-row-bottom",
+          "section": "Ряды",
+          "name": "Нижний ряд",
+          "description": "Опускания вниз и возврат на дом.",
+          "type": "row",
+          "row": "bottom",
+          "keys": []
+        },
+        {
+          "id": "qwerty-bigrams-1",
+          "section": "Биграммы",
+          "name": "Частые сочетания I",
+          "description": "Первые частотные английские пары для устойчивого темпа.",
+          "type": "bigrams",
+          "bigramSet": "common_1",
+          "keys": []
+        },
+        {
+          "id": "qwerty-bigrams-2",
+          "section": "Биграммы",
+          "name": "Частые сочетания II",
+          "description": "Еще один слой частых переходов между клавишами.",
+          "type": "bigrams",
+          "bigramSet": "common_2",
+          "keys": []
+        },
+        {
+          "id": "qwerty-bigrams-flow",
+          "section": "Биграммы",
+          "name": "Плавные связки",
+          "description": "Короткие пары для более мягкого ритма и связности.",
+          "type": "bigrams",
+          "bigramSet": "flows",
+          "keys": []
+        },
+        {
+          "id": "qwerty-transition-top-home",
+          "section": "Переходы",
+          "name": "Верхний ⇄ домашний",
+          "description": "Чередование между верхним и домашним рядом.",
+          "type": "transitions",
+          "transitionRows": ["top", "middle"],
+          "keys": []
+        },
+        {
+          "id": "qwerty-transition-home-bottom",
+          "section": "Переходы",
+          "name": "Домашний ⇄ нижний",
+          "description": "Опускания вниз и возврат на средний ряд.",
+          "type": "transitions",
+          "transitionRows": ["middle", "bottom"],
+          "keys": []
+        },
+        {
+          "id": "qwerty-transition-indexes",
+          "section": "Переходы",
+          "name": "Указательные руки",
+          "description": "Связки между ведущими пальцами обеих рук.",
+          "type": "transitions",
+          "focusFingers": ["index_left", "index_right"],
+          "keys": []
+        }
       ],
       "practiceUnlockOrder": [
-        "e","t","o","a","h","i","n","s","r","d","l","u",
-        "w","m","g","y","f","c","p","b","k","v","j","x",
-        "q","z"
+        "e", "t", "o", "a", "h", "i", "n", "s", "r", "d", "l", "u",
+        "w", "m", "g", "y", "f", "c", "p", "b", "k", "v", "j", "x",
+        "q", "z"
       ]
     },
     "dvorak": {
       "label": "Dvorak (English)",
       "lang": "en",
       "fingers": {
-        "index_left":  ["u","i","d","h","b","m"],
-        "index_right": ["e","t","n","s","w","v"],
-        "middle_left": ["k","x","."],
-        "middle_right":["l","j","q"],
-        "ring_left":   [",","o"],
-        "ring_right":  ["r","p"],
-        "pinky_left":  ["'","a",";"],
-        "pinky_right": ["g","c","f","z"]
+        "index_left": ["u", "i", "d", "h", "b", "m"],
+        "index_right": ["e", "t", "n", "s", "w", "v"],
+        "middle_left": ["k", "x", "."],
+        "middle_right": ["l", "j", "q"],
+        "ring_left": [",", "o"],
+        "ring_right": ["r", "p"],
+        "pinky_left": ["'", "a", ";"],
+        "pinky_right": ["g", "c", "f", "z"]
+      },
+      "rows": {
+        "top": ["p", "y", "f", "g", "c", "r", "l"],
+        "middle": ["a", "o", "e", "u", "i", "d", "h", "t", "n", "s"],
+        "bottom": ["q", "j", "k", "x", "b", "m", "w", "v", "z"]
       },
       "lessonOrder": [
-        { "name": "index (left)",  "keys": ["u","i","d","h"] },
-        { "name": "index (right)", "keys": ["e","t","n","s"] },
-        { "name": "middle",        "keys": ["k","x","l","j"] },
-        { "name": "ring",          "keys": [",","o","r","p"] },
-        { "name": "pinky",         "keys": ["'","a",";","g","c"] }
+        {
+          "id": "dvorak-index-left",
+          "section": "Finger Base",
+          "name": "Index left",
+          "description": "Core reach for the left index finger.",
+          "type": "keys",
+          "keys": ["u", "i", "d", "h"]
+        },
+        {
+          "id": "dvorak-index-right",
+          "section": "Finger Base",
+          "name": "Index right",
+          "description": "Core reach for the right index finger.",
+          "type": "keys",
+          "keys": ["e", "t", "n", "s"]
+        },
+        {
+          "id": "dvorak-middle",
+          "section": "Finger Base",
+          "name": "Middle fingers",
+          "description": "Middle-finger columns on both hands.",
+          "type": "keys",
+          "keys": ["k", "x", "l", "j"]
+        },
+        {
+          "id": "dvorak-ring",
+          "section": "Finger Base",
+          "name": "Ring fingers",
+          "description": "Ring-finger columns on both hands.",
+          "type": "keys",
+          "keys": [",", "o", "r", "p"]
+        },
+        {
+          "id": "dvorak-pinky",
+          "section": "Finger Base",
+          "name": "Pinky fingers",
+          "description": "Pinky reach and control.",
+          "type": "keys",
+          "keys": ["'", "a", ";", "g", "c"]
+        },
+        {
+          "id": "dvorak-row-home",
+          "section": "Rows",
+          "name": "Home row",
+          "description": "Stable home-row rhythm.",
+          "type": "row",
+          "row": "middle",
+          "keys": []
+        },
+        {
+          "id": "dvorak-row-top",
+          "section": "Rows",
+          "name": "Top row",
+          "description": "Top-row lifts with quick return.",
+          "type": "row",
+          "row": "top",
+          "keys": []
+        },
+        {
+          "id": "dvorak-row-bottom",
+          "section": "Rows",
+          "name": "Bottom row",
+          "description": "Bottom-row drops and recovery.",
+          "type": "row",
+          "row": "bottom",
+          "keys": []
+        },
+        {
+          "id": "dvorak-bigrams-1",
+          "section": "Bigrams",
+          "name": "Frequent pairs I",
+          "description": "Core English bigrams for rhythm and flow.",
+          "type": "bigrams",
+          "bigramSet": "common_1",
+          "keys": []
+        },
+        {
+          "id": "dvorak-bigrams-2",
+          "section": "Bigrams",
+          "name": "Frequent pairs II",
+          "description": "More common transitions for smoother typing.",
+          "type": "bigrams",
+          "bigramSet": "common_2",
+          "keys": []
+        },
+        {
+          "id": "dvorak-bigrams-flow",
+          "section": "Bigrams",
+          "name": "Flow pairs",
+          "description": "Soft, connective pairs for stable rhythm.",
+          "type": "bigrams",
+          "bigramSet": "flows",
+          "keys": []
+        },
+        {
+          "id": "dvorak-transition-top-home",
+          "section": "Transitions",
+          "name": "Top ⇄ home row",
+          "description": "Alternating between top and home row.",
+          "type": "transitions",
+          "transitionRows": ["top", "middle"],
+          "keys": []
+        },
+        {
+          "id": "dvorak-transition-home-bottom",
+          "section": "Transitions",
+          "name": "Home ⇄ bottom row",
+          "description": "Bottom drops and recovery to home row.",
+          "type": "transitions",
+          "transitionRows": ["middle", "bottom"],
+          "keys": []
+        },
+        {
+          "id": "dvorak-transition-indexes",
+          "section": "Transitions",
+          "name": "Index relay",
+          "description": "Hand-to-hand motion through both index fingers.",
+          "type": "transitions",
+          "focusFingers": ["index_left", "index_right"],
+          "keys": []
+        }
       ],
       "practiceUnlockOrder": [
-        "u","e","i","t","d","n","h","s","k","l","o","r",
-        "a","p",",",".","'",";","x","j","b","m","w","v",
-        "g","c","f","z","q"
+        "u", "e", "i", "t", "d", "n", "h", "s", "k", "l", "o", "r",
+        "a", "p", ",", ".", "'", ";", "x", "j", "b", "m", "w", "v",
+        "g", "c", "f", "z", "q"
       ]
     },
     "йцукен": {
       "label": "ЙЦУКЕН (Русский)",
       "lang": "ru",
       "fingers": {
-        "index_left":  ["а","п","е","к","м","и"],
-        "index_right": ["р","о","н","г","т","ь"],
-        "middle_left": ["у","в","с"],
-        "middle_right":["ш","л","б"],
-        "ring_left":   ["ц","ы","ч"],
-        "ring_right":  ["щ","д","ю"],
-        "pinky_left":  ["й","ф","я"],
-        "pinky_right": ["з","ж","э","х","ъ"]
+        "index_left": ["а", "п", "е", "к", "м", "и"],
+        "index_right": ["р", "о", "н", "г", "т", "ь"],
+        "middle_left": ["у", "в", "с"],
+        "middle_right": ["ш", "л", "б"],
+        "ring_left": ["ц", "ы", "ч"],
+        "ring_right": ["щ", "д", "ю"],
+        "pinky_left": ["й", "ф", "я"],
+        "pinky_right": ["з", "ж", "э", "х", "ъ"]
+      },
+      "rows": {
+        "top": ["й", "ц", "у", "к", "е", "н", "г", "ш", "щ", "з", "х", "ъ"],
+        "middle": ["ф", "ы", "в", "а", "п", "р", "о", "л", "д", "ж", "э"],
+        "bottom": ["я", "ч", "с", "м", "и", "т", "ь", "б", "ю"]
       },
       "lessonOrder": [
-        { "name": "указательные (левая)", "keys": ["а","п","е","к"] },
-        { "name": "указательные (правая)", "keys": ["р","о","н","г"] },
-        { "name": "указательные (низ)",    "keys": ["м","и","т","ь"] },
-        { "name": "средний (левая)",        "keys": ["у","в","с"] },
-        { "name": "средний (правая)",       "keys": ["ш","л","б"] },
-        { "name": "безымянный (левая)",     "keys": ["ц","ы","ч"] },
-        { "name": "безымянный (правая)",    "keys": ["щ","д","ю"] },
-        { "name": "мизинец (левая)",        "keys": ["й","ф","я"] },
-        { "name": "мизинец (правая)",       "keys": ["з","ж","э","х"] }
+        {
+          "id": "jtsuken-index-left",
+          "section": "База пальцев",
+          "name": "Указательные слева",
+          "description": "Клавиши левого указательного пальца.",
+          "type": "keys",
+          "keys": ["а", "п", "е", "к"]
+        },
+        {
+          "id": "jtsuken-index-right",
+          "section": "База пальцев",
+          "name": "Указательные справа",
+          "description": "Клавиши правого указательного пальца.",
+          "type": "keys",
+          "keys": ["р", "о", "н", "г"]
+        },
+        {
+          "id": "jtsuken-index-bottom",
+          "section": "База пальцев",
+          "name": "Указательные снизу",
+          "description": "Нижний сектор под указательными пальцами.",
+          "type": "keys",
+          "keys": ["м", "и", "т", "ь"]
+        },
+        {
+          "id": "jtsuken-middle-left",
+          "section": "База пальцев",
+          "name": "Средний слева",
+          "description": "Левый средний палец: верх, дом и низ.",
+          "type": "keys",
+          "keys": ["у", "в", "с"]
+        },
+        {
+          "id": "jtsuken-middle-right",
+          "section": "База пальцев",
+          "name": "Средний справа",
+          "description": "Правый средний палец: верх, дом и низ.",
+          "type": "keys",
+          "keys": ["ш", "л", "б"]
+        },
+        {
+          "id": "jtsuken-ring-left",
+          "section": "База пальцев",
+          "name": "Безымянный слева",
+          "description": "Связка клавиш под левым безымянным.",
+          "type": "keys",
+          "keys": ["ц", "ы", "ч"]
+        },
+        {
+          "id": "jtsuken-ring-right",
+          "section": "База пальцев",
+          "name": "Безымянный справа",
+          "description": "Связка клавиш под правым безымянным.",
+          "type": "keys",
+          "keys": ["щ", "д", "ю"]
+        },
+        {
+          "id": "jtsuken-pinky-left",
+          "section": "База пальцев",
+          "name": "Мизинец слева",
+          "description": "Базовые клавиши левого мизинца.",
+          "type": "keys",
+          "keys": ["й", "ф", "я"]
+        },
+        {
+          "id": "jtsuken-pinky-right",
+          "section": "База пальцев",
+          "name": "Мизинец справа",
+          "description": "Базовые клавиши правого мизинца.",
+          "type": "keys",
+          "keys": ["з", "ж", "э", "х"]
+        },
+        {
+          "id": "jtsuken-row-home",
+          "section": "Ряды",
+          "name": "Домашний ряд",
+          "description": "Фокус на средней линии и устойчивой посадке рук.",
+          "type": "row",
+          "row": "middle",
+          "keys": []
+        },
+        {
+          "id": "jtsuken-row-top",
+          "section": "Ряды",
+          "name": "Верхний ряд",
+          "description": "Подъемы вверх без потери ритма.",
+          "type": "row",
+          "row": "top",
+          "keys": []
+        },
+        {
+          "id": "jtsuken-row-bottom",
+          "section": "Ряды",
+          "name": "Нижний ряд",
+          "description": "Опускания вниз и возврат на дом.",
+          "type": "row",
+          "row": "bottom",
+          "keys": []
+        },
+        {
+          "id": "jtsuken-bigrams-1",
+          "section": "Биграммы",
+          "name": "Частые сочетания I",
+          "description": "Частотные русские пары для уверенного набора.",
+          "type": "bigrams",
+          "bigramSet": "common_1",
+          "keys": []
+        },
+        {
+          "id": "jtsuken-bigrams-2",
+          "section": "Биграммы",
+          "name": "Частые сочетания II",
+          "description": "Еще больше типичных переходов между буквами.",
+          "type": "bigrams",
+          "bigramSet": "common_2",
+          "keys": []
+        },
+        {
+          "id": "jtsuken-bigrams-flow",
+          "section": "Биграммы",
+          "name": "Плавные связки",
+          "description": "Сочетания для ровного ритма и связности слов.",
+          "type": "bigrams",
+          "bigramSet": "flows",
+          "keys": []
+        },
+        {
+          "id": "jtsuken-transition-top-home",
+          "section": "Переходы",
+          "name": "Верхний ⇄ домашний",
+          "description": "Чередование между верхним и домашним рядом.",
+          "type": "transitions",
+          "transitionRows": ["top", "middle"],
+          "keys": []
+        },
+        {
+          "id": "jtsuken-transition-home-bottom",
+          "section": "Переходы",
+          "name": "Домашний ⇄ нижний",
+          "description": "Опускания вниз и возврат на средний ряд.",
+          "type": "transitions",
+          "transitionRows": ["middle", "bottom"],
+          "keys": []
+        },
+        {
+          "id": "jtsuken-transition-indexes",
+          "section": "Переходы",
+          "name": "Указательные руки",
+          "description": "Связки между ведущими пальцами обеих рук.",
+          "type": "transitions",
+          "focusFingers": ["index_left", "index_right"],
+          "keys": []
+        }
       ],
       "practiceUnlockOrder": [
-        "о","т","а","е","и","н","с","р","ь","в","к","д",
-        "л","п","й","ы","м","я","у","з","б","ч","г","ж",
-        "ш","х","ц","э","щ","ф","ю","ъ"
+        "о", "т", "а", "е", "и", "н", "с", "р", "ь", "в", "к", "д",
+        "л", "п", "й", "ы", "м", "я", "у", "з", "б", "ч", "г", "ж",
+        "ш", "х", "ц", "э", "щ", "ф", "ю", "ъ"
       ]
     },
     "яверты": {
       "label": "ЯВЕРТЫ (Русский фонетич.)",
       "lang": "ru",
       "fingers": {
-        "index_left":  ["р","т","ф","г","в","б"],
-        "index_right": ["ы","у","х","й","н","м"],
-        "middle_left": ["е","д","ц"],
-        "middle_right":["и","к","ч"],
-        "ring_left":   ["ш","с","ж"],
-        "ring_right":  ["о","л","з"],
-        "pinky_left":  ["я","а","щ"],
-        "pinky_right": ["п","э","ю","ь","ъ"]
+        "index_left": ["р", "т", "ф", "г", "в", "б"],
+        "index_right": ["ы", "у", "х", "й", "н", "м"],
+        "middle_left": ["е", "д", "ц"],
+        "middle_right": ["и", "к", "ч"],
+        "ring_left": ["ш", "с", "ж"],
+        "ring_right": ["о", "л", "з"],
+        "pinky_left": ["я", "а", "щ"],
+        "pinky_right": ["п", "э", "ю", "ь", "ъ"]
+      },
+      "rows": {
+        "top": ["я", "в", "е", "р", "т", "ы", "у", "и", "о", "п"],
+        "middle": ["а", "с", "д", "ф", "г", "х", "й", "к", "л", "э"],
+        "bottom": ["щ", "ж", "ц", "ч", "ш", "б", "н", "м", "ю", "ь", "ъ"]
       },
       "lessonOrder": [
-        { "name": "указательные (левая)", "keys": ["р","т","ф","г"] },
-        { "name": "указательные (правая)", "keys": ["ы","у","х","й"] },
-        { "name": "указательные (низ)",    "keys": ["в","б","н","м"] },
-        { "name": "средний",               "keys": ["е","д","и","к"] },
-        { "name": "безымянный",            "keys": ["ш","с","о","л"] },
-        { "name": "мизинец",               "keys": ["я","а","п","э"] }
+        {
+          "id": "yaverty-index-left",
+          "section": "База пальцев",
+          "name": "Указательные слева",
+          "description": "Клавиши левого указательного пальца.",
+          "type": "keys",
+          "keys": ["р", "т", "ф", "г"]
+        },
+        {
+          "id": "yaverty-index-right",
+          "section": "База пальцев",
+          "name": "Указательные справа",
+          "description": "Клавиши правого указательного пальца.",
+          "type": "keys",
+          "keys": ["ы", "у", "х", "й"]
+        },
+        {
+          "id": "yaverty-index-bottom",
+          "section": "База пальцев",
+          "name": "Указательные снизу",
+          "description": "Нижний сектор под указательными пальцами.",
+          "type": "keys",
+          "keys": ["в", "б", "н", "м"]
+        },
+        {
+          "id": "yaverty-middle",
+          "section": "База пальцев",
+          "name": "Средние пальцы",
+          "description": "Средние пальцы обеих рук.",
+          "type": "keys",
+          "keys": ["е", "д", "и", "к"]
+        },
+        {
+          "id": "yaverty-ring",
+          "section": "База пальцев",
+          "name": "Безымянные пальцы",
+          "description": "Безымянные пальцы обеих рук.",
+          "type": "keys",
+          "keys": ["ш", "с", "о", "л"]
+        },
+        {
+          "id": "yaverty-pinky",
+          "section": "База пальцев",
+          "name": "Мизинцы",
+          "description": "Опора на крайние клавиши раскладки.",
+          "type": "keys",
+          "keys": ["я", "а", "п", "э"]
+        },
+        {
+          "id": "yaverty-row-home",
+          "section": "Ряды",
+          "name": "Домашний ряд",
+          "description": "Фокус на средней линии и устойчивой посадке рук.",
+          "type": "row",
+          "row": "middle",
+          "keys": []
+        },
+        {
+          "id": "yaverty-row-top",
+          "section": "Ряды",
+          "name": "Верхний ряд",
+          "description": "Подъемы вверх без потери ритма.",
+          "type": "row",
+          "row": "top",
+          "keys": []
+        },
+        {
+          "id": "yaverty-row-bottom",
+          "section": "Ряды",
+          "name": "Нижний ряд",
+          "description": "Опускания вниз и возврат на дом.",
+          "type": "row",
+          "row": "bottom",
+          "keys": []
+        },
+        {
+          "id": "yaverty-bigrams-1",
+          "section": "Биграммы",
+          "name": "Частые сочетания I",
+          "description": "Частотные русские пары для уверенного набора.",
+          "type": "bigrams",
+          "bigramSet": "common_1",
+          "keys": []
+        },
+        {
+          "id": "yaverty-bigrams-2",
+          "section": "Биграммы",
+          "name": "Частые сочетания II",
+          "description": "Еще больше типичных переходов между буквами.",
+          "type": "bigrams",
+          "bigramSet": "common_2",
+          "keys": []
+        },
+        {
+          "id": "yaverty-bigrams-flow",
+          "section": "Биграммы",
+          "name": "Плавные связки",
+          "description": "Сочетания для ровного ритма и связности слов.",
+          "type": "bigrams",
+          "bigramSet": "flows",
+          "keys": []
+        },
+        {
+          "id": "yaverty-transition-top-home",
+          "section": "Переходы",
+          "name": "Верхний ⇄ домашний",
+          "description": "Чередование между верхним и домашним рядом.",
+          "type": "transitions",
+          "transitionRows": ["top", "middle"],
+          "keys": []
+        },
+        {
+          "id": "yaverty-transition-home-bottom",
+          "section": "Переходы",
+          "name": "Домашний ⇄ нижний",
+          "description": "Опускания вниз и возврат на средний ряд.",
+          "type": "transitions",
+          "transitionRows": ["middle", "bottom"],
+          "keys": []
+        },
+        {
+          "id": "yaverty-transition-indexes",
+          "section": "Переходы",
+          "name": "Указательные руки",
+          "description": "Связки между ведущими пальцами обеих рук.",
+          "type": "transitions",
+          "focusFingers": ["index_left", "index_right"],
+          "keys": []
+        }
       ],
       "practiceUnlockOrder": [
-        "р","ы","т","у","ф","х","г","й","е","и","д","к",
-        "ш","о","с","л","я","п","а","э","в","н","б","м",
-        "ц","ч","ж","з","щ","ю","ь","ъ"
+        "р", "ы", "т", "у", "ф", "х", "г", "й", "е", "и", "д", "к",
+        "ш", "о", "с", "л", "я", "п", "а", "э", "в", "н", "б", "м",
+        "ц", "ч", "ж", "з", "щ", "ю", "ь", "ъ"
       ]
     }
   }

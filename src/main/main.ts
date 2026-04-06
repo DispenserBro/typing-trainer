@@ -29,6 +29,9 @@ ipcMain.handle('get-layouts', () => loadDataFile('data/layouts.json'));
 ipcMain.handle('get-words', (_e: Electron.IpcMainInvokeEvent, lang: string) =>
   loadDataFile(`data/words_${lang}.json`),
 );
+ipcMain.handle('get-lesson-bigrams', (_e: Electron.IpcMainInvokeEvent, lang: string) =>
+  loadDataFile(`data/lesson_bigrams_${lang}.json`),
+);
 ipcMain.handle('get-progress', () => loadJSON<Progress>(progressFile, {}));
 ipcMain.handle('save-progress', (_e: Electron.IpcMainInvokeEvent, data: Progress) => {
   saveJSON(progressFile, data);

@@ -7,9 +7,10 @@ import type {
   UserSettings, PracticeSettings, PracticeState, LayoutProgressState,
   TextDisplayMode, LanguageInfo, GameState, GameItemDefinition,
   GameEquipmentSlot, GameInventoryItem, GameRunState, GameAchievementDefinition,
-  PracticeInsightsState, LayoutPracticeInsights, PracticeInsightAggregate,
-  PracticeBigramInsight, PracticeRhythmInsight,
-} from '../../shared/types';
+    PracticeInsightsState, LayoutPracticeInsights, PracticeInsightAggregate,
+    PracticeBigramInsight, PracticeRhythmInsight, PracticeRhythmSessionEntry,
+    PracticeTrainingMode,
+  } from '../../shared/types';
 import {
   createSession, formatSpeed, speedLabel, filterYoKeys,
   buildNgramModel, type NgramModel,
@@ -38,6 +39,11 @@ function normalizeKeyboardPanelOffset(value?: number): number {
   return Math.max(-100, Math.min(100, normalized));
 }
 
+function normalizeKeyboardPanelZoom(value?: number): number {
+  if (typeof value !== 'number' || Number.isNaN(value)) return 100;
+  return Math.max(10, Math.min(300, Math.round(value)));
+}
+
 function defaultSettings(s?: Partial<UserSettings>): UserSettings {
   const legacyTextFontSize = (s as (Partial<UserSettings> & { gameTextFontSize?: number }) | undefined)?.gameTextFontSize;
 
@@ -55,6 +61,7 @@ function defaultSettings(s?: Partial<UserSettings>): UserSettings {
     showHands: s?.showHands ?? true,
     keyboardPanelHeight: normalizeKeyboardPanelHeight(s?.keyboardPanelHeight),
     keyboardPanelOffset: normalizeKeyboardPanelOffset(s?.keyboardPanelOffset),
+    keyboardPanelZoom: normalizeKeyboardPanelZoom(s?.keyboardPanelZoom),
     endWithSpace: s?.endWithSpace ?? true,
     textFontSize: normalizeTextFontSize(s?.textFontSize ?? legacyTextFontSize),
   };
@@ -332,6 +339,47 @@ function resolvePracticeInsights(progress: Progress): PracticeInsightsState {
   };
 }
 
+function normalizePracticeRhythmSessionEntry(
+  entry?: Partial<PracticeRhythmSessionEntry>,
+): PracticeRhythmSessionEntry {
+  const intervals = Array.isArray(entry?.intervals)
+    ? entry!.intervals
+      .map(value => Math.max(0, Math.round(Number(value) || 0)))
+      .filter(value => value > 0)
+      .slice(0, 300)
+    : [];
+
+  const averageInterval = Math.max(0, Number(entry?.averageInterval ?? 0));
+  const averageDeviation = Math.max(0, Number(entry?.averageDeviation ?? 0));
+  const worstInterval = Math.max(0, Number(entry?.worstInterval ?? 0));
+  const mode = entry?.trainingMode === 'rhythm' ? 'rhythm' : 'normal';
+
+  return {
+    id: typeof entry?.id === 'string' && entry.id ? entry.id : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    date: typeof entry?.date === 'string' ? entry.date : new Date().toISOString(),
+    trainingMode: mode,
+    wpm: Math.max(0, Math.round(Number(entry?.wpm ?? 0) * 10) / 10),
+    acc: Math.max(0, Math.round(Number(entry?.acc ?? 0) * 10) / 10),
+    textLength: Math.max(0, Math.floor(Number(entry?.textLength ?? 0))),
+    intervals,
+    averageInterval,
+    averageDeviation,
+    rhythmScore: Math.max(0, Math.min(100, Math.round(Number(entry?.rhythmScore ?? 0) * 10) / 10)),
+    worstInterval,
+  };
+}
+
+function resolvePracticeRhythmHistory(progress: Progress): Record<string, PracticeRhythmSessionEntry[]> {
+  return Object.fromEntries(
+    Object.entries(progress.practiceRhythmHistory ?? {}).map(([layoutId, entries]) => [
+      layoutId,
+      (Array.isArray(entries) ? entries : [])
+        .map(entry => normalizePracticeRhythmSessionEntry(entry))
+        .slice(-30),
+    ]),
+  );
+}
+
 function getLayoutPracticeInsights(progress: Progress, layoutId: string): LayoutPracticeInsights {
   if (!progress.practiceInsights) {
     progress.practiceInsights = resolvePracticeInsights(progress);
@@ -349,6 +397,7 @@ export interface AppContextValue {
   ngramModel: NgramModel | null;
   progress: Progress;
   practiceInsights: PracticeInsightsState;
+  practiceRhythmHistory: Record<string, PracticeRhythmSessionEntry[]>;
   customThemes: CustomThemes;
   gameState: GameState;
   gameItemCatalog: GameItemDefinition[];
@@ -386,8 +435,14 @@ export interface AppContextValue {
   getPracticeState: () => PracticeState;
   getPracticeInsights: () => LayoutPracticeInsights;
   savePracticeInsights: (insights: LayoutPracticeInsights) => void;
+  savePracticeRhythmSession: (entry: Omit<PracticeRhythmSessionEntry, 'id' | 'date'> & { id?: string; date?: string }) => void;
   saveCharStats: (cs: Record<string, CharStat>) => void;
-  saveHistory: (mode: 'test' | 'lesson' | 'practice' | 'game', wpm: number, acc: number) => void;
+  saveHistory: (
+    mode: 'test' | 'lesson' | 'practice' | 'game',
+    wpm: number,
+    acc: number,
+    extras?: { trainingMode?: PracticeTrainingMode; charStats?: Record<string, CharStat> },
+  ) => void;
   saveGameState: (game: GameState) => void;
   grantGameItem: (itemId: string) => string | null;
   equipGameItem: (slot: GameEquipmentSlot, inventoryItemId: string) => boolean;
@@ -430,6 +485,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const settings = resolveSettings(progress);
   const practiceSettings = defaultPracticeSettings(progress.practiceSettings);
   const practiceInsights = resolvePracticeInsights(progress);
+  const practiceRhythmHistory = resolvePracticeRhythmHistory(progress);
   const gameState = resolveGameState(progress);
 
   const layoutsForLanguage = useMemo<[string, Layout][]>(() => {
@@ -609,7 +665,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   }, [currentLayout]);
 
-  const saveHistory = useCallback((mode: 'test' | 'lesson' | 'practice' | 'game', wpm: number, acc: number) => {
+  const savePracticeRhythmSession = useCallback((
+    entry: Omit<PracticeRhythmSessionEntry, 'id' | 'date'> & { id?: string; date?: string },
+  ) => {
+    setProgress(prev => {
+      const next = { ...prev };
+      if (!next.practiceRhythmHistory) {
+        next.practiceRhythmHistory = resolvePracticeRhythmHistory(prev);
+      }
+      const normalized = normalizePracticeRhythmSessionEntry(entry);
+      const current = next.practiceRhythmHistory[currentLayout] ?? [];
+      next.practiceRhythmHistory[currentLayout] = [...current, normalized].slice(-30);
+      window.api.saveProgress(next);
+      return { ...next };
+    });
+  }, [currentLayout]);
+
+  const saveHistory = useCallback((
+    mode: 'test' | 'lesson' | 'practice' | 'game',
+    wpm: number,
+    acc: number,
+    extras?: { trainingMode?: PracticeTrainingMode; charStats?: Record<string, CharStat> },
+  ) => {
     setProgress(prev => {
       const next = { ...prev };
       if (!next.history) next.history = {};
@@ -620,6 +697,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
         mode,
         wpm: Math.round(wpm),
         acc: Math.round(acc * 10) / 10,
+        trainingMode: extras?.trainingMode,
+        charStats: extras?.charStats
+          ? Object.fromEntries(
+            Object.entries(extras.charStats).map(([char, stat]) => [
+              char,
+              {
+                hits: Math.max(0, Math.floor(stat.hits || 0)),
+                misses: Math.max(0, Math.floor(stat.misses || 0)),
+                totalTime: Math.max(0, Number(stat.totalTime || 0)),
+              },
+            ]),
+          )
+          : undefined,
       });
 
       if (next.history[currentLayout].length > 500) {
@@ -929,9 +1019,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     layouts,
     allWords,
     ngramModel,
-    progress,
-    practiceInsights,
-    customThemes,
+      progress,
+      practiceInsights,
+      practiceRhythmHistory,
+      customThemes,
     gameState,
     gameItemCatalog: GAME_ITEM_CATALOG,
     gameAchievementCatalog: GAME_ACHIEVEMENT_CATALOG,
@@ -960,10 +1051,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     fmtSpeed,
     spdLabel,
     getLayoutProgress: getLayoutProgressCb,
-    getPracticeState: getPracticeStateCb,
-    getPracticeInsights: getPracticeInsightsCb,
-    savePracticeInsights,
-    saveCharStats,
+      getPracticeState: getPracticeStateCb,
+      getPracticeInsights: getPracticeInsightsCb,
+      savePracticeInsights,
+      savePracticeRhythmSession,
+      saveCharStats,
     saveHistory,
     saveGameState,
     grantGameItem,

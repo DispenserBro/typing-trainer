@@ -6,29 +6,7 @@ import { flushSync } from 'react-dom';
 import type { FingerName } from '../../shared/types';
 import { useApp } from '../contexts/AppContext';
 import { KeyboardHands, hasKeyboardHandPose, type HandPoseSide } from './KeyboardHands';
-
-const KB_ROWS: Record<string, string[][]> = {
-  qwerty: [
-    ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']'],
-    ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\''],
-    ['z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/'],
-  ],
-  dvorak: [
-    ['\'', ',', '.', 'p', 'y', 'f', 'g', 'c', 'r', 'l', '/', '+'],
-    ['a', 'o', 'e', 'u', 'i', 'd', 'h', 't', 'n', 's', '-'],
-    [';', 'q', 'j', 'k', 'x', 'b', 'm', 'w', 'v', 'z'],
-  ],
-  'йцукен': [
-    ['й', 'ц', 'у', 'к', 'е', 'н', 'г', 'ш', 'щ', 'з', 'х', 'ъ'],
-    ['ф', 'ы', 'в', 'а', 'п', 'р', 'о', 'л', 'д', 'ж', 'э'],
-    ['я', 'ч', 'с', 'м', 'и', 'т', 'ь', 'б', 'ю', '.'],
-  ],
-  'яверты': [
-    ['я', 'ш', 'е', 'р', 'т', 'ы', 'у', 'и', 'о', 'п', 'ъ', 'ь'],
-    ['а', 'с', 'д', 'ф', 'г', 'х', 'й', 'к', 'л', 'э', 'ю'],
-    ['щ', 'ж', 'ц', 'в', 'б', 'н', 'м', 'ч', 'з', '.'],
-  ],
-};
+import { getKeyboardRows } from '../keyboardLayout';
 
 const FINGER_COLORS: Record<FingerName, string> = {
   pinky_left: 'var(--red, #f44336)',
@@ -89,9 +67,11 @@ export function Keyboard() {
     || currentMode === 'stats' || (currentMode === 'settings' && !keyboardPreviewActive);
   const showHands = settings.showHands;
   const showStage = panelHeight > COLLAPSED_STAGE_HEIGHT;
-  const keyboardScale = showStage
+  const autoKeyboardScale = showStage
     ? Math.max(MIN_PANEL_SCALE, Math.min(1, panelHeight / MAX_PANEL_HEIGHT))
     : 1;
+  const userKeyboardScale = Math.max(0.1, Math.min(3, settings.keyboardPanelZoom / 100));
+  const keyboardScale = autoKeyboardScale * userKeyboardScale;
 
   const fingerMap = useMemo(() => {
     if (!layout) return {} as Record<string, FingerName>;
@@ -102,7 +82,7 @@ export function Keyboard() {
     return map;
   }, [layout]);
 
-  const rows = KB_ROWS[currentLayout] || KB_ROWS.qwerty;
+  const rows = getKeyboardRows(currentLayout);
   const target = activeChar === ' ' ? ' ' : activeChar?.toLowerCase();
   const activeFinger = target && target !== ' ' ? fingerMap[target] : undefined;
   const activeHand: HandPoseSide | undefined = target === ' '

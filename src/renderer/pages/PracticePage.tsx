@@ -99,7 +99,7 @@ export function PracticePage() {
   const { layouts, currentLayout, allWords, ngramModel, progress, settings,
     practiceSettings, fmtSpeed, spdLabel, savePracticeSetting,
     saveHistory, saveProgress, getLayoutProgress, getPracticeState,
-    getPracticeInsights, savePracticeInsights } = app;
+    getPracticeInsights, savePracticeInsights, savePracticeRhythmSession } = app;
 
   const layout = layouts.layouts[currentLayout];
   const useYo = settings.useYo;
@@ -243,11 +243,25 @@ export function PracticePage() {
         session: ses,
       }),
     );
+    const sessionIntervals = ses?.keypresses
+      ?.filter((entry: { expected: string; interval: number }) => entry.expected && entry.expected !== ' ' && entry.interval > 0)
+      .map((entry: { interval: number }) => Math.round(entry.interval)) ?? [];
     const feedback = buildPracticeFeedback(nextPracticeInsights, worstCharAfterFinish);
     practiceState.worstChar = worstCharAfterFinish;
     saveProgress(progress);
     savePracticeInsights(nextPracticeInsights);
-    saveHistory('practice', wpm, acc);
+    savePracticeRhythmSession({
+      trainingMode,
+      wpm,
+      acc,
+      textLength: ses?.text?.length ?? 0,
+      intervals: sessionIntervals,
+      averageInterval: rhythm.averageInterval,
+      averageDeviation: rhythm.averageDeviation,
+      rhythmScore,
+      worstInterval: Math.max(0, ...(sessionIntervals.length ? sessionIntervals : [0])),
+    });
+    saveHistory('practice', wpm, acc, { trainingMode, charStats: ses?.charStats });
     if (ses?.charStats) setLastCharStats(ses.charStats);
     if (openedLetter) setUnlockModalLetter(openedLetter);
     setResult({
@@ -261,7 +275,7 @@ export function PracticePage() {
       rhythmDeviation: Math.round(rhythm.averageDeviation),
       feedback,
     });
-  }, [layoutProgress, practiceUnlockOrder, practiceState, currentLayout, progress, saveProgress, saveHistory, goalCPM, unlocked, fallbackWorstChar, getPracticeInsights, savePracticeInsights, layout, trainingMode]);
+  }, [layoutProgress, practiceUnlockOrder, practiceState, currentLayout, progress, saveProgress, saveHistory, goalCPM, unlocked, fallbackWorstChar, getPracticeInsights, savePracticeInsights, savePracticeRhythmSession, layout, trainingMode]);
 
   const { session, start, stop, handleKey, wpm, acc, renderTick, waitingForSpace } = useTypingSession({
     mode: 'practice',

@@ -2,6 +2,7 @@ name: Build & Release
 
 env:
   APP_NAME_SLUG: typing-trainer
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 on:
   push:
@@ -22,9 +23,9 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
@@ -38,28 +39,28 @@ jobs:
       - run: npm ci
       - run: ${{ matrix.cmd }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: matrix.os == 'windows-latest'
         with:
           name: dist-${{ env.APP_NAME_SLUG }}-exe
           path: dist/*.exe
           if-no-files-found: ignore
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: matrix.os == 'ubuntu-latest'
         with:
           name: dist-${{ env.APP_NAME_SLUG }}-appimage
           path: dist/*.AppImage
           if-no-files-found: ignore
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: matrix.os == 'ubuntu-latest'
         with:
           name: dist-${{ env.APP_NAME_SLUG }}-deb
           path: dist/*.deb
           if-no-files-found: ignore
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: matrix.os == 'ubuntu-latest'
         with:
           name: dist-${{ env.APP_NAME_SLUG }}-rpm

@@ -4,6 +4,7 @@ import type { Progress, CustomThemes, LayoutsData, ElectronAPI } from '../shared
 const api: ElectronAPI = {
   getLayouts: () => ipcRenderer.invoke('get-layouts') as Promise<LayoutsData>,
   getWords: (lang: string) => ipcRenderer.invoke('get-words', lang) as Promise<string[]>,
+  getLessonBigrams: (lang: string) => ipcRenderer.invoke('get-lesson-bigrams', lang) as Promise<Record<string, string[]>>,
   getProgress: () => ipcRenderer.invoke('get-progress') as Promise<Progress>,
   saveProgress: (data: Progress) => ipcRenderer.invoke('save-progress', data) as Promise<boolean>,
   getCustomThemes: () => ipcRenderer.invoke('get-custom-themes') as Promise<CustomThemes>,

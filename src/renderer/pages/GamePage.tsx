@@ -225,7 +225,7 @@ export function GamePage() {
     rewardChoiceRefs.current = [];
   }, []);
 
-  const onFinish = useCallback((wpm: number, acc: number, elapsed: number) => {
+  const onFinish = useCallback((wpm: number, acc: number, elapsed: number, ses: any) => {
     const boss = isBossLevel(level);
     const baseMinAccuracy = boss ? BOSS_MIN_ACCURACY : NORMAL_MIN_ACCURACY;
     const minAccuracy = Math.max(0, baseMinAccuracy - itemBonuses.accuracyRequirementReduction);
@@ -236,7 +236,7 @@ export function GamePage() {
     const nextLives = passed ? lives : Math.max(0, lives - 1);
     const victory = passed && level >= TOTAL_GAME_LEVELS;
 
-    saveHistory('game', wpm, acc);
+    saveHistory('game', wpm, acc, { charStats: ses?.charStats });
     if (passed) {
       setCompletedLevels(level);
       markGameLevelReached(level);
