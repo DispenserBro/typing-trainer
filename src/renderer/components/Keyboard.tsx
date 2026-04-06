@@ -1,6 +1,8 @@
 import {
-  useMemo, useRef, useState, useLayoutEffect, useCallback, type CSSProperties,
+  useMemo, useRef, useState, useLayoutEffect, useCallback, useEffect,
+  type CSSProperties, type PointerEvent as ReactPointerEvent,
 } from 'react';
+import { flushSync } from 'react-dom';
 import type { FingerName } from '../../shared/types';
 import { useApp } from '../contexts/AppContext';
 import { KeyboardHands, hasKeyboardHandPose, type HandPoseSide } from './KeyboardHands';
@@ -44,9 +46,13 @@ const SVG_EXACT_LAYOUTS = new Set(['йцукен', 'яверты']);
 
 const HANDS_VIEWBOX_WIDTH = 716.3;
 const HANDS_VIEWBOX_HEIGHT = 380;
-const HANDS_WIDTH_RATIO = 1.06;
-const HANDS_HOME_ROW_RATIO = 0.41;
-const HANDS_CENTER_SHIFT_IN_KEYS = 1.2;
+const HANDS_WIDTH_RATIO = 2;
+const HANDS_HOME_ROW_RATIO = 0.4;
+const HANDS_CENTER_SHIFT_IN_KEYS = 1.35;
+const MIN_PANEL_HEIGHT = 22;
+const MAX_PANEL_HEIGHT = 520;
+const COLLAPSED_STAGE_HEIGHT = 74;
+const MIN_PANEL_SCALE = 0.34;
 
 function getExactSvgPoseKey(layoutName: string, key: string) {
   if (!SVG_EXACT_LAYOUTS.has(layoutName)) return null;
@@ -64,16 +70,28 @@ function getExactSvgPoseKey(layoutName: string, key: string) {
 }
 
 export function Keyboard() {
-  const { currentLayout, layouts, activeChar, currentMode, settings } = useApp();
+  const {
+    currentLayout, layouts, activeChar, currentMode, settings, saveSetting, keyboardPreviewActive,
+  } = useApp();
   const layout = layouts.layouts[currentLayout];
   const stageRef = useRef<HTMLDivElement | null>(null);
   const keyboardRef = useRef<HTMLDivElement | null>(null);
   const keyRefs = useRef<Record<string, HTMLSpanElement | null>>({});
+  const didHydratePanelHeightRef = useRef(false);
+  const dragStartYRef = useRef(0);
+  const dragStartHeightRef = useRef(settings.keyboardPanelHeight);
+  const panelHeightRef = useRef(settings.keyboardPanelHeight);
+  const draggingRef = useRef(false);
   const [handsStyle, setHandsStyle] = useState<CSSProperties | undefined>(undefined);
+  const [panelHeight, setPanelHeight] = useState(settings.keyboardPanelHeight);
 
   const hidden = !settings.showKeyboard
-    || currentMode === 'stats' || currentMode === 'settings';
+    || currentMode === 'stats' || (currentMode === 'settings' && !keyboardPreviewActive);
   const showHands = settings.showHands;
+  const showStage = panelHeight > COLLAPSED_STAGE_HEIGHT;
+  const keyboardScale = showStage
+    ? Math.max(MIN_PANEL_SCALE, Math.min(1, panelHeight / MAX_PANEL_HEIGHT))
+    : 1;
 
   const fingerMap = useMemo(() => {
     if (!layout) return {} as Record<string, FingerName>;
@@ -131,7 +149,7 @@ export function Keyboard() {
   const measureHandsFrame = useCallback(() => {
     const stage = stageRef.current;
     const keyboard = keyboardRef.current;
-    if (!stage || !keyboard || rows.length < 2) return;
+    if (!stage || !keyboard || rows.length < 2 || !showStage) return;
 
     const middleRowKeys = rows[1]
       .map(key => keyRefs.current[key])
@@ -158,9 +176,21 @@ export function Keyboard() {
       width: `${handsWidth}px`,
       transform: 'translateX(-50%)',
     });
-  }, [rows]);
+  }, [rows, showStage, keyboardScale]);
 
   useLayoutEffect(() => {
+    if (draggingRef.current || didHydratePanelHeightRef.current) return;
+    didHydratePanelHeightRef.current = true;
+    setPanelHeight(settings.keyboardPanelHeight);
+    panelHeightRef.current = settings.keyboardPanelHeight;
+  }, [settings.keyboardPanelHeight]);
+
+  useLayoutEffect(() => {
+    if (!showStage) {
+      setHandsStyle(undefined);
+      return undefined;
+    }
+
     measureHandsFrame();
 
     const stage = stageRef.current;
@@ -184,47 +214,108 @@ export function Keyboard() {
       window.removeEventListener('resize', onResize);
       observer?.disconnect();
     };
-  }, [measureHandsFrame, currentLayout]);
+  }, [measureHandsFrame, currentLayout, showStage, keyboardScale]);
+
+  useEffect(() => {
+    if (hidden) return undefined;
+
+    const applyDraggedHeight = (clientY: number) => {
+      const deltaY = clientY - dragStartYRef.current;
+      const nextHeight = Math.max(
+        MIN_PANEL_HEIGHT,
+        Math.min(MAX_PANEL_HEIGHT, dragStartHeightRef.current - deltaY),
+      );
+      panelHeightRef.current = nextHeight;
+      setPanelHeight(nextHeight);
+    };
+
+    const onPointerMove = (event: PointerEvent) => {
+      if (!draggingRef.current) return;
+      applyDraggedHeight(event.clientY);
+    };
+
+    const onPointerUp = (event: PointerEvent) => {
+      if (!draggingRef.current) return;
+      flushSync(() => {
+        applyDraggedHeight(event.clientY);
+      });
+      draggingRef.current = false;
+      saveSetting('keyboardPanelHeight', panelHeightRef.current);
+    };
+
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+
+    return () => {
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+    };
+  }, [hidden, saveSetting]);
+
+  const startResize = useCallback((event: ReactPointerEvent<HTMLButtonElement>) => {
+    draggingRef.current = true;
+    dragStartYRef.current = event.clientY;
+    dragStartHeightRef.current = panelHeightRef.current;
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  }, []);
 
   if (hidden) return null;
 
+  const wrapStyle = {
+    height: `${panelHeight}px`,
+    ['--kb-panel-scale' as string]: `${keyboardScale}`,
+    ['--kb-panel-offset' as string]: `${settings.keyboardPanelOffset}`,
+  } as CSSProperties;
+
   return (
-    <div id="keyboard-wrap">
-      <div className="keyboard-stage svg-hands" ref={stageRef}>
-        {showHands && <KeyboardHands poseKey={activePose} activeHand={activeHand} style={handsStyle} />}
+    <div id="keyboard-wrap" style={wrapStyle}>
+      <button
+        type="button"
+        className="keyboard-resize-handle"
+        aria-label="Изменить высоту блока клавиатуры"
+        onPointerDown={startResize}
+      >
+        <span />
+      </button>
+      <div className={`keyboard-wrap-body${showStage ? '' : ' collapsed'}`}>
+        {showStage && (
+          <div className="keyboard-stage svg-hands" ref={stageRef}>
+            {showHands && <KeyboardHands poseKey={activePose} activeHand={activeHand} style={handsStyle} />}
 
-        <div id="keyboard" ref={keyboardRef}>
-          {rows.map((row, ri) => (
-            <div className="kb-row" key={ri}>
-              {row.map(key => {
-                const finger = fingerMap[key.toLowerCase()];
-                const isActive = key === target;
-                const keyStyle = (finger
-                  ? { '--finger-color': FINGER_COLORS[finger], borderBottomColor: FINGER_COLORS[finger] }
-                  : { '--finger-color': 'transparent', borderBottomColor: 'transparent' }) as CSSProperties;
+            <div id="keyboard" ref={keyboardRef}>
+              {rows.map((row, ri) => (
+                <div className="kb-row" key={ri}>
+                  {row.map(key => {
+                    const finger = fingerMap[key.toLowerCase()];
+                    const isActive = key === target;
+                    const keyStyle = (finger
+                      ? { '--finger-color': FINGER_COLORS[finger], borderBottomColor: FINGER_COLORS[finger] }
+                      : { '--finger-color': 'transparent', borderBottomColor: 'transparent' }) as CSSProperties;
 
-                return (
-                  <span
-                    key={key}
-                    ref={el => { keyRefs.current[key] = el; }}
-                    className={`kb-key${isActive ? ' active' : ''}`}
-                    style={keyStyle}
-                  >
-                    <span className="kb-key-main">{key}</span>
-                  </span>
-                );
-              })}
+                    return (
+                      <span
+                        key={key}
+                        ref={el => { keyRefs.current[key] = el; }}
+                        className={`kb-key${isActive ? ' active' : ''}`}
+                        style={keyStyle}
+                      >
+                        <span className="kb-key-main">{key}</span>
+                      </span>
+                    );
+                  })}
+                </div>
+              ))}
+              <div className="kb-row">
+                <span
+                  ref={el => { keyRefs.current[' '] = el; }}
+                  className={`kb-key kb-space${target === ' ' ? ' active' : ''}`}
+                >
+                  <span className="kb-key-main">⎵</span>
+                </span>
+              </div>
             </div>
-          ))}
-          <div className="kb-row">
-            <span
-              ref={el => { keyRefs.current[' '] = el; }}
-              className={`kb-key kb-space${target === ' ' ? ' active' : ''}`}
-            >
-              <span className="kb-key-main">⎵</span>
-            </span>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

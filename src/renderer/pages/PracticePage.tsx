@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { useTypingSession } from '../hooks/useTypingSession';
 import { TextDisplay } from '../components/TextDisplay';
+import { NumberInput } from '../components/NumberInput';
 import { generatePracticeText, getWorstChar, formatSpeed, speedLabel, filterYoWords, filterYoKeys } from '../engine';
 import type {
   DailyGoalType, CharStat, PracticeTrainingMode, LayoutPracticeInsights, FingerName,
@@ -582,13 +583,13 @@ export function PracticePage() {
       {showSettingsModal && (
         <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) setShowSettingsModal(false); }}>
           <div className="modal practice-settings-modal" onClick={e => e.stopPropagation()}>
-            <div className="practice-settings-modal-head">
-              <div>
-                <h3>Настройки практики</h3>
-                <p className="card-desc">Все, что влияет на длину, сложность и характер тренировки.</p>
-              </div>
-              <button className="btn-secondary btn-sm" onClick={() => setShowSettingsModal(false)}>
-                Закрыть
+              <div className="practice-settings-modal-head">
+                <div>
+                  <h3>Настройки практики</h3>
+                  <p className="card-desc">Длина, темп и характер тренировки.</p>
+                </div>
+                <button className="btn-secondary btn-sm" onClick={() => setShowSettingsModal(false)}>
+                  Закрыть
               </button>
             </div>
 
@@ -601,21 +602,32 @@ export function PracticePage() {
                     <option value="minutes">Минуты</option>
                     <option value="sessions">Кол-во практик</option>
                   </select>
-                  <input type="number" className="input-minimal w60"
-                    value={practiceSettings.dailyGoalValue} min={1} max={999}
-                    onChange={e => savePracticeSetting('dailyGoalValue', Math.max(1, parseInt(e.target.value) || 15))} />
+                  <NumberInput
+                    value={practiceSettings.dailyGoalValue}
+                    min={1}
+                    max={999}
+                    className="w84"
+                    ariaLabel="Цель на день"
+                    onChange={(next) => savePracticeSetting('dailyGoalValue', Math.max(1, Math.round(next) || 15))}
+                  />
                 </div>
               </div>
 
               <div className="poption">
                 <span className="poption-label">Целевая скорость</span>
                 <div className="poption-row">
-                  <input type="number" className="input-minimal w60"
-                    value={goalDisplay} min={1} max={9999}
-                    onChange={e => {
-                      const v = Math.max(1, parseFloat(e.target.value) || 0);
-                      savePracticeSetting('goalSpeedCpm', Math.round(displayToCpm(v)));
-                    }} />
+                  <NumberInput
+                    value={goalDisplay}
+                    min={1}
+                    max={9999}
+                    step={unit === 'cps' ? 0.1 : 1}
+                    className="w96"
+                    ariaLabel="Целевая скорость практики"
+                    onChange={(next) => {
+                      const value = Math.max(1, next || 0);
+                      savePracticeSetting('goalSpeedCpm', Math.round(displayToCpm(value)));
+                    }}
+                  />
                   <span className="poption-hint">{spdLabel}</span>
                 </div>
               </div>
@@ -637,7 +649,7 @@ export function PracticePage() {
                   </button>
                 </div>
                 <span className="poption-hint">
-                  {trainingMode === 'rhythm' ? 'Короткие чистые тексты и контроль ровности интервалов.' : 'Стандартная практика с упором на скорость и точность.'}
+                  {trainingMode === 'rhythm' ? 'Короткий текст и ровный темп.' : 'Базовый режим на скорость и точность.'}
                 </span>
               </div>
 
@@ -651,7 +663,7 @@ export function PracticePage() {
                   <span className="toggle-switch" />
                   <span className="poption-toggle-text">
                     <span className="poption-label">Умная адаптация</span>
-                    <span className="poption-hint">Подстраивает текст под слабые буквы, сочетания и ритм.</span>
+                    <span className="poption-hint">Подбирает текст под слабые места.</span>
                   </span>
                 </label>
               </div>
@@ -672,8 +684,8 @@ export function PracticePage() {
                 </div>
                 <span className="poption-hint">
                   {smartAdaptationEnabled
-                    ? 'Чем выше сила, тем заметнее практика давит на слабые места.'
-                    : 'Включите адаптацию, чтобы управлять ее интенсивностью.'}
+                    ? 'Выше сила — больше акцент на слабых местах.'
+                    : 'Включите адаптацию, чтобы менять ее силу.'}
                 </span>
               </div>
 
@@ -692,10 +704,10 @@ export function PracticePage() {
                   ))}
                 </div>
                 <span className="poption-hint">
-                  {smartAdaptationFocus === 'balanced' && 'Смешанный режим: практика учитывает и буквы, и сочетания, и стабильность темпа.'}
-                  {smartAdaptationFocus === 'chars' && 'Сильнее подталкивает к отработке отдельных букв и неудобных клавиш.'}
-                  {smartAdaptationFocus === 'bigrams' && 'Чаще подсовывает слабые переходы между соседними символами.'}
-                  {smartAdaptationFocus === 'rhythm' && 'Делает тексты чище и сильнее следит за ровностью темпа.'}
+                  {smartAdaptationFocus === 'balanced' && 'Баланс букв, сочетаний и темпа.'}
+                  {smartAdaptationFocus === 'chars' && 'Больше внимания отдельным буквам.'}
+                  {smartAdaptationFocus === 'bigrams' && 'Больше внимания переходам между буквами.'}
+                  {smartAdaptationFocus === 'rhythm' && 'Больше внимания ровности темпа.'}
                 </span>
               </div>
 
@@ -706,7 +718,7 @@ export function PracticePage() {
                   <span className="toggle-switch" />
                   <span className="poption-toggle-text">
                     <span className="poption-label">Ни шагу назад</span>
-                    <span className="poption-hint">Backspace отключен, ошибка сразу ломает темп.</span>
+                    <span className="poption-hint">Backspace отключен.</span>
                   </span>
                 </label>
               </div>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useApp, BUILT_IN_THEMES } from '../contexts/AppContext';
 import { ThemeModal } from '../components/ThemeModal';
+import { NumberInput } from '../components/NumberInput';
 import type { SpeedUnit } from '../../shared/types';
 import { Pencil, Trash2, Minus, Square, Tally1, AlignJustify, MoveRight } from 'lucide-react';
 
@@ -10,6 +11,7 @@ export function SettingsPage() {
     currentLanguage, setCurrentLanguage,
     languages, layoutsForLanguage,
     settings, saveSetting,
+    keyboardPreviewActive, setKeyboardPreviewActive,
     progress, saveProgress, resetGameProgress,
     customThemes, applyTheme,
   } = useApp();
@@ -136,23 +138,55 @@ export function SettingsPage() {
           <h4>Клавиатура</h4>
           <label className="poption-toggle">
             <input type="checkbox" checked={settings.showKeyboard}
-              onChange={e => saveSetting('showKeyboard', e.target.checked)} />
+              onChange={e => {
+                saveSetting('showKeyboard', e.target.checked);
+                if (!e.target.checked) setKeyboardPreviewActive(false);
+              }} />
             <span className="toggle-switch" />
             <span className="poption-toggle-text">Показывать клавиатуру</span>
           </label>
           {settings.showKeyboard && (
-            <label className="poption-toggle" style={{ marginTop: 10 }}>
-              <input
-                type="checkbox"
-                checked={settings.showHands}
-                onChange={e => saveSetting('showHands', e.target.checked)}
-              />
-              <span className="toggle-switch" />
-              <span className="settings-beta-row">
-                <span className="poption-toggle-text">Показывать пальцы</span>
-                <span className="settings-beta-tag">Beta</span>
-              </span>
-            </label>
+            <>
+              <label className="poption-toggle" style={{ marginTop: 10 }}>
+                <input
+                  type="checkbox"
+                  checked={settings.showHands}
+                  onChange={e => saveSetting('showHands', e.target.checked)}
+                />
+                <span className="toggle-switch" />
+                <span className="settings-beta-row">
+                  <span className="poption-toggle-text">Показывать пальцы</span>
+                  <span className="settings-beta-tag">Beta</span>
+                </span>
+              </label>
+
+              <div className="poption" style={{ marginTop: 14 }}>
+                <span className="poption-label">Смещение по вертикали</span>
+                <div className="poption-row">
+                    <NumberInput
+                      value={settings.keyboardPanelOffset}
+                      min={-100}
+                      max={100}
+                      step={1}
+                      emptyValue={0}
+                      className="w96"
+                      ariaLabel="Смещение клавиатуры по вертикали"
+                      onChange={(next) => saveSetting('keyboardPanelOffset', Math.round(next))}
+                    />
+                    <span className="poption-hint">%</span>
+                  </div>
+                  <span className="poption-hint">0 — по центру, отрицательное вниз, положительное вверх.</span>
+                </div>
+
+              <div className="settings-keyboard-actions">
+                <button
+                  className={`btn-secondary btn-sm${keyboardPreviewActive ? ' active' : ''}`}
+                  onClick={() => setKeyboardPreviewActive(!keyboardPreviewActive)}
+                >
+                  {keyboardPreviewActive ? 'Скрыть предпросмотр' : 'Предпросмотр клавиатуры'}
+                </button>
+              </div>
+            </>
           )}
         </div>
 
@@ -191,17 +225,14 @@ export function SettingsPage() {
           <div className="poption">
             <span className="poption-label">Размер текста для ввода</span>
             <div className="poption-row">
-              <input
-                type="number"
-                className="input-minimal w60"
+              <NumberInput
+                value={settings.textFontSize}
                 min={0.75}
                 max={2.5}
                 step={0.05}
-                value={settings.textFontSize}
-                onChange={e => {
-                  const next = Math.max(0.75, Math.min(2.5, parseFloat(e.target.value) || 1.125));
-                  saveSetting('textFontSize', next);
-                }}
+                className="w72"
+                ariaLabel="Размер текста для ввода"
+                onChange={(next) => saveSetting('textFontSize', next)}
               />
               <span className="poption-hint">rem</span>
             </div>

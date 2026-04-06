@@ -11,6 +11,7 @@ import type {
 import { useApp } from '../contexts/AppContext';
 import { useTypingSession } from '../hooks/useTypingSession';
 import { TextDisplay } from '../components/TextDisplay';
+import { NumberInput } from '../components/NumberInput';
 import { generatePracticeText, getWorstChar, filterYoWords, filterYoKeys } from '../engine';
 import {
   GAME_EQUIPMENT_SLOTS,
@@ -419,13 +420,14 @@ export function GamePage() {
       <label className="game-start-field">
         <span>Целевая скорость</span>
         <div className="game-start-input-row">
-          <input
-            type="number"
-            className="input-minimal"
+          <NumberInput
+            value={targetSpeedDisplay}
             min={1}
             max={9999}
-            value={targetSpeedDisplay}
-            onChange={e => updateTargetSpeed(parseFloat(e.target.value) || 0)}
+            step={unit === 'cps' ? 0.1 : 1}
+            className="w112"
+            ariaLabel="Целевая скорость игры"
+            onChange={(next) => updateTargetSpeed(next)}
           />
           <small>{spdLabel}</small>
         </div>

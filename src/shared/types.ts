@@ -222,6 +222,8 @@ export interface UserSettings {
   useYo: boolean;      // include ё (Russian only)
   showKeyboard: boolean;
   showHands: boolean;
+  keyboardPanelHeight: number;
+  keyboardPanelOffset: number;
   endWithSpace: boolean;
   textFontSize: number;
 }

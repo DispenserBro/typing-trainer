@@ -25,6 +25,19 @@ function normalizeTextFontSize(value?: number): number {
   return value > 4 ? value / 16 : value;
 }
 
+function normalizeKeyboardPanelHeight(value?: number): number {
+  if (typeof value !== 'number' || Number.isNaN(value)) return 292;
+  return Math.max(22, Math.min(520, Math.round(value)));
+}
+
+function normalizeKeyboardPanelOffset(value?: number): number {
+  if (typeof value !== 'number' || Number.isNaN(value)) return 0;
+  const normalized = Math.abs(value) > 100
+    ? Math.round((value / 220) * 100)
+    : Math.round(value);
+  return Math.max(-100, Math.min(100, normalized));
+}
+
 function defaultSettings(s?: Partial<UserSettings>): UserSettings {
   const legacyTextFontSize = (s as (Partial<UserSettings> & { gameTextFontSize?: number }) | undefined)?.gameTextFontSize;
 
@@ -40,6 +53,8 @@ function defaultSettings(s?: Partial<UserSettings>): UserSettings {
     useYo: s?.useYo ?? false,
     showKeyboard: s?.showKeyboard ?? true,
     showHands: s?.showHands ?? true,
+    keyboardPanelHeight: normalizeKeyboardPanelHeight(s?.keyboardPanelHeight),
+    keyboardPanelOffset: normalizeKeyboardPanelOffset(s?.keyboardPanelOffset),
     endWithSpace: s?.endWithSpace ?? true,
     textFontSize: normalizeTextFontSize(s?.textFontSize ?? legacyTextFontSize),
   };
@@ -352,6 +367,8 @@ export interface AppContextValue {
   setSession: (s: Session) => void;
   activeChar: string | undefined;
   setActiveChar: (ch: string | undefined) => void;
+  keyboardPreviewActive: boolean;
+  setKeyboardPreviewActive: (active: boolean) => void;
 
   switchMode: (mode: string) => void;
   setCurrentLayout: (layout: string) => void;
@@ -405,6 +422,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [currentMode, setCurrentMode] = useState('practice');
   const [session, setSession] = useState<Session>(createSession('', '', -1));
   const [activeChar, setActiveChar] = useState<string | undefined>(undefined);
+  const [keyboardPreviewActive, setKeyboardPreviewActive] = useState(false);
 
   const progressRef = useRef(progress);
   progressRef.current = progress;
@@ -490,6 +508,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const switchMode = useCallback((mode: string) => {
     setCurrentMode(mode);
+    if (mode !== 'settings') setKeyboardPreviewActive(false);
     setSession(prev => {
       if (prev.active && prev.timer) clearInterval(prev.timer);
       return { ...prev, active: false, timer: null };
@@ -927,6 +946,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSession,
     activeChar,
     setActiveChar,
+    keyboardPreviewActive,
+    setKeyboardPreviewActive,
     switchMode,
     setCurrentLayout,
     setCurrentLanguage,
