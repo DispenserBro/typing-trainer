@@ -10,6 +10,9 @@ on:
       - 'v*'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     strategy:
@@ -43,26 +46,37 @@ jobs:
         if: matrix.os == 'windows-latest'
         with:
           name: dist-${{ env.APP_NAME_SLUG }}-exe
-          path: dist/*.exe
+          path: dist-build/*.exe
           if-no-files-found: ignore
 
       - uses: actions/upload-artifact@v6
         if: matrix.os == 'ubuntu-latest'
         with:
           name: dist-${{ env.APP_NAME_SLUG }}-appimage
-          path: dist/*.AppImage
+          path: dist-build/*.AppImage
           if-no-files-found: ignore
 
       - uses: actions/upload-artifact@v6
         if: matrix.os == 'ubuntu-latest'
         with:
           name: dist-${{ env.APP_NAME_SLUG }}-deb
-          path: dist/*.deb
+          path: dist-build/*.deb
           if-no-files-found: ignore
 
       - uses: actions/upload-artifact@v6
         if: matrix.os == 'ubuntu-latest'
         with:
           name: dist-${{ env.APP_NAME_SLUG }}-rpm
-          path: dist/*.rpm
+          path: dist-build/*.rpm
           if-no-files-found: ignore
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          fail_on_unmatched_files: false
+          files: |
+            dist-build/*.exe
+            dist-build/*.AppImage
+            dist-build/*.deb
+            dist-build/*.rpm
