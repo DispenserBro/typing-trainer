@@ -2,7 +2,7 @@ import type { ReactElement } from 'react';
 import { AppProvider, useApp } from './contexts/AppContext';
 import { Titlebar } from './components/Titlebar';
 import { Sidebar } from './components/Sidebar';
-import { Keyboard } from './components/Keyboard';
+import { Keyboard } from './components/keyboard/Keyboard';
 import { PracticePage } from './pages/PracticePage';
 import { TestPage } from './pages/TestPage';
 import { LessonsPage } from './pages/LessonsPage';

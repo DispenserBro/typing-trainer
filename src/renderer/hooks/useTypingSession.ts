@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import type { Session, CharStat } from '../../shared/types';
-import { createSession } from '../engine';
+import { createSession } from '../../core/engine';
 import { useApp } from '../contexts/AppContext';
 
 interface UseTypingSessionOptions {
@@ -64,6 +64,16 @@ export function useTypingSession({ mode, noStepBack, onFinish }: UseTypingSessio
   const handleKey = useCallback((e: KeyboardEvent) => {
     const s = sessionRef.current;
     if (!s.active) return;
+
+    if (
+      document.activeElement instanceof HTMLElement
+      && document.activeElement !== document.body
+      && !document.activeElement.isContentEditable
+      && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)
+    ) {
+      document.activeElement.blur();
+    }
+
     if (e.ctrlKey || e.altKey || e.metaKey) return;
     if (['Shift', 'CapsLock', 'Tab', 'Escape'].includes(e.key)) return;
     if (e.key.length > 1 && e.key !== 'Backspace') return;
@@ -159,3 +169,4 @@ export function useTypingSession({ mode, noStepBack, onFinish }: UseTypingSessio
     waitingForSpace,
   };
 }
+

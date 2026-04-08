@@ -5,390 +5,37 @@ import {
 import type {
   LayoutsData, Layout, Progress, CustomThemes, Session, CharStat,
   UserSettings, PracticeSettings, PracticeState, LayoutProgressState,
-  TextDisplayMode, LanguageInfo, GameState, GameItemDefinition,
-  GameEquipmentSlot, GameInventoryItem, GameRunState, GameAchievementDefinition,
-    PracticeInsightsState, LayoutPracticeInsights, PracticeInsightAggregate,
-    PracticeBigramInsight, PracticeRhythmInsight, PracticeRhythmSessionEntry,
-    PracticeTrainingMode,
-  } from '../../shared/types';
+  LanguageInfo, GameState, GameItemDefinition,
+  GameEquipmentSlot, GameRunState, GameAchievementDefinition,
+  PracticeInsightsState, LayoutPracticeInsights, PracticeRhythmSessionEntry,
+  PracticeTrainingMode,
+} from '../../shared/types';
 import {
-  createSession, formatSpeed, speedLabel, filterYoKeys,
+  createSession, formatSpeed, speedLabel,
   buildNgramModel, type NgramModel,
-} from '../engine';
-import { GAME_ITEM_CATALOG, GAME_ITEM_MAP, isBrokenInventoryItem } from '../gameItems';
-import { GAME_ACHIEVEMENT_CATALOG, GAME_ACHIEVEMENT_MAP } from '../gameAchievements';
-import { createEmptyLayoutPracticeInsights } from '../practiceInsights';
+} from '../../core/engine';
+import { GAME_ITEM_CATALOG } from '../../core/game/items';
+import { GAME_ACHIEVEMENT_CATALOG } from '../../core/game/gameAchievements';
+import {
+  BUILT_IN_THEMES,
+  defaultPracticeSettings,
+} from './appDefaults';
+import {
+  resolveGameState,
+  resolvePracticeInsights,
+  resolvePracticeRhythmHistory,
+  resolveSettings,
+} from './appResolvers';
+import {
+  getLayoutPracticeInsights,
+  getLayoutProgress,
+  getPracticeState,
+} from './appProgress';
+import { createPracticeActions } from './appActionsPractice';
+import { createStatsActions } from './appActionsStats';
+import { createGameActions } from './appActionsGame';
 
-export const BUILT_IN_THEMES = ['dark-orange', 'catppuccin', 'nord', 'monokai', 'light'];
-
-function normalizeTextFontSize(value?: number): number {
-  if (typeof value !== 'number' || Number.isNaN(value) || value <= 0) return 1.125;
-  return value > 4 ? value / 16 : value;
-}
-
-function normalizeKeyboardPanelHeight(value?: number): number {
-  if (typeof value !== 'number' || Number.isNaN(value)) return 292;
-  return Math.max(22, Math.min(520, Math.round(value)));
-}
-
-function normalizeKeyboardPanelOffset(value?: number): number {
-  if (typeof value !== 'number' || Number.isNaN(value)) return 0;
-  const normalized = Math.abs(value) > 100
-    ? Math.round((value / 220) * 100)
-    : Math.round(value);
-  return Math.max(-100, Math.min(100, normalized));
-}
-
-function normalizeKeyboardPanelZoom(value?: number): number {
-  if (typeof value !== 'number' || Number.isNaN(value)) return 100;
-  return Math.max(10, Math.min(300, Math.round(value)));
-}
-
-function defaultSettings(s?: Partial<UserSettings>): UserSettings {
-  const legacyTextFontSize = (s as (Partial<UserSettings> & { gameTextFontSize?: number }) | undefined)?.gameTextFontSize;
-
-  return {
-    speedUnit: s?.speedUnit ?? 'cpm',
-    cursorStyle: s?.cursorStyle ?? 'underline',
-    cursorSmooth: s?.cursorSmooth ?? 'smooth',
-    highlightCurrentChar: s?.highlightCurrentChar ?? true,
-    textDisplay: s?.textDisplay ?? 'block',
-    theme: s?.theme ?? 'dark-orange',
-    language: s?.language ?? '',
-    layout: s?.layout ?? '',
-    useYo: s?.useYo ?? false,
-    showKeyboard: s?.showKeyboard ?? true,
-    showHands: s?.showHands ?? true,
-    keyboardPanelHeight: normalizeKeyboardPanelHeight(s?.keyboardPanelHeight),
-    keyboardPanelOffset: normalizeKeyboardPanelOffset(s?.keyboardPanelOffset),
-    keyboardPanelZoom: normalizeKeyboardPanelZoom(s?.keyboardPanelZoom),
-    endWithSpace: s?.endWithSpace ?? true,
-    textFontSize: normalizeTextFontSize(s?.textFontSize ?? legacyTextFontSize),
-  };
-}
-
-function defaultPracticeSettings(p?: Partial<PracticeSettings>): PracticeSettings {
-  return {
-    dailyGoalType: p?.dailyGoalType ?? 'minutes',
-    dailyGoalValue: p?.dailyGoalValue ?? 15,
-    goalSpeedCpm: p?.goalSpeedCpm ?? 150,
-    trainingMode: p?.trainingMode ?? 'normal',
-    smartAdaptationEnabled: p?.smartAdaptationEnabled ?? true,
-    smartAdaptationStrength: p?.smartAdaptationStrength ?? 'medium',
-    smartAdaptationFocus: p?.smartAdaptationFocus ?? 'balanced',
-    noStepBack: p?.noStepBack ?? false,
-  };
-}
-
-function defaultGameState(game?: Partial<GameState>): GameState {
-  return {
-    highestLevel: Math.max(1, Math.floor(game?.highestLevel ?? 1)),
-    inventory: Array.isArray(game?.inventory) ? game.inventory : [],
-    discoveredItemIds: Array.isArray(game?.discoveredItemIds) ? game.discoveredItemIds : [],
-    achievements: Array.isArray(game?.achievements) ? game.achievements : [],
-    equipped: {
-      slotA: game?.equipped?.slotA ?? (game?.equipped as Partial<Record<'active', string | null>> | undefined)?.active ?? null,
-      slotB: game?.equipped?.slotB ?? (game?.equipped as Partial<Record<'passiveA', string | null>> | undefined)?.passiveA ?? null,
-      slotC: game?.equipped?.slotC ?? (game?.equipped as Partial<Record<'passiveB', string | null>> | undefined)?.passiveB ?? null,
-    },
-    currentRun: game?.currentRun ?? null,
-  };
-}
-
-function createInventoryItemId() {
-  return `itm-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-}
-
-function normalizeInventoryItem(entry: unknown): GameInventoryItem[] {
-  if (!entry || typeof entry !== 'object') return [];
-  const candidate = entry as Partial<GameInventoryItem> & { itemId?: string; count?: number };
-  if (!candidate.itemId || !GAME_ITEM_MAP[candidate.itemId]) return [];
-
-  const item = GAME_ITEM_MAP[candidate.itemId];
-  const maxDurability = item.maxDurability ?? null;
-
-  if (typeof candidate.id === 'string') {
-    const savedMaxDurability = typeof candidate.maxDurability === 'number'
-      ? Math.max(0, Math.floor(candidate.maxDurability))
-      : maxDurability;
-    const savedDurability = typeof candidate.durability === 'number'
-      ? Math.max(0, Math.min(Math.floor(candidate.durability), savedMaxDurability ?? Number.MAX_SAFE_INTEGER))
-      : savedMaxDurability;
-
-    return [{
-      id: candidate.id,
-      itemId: candidate.itemId,
-      durability: savedMaxDurability == null ? null : savedDurability,
-      maxDurability: savedMaxDurability,
-    }];
-  }
-
-  const count = typeof candidate.count === 'number' ? Math.max(1, Math.floor(candidate.count)) : 1;
-  return Array.from({ length: count }, () => ({
-    id: createInventoryItemId(),
-    itemId: candidate.itemId!,
-    durability: maxDurability,
-    maxDurability,
-  }));
-}
-
-function resolveSettings(progress: Progress): UserSettings {
-  const base = defaultSettings(progress.settings);
-  const legacyTextDisplay = (progress.practiceSettings as (Partial<PracticeSettings> & { textDisplay?: TextDisplayMode }) | undefined)?.textDisplay;
-
-  return {
-    ...base,
-    textDisplay: progress.settings?.textDisplay ?? legacyTextDisplay ?? base.textDisplay,
-  };
-}
-
-function resolveGameState(progress: Progress): GameState {
-  const base = defaultGameState(progress.game);
-  const inventory = base.inventory
-    .flatMap(entry => normalizeInventoryItem(entry))
-    .filter(entry => GAME_ITEM_MAP[entry.itemId]);
-
-  const discoveredItemIds = Array.from(new Set([
-    ...base.discoveredItemIds.filter(itemId => GAME_ITEM_MAP[itemId]),
-    ...inventory.map(entry => entry.itemId),
-  ]));
-  const achievements = Array.from(new Set(
-    (base.achievements ?? []).filter(achievementId => GAME_ACHIEVEMENT_MAP[achievementId]),
-  ));
-
-  const usedInventoryIds = new Set<string>();
-  const normalizeEquippedSlot = (value: string | null | undefined) => {
-    if (!value) return null;
-
-    const exactItem = inventory.find(entry => entry.id === value && !isBrokenInventoryItem(entry) && !usedInventoryIds.has(entry.id));
-    if (exactItem) {
-      usedInventoryIds.add(exactItem.id);
-      return exactItem.id;
-    }
-
-    const legacyItem = inventory.find(entry => entry.itemId === value && !isBrokenInventoryItem(entry) && !usedInventoryIds.has(entry.id));
-    if (legacyItem) {
-      usedInventoryIds.add(legacyItem.id);
-      return legacyItem.id;
-    }
-
-    return null;
-  };
-
-  return {
-    highestLevel: Math.max(1, Math.floor(base.highestLevel || 1)),
-    inventory,
-    discoveredItemIds,
-    achievements,
-    equipped: {
-      slotA: normalizeEquippedSlot(base.equipped.slotA),
-      slotB: normalizeEquippedSlot(base.equipped.slotB),
-      slotC: normalizeEquippedSlot(base.equipped.slotC),
-    },
-    currentRun: base.currentRun ? {
-      level: Math.max(1, Math.floor(base.currentRun.level || 1)),
-      lives: Math.max(0, Math.floor(base.currentRun.lives || 0)),
-      completedLevels: Math.max(0, Math.floor(base.currentRun.completedLevels || 0)),
-      targetSpeedCpm: Math.max(1, Math.floor(base.currentRun.targetSpeedCpm || 1)),
-      levelText: typeof base.currentRun.levelText === 'string' ? base.currentRun.levelText : '',
-      result: base.currentRun.result ?? null,
-      rewardChoices: base.currentRun.rewardChoices ?? null,
-      selectedRewardMessage: base.currentRun.selectedRewardMessage ?? null,
-    } : null,
-  };
-}
-
-function getPracticeState(progress: Progress, layout: string): PracticeState {
-  if (!progress.practice) progress.practice = {};
-  if (!progress.practice[layout]) {
-    progress.practice[layout] = {
-      worstChar: null,
-      sessionsToday: 0,
-      minutesToday: 0,
-      lastDate: '',
-    };
-  }
-
-  const practiceState = progress.practice[layout];
-  if (typeof practiceState.minutesToday !== 'number') practiceState.minutesToday = 0;
-
-  const today = new Date().toISOString().slice(0, 10);
-  if (practiceState.lastDate !== today) {
-    practiceState.sessionsToday = 0;
-    practiceState.minutesToday = 0;
-    practiceState.lastDate = today;
-  }
-
-  return practiceState;
-}
-
-function getLayoutProgress(progress: Progress, layout: string): LayoutProgressState {
-  if (!progress.layoutProgress) progress.layoutProgress = {};
-  const legacyUnlocked = (progress.practice?.[layout] as { unlocked?: number } | undefined)?.unlocked;
-
-  if (!progress.layoutProgress[layout]) {
-    progress.layoutProgress[layout] = {
-      unlocked: typeof legacyUnlocked === 'number' && !Number.isNaN(legacyUnlocked) ? legacyUnlocked : 2,
-      unlockProgress: 0,
-    };
-  }
-
-  const layoutProgress = progress.layoutProgress[layout];
-  if (typeof layoutProgress.unlocked !== 'number' || Number.isNaN(layoutProgress.unlocked)) {
-    layoutProgress.unlocked = typeof legacyUnlocked === 'number' && !Number.isNaN(legacyUnlocked) ? legacyUnlocked : 2;
-  }
-  if (typeof layoutProgress.unlockProgress !== 'number' || Number.isNaN(layoutProgress.unlockProgress)) {
-    layoutProgress.unlockProgress = 0;
-  }
-
-  return layoutProgress;
-}
-
-function getNextUnlockableLetter(
-  progress: Progress,
-  layouts: LayoutsData,
-  layoutId: string,
-): string | null {
-  const currentLayoutData = layouts.layouts[layoutId];
-  if (!currentLayoutData) return null;
-
-  const useYo = resolveSettings(progress).useYo;
-  const unlockOrder = filterYoKeys(currentLayoutData.practiceUnlockOrder ?? [], useYo);
-  const layoutProgress = getLayoutProgress(progress, layoutId);
-  return unlockOrder[layoutProgress.unlocked] ?? null;
-}
-
-function normalizePracticeInsightAggregate(
-  aggregate?: Partial<PracticeInsightAggregate>,
-): PracticeInsightAggregate {
-  return {
-    hits: Math.max(0, Math.floor(aggregate?.hits ?? 0)),
-    misses: Math.max(0, Math.floor(aggregate?.misses ?? 0)),
-    totalTime: Math.max(0, Number(aggregate?.totalTime ?? 0)),
-    weakness: Math.max(0, Number(aggregate?.weakness ?? 0)),
-  };
-}
-
-function normalizePracticeBigramInsight(
-  aggregate?: Partial<PracticeBigramInsight>,
-): PracticeBigramInsight {
-  return {
-    hits: Math.max(0, Math.floor(aggregate?.hits ?? 0)),
-    misses: Math.max(0, Math.floor(aggregate?.misses ?? 0)),
-    totalTransitionTime: Math.max(0, Number(aggregate?.totalTransitionTime ?? 0)),
-    weakness: Math.max(0, Number(aggregate?.weakness ?? 0)),
-  };
-}
-
-function normalizePracticeRhythmInsight(
-  rhythm?: Partial<PracticeRhythmInsight>,
-): PracticeRhythmInsight {
-  return {
-    samples: Math.max(0, Math.floor(rhythm?.samples ?? 0)),
-    averageInterval: Math.max(0, Number(rhythm?.averageInterval ?? 0)),
-    averageDeviation: Math.max(0, Number(rhythm?.averageDeviation ?? 0)),
-    weakness: Math.max(0, Number(rhythm?.weakness ?? 0)),
-  };
-}
-
-function normalizeLayoutPracticeInsights(
-  insights?: Partial<LayoutPracticeInsights>,
-): LayoutPracticeInsights {
-  const empty = createEmptyLayoutPracticeInsights();
-  const chars = Object.fromEntries(
-    Object.entries(insights?.chars ?? {}).map(([char, aggregate]) => [
-      char.toLowerCase(),
-      normalizePracticeInsightAggregate(aggregate),
-    ]),
-  );
-  const bigrams = Object.fromEntries(
-    Object.entries(insights?.bigrams ?? {}).map(([bigram, aggregate]) => [
-      bigram.toLowerCase(),
-      normalizePracticeBigramInsight(aggregate),
-    ]),
-  );
-  const fingers = Object.fromEntries(
-    Object.entries(insights?.fingers ?? {}).map(([finger, aggregate]) => [
-      finger,
-      normalizePracticeInsightAggregate(aggregate),
-    ]),
-  ) as LayoutPracticeInsights['fingers'];
-
-  return {
-    chars,
-    bigrams,
-    fingers,
-    rows: {
-      top: normalizePracticeInsightAggregate(insights?.rows?.top ?? empty.rows.top),
-      middle: normalizePracticeInsightAggregate(insights?.rows?.middle ?? empty.rows.middle),
-      bottom: normalizePracticeInsightAggregate(insights?.rows?.bottom ?? empty.rows.bottom),
-    },
-    rhythm: normalizePracticeRhythmInsight(insights?.rhythm ?? empty.rhythm),
-    lastUpdated: typeof insights?.lastUpdated === 'string' ? insights.lastUpdated : '',
-  };
-}
-
-function resolvePracticeInsights(progress: Progress): PracticeInsightsState {
-  return {
-    byLayout: Object.fromEntries(
-      Object.entries(progress.practiceInsights?.byLayout ?? {}).map(([layoutId, insights]) => [
-        layoutId,
-        normalizeLayoutPracticeInsights(insights),
-      ]),
-    ),
-  };
-}
-
-function normalizePracticeRhythmSessionEntry(
-  entry?: Partial<PracticeRhythmSessionEntry>,
-): PracticeRhythmSessionEntry {
-  const intervals = Array.isArray(entry?.intervals)
-    ? entry!.intervals
-      .map(value => Math.max(0, Math.round(Number(value) || 0)))
-      .filter(value => value > 0)
-      .slice(0, 300)
-    : [];
-
-  const averageInterval = Math.max(0, Number(entry?.averageInterval ?? 0));
-  const averageDeviation = Math.max(0, Number(entry?.averageDeviation ?? 0));
-  const worstInterval = Math.max(0, Number(entry?.worstInterval ?? 0));
-  const mode = entry?.trainingMode === 'rhythm' ? 'rhythm' : 'normal';
-
-  return {
-    id: typeof entry?.id === 'string' && entry.id ? entry.id : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    date: typeof entry?.date === 'string' ? entry.date : new Date().toISOString(),
-    trainingMode: mode,
-    wpm: Math.max(0, Math.round(Number(entry?.wpm ?? 0) * 10) / 10),
-    acc: Math.max(0, Math.round(Number(entry?.acc ?? 0) * 10) / 10),
-    textLength: Math.max(0, Math.floor(Number(entry?.textLength ?? 0))),
-    intervals,
-    averageInterval,
-    averageDeviation,
-    rhythmScore: Math.max(0, Math.min(100, Math.round(Number(entry?.rhythmScore ?? 0) * 10) / 10)),
-    worstInterval,
-  };
-}
-
-function resolvePracticeRhythmHistory(progress: Progress): Record<string, PracticeRhythmSessionEntry[]> {
-  return Object.fromEntries(
-    Object.entries(progress.practiceRhythmHistory ?? {}).map(([layoutId, entries]) => [
-      layoutId,
-      (Array.isArray(entries) ? entries : [])
-        .map(entry => normalizePracticeRhythmSessionEntry(entry))
-        .slice(-30),
-    ]),
-  );
-}
-
-function getLayoutPracticeInsights(progress: Progress, layoutId: string): LayoutPracticeInsights {
-  if (!progress.practiceInsights) {
-    progress.practiceInsights = resolvePracticeInsights(progress);
-  }
-  if (!progress.practiceInsights.byLayout[layoutId]) {
-    progress.practiceInsights.byLayout[layoutId] = createEmptyLayoutPracticeInsights();
-  }
-  return normalizeLayoutPracticeInsights(progress.practiceInsights.byLayout[layoutId]);
-}
+export { BUILT_IN_THEMES } from './appDefaults';
 
 export interface AppContextValue {
   ready: boolean;
@@ -447,6 +94,7 @@ export interface AppContextValue {
   grantGameItem: (itemId: string) => string | null;
   equipGameItem: (slot: GameEquipmentSlot, inventoryItemId: string) => boolean;
   unequipGameItem: (slot: GameEquipmentSlot) => void;
+  repairGameItems: (amount: number, onlyEquipped?: boolean) => string[];
   wearEquippedGameItems: (args: { passed: boolean; isBoss: boolean }) => string[];
   resetGameInventory: () => void;
   resetGameProgress: () => void;
@@ -461,6 +109,76 @@ export interface AppContextValue {
 const AppContext = createContext<AppContextValue>(null!);
 export const useApp = () => useContext(AppContext);
 
+function isStringListEqual(left: string[], right: string[]) {
+  if (left.length !== right.length) return false;
+  for (let i = 0; i < left.length; i += 1) {
+    if (left[i] !== right[i]) return false;
+  }
+  return true;
+}
+
+function isGameInventoryItemEqual(
+  left: GameState['inventory'][number],
+  right: GameState['inventory'][number],
+) {
+  return (
+    left.id === right.id
+    && left.itemId === right.itemId
+    && left.durability === right.durability
+    && left.maxDurability === right.maxDurability
+  );
+}
+
+function isInventoryEqual(left: GameState['inventory'], right: GameState['inventory']) {
+  if (left.length !== right.length) return false;
+  for (let i = 0; i < left.length; i += 1) {
+    if (!isGameInventoryItemEqual(left[i]!, right[i]!)) return false;
+  }
+  return true;
+}
+
+function isEquipmentEqual(left: GameState['equipped'], right: GameState['equipped']) {
+  return (
+    left.slotA === right.slotA
+    && left.slotB === right.slotB
+    && left.slotC === right.slotC
+  );
+}
+
+function isGameRunEqual(left: GameRunState | null | undefined, right: GameRunState | null | undefined) {
+  if (left === right) return true;
+  if (!left || !right) return false;
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function stabilizeGameState(prev: GameState | null, next: GameState) {
+  if (!prev) return next;
+
+  if (
+    prev.highestLevel === next.highestLevel
+    && isInventoryEqual(prev.inventory, next.inventory)
+    && isStringListEqual(prev.discoveredItemIds, next.discoveredItemIds)
+    && isStringListEqual(prev.achievements, next.achievements)
+    && isEquipmentEqual(prev.equipped, next.equipped)
+    && isGameRunEqual(prev.currentRun, next.currentRun)
+  ) {
+    return prev;
+  }
+
+  return {
+    highestLevel: next.highestLevel,
+    inventory: isInventoryEqual(prev.inventory, next.inventory) ? prev.inventory : next.inventory,
+    discoveredItemIds: isStringListEqual(prev.discoveredItemIds, next.discoveredItemIds)
+      ? prev.discoveredItemIds
+      : next.discoveredItemIds,
+    achievements: isStringListEqual(prev.achievements, next.achievements)
+      ? prev.achievements
+      : next.achievements,
+    equipped: isEquipmentEqual(prev.equipped, next.equipped) ? prev.equipped : next.equipped,
+    currentRun: isGameRunEqual(prev.currentRun, next.currentRun) ? prev.currentRun : next.currentRun,
+  };
+}
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [layouts, setLayouts] = useState<LayoutsData>({ languages: [], layouts: {} });
@@ -472,6 +190,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const [progress, setProgress] = useState<Progress>({});
   const [customThemes, setCustomThemes] = useState<CustomThemes>({});
+  const [settingsState, setSettingsState] = useState<UserSettings>(() => resolveSettings({}));
+  const [practiceSettingsState, setPracticeSettingsState] = useState<PracticeSettings>(() => defaultPracticeSettings());
+  const [gameState, setGameState] = useState<GameState>(() => resolveGameState({}));
   const [currentLayout, setCurrentLayoutState] = useState('');
   const [currentLanguage, setCurrentLanguageState] = useState('');
   const [currentMode, setCurrentMode] = useState('practice');
@@ -482,12 +203,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const progressRef = useRef(progress);
   progressRef.current = progress;
 
-  const settings = resolveSettings(progress);
-  const practiceSettings = defaultPracticeSettings(progress.practiceSettings);
+  const settingsRef = useRef(settingsState);
+  settingsRef.current = settingsState;
+
+  const practiceSettingsRef = useRef(practiceSettingsState);
+  practiceSettingsRef.current = practiceSettingsState;
+
+  const gameStateRef = useRef<GameState>(gameState);
+  gameStateRef.current = gameState;
+
+  const settings = settingsState;
+  const practiceSettings = practiceSettingsState;
   const practiceInsights = resolvePracticeInsights(progress);
   const practiceRhythmHistory = resolvePracticeRhythmHistory(progress);
-  const gameState = resolveGameState(progress);
-
   const layoutsForLanguage = useMemo<[string, Layout][]>(() => {
     if (!currentLanguage) return [];
     return Object.entries(layouts.layouts).filter(([, layout]) => layout.lang === currentLanguage);
@@ -495,8 +223,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const languages = layouts.languages ?? [];
 
+  const customThemesRef = useRef(customThemes);
+  customThemesRef.current = customThemes;
+
   const applyThemeDOM = useCallback((name: string, themesOverride?: CustomThemes) => {
-    const themes = themesOverride ?? customThemes;
+    const themes = themesOverride ?? customThemesRef.current;
     if (BUILT_IN_THEMES.includes(name)) {
       document.body.setAttribute('data-theme', name);
       const root = document.documentElement.style;
@@ -520,7 +251,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       root.setProperty('--red', colors.red);
       root.setProperty('--yellow', colors.yellow);
     }
-  }, [customThemes]);
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -530,19 +261,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
         window.api.getCustomThemes(),
       ]);
 
+      const normalizedProgress = {
+        ...loadedProgress,
+        game: resolveGameState(loadedProgress),
+      };
+      const normalizedGameState = stabilizeGameState(gameStateRef.current, normalizedProgress.game);
+      const normalizedSettings = resolveSettings(normalizedProgress);
+      const normalizedPracticeSettings = defaultPracticeSettings(normalizedProgress.practiceSettings);
+
       setLayouts(loadedLayouts);
-      setProgress(loadedProgress);
+      setProgress(normalizedProgress);
+      setSettingsState(normalizedSettings);
+      setPracticeSettingsState(normalizedPracticeSettings);
+      setGameState(normalizedGameState);
       setCustomThemes(loadedThemes);
 
-      const resolvedSettings = resolveSettings(loadedProgress);
-
-      let nextLanguage = resolvedSettings.language;
+      let nextLanguage = normalizedSettings.language;
       if (!nextLanguage || !(loadedLayouts.languages ?? []).some((language: LanguageInfo) => language.id === nextLanguage)) {
         nextLanguage = loadedLayouts.languages?.[0]?.id ?? 'en';
       }
       setCurrentLanguageState(nextLanguage);
 
-      let nextLayout = resolvedSettings.layout;
+      let nextLayout = normalizedSettings.layout;
       const compatibleLayouts = Object.entries(loadedLayouts.layouts)
         .filter(([, layout]) => layout.lang === nextLanguage);
       if (!nextLayout || !loadedLayouts.layouts[nextLayout] || loadedLayouts.layouts[nextLayout].lang !== nextLanguage) {
@@ -553,10 +293,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const words = await window.api.getWords(nextLanguage);
       setAllWords(words);
 
-      applyThemeDOM(resolvedSettings.theme ?? 'dark-orange', loadedThemes);
+      void window.api.saveProgress(normalizedProgress);
+
+      applyThemeDOM(normalizedSettings.theme ?? 'dark-orange', loadedThemes);
       setReady(true);
     })();
-  }, [applyThemeDOM]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- runs once on mount
+
+  /* ─── REMOVED sync effects ───
+     saveSetting / savePracticeSetting / commitGameState already set both the
+     derived state (settingsState, practiceSettingsState, gameState) AND progress
+     in one batch.  Extra useEffects that re-derive state from progress.settings /
+     progress.practiceSettings / progress.game used to fire one render later and
+     overwrite the freshly-set value with a stale-closure version — causing
+     settings, themes, and inventory to revert silently.
+     The initial load is handled by the init effect above, and saveProgressCb
+     explicitly re-resolves everything, so these effects are not needed.
+  ─────────────────────────────── */
+
+  useEffect(() => {
+    if (!ready) return;
+    applyThemeDOM(settings.theme ?? 'dark-orange');
+  }, [ready, settings.theme, customThemes]); // eslint-disable-line react-hooks/exhaustive-deps -- applyThemeDOM is stable (reads customThemes via ref)
 
   const applyTheme = useCallback((name: string) => {
     applyThemeDOM(name);
@@ -573,8 +331,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const setCurrentLayout = useCallback((layout: string) => {
     setCurrentLayoutState(layout);
+    const nextSettings = { ...settingsRef.current, layout };
+    setSettingsState(nextSettings);
     setProgress(prev => {
-      const next = { ...prev, settings: { ...resolveSettings(prev), layout } };
+      const next = { ...prev, settings: nextSettings };
       window.api.saveProgress(next);
       return next;
     });
@@ -586,10 +346,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       .filter(([, layout]) => layout.lang === language);
     const nextLayout = compatibleLayouts[0]?.[0] ?? '';
     setCurrentLayoutState(nextLayout);
+    const nextSettings = { ...settingsRef.current, language, layout: nextLayout };
+    setSettingsState(nextSettings);
     setProgress(prev => {
       const next = {
         ...prev,
-        settings: { ...resolveSettings(prev), language, layout: nextLayout },
+        settings: nextSettings,
       };
       window.api.saveProgress(next);
       return next;
@@ -606,18 +368,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [ready, currentLanguage, reloadWords]);
 
   const saveSetting = useCallback(<K extends keyof UserSettings>(key: K, val: UserSettings[K]) => {
+    const nextSettings = { ...settingsRef.current, [key]: val };
+    setSettingsState(nextSettings);
     setProgress(prev => {
-      const next = { ...prev, settings: { ...resolveSettings(prev), [key]: val } };
+      const next = { ...prev, settings: nextSettings };
       window.api.saveProgress(next);
       return next;
     });
   }, []);
 
   const savePracticeSetting = useCallback(<K extends keyof PracticeSettings>(key: K, val: PracticeSettings[K]) => {
+    const nextPracticeSettings = { ...practiceSettingsRef.current, [key]: val };
+    setPracticeSettingsState(nextPracticeSettings);
     setProgress(prev => {
       const next = {
         ...prev,
-        practiceSettings: { ...defaultPracticeSettings(prev.practiceSettings), [key]: val },
+        practiceSettings: nextPracticeSettings,
       };
       window.api.saveProgress(next);
       return next;
@@ -625,387 +391,61 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const saveProgressCb = useCallback((nextProgress: Progress) => {
+    setSettingsState(resolveSettings(nextProgress));
+    setPracticeSettingsState(defaultPracticeSettings(nextProgress.practiceSettings));
+    setGameState(prev => stabilizeGameState(prev, resolveGameState(nextProgress)));
     setProgress(nextProgress);
     window.api.saveProgress(nextProgress);
   }, []);
 
   const saveCustomThemesCb = useCallback((themes: CustomThemes) => {
+    customThemesRef.current = themes;
     setCustomThemes(themes);
     window.api.saveCustomThemes(themes);
   }, []);
 
-  const saveCharStats = useCallback((charStats: Record<string, CharStat>) => {
-    setProgress(prev => {
-      const next = { ...prev };
-      if (!next.keyStats) next.keyStats = {};
-      if (!next.keyStats[currentLayout]) next.keyStats[currentLayout] = {};
+  const {
+    savePracticeInsights,
+    savePracticeRhythmSession,
+  } = useMemo(() => createPracticeActions({
+    setProgress,
+    persistProgress: window.api.saveProgress,
+    currentLayout,
+  }), [currentLayout]);
 
-      const layoutStats = next.keyStats[currentLayout];
-      for (const [char, data] of Object.entries(charStats)) {
-        if (!layoutStats[char]) layoutStats[char] = { hits: 0, misses: 0, totalTime: 0 };
-        layoutStats[char].hits += data.hits;
-        layoutStats[char].misses += data.misses;
-        layoutStats[char].totalTime += data.totalTime;
-      }
+  const {
+    saveCharStats,
+    saveHistory,
+  } = useMemo(() => createStatsActions({
+    setProgress,
+    persistProgress: window.api.saveProgress,
+    currentLayout,
+  }), [currentLayout]);
 
-      window.api.saveProgress(next);
-      return { ...next };
-    });
-  }, [currentLayout]);
-
-  const savePracticeInsights = useCallback((insights: LayoutPracticeInsights) => {
-    setProgress(prev => {
-      const next = { ...prev };
-      if (!next.practiceInsights) {
-        next.practiceInsights = resolvePracticeInsights(prev);
-      }
-      next.practiceInsights.byLayout[currentLayout] = normalizeLayoutPracticeInsights(insights);
-      window.api.saveProgress(next);
-      return { ...next };
-    });
-  }, [currentLayout]);
-
-  const savePracticeRhythmSession = useCallback((
-    entry: Omit<PracticeRhythmSessionEntry, 'id' | 'date'> & { id?: string; date?: string },
-  ) => {
-    setProgress(prev => {
-      const next = { ...prev };
-      if (!next.practiceRhythmHistory) {
-        next.practiceRhythmHistory = resolvePracticeRhythmHistory(prev);
-      }
-      const normalized = normalizePracticeRhythmSessionEntry(entry);
-      const current = next.practiceRhythmHistory[currentLayout] ?? [];
-      next.practiceRhythmHistory[currentLayout] = [...current, normalized].slice(-30);
-      window.api.saveProgress(next);
-      return { ...next };
-    });
-  }, [currentLayout]);
-
-  const saveHistory = useCallback((
-    mode: 'test' | 'lesson' | 'practice' | 'game',
-    wpm: number,
-    acc: number,
-    extras?: { trainingMode?: PracticeTrainingMode; charStats?: Record<string, CharStat> },
-  ) => {
-    setProgress(prev => {
-      const next = { ...prev };
-      if (!next.history) next.history = {};
-      if (!next.history[currentLayout]) next.history[currentLayout] = [];
-
-      next.history[currentLayout].push({
-        date: new Date().toISOString(),
-        mode,
-        wpm: Math.round(wpm),
-        acc: Math.round(acc * 10) / 10,
-        trainingMode: extras?.trainingMode,
-        charStats: extras?.charStats
-          ? Object.fromEntries(
-            Object.entries(extras.charStats).map(([char, stat]) => [
-              char,
-              {
-                hits: Math.max(0, Math.floor(stat.hits || 0)),
-                misses: Math.max(0, Math.floor(stat.misses || 0)),
-                totalTime: Math.max(0, Number(stat.totalTime || 0)),
-              },
-            ]),
-          )
-          : undefined,
-      });
-
-      if (next.history[currentLayout].length > 500) {
-        next.history[currentLayout] = next.history[currentLayout].slice(-500);
-      }
-
-      window.api.saveProgress(next);
-      return { ...next };
-    });
-  }, [currentLayout]);
-
-  const saveGameState = useCallback((game: GameState) => {
-    setProgress(prev => {
-      const next = { ...prev, game: resolveGameState({ ...prev, game }) };
-      window.api.saveProgress(next);
-      return next;
-    });
-  }, []);
-
-  const grantGameItem = useCallback((itemId: string) => {
-    const item = GAME_ITEM_MAP[itemId];
-    if (!item) return null;
-
-    const grantedId = createInventoryItemId();
-    setProgress(prev => {
-      const game = resolveGameState(prev);
-      const next = {
-        ...prev,
-        game: {
-          ...game,
-          inventory: [
-            ...game.inventory,
-            {
-              id: grantedId,
-              itemId,
-              durability: item.maxDurability ?? null,
-              maxDurability: item.maxDurability ?? null,
-            },
-          ],
-          discoveredItemIds: Array.from(new Set([...game.discoveredItemIds, itemId])),
-        },
-      };
-      window.api.saveProgress(next);
-      return next;
-    });
-
-    return grantedId;
-  }, []);
-
-  const equipGameItem = useCallback((slot: GameEquipmentSlot, inventoryItemId: string) => {
-    let equipped = false;
-
-    setProgress(prev => {
-      const game = resolveGameState(prev);
-      const inventoryItem = game.inventory.find(entry => entry.id === inventoryItemId);
-      if (!inventoryItem || isBrokenInventoryItem(inventoryItem)) return prev;
-
-      const item = GAME_ITEM_MAP[inventoryItem.itemId];
-      if (!item) return prev;
-
-      const alreadyEquippedElsewhere = Object.entries(game.equipped)
-        .some(([slotKey, entryId]) => slotKey !== slot && entryId === inventoryItemId);
-      if (alreadyEquippedElsewhere) return prev;
-
-      equipped = true;
-      const next = {
-        ...prev,
-        game: {
-          ...game,
-          equipped: { ...game.equipped, [slot]: inventoryItemId },
-        },
-      };
-      window.api.saveProgress(next);
-      return next;
-    });
-
-    return equipped;
-  }, []);
-
-  const unequipGameItem = useCallback((slot: GameEquipmentSlot) => {
-    setProgress(prev => {
-      const game = resolveGameState(prev);
-      if (!game.equipped[slot]) return prev;
-
-      const next = {
-        ...prev,
-        game: {
-          ...game,
-          equipped: { ...game.equipped, [slot]: null },
-        },
-      };
-      window.api.saveProgress(next);
-      return next;
-    });
-  }, []);
-
-  const wearEquippedGameItems = useCallback(({ passed, isBoss }: { passed: boolean; isBoss: boolean }) => {
-    const brokenItemIds: string[] = [];
-
-    setProgress(prev => {
-      const game = resolveGameState(prev);
-      const equippedIds = new Set(Object.values(game.equipped).filter((value): value is string => Boolean(value)));
-      let changed = false;
-
-      const inventory = game.inventory.map(entry => {
-        if (!equippedIds.has(entry.id)) return entry;
-
-        const item = GAME_ITEM_MAP[entry.itemId];
-        if (!item?.durabilityRules || entry.maxDurability == null || entry.durability == null) return entry;
-        if (item.bossOnly && !isBoss) return entry;
-
-        const wear = isBoss
-          ? (passed ? item.durabilityRules.bossPass : item.durabilityRules.bossFail)
-          : (passed ? item.durabilityRules.normalPass : item.durabilityRules.normalFail);
-        if (wear <= 0) return entry;
-
-        changed = true;
-        const nextDurability = Math.max(0, entry.durability - wear);
-        if (nextDurability <= 0) brokenItemIds.push(entry.id);
-        return { ...entry, durability: nextDurability };
-      });
-
-      if (!changed) return prev;
-
-      const next = {
-        ...prev,
-        game: {
-          ...game,
-          inventory,
-          equipped: {
-            slotA: brokenItemIds.includes(game.equipped.slotA ?? '') ? null : game.equipped.slotA,
-            slotB: brokenItemIds.includes(game.equipped.slotB ?? '') ? null : game.equipped.slotB,
-            slotC: brokenItemIds.includes(game.equipped.slotC ?? '') ? null : game.equipped.slotC,
-          },
-        },
-      };
-      window.api.saveProgress(next);
-      return next;
-    });
-
-    return brokenItemIds;
-  }, []);
-
-  const resetGameInventory = useCallback(() => {
-    setProgress(prev => {
-      const game = resolveGameState(prev);
-      const next = {
-        ...prev,
-        game: {
-          ...game,
-          inventory: [],
-          discoveredItemIds: [],
-          equipped: {
-            slotA: null,
-            slotB: null,
-            slotC: null,
-          },
-          currentRun: null,
-        },
-      };
-      window.api.saveProgress(next);
-      return next;
-    });
-  }, []);
-
-  const resetGameProgress = useCallback(() => {
-    setProgress(prev => {
-      const game = resolveGameState(prev);
-      const next = {
-        ...prev,
-        game: {
-          ...game,
-          highestLevel: 1,
-          inventory: [],
-          discoveredItemIds: [],
-          achievements: [],
-          equipped: {
-            slotA: null,
-            slotB: null,
-            slotC: null,
-          },
-          currentRun: null,
-        },
-      };
-      window.api.saveProgress(next);
-      return next;
-    });
-  }, []);
-
-  const saveCurrentGameRun = useCallback((run: GameRunState | null) => {
-    setProgress(prev => {
-      const game = resolveGameState(prev);
-      const next = {
-        ...prev,
-        game: {
-          ...game,
-          currentRun: run,
-        },
-      };
-      window.api.saveProgress(next);
-      return next;
-    });
-  }, []);
-
-  const clearCurrentGameRun = useCallback((destroyItems = false) => {
-    setProgress(prev => {
-      const game = resolveGameState(prev);
-      const next = {
-        ...prev,
-        game: {
-          ...game,
-          currentRun: null,
-          ...(destroyItems ? {
-            inventory: [],
-            discoveredItemIds: [],
-            equipped: {
-              slotA: null,
-              slotB: null,
-              slotC: null,
-            },
-          } : {}),
-        },
-      };
-      window.api.saveProgress(next);
-      return next;
-    });
-  }, []);
-
-  const markGameLevelReached = useCallback((level: number) => {
-    setProgress(prev => {
-      const game = resolveGameState(prev);
-      const normalizedLevel = Math.max(1, Math.floor(level || 1));
-      if (normalizedLevel <= game.highestLevel) return prev;
-
-      const next = {
-        ...prev,
-        game: {
-          ...game,
-          highestLevel: normalizedLevel,
-        },
-      };
-      window.api.saveProgress(next);
-      return next;
-    });
-  }, []);
-
-  const peekNextGameLetter = useCallback(() => {
-    return getNextUnlockableLetter(progressRef.current, layouts, currentLayout);
-  }, [currentLayout, layouts]);
-
-  const unlockNextGameLetter = useCallback(() => {
-    const unlockedChar = getNextUnlockableLetter(progressRef.current, layouts, currentLayout);
-    if (!unlockedChar) return null;
-
-    setProgress(prev => {
-      const next = { ...prev };
-      const layoutProgress = getLayoutProgress(next, currentLayout);
-      layoutProgress.unlocked += 1;
-      layoutProgress.unlockProgress = 0;
-      window.api.saveProgress(next);
-      return { ...next };
-    });
-
-    return unlockedChar;
-  }, [currentLayout, layouts]);
-
-  const unlockGameAchievements = useCallback((achievementIds: string[]) => {
-    const currentProgress = progressRef.current;
-    const game = resolveGameState(currentProgress);
-    const knownAchievements = new Set(game.achievements);
-    const unlocked: GameAchievementDefinition[] = [];
-
-    for (const achievementId of achievementIds) {
-      const achievement = GAME_ACHIEVEMENT_MAP[achievementId];
-      if (!achievement || knownAchievements.has(achievementId)) continue;
-      knownAchievements.add(achievementId);
-      unlocked.push(achievement);
-    }
-
-    if (!unlocked.length) return unlocked;
-
-    setProgress(prev => {
-      const resolvedGame = resolveGameState(prev);
-      const next = {
-        ...prev,
-        game: {
-          ...resolvedGame,
-          achievements: Array.from(knownAchievements),
-        },
-      };
-      window.api.saveProgress(next);
-      return next;
-    });
-
-    return unlocked;
-  }, []);
+  const {
+    saveGameState,
+    grantGameItem,
+    equipGameItem,
+    unequipGameItem,
+    wearEquippedGameItems,
+    repairGameItems,
+    resetGameInventory,
+    resetGameProgress,
+    saveCurrentGameRun,
+    clearCurrentGameRun,
+    markGameLevelReached,
+    peekNextGameLetter,
+    unlockNextGameLetter,
+    unlockGameAchievements,
+  } = useMemo(() => createGameActions({
+    setProgress,
+    setGameState,
+    persistProgress: window.api.saveProgress,
+    progressRef,
+    gameStateRef,
+    currentLayout,
+    layouts,
+  }), [currentLayout, layouts]);
 
   const fmtSpeed = useCallback((wpm: number) => formatSpeed(wpm, settings.speedUnit), [settings.speedUnit]);
   const spdLabel = speedLabel(settings.speedUnit);
@@ -1061,6 +501,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     grantGameItem,
     equipGameItem,
     unequipGameItem,
+    repairGameItems,
     wearEquippedGameItems,
     resetGameInventory,
     resetGameProgress,
@@ -1074,3 +515,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
+
+
+

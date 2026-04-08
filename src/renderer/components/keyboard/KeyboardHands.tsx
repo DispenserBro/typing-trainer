@@ -1,5 +1,5 @@
 import { useMemo, type CSSProperties } from 'react';
-import handsSvgRaw from '../../../data/hands.svg';
+import handsSvgRaw from '../../../../data/hands.svg';
 
 export type HandPoseSide = 'left' | 'right' | 'both';
 

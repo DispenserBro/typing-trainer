@@ -4,6 +4,7 @@ node_modules/
 # Build output
 dist/
 dist-debug/
+dist-build/
 
 # Electron Builder output
 release/

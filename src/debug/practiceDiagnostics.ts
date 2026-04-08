@@ -4,7 +4,7 @@ import {
   filterYoWords,
   generatePracticeText,
   type NgramModel,
-} from '../renderer/engine';
+} from '../core/engine';
 import type {
   LayoutPracticeInsights,
   LayoutsData,

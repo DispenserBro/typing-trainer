@@ -1,44 +1,16 @@
-import { Fragment, useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { useTypingSession } from '../hooks/useTypingSession';
-import { TextDisplay } from '../components/TextDisplay';
 import {
   generateLessonExerciseText,
   getExerciseNamesForLesson,
-  getLessonKeys,
   EXERCISE_COUNT,
-  filterYoKeys,
-} from '../engine';
-import { Check, Play, ArrowLeft, ArrowRight, ChevronDown, ChevronRight } from 'lucide-react';
-import type { FingerName, Lesson } from '../../shared/types';
-
-/* ─── helpers ────────────────────────────────────────── */
-function keysLabel(keys: string[]): string {
-  if (keys.length <= 2) return keys.map(k => k.toUpperCase()).join(' и ');
-  return keys.slice(0, -1).map(k => k.toUpperCase()).join(', ')
-    + ' и ' + keys[keys.length - 1].toUpperCase();
-}
-
-function sectionLabel(section?: string): string {
-  return section ?? 'Уроки';
-}
-
-const LESSON_ROW_LABELS = {
-  top: 'верхний ряд',
-  middle: 'домашний ряд',
-  bottom: 'нижний ряд',
-} as const;
-
-const LESSON_FINGER_LABELS: Record<FingerName, string> = {
-  index_left: 'левый указательный',
-  index_right: 'правый указательный',
-  middle_left: 'левый средний',
-  middle_right: 'правый средний',
-  ring_left: 'левый безымянный',
-  ring_right: 'правый безымянный',
-  pinky_left: 'левый мизинец',
-  pinky_right: 'правый мизинец',
-};
+} from '../../core/engine';
+import type { Lesson } from '../../shared/types';
+import { LessonsDetailView } from '../components/lessons/LessonsDetailView';
+import { LessonsExerciseView } from '../components/lessons/LessonsExerciseView';
+import { LessonsListView } from '../components/lessons/LessonsListView';
+import { getLessonFocusLabel, keysLabel, resolveLesson, sectionLabel } from '../../core/lessons/utils';
 
 /* ═══════════════════════════════════════════════════════ */
 export function LessonsPage() {
@@ -94,20 +66,9 @@ export function LessonsPage() {
   const [showOverlay, setShowOverlay] = useState(false);
   const [result, setResult] = useState<{ wpm: number; acc: number; passed: boolean } | null>(null);
 
-  const resolveLesson = useCallback((lesson: Lesson | null | undefined): Lesson | null => {
-    if (!lesson) return null;
-    const resolvedBigrams = lesson.bigramSet
-      ? (bigramSets[lesson.bigramSet] ?? lesson.bigrams ?? [])
-      : (lesson.bigrams ?? []);
-    const withBigrams: Lesson = {
-      ...lesson,
-      bigrams: resolvedBigrams,
-    };
-    return {
-      ...withBigrams,
-      keys: filterYoKeys(getLessonKeys(withBigrams, layout), useYo),
-    };
-  }, [bigramSets, layout, useYo]);
+  const resolveCurrentLesson = useCallback((lesson: Lesson | null | undefined): Lesson | null => (
+    resolveLesson(lesson, bigramSets, layout, useYo)
+  ), [bigramSets, layout, useYo]);
 
   const onFinish = useCallback((wpm: number, _acc: number, _elapsed: number, ses: any) => {
     const acc = _acc;
@@ -142,27 +103,27 @@ export function LessonsPage() {
 
   const openExercise = useCallback((exIdx: number) => {
     if (activeLesson === null) return;
-    const les = resolveLesson(lessons[activeLesson]);
+    const les = resolveCurrentLesson(lessons[activeLesson]);
     if (!les) return;
     let keys = les.keys;
     if (les.type !== 'row' && les.type !== 'bigrams') {
       // Keep classic cumulative behavior for finger lessons.
       let cumulative: string[] = [];
       for (let i = 0; i <= activeLesson; i++) {
-        cumulative.push(...(resolveLesson(lessons[i])?.keys ?? []));
+        cumulative.push(...(resolveCurrentLesson(lessons[i])?.keys ?? []));
       }
       keys = cumulative;
     }
     const normalizedLesson: Lesson = {
       ...les,
-      keys: filterYoKeys(keys, useYo),
+      keys,
     };
     const text = generateLessonExerciseText(normalizedLesson, layout, exIdx, 20, ngramModel ?? undefined);
     setActiveExercise(exIdx);
     setExerciseText(text);
     setShowOverlay(true);
     setResult(null);
-  }, [activeLesson, lessons, useYo, layout, ngramModel, resolveLesson]);
+  }, [activeLesson, lessons, layout, ngramModel, resolveCurrentLesson]);
 
   const startExercise = useCallback(() => {
     if (!exerciseText) return;
@@ -232,22 +193,6 @@ export function LessonsPage() {
     return () => clearInterval(iv);
   }, [session.active]);
 
-  const lessonFocusLabel = useCallback((lesson: Lesson | null, fallbackKeys?: string[]) => {
-    if (!lesson) return '';
-    if (lesson.type === 'bigrams' && lesson.bigrams?.length) {
-      return lesson.bigrams.join(' · ');
-    }
-    if (lesson.type === 'transitions') {
-      if (lesson.transitionRows?.length) {
-        return lesson.transitionRows.map(row => LESSON_ROW_LABELS[row]).join(' ⇄ ');
-      }
-      if (lesson.focusFingers?.length) {
-        return lesson.focusFingers.map(finger => LESSON_FINGER_LABELS[finger]).join(' ⇄ ');
-      }
-    }
-    return keysLabel(fallbackKeys ?? lesson.keys);
-  }, []);
-
   const openSiblingLesson = useCallback((lessonIndex: number | null) => {
     if (lessonIndex === null) return;
     stop();
@@ -260,9 +205,9 @@ export function LessonsPage() {
 
   /* ─── Current lesson's keys for header display ──── */
   const lessonKeys = activeLesson !== null
-    ? (resolveLesson(lessons[activeLesson])?.keys ?? [])
+    ? (resolveCurrentLesson(lessons[activeLesson])?.keys ?? [])
     : [];
-  const activeLessonData = activeLesson !== null ? resolveLesson(lessons[activeLesson]) : null;
+  const activeLessonData = activeLesson !== null ? resolveCurrentLesson(lessons[activeLesson]) : null;
   const activeLessonExerciseNames = activeLessonData ? getExerciseNamesForLesson(activeLessonData) : null;
   const activeLessonSection = activeLessonData ? sectionLabel(activeLessonData.section) : null;
   const activeSectionLessonIndexes = useMemo(
@@ -299,59 +244,31 @@ export function LessonsPage() {
      ═══════════════════════════════════════════════════ */
   if (activeLesson !== null && activeExercise !== null) {
     return (
-      <section className="mode-panel active">
-        <div className="panel-header"><h1>Уроки</h1></div>
-        <h3 className="lesson-active-title">
-          {activeLessonData?.name ?? keysLabel(lessonKeys)} — {activeLessonExerciseNames?.[activeExercise] ?? ''}
-        </h3>
-        {activeLessonData?.description && (
-          <p className="lesson-active-subtitle">
-            {activeLessonData.description}
-          </p>
-        )}
-        <p className="lesson-active-keys">{lessonFocusLabel(activeLessonData, lessonKeys)}</p>
-        <div className="stats-bar">
-          <div className="metric"><b>{fmtSpeed(wpm)}</b> <small className="speed-unit">{spdLabel}</small></div>
-          <div className="metric"><b>{Math.round(acc)}</b>%</div>
-        </div>
-        <TextDisplay
-          text={session.active ? session.text : exerciseText}
-          pos={session.active ? session.pos : 0}
-          errPositions={session.active ? session.errPositions : new Set()}
-          waitingForSpace={waitingForSpace}
-          overlay={showOverlay && !session.active && !result ? 'Нажмите здесь, чтобы начать' : null}
-          onOverlayClick={startExercise}
-        />
-        {result && (
-          <div className="result-card">
-            <h3>Упражнение завершено!</h3>
-            <div className="result-big">{fmtSpeed(result.wpm)} {spdLabel}</div>
-            <p>Точность: <b>{Math.round(result.acc)}%</b></p>
-            <p>{result.passed
-              ? <span style={{ color: 'var(--green)' }}><Check size={16} style={{ verticalAlign: 'middle' }} /> Пройдено!</span>
-              : 'Нужна точность ≥ 80%'}
-            </p>
-            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-              <button className="btn-secondary" onClick={retryExercise}>Повторить</button>
-              {result.passed && activeExercise + 1 < EXERCISE_COUNT && (
-                <button className="btn-accent" onClick={nextExercise}>Далее <ArrowRight size={14} style={{ verticalAlign: 'middle' }} /></button>
-              )}
-              {result.passed && activeExercise + 1 >= EXERCISE_COUNT && (
-                nextLessonTarget !== null ? (
-                  <button className="btn-accent" onClick={() => openSiblingLesson(nextLessonTarget)}>
-                    {nextLessonTargetLabel} <ArrowRight size={14} style={{ verticalAlign: 'middle' }} />
-                  </button>
-                ) : (
-                  <button className="btn-accent" onClick={() => { setActiveLesson(null); setActiveExercise(null); }}>
-                    Готово <Check size={14} style={{ verticalAlign: 'middle' }} />
-                  </button>
-                )
-              )}
-            </div>
-          </div>
-        )}
-        <button className="btn-secondary mt-12" onClick={goBack}><ArrowLeft size={14} style={{ verticalAlign: 'middle' }} /> Назад</button>
-      </section>
+      <LessonsExerciseView
+        title={`${activeLessonData?.name ?? keysLabel(lessonKeys)} — ${activeLessonExerciseNames?.[activeExercise] ?? ''}`}
+        subtitle={activeLessonData?.description ?? null}
+        focusLabel={getLessonFocusLabel(activeLessonData, lessonKeys)}
+        currentSpeed={fmtSpeed(wpm)}
+        speedUnit={spdLabel}
+        currentAccuracy={acc}
+        sessionActive={session.active}
+        sessionText={session.text}
+        sessionPos={session.pos}
+        sessionErrPositions={session.errPositions}
+        exerciseText={exerciseText}
+        waitingForSpace={waitingForSpace}
+        showOverlay={showOverlay}
+        result={result}
+        hasNextExercise={activeExercise + 1 < EXERCISE_COUNT}
+        hasNextLessonTarget={nextLessonTarget !== null}
+        nextLessonTargetLabel={nextLessonTargetLabel}
+        onOverlayClick={startExercise}
+        onRetry={retryExercise}
+        onNextExercise={nextExercise}
+        onOpenNextLesson={() => openSiblingLesson(nextLessonTarget)}
+        onDone={() => { setActiveLesson(null); setActiveExercise(null); }}
+        onBack={goBack}
+      />
     );
   }
 
@@ -360,69 +277,24 @@ export function LessonsPage() {
      ═══════════════════════════════════════════════════ */
   if (activeLesson !== null) {
     const done = lessonsDone[activeLesson] ?? 0;
-
     return (
-      <section className="mode-panel active">
-        <div className="panel-header"><h1>Уроки</h1></div>
-        <h3 className="lesson-active-title">
-          {activeLessonData?.name ?? keysLabel(lessonKeys)}
-        </h3>
-        <p className="lesson-active-subtitle">
-          {activeLessonData?.description ?? sectionLabel(activeLessonData?.section)}
-        </p>
-        {activeLessonSection && activeSectionLessonIndexes.length > 0 && (
-          <div className="lesson-section-progress">
-            <span className="lesson-section-progress__label">{activeLessonSection}</span>
-            <span className="lesson-section-progress__value">
-              Урок {activeSectionPosition + 1} из {activeSectionLessonIndexes.length}
-            </span>
-          </div>
-        )}
-        <p className="lesson-active-keys">{lessonFocusLabel(activeLessonData, lessonKeys)}</p>
-        <div className="exercise-list">
-          {Array.from({ length: EXERCISE_COUNT }, (_, i) => {
-            const status = i < done ? 'done' : i === done ? 'current' : 'locked';
-            return (
-              <div
-                key={i}
-                className={`exercise-card ${status}`}
-                onClick={() => status !== 'locked' && openExercise(i)}
-              >
-                <div className="exercise-info">
-                  <span className="exercise-name">{activeLessonExerciseNames?.[i] ?? `Упражнение ${i + 1}`}</span>
-                  {status === 'done' && <span className="exercise-check"><Check size={16} /></span>}
-                  {status === 'current' && <span className="exercise-play"><Play size={16} /></span>}
-                </div>
-                <div className="exercise-progress-bar">
-                  {Array.from({ length: EXERCISE_COUNT }, (_, j) => (
-                    <div
-                      key={j}
-                      className={`progress-segment ${j < done ? 'filled' : ''}`}
-                    />
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        <div className="lesson-section-nav">
-          <button
-            className="btn-secondary"
-            onClick={() => openSiblingLesson(prevLessonInSection)}
-            disabled={prevLessonInSection === null}
-          >
-            <ArrowLeft size={14} style={{ verticalAlign: 'middle' }} /> Предыдущий урок
-          </button>
-          <button
-            className="btn-secondary"
-            onClick={() => openSiblingLesson(nextLessonTarget)}
-            disabled={nextLessonTarget === null}
-          >
-            {nextLessonTargetLabel} <ArrowRight size={14} style={{ verticalAlign: 'middle' }} />
-          </button>
-        </div>
-        <button className="btn-secondary mt-12" onClick={goBack}><ArrowLeft size={14} style={{ verticalAlign: 'middle' }} /> Назад</button>
-      </section>
+      <LessonsDetailView
+        title={activeLessonData?.name ?? keysLabel(lessonKeys)}
+        subtitle={activeLessonData?.description ?? sectionLabel(activeLessonData?.section)}
+        sectionTitle={activeLessonSection}
+        sectionPosition={activeSectionPosition}
+        sectionCount={activeSectionLessonIndexes.length}
+        focusLabel={getLessonFocusLabel(activeLessonData, lessonKeys)}
+        exerciseNames={activeLessonExerciseNames}
+        done={done}
+        nextLessonTargetLabel={nextLessonTargetLabel}
+        hasPrevLesson={prevLessonInSection !== null}
+        hasNextLesson={nextLessonTarget !== null}
+        onOpenExercise={openExercise}
+        onOpenPrevLesson={() => openSiblingLesson(prevLessonInSection)}
+        onOpenNextLesson={() => openSiblingLesson(nextLessonTarget)}
+        onBack={goBack}
+      />
     );
   }
 
@@ -430,58 +302,19 @@ export function LessonsPage() {
      VIEW: Lesson list (cards)
      ═══════════════════════════════════════════════════ */
   return (
-    <section className="mode-panel active">
-      <div className="panel-header"><h1>Уроки</h1></div>
-      <div className="lesson-grid">
-        {lessons.map((les, idx) => {
-          const done = lessonsDone[idx] ?? 0;
-          const allDone = done >= EXERCISE_COUNT;
-          const resolvedLesson = resolveLesson(les);
-          const keys = resolvedLesson?.keys ?? [];
-          const currentSection = sectionLabel(les.section);
-          const prevSection = idx > 0 ? sectionLabel(lessons[idx - 1]?.section) : null;
-          const showSection = idx === 0 || prevSection !== currentSection;
-          const isCollapsed = !!collapsedSections[currentSection];
-          const unlocked = getSectionUnlockState(idx);
-          return (
-            <Fragment key={les.id}>
-              {showSection && (
-                <button
-                  type="button"
-                  className={`lesson-section-title${isCollapsed ? ' collapsed' : ''}`}
-                  onClick={() => toggleSection(currentSection)}
-                >
-                  {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
-                  <span>{currentSection}</span>
-                </button>
-              )}
-              {!isCollapsed && (
-                <div
-                  className={`lesson-card${allDone ? ' completed' : ''}${!unlocked ? ' locked' : ''}`}
-                  onClick={() => unlocked && openLesson(idx)}
-                >
-                  <div className="lesson-card-top">
-                    <span className="lesson-num">{idx + 1}</span>
-                    <span className="lesson-name">{les.name}</span>
-                  </div>
-                  {les.description && <span className="lesson-desc">{les.description}</span>}
-                  <span className="lesson-keys">{lessonFocusLabel(resolvedLesson, keys)}</span>
-                  {!unlocked && (
-                    <span className="lesson-locked-note">
-                      Сначала заверши предыдущий урок в этой секции
-                    </span>
-                  )}
-                  <div className="lesson-progress-bar">
-                    {Array.from({ length: EXERCISE_COUNT }, (_, j) => (
-                      <div key={j} className={`progress-segment ${j < done ? 'filled' : ''}`} />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </Fragment>
-          );
-        })}
-      </div>
-    </section>
+    <LessonsListView
+      lessons={lessons}
+      lessonsDone={lessonsDone}
+      collapsedSections={collapsedSections}
+      onToggleSection={toggleSection}
+      onOpenLesson={openLesson}
+      sectionLabel={sectionLabel}
+      lessonFocusLabel={getLessonFocusLabel}
+      resolveLessonAtIndex={(index) => resolveCurrentLesson(lessons[index])}
+      getSectionUnlockState={getSectionUnlockState}
+      exerciseCount={EXERCISE_COUNT}
+    />
   );
 }
+
+

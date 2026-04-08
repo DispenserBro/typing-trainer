@@ -1,4 +1,4 @@
-import type { GameAchievementDefinition } from '../shared/types';
+import type { GameAchievementDefinition } from '../../shared/types';
 
 export const GAME_ACHIEVEMENT_CATALOG: GameAchievementDefinition[] = [
   {

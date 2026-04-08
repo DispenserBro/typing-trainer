@@ -1,10 +1,12 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { Heart, RotateCcw, Swords, Trophy, Medal } from 'lucide-react';
+import { Trophy } from 'lucide-react';
 import type {
   GameAchievementDefinition,
   GameEquipmentSlot,
-  GameItemDefinition,
-  GameInventoryItem,
+  GameRunEventChoice,
+  GameRunEventState,
+  GameRunMapState,
+  GameRunModifier,
   GameRunRewardChoice,
   GameRunResult,
 } from '../../shared/types';
@@ -12,53 +14,106 @@ import { useApp } from '../contexts/AppContext';
 import { useTypingSession } from '../hooks/useTypingSession';
 import { TextDisplay } from '../components/TextDisplay';
 import { NumberInput } from '../components/NumberInput';
-import { generatePracticeText, getWorstChar, filterYoWords, filterYoKeys } from '../engine';
+import { GameAchievementsModal } from '../components/game/GameAchievementsModal';
+import { GameAchievementToastStack } from '../components/game/GameAchievementToastStack';
+import { GameHud } from '../components/game/GameHud';
+import { GameInventoryPanel } from '../components/game/GameInventoryPanel';
+import { GameEventModal } from '../components/game/GameEventModal';
+import { GameRunMap } from '../components/game/GameRunMap';
+import { GameResultCard } from '../components/game/GameResultCard';
+import { generatePracticeText, getWorstChar, filterYoWords, filterYoKeys } from '../../core/engine';
 import {
   GAME_EQUIPMENT_SLOTS,
   getGameItemById,
   getGameItemIcon,
   getGameItemRarityStars,
-  isBrokenInventoryItem,
-  pickRandomGameItem,
-} from '../gameItems';
-import { getGameAchievementById } from '../gameAchievements';
-
-const TOTAL_GAME_LEVELS = 100;
-const BOSS_LEVEL_INTERVAL = 5;
-const NORMAL_MIN_ACCURACY = 85;
-const BOSS_MIN_ACCURACY = 95;
-const NORMAL_LEVEL_WORDS = 25;
-const BOSS_LEVEL_WORDS = 35;
+} from '../../core/game/items';
+import { getGameAchievementById } from '../../core/game/gameAchievements';
+import {
+  createCacheEvent,
+  createRestEvent,
+  createRiskEvent,
+  createShopEvent,
+} from '../../core/game/gameEvents';
+import {
+  createGameRunMap,
+  getGameRunMapNode,
+  getGameRunMapOutgoingIds,
+  selectGameRunMapNode,
+  setGameRunMapSelectableNodes,
+} from '../../core/game/routes';
+import {
+  buildEquippedBySlot,
+  buildEquippedEntries,
+  buildInventoryEntries,
+  getHasRepairTargets,
+  getTargetSpeedDisplay,
+  sumItemBonuses,
+  sumModifierBonuses,
+} from '../../core/game/pageUtils';
+import type { EquippedEntry, InventoryEntry } from '../../core/game/viewTypes';
+import {
+  BOSS_LEVEL_INTERVAL,
+  BOSS_LEVEL_WORDS,
+  BOSS_MIN_ACCURACY,
+  buildBossRewardChoices,
+  formatSpeedFromCpm,
+  isBossLevel,
+  NORMAL_LEVEL_WORDS,
+  NORMAL_MIN_ACCURACY,
+  TOTAL_GAME_LEVELS,
+} from '../../core/game/runUtils';
 
 type BossRewardChoice = GameRunRewardChoice;
 type LevelResult = GameRunResult;
 
-function isBossLevel(level: number) {
-  return level % BOSS_LEVEL_INTERVAL === 0;
+function isInventoryEntryEqual(left: InventoryEntry, right: InventoryEntry) {
+  return left.id === right.id
+    && left.itemId === right.itemId
+    && left.durability === right.durability
+    && left.maxDurability === right.maxDurability
+    && left.equippedIn === right.equippedIn
+    && left.broken === right.broken
+    && (left.meta?.id ?? null) === (right.meta?.id ?? null);
 }
 
-function formatSpeedFromCpm(cpm: number, unit: 'wpm' | 'cpm' | 'cps') {
-  if (unit === 'wpm') return `${Math.round(cpm / 5)}`;
-  if (unit === 'cps') return `${+(cpm / 60).toFixed(1)}`;
-  return `${Math.round(cpm)}`;
+function areInventoryEntriesEqual(left: InventoryEntry[], right: InventoryEntry[]) {
+  if (left.length !== right.length) return false;
+  for (let i = 0; i < left.length; i += 1) {
+    if (!isInventoryEntryEqual(left[i]!, right[i]!)) return false;
+  }
+  return true;
 }
 
-function formatGameItemMeta(item: GameItemDefinition, equipped = false) {
-  return `${getGameItemRarityStars(item.rarity)} · ${item.bossOnly ? 'только на боссах' : 'работает всегда'}${equipped ? ' · экипирован' : ''}`;
+function isEquippedEntryEqual(left: EquippedEntry, right: EquippedEntry) {
+  return left.slot.key === right.slot.key
+    && left.broken === right.broken
+    && (left.meta?.id ?? null) === (right.meta?.id ?? null)
+    && (left.inventoryItem?.id ?? null) === (right.inventoryItem?.id ?? null)
+    && (left.inventoryItem?.durability ?? null) === (right.inventoryItem?.durability ?? null)
+    && (left.inventoryItem?.maxDurability ?? null) === (right.inventoryItem?.maxDurability ?? null);
 }
 
-function getRewardKindLabel(choice: BossRewardChoice) {
-  if (choice.kind === 'simple') return 'Тихая реликвия';
-  if (choice.kind === 'durable') return 'Нестабильный артефакт';
-  return 'Печать мастера';
+function areEquippedEntriesEqual(left: EquippedEntry[], right: EquippedEntry[]) {
+  if (left.length !== right.length) return false;
+  for (let i = 0; i < left.length; i += 1) {
+    if (!isEquippedEntryEqual(left[i]!, right[i]!)) return false;
+  }
+  return true;
+}
+
+function blurActiveElement() {
+  if (document.activeElement instanceof HTMLElement) {
+    document.activeElement.blur();
+  }
 }
 
 export function GamePage() {
   const {
     layouts, currentLayout, allWords, ngramModel, progress, settings, practiceSettings,
     fmtSpeed, spdLabel, saveHistory, getLayoutProgress,
-    gameState, grantGameItem, equipGameItem, unequipGameItem, markGameLevelReached,
-    wearEquippedGameItems, resetGameInventory, peekNextGameLetter, unlockNextGameLetter,
+    gameState, grantGameItem, equipGameItem, unequipGameItem, repairGameItems, markGameLevelReached,
+    wearEquippedGameItems, peekNextGameLetter, unlockNextGameLetter,
     unlockGameAchievements, saveCurrentGameRun, clearCurrentGameRun, gameAchievementCatalog,
   } = useApp();
 
@@ -73,39 +128,34 @@ export function GamePage() {
   const unlocked = practiceUnlockOrder.slice(0, layoutProgress.unlocked);
   const weak = getWorstChar(progress.keyStats?.[currentLayout], unlocked);
 
-  const equippedBySlot = useMemo(() => Object.fromEntries(
-    GAME_EQUIPMENT_SLOTS.map(slot => [slot.key, gameState.equipped[slot.key]]),
-  ) as Record<GameEquipmentSlot, string | null>, [gameState.equipped]);
+  const equippedBySlot = useMemo(
+    () => buildEquippedBySlot(gameState.equipped),
+    [gameState.equipped],
+  );
 
-  const inventoryItems = useMemo(() => gameState.inventory
-    .map(entry => {
-      const meta = getGameItemById(entry.itemId);
-      if (!meta) return null;
-      const equippedIn = GAME_EQUIPMENT_SLOTS.find(slot => gameState.equipped[slot.key] === entry.id)?.key ?? null;
-      return {
-        ...entry,
-        meta,
-        broken: isBrokenInventoryItem(entry),
-        equippedIn,
-      };
-    })
-    .filter((entry): entry is GameInventoryItem & {
-      meta: GameItemDefinition;
-      broken: boolean;
-      equippedIn: GameEquipmentSlot | null;
-    } => Boolean(entry)),
-  [gameState.equipped, gameState.inventory]);
+  const inventoryItems = useMemo(
+    () => buildInventoryEntries(gameState.inventory, gameState.equipped),
+    [gameState.equipped, gameState.inventory],
+  );
 
-  const equippedItems = useMemo(() => GAME_EQUIPMENT_SLOTS.map(slot => {
-    const inventoryItemId = equippedBySlot[slot.key];
-    const inventoryItem = inventoryItems.find(entry => entry.id === inventoryItemId) ?? null;
-    return {
-      slot,
-      inventoryItem,
-      meta: inventoryItem?.meta ?? null,
-      broken: inventoryItem?.broken ?? false,
-    };
-  }), [equippedBySlot, inventoryItems]);
+  const equippedItems = useMemo(
+    () => buildEquippedEntries(equippedBySlot, inventoryItems),
+    [equippedBySlot, inventoryItems],
+  );
+  const stableInventoryItemsRef = useRef<InventoryEntry[]>([]);
+  const stableEquippedItemsRef = useRef<EquippedEntry[]>([]);
+
+  if (!areInventoryEntriesEqual(stableInventoryItemsRef.current, inventoryItems)) {
+    stableInventoryItemsRef.current = inventoryItems;
+  }
+
+  if (!areEquippedEntriesEqual(stableEquippedItemsRef.current, equippedItems)) {
+    stableEquippedItemsRef.current = equippedItems;
+  }
+
+  const stableInventoryItems = stableInventoryItemsRef.current;
+  const stableEquippedItems = stableEquippedItemsRef.current;
+  const hasRepairTargets = useMemo(() => getHasRepairTargets(stableEquippedItems), [stableEquippedItems]);
 
   const [targetSpeedCpm, setTargetSpeedCpm] = useState(() => Math.max(1, practiceSettings.goalSpeedCpm || 150));
   const [lives, setLives] = useState(3);
@@ -115,6 +165,9 @@ export function GamePage() {
   const [gameStarted, setGameStarted] = useState(false);
   const [showStartPanel, setShowStartPanel] = useState(true);
   const [result, setResult] = useState<LevelResult | null>(null);
+  const [activeModifiers, setActiveModifiers] = useState<GameRunModifier[]>([]);
+  const [runMap, setRunMap] = useState<GameRunMapState | null>(null);
+  const [pendingEvent, setPendingEvent] = useState<GameRunEventState | null>(null);
   const [rewardChoices, setRewardChoices] = useState<BossRewardChoice[] | null>(null);
   const [selectedRewardMessage, setSelectedRewardMessage] = useState<string | null>(null);
   const [showAchievementsModal, setShowAchievementsModal] = useState(false);
@@ -122,7 +175,9 @@ export function GamePage() {
   const finishCauseRef = useRef<'completed' | 'timeout'>('completed');
   const resultActionRef = useRef<HTMLButtonElement | null>(null);
   const rewardChoiceRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const eventChoiceRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const hasHydratedRunRef = useRef(false);
+  const previewMap = useMemo(() => createGameRunMap(TOTAL_GAME_LEVELS), []);
   const activeIsBoss = isBossLevel(level);
   const unlockedAchievements = useMemo(
     () => gameState.achievements
@@ -130,26 +185,31 @@ export function GamePage() {
       .filter((achievement): achievement is GameAchievementDefinition => Boolean(achievement)),
     [gameState.achievements],
   );
-  const itemBonuses = useMemo(() => equippedItems.reduce((acc, entry) => {
-    if (!entry.inventoryItem || !entry.meta || entry.broken) return acc;
-    if (entry.meta.bossOnly && !activeIsBoss) return acc;
-    acc.speedRequirementReductionPercent += entry.meta.speedRequirementReductionPercent ?? 0;
-    acc.accuracyRequirementReduction += entry.meta.accuracyRequirementReduction ?? 0;
-    acc.bossTimerBonusSeconds += entry.meta.bossTimerBonusSeconds ?? 0;
-    return acc;
-  }, {
-    speedRequirementReductionPercent: 0,
-    accuracyRequirementReduction: 0,
-    bossTimerBonusSeconds: 0,
-  }), [activeIsBoss, equippedItems]);
+  const itemBonuses = useMemo(
+    () => sumItemBonuses(stableEquippedItems, activeIsBoss),
+    [activeIsBoss, stableEquippedItems],
+  );
+  const modifierBonuses = useMemo(
+    () => sumModifierBonuses(activeModifiers, activeIsBoss),
+    [activeIsBoss, activeModifiers],
+  );
+  const totalBonuses = useMemo(() => ({
+    speedRequirementReductionPercent: itemBonuses.speedRequirementReductionPercent + modifierBonuses.speedRequirementReductionPercent,
+    accuracyRequirementReduction: itemBonuses.accuracyRequirementReduction + modifierBonuses.accuracyRequirementReduction,
+    bossTimerBonusSeconds: itemBonuses.bossTimerBonusSeconds + modifierBonuses.bossTimerBonusSeconds,
+  }), [itemBonuses, modifierBonuses]);
+  const activeMap = runMap ?? previewMap;
+  const currentMapNode = useMemo(
+    () => getGameRunMapNode(activeMap, activeMap.currentNodeId),
+    [activeMap],
+  );
+  const selectableMapNodeIds = activeMap.selectableNodeIds;
 
   const goalWpm = targetSpeedCpm / 5;
   const unit = settings.speedUnit;
-  const targetSpeedDisplay = unit === 'wpm' ? Math.round(targetSpeedCpm / 5)
-    : unit === 'cps' ? +(targetSpeedCpm / 60).toFixed(1)
-    : Math.round(targetSpeedCpm);
-  const effectiveGoalWpm = goalWpm * (1 - itemBonuses.speedRequirementReductionPercent / 100);
-  const effectiveTargetSpeedCpm = targetSpeedCpm * (1 - itemBonuses.speedRequirementReductionPercent / 100);
+  const targetSpeedDisplay = getTargetSpeedDisplay(targetSpeedCpm, unit);
+  const effectiveGoalWpm = goalWpm * (1 - totalBonuses.speedRequirementReductionPercent / 100);
+  const effectiveTargetSpeedCpm = targetSpeedCpm * (1 - totalBonuses.speedRequirementReductionPercent / 100);
   const effectiveTargetSpeedDisplay = formatSpeedFromCpm(effectiveTargetSpeedCpm, unit);
 
   const queueAchievementToasts = useCallback((achievementIds: string[]) => {
@@ -157,6 +217,20 @@ export function GamePage() {
     if (!unlocked.length) return;
     setAchievementToasts(prev => [...prev, ...unlocked]);
   }, [unlockGameAchievements]);
+
+  const handleEquipItem = useCallback((slot: GameEquipmentSlot, itemId: string) => {
+    blurActiveElement();
+    const equipped = equipGameItem(slot, itemId);
+    if (equipped) queueAchievementToasts(['equip-item']);
+  }, [equipGameItem, queueAchievementToasts]);
+
+  const handleUnequipItem = useCallback((slot: GameEquipmentSlot) => {
+    blurActiveElement();
+    unequipGameItem(slot);
+  }, [unequipGameItem]);
+
+  const openAchievementsModal = useCallback(() => setShowAchievementsModal(true), []);
+  const closeAchievementsModal = useCallback(() => setShowAchievementsModal(false), []);
 
   const updateTargetSpeed = (value: number) => {
     const normalized = Math.max(1, Number.isFinite(value) ? value : 1);
@@ -173,8 +247,8 @@ export function GamePage() {
 
   const calculateBossTimeLimit = useCallback((text: string) => {
     const requiredChars = text.length + (settings.endWithSpace ? 1 : 0);
-    return requiredChars * 60 / targetSpeedCpm + itemBonuses.bossTimerBonusSeconds;
-  }, [itemBonuses.bossTimerBonusSeconds, settings.endWithSpace, targetSpeedCpm]);
+    return requiredChars * 60 / targetSpeedCpm + totalBonuses.bossTimerBonusSeconds;
+  }, [settings.endWithSpace, targetSpeedCpm, totalBonuses.bossTimerBonusSeconds]);
 
   const currentBossTimeLimit = useMemo(() => {
     if (!activeIsBoss || !levelText) return null;
@@ -182,41 +256,7 @@ export function GamePage() {
   }, [activeIsBoss, levelText, calculateBossTimeLimit]);
 
   const generateBossRewardChoices = useCallback((): BossRewardChoice[] => {
-    const nextLetter = peekNextGameLetter();
-    const simpleItem = pickRandomGameItem('simple');
-    const durableItem = pickRandomGameItem('durable');
-
-    return [
-      {
-        id: 'reward-letter',
-        kind: 'letter',
-        title: 'Печать мастера',
-        flavor: nextLetter ? `Пробуждает символ «${nextLetter.toUpperCase()}»` : 'Алфавит уже полностью открыт',
-        description: nextLetter
-          ? 'Навсегда открывает следующую букву для практики и игры.'
-          : 'В этой раскладке больше нет закрытых символов.',
-        letter: nextLetter,
-        disabled: !nextLetter,
-      },
-      {
-        id: `reward-simple-${simpleItem?.id ?? 'none'}`,
-        kind: 'simple',
-        title: 'Тихая реликвия',
-        flavor: simpleItem?.name ?? 'Реликвии закончились',
-        description: simpleItem?.description ?? 'Сейчас этот выбор недоступен.',
-        itemId: simpleItem?.id,
-        disabled: !simpleItem,
-      },
-      {
-        id: `reward-durable-${durableItem?.id ?? 'none'}`,
-        kind: 'durable',
-        title: 'Нестабильный артефакт',
-        flavor: durableItem?.name ?? 'Артефакты закончились',
-        description: durableItem?.description ?? 'Сейчас этот выбор недоступен.',
-        itemId: durableItem?.id,
-        disabled: !durableItem,
-      },
-    ];
+    return buildBossRewardChoices(peekNextGameLetter());
   }, [peekNextGameLetter]);
 
   const resetRewardState = useCallback(() => {
@@ -225,10 +265,26 @@ export function GamePage() {
     rewardChoiceRefs.current = [];
   }, []);
 
+  const resetMapSelection = useCallback(() => {
+    setRunMap(prev => (prev ? setGameRunMapSelectableNodes(prev, []) : prev));
+  }, []);
+
+  const resetEventState = useCallback(() => {
+    setPendingEvent(null);
+    eventChoiceRefs.current = [];
+  }, []);
+
+  const consumeActiveModifiers = useCallback(() => {
+    setActiveModifiers(prev => prev
+      .map(modifier => ({ ...modifier, remainingLevels: modifier.remainingLevels - 1 }))
+      .filter(modifier => modifier.remainingLevels > 0),
+    );
+  }, []);
+
   const onFinish = useCallback((wpm: number, acc: number, elapsed: number, ses: any) => {
     const boss = isBossLevel(level);
     const baseMinAccuracy = boss ? BOSS_MIN_ACCURACY : NORMAL_MIN_ACCURACY;
-    const minAccuracy = Math.max(0, baseMinAccuracy - itemBonuses.accuracyRequirementReduction);
+    const minAccuracy = Math.max(0, baseMinAccuracy - totalBonuses.accuracyRequirementReduction);
     const timeLimitSeconds = boss ? calculateBossTimeLimit(levelText) : null;
     const timedOut = finishCauseRef.current === 'timeout';
     finishCauseRef.current = 'completed';
@@ -244,19 +300,29 @@ export function GamePage() {
 
     const brokenItemIds = wearEquippedGameItems({ passed, isBoss: boss });
     const brokenItems = brokenItemIds
-      .map(itemId => inventoryItems.find(entry => entry.id === itemId)?.meta.name ?? null)
+      .map(itemId => stableInventoryItems.find(entry => entry.id === itemId)?.meta.name ?? null)
       .filter((name): name is string => Boolean(name));
+    consumeActiveModifiers();
+
+    const nextMapNodeIds = runMap ? getGameRunMapOutgoingIds(runMap, runMap.currentNodeId) : [];
 
     if (passed && boss && !victory && level < TOTAL_GAME_LEVELS) {
       setRewardChoices(generateBossRewardChoices());
       setSelectedRewardMessage(null);
-    } else {
+      resetMapSelection();
+      resetEventState();
+    } else if (passed && !victory && nextMapNodeIds.length > 0) {
+      setRunMap(prev => (prev ? setGameRunMapSelectableNodes(prev, nextMapNodeIds) : prev));
       resetRewardState();
+      resetEventState();
+    } else {
+      resetMapSelection();
+      resetRewardState();
+      resetEventState();
     }
 
     if (victory) {
-      resetGameInventory();
-      clearCurrentGameRun();
+      clearCurrentGameRun(true);
     } else if (!passed && nextLives <= 0) {
       clearCurrentGameRun(true);
     }
@@ -291,18 +357,23 @@ export function GamePage() {
     calculateBossTimeLimit,
     effectiveGoalWpm,
     generateBossRewardChoices,
-    inventoryItems,
-    itemBonuses.accuracyRequirementReduction,
+    hasRepairTargets,
+    stableEquippedItems,
+    stableInventoryItems,
     level,
     levelText,
     lives,
     markGameLevelReached,
     clearCurrentGameRun,
-    resetGameInventory,
+    consumeActiveModifiers,
+    resetEventState,
+    resetMapSelection,
     resetRewardState,
     saveHistory,
+    totalBonuses.accuracyRequirementReduction,
     wearEquippedGameItems,
     queueAchievementToasts,
+    runMap,
   ]);
 
   const { session, start, stop, finish, handleKey, wpm, acc, waitingForSpace } = useTypingSession({
@@ -313,38 +384,133 @@ export function GamePage() {
   const startLevel = useCallback((nextLevel: number, resetGame = false) => {
     if (!layout || !words.length || !unlocked.length) return;
     finishCauseRef.current = 'completed';
+    blurActiveElement();
     const text = buildLevelText(nextLevel);
     setLevel(nextLevel);
     setLevelText(text);
     setResult(null);
+    resetMapSelection();
+    resetEventState();
     resetRewardState();
     if (resetGame) {
       setLives(3);
       setCompletedLevels(0);
+      setActiveModifiers([]);
       setGameStarted(true);
     }
     setShowStartPanel(false);
     start(text);
-  }, [layout, words.length, unlocked.length, buildLevelText, resetRewardState, start]);
+  }, [layout, words.length, unlocked.length, buildLevelText, resetEventState, resetRewardState, resetMapSelection, start]);
+
+  const enterMapNode = useCallback((nodeId: string, clearResult = true) => {
+    if (!runMap) return;
+
+    const selectedNode = getGameRunMapNode(runMap, nodeId);
+    if (!selectedNode) return;
+
+    let nextMap = selectGameRunMapNode(runMap, nodeId);
+    let nextNode = selectedNode;
+
+    if (selectedNode.kind === 'battle' && selectedNode.battleLevel == null) {
+      const outgoingBattleId = getGameRunMapOutgoingIds(nextMap, selectedNode.id)[0] ?? null;
+      const outgoingBattleNode = getGameRunMapNode(nextMap, outgoingBattleId);
+      if (outgoingBattleId && outgoingBattleNode) {
+        nextMap = selectGameRunMapNode(nextMap, outgoingBattleId);
+        nextNode = outgoingBattleNode;
+      }
+    }
+
+    setRunMap(nextMap);
+    if (clearResult) setResult(null);
+    resetRewardState();
+
+    if (nextNode.battleLevel != null) {
+      resetEventState();
+      stop();
+      startLevel(nextNode.battleLevel);
+      return;
+    }
+
+    if (nextNode.kind === 'rest') {
+      setPendingEvent(createRestEvent({
+        level,
+        lives,
+        hasRepairTargets: hasRepairTargets || stableEquippedItems.some(entry =>
+          Boolean(entry.inventoryItem?.maxDurability != null),
+        ),
+      }));
+    } else if (nextNode.kind === 'treasure') {
+      setPendingEvent(createCacheEvent({
+        level,
+        lives,
+        hasRepairTargets: hasRepairTargets || stableEquippedItems.some(entry =>
+          Boolean(entry.inventoryItem?.maxDurability != null),
+        ),
+      }));
+    } else if (nextNode.kind === 'shop') {
+      setPendingEvent(createShopEvent({
+        level,
+        lives,
+        hasRepairTargets: hasRepairTargets || stableEquippedItems.some(entry =>
+          Boolean(entry.inventoryItem?.maxDurability != null),
+        ),
+      }));
+    } else if (nextNode.kind === 'risk') {
+      setPendingEvent(createRiskEvent({
+        level,
+        lives,
+        hasRepairTargets: hasRepairTargets || stableEquippedItems.some(entry =>
+          Boolean(entry.inventoryItem?.maxDurability != null),
+        ),
+      }));
+    }
+    eventChoiceRefs.current = [];
+  }, [
+    runMap,
+    resetEventState,
+    resetRewardState,
+    stop,
+    startLevel,
+    level,
+    lives,
+    hasRepairTargets,
+    stableEquippedItems,
+  ]);
+
+  const continueFromMap = useCallback(() => {
+    if (!runMap?.currentNodeId) return;
+    const nextNodeId = getGameRunMapOutgoingIds(runMap, runMap.currentNodeId)[0] ?? null;
+    if (!nextNodeId) return;
+    enterMapNode(nextNodeId);
+  }, [enterMapNode, runMap]);
 
   const startGame = useCallback(() => {
+    blurActiveElement();
     stop();
+    clearCurrentGameRun(true);
+    setRunMap(createGameRunMap(TOTAL_GAME_LEVELS));
     startLevel(1, true);
-  }, [startLevel, stop]);
+  }, [clearCurrentGameRun, startLevel, stop]);
 
   const openStartPanel = useCallback(() => {
     stop();
     setResult(null);
+    resetMapSelection();
+    resetEventState();
     resetRewardState();
     setShowStartPanel(true);
-  }, [resetRewardState, stop]);
+  }, [resetEventState, resetRewardState, resetMapSelection, stop]);
 
   const continueGame = useCallback(() => {
+    if (pendingEvent && !pendingEvent.resolvedChoiceId) return;
     if (rewardChoices && !selectedRewardMessage) return;
     if (lives <= 0 || level >= TOTAL_GAME_LEVELS) return;
-    stop();
-    startLevel(level + 1);
-  }, [level, lives, rewardChoices, selectedRewardMessage, startLevel, stop]);
+    if (selectableMapNodeIds.length > 0) {
+      setResult(null);
+      return;
+    }
+    continueFromMap();
+  }, [continueFromMap, level, lives, pendingEvent, rewardChoices, selectableMapNodeIds.length, selectedRewardMessage]);
 
   const retryLevel = useCallback(() => {
     if (lives <= 0) return;
@@ -379,9 +545,66 @@ export function GamePage() {
     ]);
   }, [grantGameItem, queueAchievementToasts, unlockNextGameLetter]);
 
+  const handleMapNodeSelect = useCallback((nodeId: string) => {
+    if (!runMap || !runMap.selectableNodeIds.includes(nodeId)) return;
+    enterMapNode(nodeId);
+  }, [enterMapNode, runMap]);
+
+  const handleEventChoice = useCallback((choice: GameRunEventChoice) => {
+    if (!pendingEvent || pendingEvent.resolvedChoiceId || choice.disabled) return;
+
+    const lines: string[] = [];
+    const achievementIds: string[] = [];
+
+    if (choice.effect.lifeDelta) {
+      const nextLives = Math.max(0, Math.min(3, lives + choice.effect.lifeDelta));
+      setLives(nextLives);
+      setResult(prev => prev ? { ...prev, livesLeft: nextLives } : prev);
+      if (choice.effect.lifeDelta > 0) {
+        lines.push(`Жизни восстановлены: ${nextLives} из 3.`);
+      } else {
+        lines.push(`Сделка забрала ${Math.abs(choice.effect.lifeDelta)} жизнь.`);
+      }
+    }
+
+    if (choice.effect.repairEquippedBy) {
+      const repairedNames = repairGameItems(choice.effect.repairEquippedBy, true);
+      lines.push(repairedNames.length
+        ? `Починены предметы: ${repairedNames.join(', ')}.`
+        : 'Ремонт завершен, но чинить было почти нечего.');
+    }
+
+    if (choice.effect.grantItemId) {
+      const item = getGameItemById(choice.effect.grantItemId);
+      const grantedId = grantGameItem(choice.effect.grantItemId);
+      if (item && grantedId) {
+        lines.push(`Вы получили «${item.name}».`);
+        achievementIds.push(
+          'collect-item',
+          ...(item.rewardKind === 'durable' ? ['collect-durable-item'] : []),
+          ...(item.rarity === 3 ? ['collect-top-rarity-item'] : []),
+        );
+      }
+    }
+
+    if (choice.effect.modifier) {
+      setActiveModifiers(prev => [...prev, choice.effect.modifier!]);
+      lines.push(`Активирован эффект: ${choice.effect.modifier.description}.`);
+    }
+
+    queueAchievementToasts(achievementIds);
+    setPendingEvent(prev => prev ? {
+      ...prev,
+      resolvedChoiceId: choice.id,
+      resultText: lines.join(' ') || `${choice.title} приносит свои плоды.`,
+    } : prev);
+  }, [grantGameItem, lives, pendingEvent, queueAchievementToasts, repairGameItems]);
+
   const resumeSavedLevel = useCallback(() => {
     if (session.active || !levelText) return;
+    blurActiveElement();
     setResult(null);
+    setPendingEvent(null);
     setRewardChoices(null);
     setSelectedRewardMessage(null);
     start(levelText);
@@ -394,19 +617,16 @@ export function GamePage() {
     return () => document.removeEventListener('keydown', handler);
   }, [session.active, handleKey]);
 
-  const [, setTick] = useState(0);
-  useEffect(() => {
-    if (!session.active) return;
-    const interval = setInterval(() => setTick(t => t + 1), 200);
-    return () => clearInterval(interval);
-  }, [session.active]);
-
-  const liveElapsedSeconds = session.active ? (performance.now() - session.startTime) / 1000 : (result?.elapsed ?? 0);
-  const bossTimerRatio = currentBossTimeLimit ? Math.min(1, liveElapsedSeconds / currentBossTimeLimit) : 0;
   const gameWon = Boolean(result?.victory);
   const gameOver = gameStarted && !session.active && !gameWon && lives <= 0;
-  const gameLocked = gameStarted && !gameOver && !gameWon;
   const rewardPending = Boolean(result?.passed && result.isBoss && rewardChoices && !selectedRewardMessage);
+  const showBattlePanel = gameStarted
+    && !showStartPanel
+    && !result
+    && !pendingEvent
+    && selectableMapNodeIds.length === 0
+    && Boolean(currentMapNode?.battleLevel)
+    && Boolean(levelText);
   const startOverlayContent = showStartPanel ? (
     <form
       className="game-start-panel"
@@ -434,13 +654,11 @@ export function GamePage() {
       </label>
       <button type="submit" className="btn-accent">
         Старт игры
-      </button>
-    </form>
-  ) : null;
-  const textDisplayOverlay = !session.active
-    ? (showStartPanel
-      ? null
-      : (!result && levelText ? `Забег сохранен\nУровень ${level} · ${Math.max(lives, 0)} жизни\nНажмите, чтобы продолжить` : null))
+        </button>
+      </form>
+    ) : null;
+  const battleOverlayText = !session.active && !showStartPanel && !result && levelText
+    ? `Забег сохранен\nУровень ${level} · ${Math.max(lives, 0)} жизни\nНажмите, чтобы продолжить`
     : null;
 
   useEffect(() => {
@@ -455,6 +673,9 @@ export function GamePage() {
     setCompletedLevels(savedRun.completedLevels);
     setTargetSpeedCpm(savedRun.targetSpeedCpm);
     setLevelText(savedRun.levelText);
+    setActiveModifiers(savedRun.activeModifiers ?? []);
+    setRunMap(savedRun.map ?? createGameRunMap(TOTAL_GAME_LEVELS));
+    setPendingEvent(savedRun.pendingEvent ?? null);
     setResult(savedRun.result);
     setRewardChoices(savedRun.rewardChoices);
     setSelectedRewardMessage(savedRun.selectedRewardMessage);
@@ -463,7 +684,7 @@ export function GamePage() {
   }, [gameState.currentRun]);
 
   useEffect(() => {
-    if (!hasHydratedRunRef.current || !gameStarted) return;
+    if (!hasHydratedRunRef.current || !gameStarted || gameOver || gameWon) return;
 
     saveCurrentGameRun({
       level,
@@ -471,16 +692,25 @@ export function GamePage() {
       completedLevels,
       targetSpeedCpm,
       levelText,
+      activeModifiers,
+      map: runMap,
+      pendingRoute: null,
+      pendingEvent,
       result,
       rewardChoices,
       selectedRewardMessage,
     });
   }, [
+    activeModifiers,
     completedLevels,
     gameStarted,
+    gameOver,
+    gameWon,
     level,
     levelText,
     lives,
+    runMap,
+    pendingEvent,
     result,
     rewardChoices,
     saveCurrentGameRun,
@@ -490,10 +720,14 @@ export function GamePage() {
 
   useEffect(() => {
     if (!session.active || !activeIsBoss || !currentBossTimeLimit) return;
-    if (liveElapsedSeconds < currentBossTimeLimit) return;
-    finishCauseRef.current = 'timeout';
-    finish();
-  }, [activeIsBoss, currentBossTimeLimit, finish, liveElapsedSeconds, session.active]);
+    const elapsedMs = performance.now() - session.startTime;
+    const timeoutMs = Math.max(0, currentBossTimeLimit * 1000 - elapsedMs);
+    const timeout = setTimeout(() => {
+      finishCauseRef.current = 'timeout';
+      finish();
+    }, timeoutMs);
+    return () => clearTimeout(timeout);
+  }, [activeIsBoss, currentBossTimeLimit, finish, session.active, session.startTime]);
 
   useEffect(() => {
     if (!rewardPending) return;
@@ -501,10 +735,24 @@ export function GamePage() {
     nextButton?.focus({ preventScroll: true });
   }, [rewardPending]);
 
+  const mapSelectionPending = Boolean(result?.passed && selectableMapNodeIds.length > 0);
+  const eventPending = Boolean(pendingEvent && !pendingEvent.resolvedChoiceId);
+
   useEffect(() => {
-    if (!result || session.active || rewardPending) return;
+    if (!eventPending) return;
+    const nextButton = eventChoiceRefs.current.find(Boolean);
+    nextButton?.focus({ preventScroll: true });
+  }, [eventPending]);
+
+  useEffect(() => {
+    if (!pendingEvent || eventPending || result || session.active) return;
     resultActionRef.current?.focus({ preventScroll: true });
-  }, [result, rewardPending, session.active, selectedRewardMessage]);
+  }, [eventPending, pendingEvent, result, session.active]);
+
+  useEffect(() => {
+    if (!result || session.active || rewardPending || mapSelectionPending || eventPending) return;
+    resultActionRef.current?.focus({ preventScroll: true });
+  }, [eventPending, mapSelectionPending, result, rewardPending, session.active, selectedRewardMessage]);
 
   useEffect(() => {
     if (!achievementToasts.length) return;
@@ -515,19 +763,19 @@ export function GamePage() {
   }, [achievementToasts]);
 
   useEffect(() => {
-    const equippedHighestRarityItems = equippedItems.filter(entry => entry.meta?.rarity === 3 && !entry.broken);
+    const equippedHighestRarityItems = stableEquippedItems.filter(entry => entry.meta?.rarity === 3 && !entry.broken);
     const allTopRarityFilled = equippedHighestRarityItems.length === GAME_EQUIPMENT_SLOTS.length
-      && equippedItems.every(entry => entry.meta?.rarity === 3 && !entry.broken);
+      && stableEquippedItems.every(entry => entry.meta?.rarity === 3 && !entry.broken);
     if (!allTopRarityFilled) return;
     queueAchievementToasts(['full-top-rarity-loadout']);
-  }, [equippedItems, queueAchievementToasts]);
+  }, [stableEquippedItems, queueAchievementToasts]);
 
   return (
     <section className="mode-panel active">
       <div className="panel-header">
         <div className="game-header-title">
           <h1>Игровой режим</h1>
-          <button className="btn-secondary btn-sm game-achievements-button" onClick={() => setShowAchievementsModal(true)}>
+          <button className="btn-secondary btn-sm game-achievements-button" onClick={openAchievementsModal}>
             <Trophy size={14} />
             Достижения
             <span className="game-achievements-count">{unlockedAchievements.length}/{gameAchievementCatalog.length}</span>
@@ -542,269 +790,95 @@ export function GamePage() {
         )}
       </div>
 
-      <div className="stats-bar">
-        <div className="metric"><b>{Math.max(lives, 0)}</b> жизни</div>
-        <div className="metric"><b>{level}</b> / {TOTAL_GAME_LEVELS}</div>
-        <div className={`metric${activeIsBoss ? ' metric-negative' : ''}`}><b>{activeIsBoss ? 'Босс' : 'Уровень'}</b></div>
-        <div className="metric"><b>{layoutProgress.unlocked}</b> букв</div>
-        <div className="metric"><b>{gameState.highestLevel}</b> рекорд</div>
-        <div className="metric"><b>{effectiveTargetSpeedDisplay}</b> <small className="speed-unit">{spdLabel}</small></div>
-        <div className="metric"><b>{session.active ? fmtSpeed(wpm) : (result ? fmtSpeed(result.wpm) : '0')}</b> <small className="speed-unit">{spdLabel}</small></div>
-        <div className="metric"><b>{session.active ? Math.round(acc) : (result ? Math.round(result.acc) : 100)}</b>%</div>
-      </div>
-
-      {activeIsBoss && currentBossTimeLimit && (
-        <div className="game-boss-timer">
-          <div className="game-boss-timer-row">
-            <span>Таймер босса</span>
-            <span><b>{liveElapsedSeconds.toFixed(1)}</b> / {currentBossTimeLimit.toFixed(1)} c</span>
-          </div>
-          <div className="game-boss-timer-bar">
-            <div
-              className={`game-boss-timer-fill${bossTimerRatio >= 0.85 ? ' danger' : ''}`}
-              style={{ width: `${Math.min(100, bossTimerRatio * 100)}%` }}
-            />
-          </div>
-        </div>
-      )}
-
-      <details className="card game-items-card">
-        <summary className="game-items-summary">
-          <span>Инвентарь</span>
-          <small>{inventoryItems.length} предметов</small>
-        </summary>
-        <p className="card-desc">
-          Реликвии добываются только после побед над боссами. Хрупкие артефакты дают больше силы, но могут рассыпаться прямо по ходу забега.
-        </p>
-        {inventoryItems.length ? (
-          <div className="game-inventory-grid">
-            {inventoryItems.map(item => {
-              const Icon = getGameItemIcon(item.meta.icon);
-
-              return (
-                <div key={item.id} className={`game-inventory-card rarity-${item.meta.rarity}${item.broken ? ' broken' : ''}`}>
-                  <div className="game-inventory-head">
-                    <div className="game-item-badge">
-                      <Icon size={18} />
-                    </div>
-                    <div>
-                      <div className="game-slot-name">{item.meta.name}</div>
-                      <div className="game-item-meta">{formatGameItemMeta(item.meta, Boolean(item.equippedIn))}</div>
-                    </div>
-                  </div>
-                  <div className="game-slot-desc">{item.meta.description}</div>
-                  {item.maxDurability != null && item.durability != null && (
-                    <div className={`game-durability${item.broken ? ' broken' : ''}`}>
-                      Прочность: <b>{item.durability}</b> / {item.maxDurability}
-                    </div>
-                  )}
-                  <div className="game-item-effects">
-                    {item.meta.effects.map(effect => (
-                      <span key={`${item.id}-${effect.kind}-${effect.description}`} className="game-item-effect-chip">
-                        {effect.description}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="game-item-actions">
-                    {GAME_EQUIPMENT_SLOTS.map(slot => (
-                      <button
-                        key={slot.key}
-                        className="btn-secondary btn-sm"
-                        disabled={item.broken}
-                        onClick={() => {
-                          const equipped = equipGameItem(slot.key, item.id);
-                          if (equipped) queueAchievementToasts(['equip-item']);
-                        }}
-                      >
-                        {slot.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="game-items-empty">
-            После боссов здесь будут появляться реликвии и артефакты для текущего забега.
-          </div>
-        )}
-      </details>
-
-      <div className="game-status-row">
-        <div className="game-lives-row">
-          {Array.from({ length: 3 }, (_, idx) => (
-            <span key={idx} className={`game-heart${idx < lives ? ' active' : ' lost'}`}>
-              <Heart size={18} fill="currentColor" />
-            </span>
-          ))}
-        </div>
-        <div className="game-equipped-inline">
-          {equippedItems.map(entry => {
-            const Icon = entry.meta ? getGameItemIcon(entry.meta.icon) : null;
-
-            return (
-              <div key={entry.slot.key} className={`game-inline-slot${entry.meta ? ' filled' : ''}${entry.broken ? ' broken' : ''}`}>
-                <div className="game-inline-slot-label">{entry.slot.label}</div>
-                {entry.meta && entry.inventoryItem ? (
-                  <div className={`game-inline-slot-body rarity-${entry.meta.rarity}`}>
-                    <span className="game-item-badge">
-                      {Icon && <Icon size={16} />}
-                    </span>
-                    <div className="game-inline-slot-text">
-                      <strong>{entry.meta.shortName}</strong>
-                      <small>
-                        {getGameItemRarityStars(entry.meta.rarity)}
-                        {' · '}
-                        {entry.inventoryItem.maxDurability != null && entry.inventoryItem.durability != null
-                          ? `${entry.inventoryItem.durability}/${entry.inventoryItem.maxDurability}`
-                          : 'без износа'}
-                        {entry.meta.bossOnly ? ' · боссы' : ''}
-                      </small>
-                    </div>
-                    <button className="btn-secondary btn-sm" onClick={() => unequipGameItem(entry.slot.key)}>
-                      Снять
-                    </button>
-                  </div>
-                ) : (
-                  <div className="game-inline-slot-empty">Пусто</div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <TextDisplay
-        text={session.active ? session.text : levelText}
-        pos={session.active ? session.pos : 0}
-        errPositions={session.active ? session.errPositions : new Set()}
-        waitingForSpace={waitingForSpace}
-        overlay={textDisplayOverlay}
-        overlayCover
-        overlayContent={startOverlayContent}
-        onOverlayClick={showStartPanel ? undefined : (!result ? resumeSavedLevel : undefined)}
+      <GameHud
+        lives={lives}
+        level={level}
+        totalLevels={TOTAL_GAME_LEVELS}
+        activeIsBoss={activeIsBoss}
+        unlockedLetters={layoutProgress.unlocked}
+        highestLevel={gameState.highestLevel}
+        effectiveTargetSpeedDisplay={effectiveTargetSpeedDisplay}
+        currentSpeedDisplay={session.active ? fmtSpeed(wpm) : (result ? fmtSpeed(result.wpm) : '0')}
+        accuracy={session.active ? acc : (result ? result.acc : 100)}
+        speedUnitLabel={spdLabel}
+        activeModifiers={activeModifiers}
+        bossTimeLimit={currentBossTimeLimit}
+        sessionActive={session.active}
+        sessionStartTime={session.startTime}
+        resultElapsedSeconds={result?.elapsed ?? 0}
       />
 
-      {result && !session.active && (
-        <div className="result-card game-result-card">
-          <h3>{result.victory
-            ? 'Игра пройдена'
-            : result.passed
-              ? (result.isBoss ? 'Босс повержен' : 'Уровень пройден')
-              : result.timedOut
-                ? (result.livesLeft > 0 ? 'Время вышло' : 'Игра окончена')
-                : (result.livesLeft > 0 ? 'Жизнь потеряна' : 'Игра окончена')}
-          </h3>
-          <div className="result-big">{fmtSpeed(result.wpm)} {spdLabel}</div>
-          <p>
-            Базовая цель: <b>{targetSpeedDisplay} {spdLabel}</b> ·
-            Цель с реликвиями: <b>{effectiveTargetSpeedDisplay} {spdLabel}</b>
-          </p>
-          <p>
-            Точность: <b>{Math.round(result.acc)}%</b> / {result.minAccuracy}%+
-          </p>
-          {result.isBoss && result.timeLimitSeconds && (
-            <p>Время: <b>{result.elapsed.toFixed(1)} c</b> / {result.timeLimitSeconds.toFixed(1)} c</p>
-          )}
-          {result.brokenItems.length > 0 && (
-            <p className="game-breakage-note">Распались предметы: <b>{result.brokenItems.join(', ')}</b></p>
-          )}
-          <p>{result.victory
-            ? `Вы прошли все ${TOTAL_GAME_LEVELS} уровней. Все реликвии этого забега рассеялись.`
-            : result.passed
-              ? result.isBoss
-                ? `Трофей босса ждет выбора. Следующий этап: уровень ${result.level + 1}.`
-                : `Уровень ${result.level} завершен. Дальше идет ${result.level + 1}${(result.level + 1) % BOSS_LEVEL_INTERVAL === 0 ? ' — босс' : ''}.`
-              : result.timedOut
-                ? `Вы не уложились в лимит времени. Осталось жизней: ${result.livesLeft}.`
-                : `Нужно держать скорость не ниже цели и точность от ${result.minAccuracy}%. Осталось жизней: ${result.livesLeft}.`}
-          </p>
+      <GameInventoryPanel
+        inventoryItems={stableInventoryItems}
+        equippedItems={stableEquippedItems}
+        onEquip={handleEquipItem}
+        onUnequip={handleUnequipItem}
+      />
 
-          {rewardChoices && result.passed && result.isBoss && !result.victory && (
-            <div className="game-reward-block">
-              <div className="game-reward-title">Трофей босса</div>
-              {!selectedRewardMessage ? (
-                <div className="game-reward-grid">
-                  {rewardChoices.map((choice, index) => {
-                    const rewardItem = choice.itemId ? getGameItemById(choice.itemId) : null;
-                    const RewardIcon = rewardItem ? getGameItemIcon(rewardItem.icon) : null;
-                    const rewardRarity = rewardItem ? getGameItemRarityStars(rewardItem.rarity) : '✦ Особая награда';
-                    const rewardName = rewardItem?.name ?? (choice.letter ? `Символ «${choice.letter.toUpperCase()}»` : choice.title);
-                    const rewardKindLabel = getRewardKindLabel(choice);
-                    return (
-                      <div
-                        key={choice.id}
-                        className={`game-reward-card${rewardItem ? ` rarity-${rewardItem.rarity}` : ''}${choice.disabled ? ' disabled' : ''}`}
-                      >
-                        <div className="game-reward-card-head">
-                          <div className={`game-item-badge${choice.kind === 'letter' ? ' letter' : ''}`}>
-                            {choice.kind === 'letter'
-                              ? (choice.letter?.toUpperCase() ?? '?')
-                              : RewardIcon && <RewardIcon size={18} />}
-                          </div>
-                          <div className="game-reward-copy">
-                            <div className={`game-reward-rarity${rewardItem ? '' : ' special'}`}>{rewardRarity}</div>
-                            <div className="game-reward-name">{rewardName}</div>
-                            <div className="game-reward-kind">{rewardKindLabel}</div>
-                          </div>
-                        </div>
-                        <div className="game-reward-body">
-                          <div className="game-slot-desc">{choice.description}</div>
-                          {rewardItem?.maxDurability != null && (
-                            <div className="game-durability risky">
-                              Прочность: <b>{rewardItem.maxDurability}</b> / {rewardItem.maxDurability}
-                            </div>
-                          )}
-                          {rewardItem && (
-                            <div className="game-item-effects">
-                              {rewardItem.effects.map(effect => (
-                                <span key={`${choice.id}-${effect.description}`} className="game-item-effect-chip">
-                                  {effect.description}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                        <button
-                          ref={node => { rewardChoiceRefs.current[index] = node; }}
-                          className="btn-accent"
-                          disabled={choice.disabled}
-                          onClick={() => handleRewardChoice(choice)}
-                        >
-                          {choice.kind === 'letter'
-                            ? 'Пробудить символ'
-                            : choice.kind === 'simple'
-                              ? 'Забрать реликвию'
-                              : 'Рискнуть и взять'}
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="game-reward-picked">{selectedRewardMessage}</div>
-              )}
+      <div className="game-map-stage">
+        <GameRunMap map={activeMap} onSelectNode={handleMapNodeSelect} />
+
+        {showBattlePanel && (
+          <div className="game-map-overlay">
+            <div className="game-map-overlay-card game-battle-overlay">
+              <TextDisplay
+                text={session.active ? session.text : levelText}
+                pos={session.active ? session.pos : 0}
+                errPositions={session.active ? session.errPositions : new Set()}
+                waitingForSpace={waitingForSpace}
+                overlay={battleOverlayText}
+                overlayCover
+                onOverlayClick={!session.active ? resumeSavedLevel : undefined}
+              />
             </div>
-          )}
-
-          <div className="game-actions">
-            {rewardPending ? null : result.passed && !result.victory ? (
-              <button ref={resultActionRef} className="btn-accent" onClick={continueGame}>
-                <Swords size={14} style={{ verticalAlign: 'middle' }} /> Следующий уровень
-              </button>
-            ) : result.livesLeft > 0 && !result.victory ? (
-              <button ref={resultActionRef} className="btn-accent" onClick={retryLevel}>
-                <RotateCcw size={14} style={{ verticalAlign: 'middle' }} /> Повторить уровень
-              </button>
-            ) : (
-              <button ref={resultActionRef} className="btn-accent" onClick={startGame}>
-                <RotateCcw size={14} style={{ verticalAlign: 'middle' }} /> Сыграть ещё раз
-              </button>
-            )}
           </div>
-        </div>
-      )}
+        )}
+
+        {showStartPanel && (
+          <div className="game-map-overlay">
+            <div className="game-map-overlay-card">
+              {startOverlayContent}
+            </div>
+          </div>
+        )}
+
+        {pendingEvent && !result && (
+          <div className="game-map-overlay">
+            <GameEventModal
+              pendingEvent={pendingEvent}
+              eventPending={eventPending}
+              eventChoiceRefs={eventChoiceRefs}
+              resultActionRef={resultActionRef}
+              onSelectEventChoice={handleEventChoice}
+              onContinue={continueGame}
+            />
+          </div>
+        )}
+
+        {result && !session.active && (
+          <div className="game-map-overlay">
+            <GameResultCard
+              result={result}
+              speedLabel={spdLabel}
+              formatSpeed={fmtSpeed}
+              targetSpeedDisplay={targetSpeedDisplay}
+              effectiveTargetSpeedDisplay={effectiveTargetSpeedDisplay}
+              rewardChoices={rewardChoices}
+              selectedRewardMessage={selectedRewardMessage}
+              rewardPending={rewardPending}
+              mapSelectionPending={mapSelectionPending}
+              totalLevels={TOTAL_GAME_LEVELS}
+              bossLevelInterval={BOSS_LEVEL_INTERVAL}
+              resultActionRef={resultActionRef}
+              rewardChoiceRefs={rewardChoiceRefs}
+              onContinue={continueGame}
+              onRetry={retryLevel}
+              onRestart={startGame}
+              onSelectReward={handleRewardChoice}
+            />
+          </div>
+        )}
+      </div>
 
       {(gameOver || gameWon) && (
         <div className="card mt-16">
@@ -817,46 +891,20 @@ export function GamePage() {
         </div>
       )}
 
-      {showAchievementsModal && (
-        <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) setShowAchievementsModal(false); }}>
-          <div className="modal game-achievements-modal">
-            <h3>Достижения</h3>
-            <p className="card-desc">
-              Открыто <b>{unlockedAchievements.length}</b> из {gameAchievementCatalog.length}.
-            </p>
-            <div className="game-achievements-list">
-              {gameAchievementCatalog.map(achievement => {
-                const unlocked = gameState.achievements.includes(achievement.id);
-                return (
-                  <div key={achievement.id} className={`game-achievement-card${unlocked ? ' unlocked' : ''}`}>
-                    <div className="game-achievement-icon">
-                      <Medal size={16} />
-                    </div>
-                    <div className="game-achievement-copy">
-                      <div className="game-achievement-name">{achievement.name}</div>
-                      <div className="game-achievement-description">{achievement.description}</div>
-                    </div>
-                    <div className="game-achievement-state">{unlocked ? 'Открыто' : 'Закрыто'}</div>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="modal-actions">
-              <button className="btn-secondary" onClick={() => setShowAchievementsModal(false)}>Закрыть</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <GameAchievementsModal
+        open={showAchievementsModal}
+        unlockedAchievementIds={gameState.achievements}
+        achievementCatalog={gameAchievementCatalog}
+        onClose={closeAchievementsModal}
+      />
 
-      <div className="game-achievement-toast-stack" aria-live="polite" aria-atomic="true">
-        {achievementToasts.slice(0, 3).map(achievement => (
-          <div key={`${achievement.id}-${achievementToasts.indexOf(achievement)}`} className="game-achievement-toast">
-            <div className="game-achievement-toast-title">Достижение получено</div>
-            <div className="game-achievement-toast-name">{achievement.name}</div>
-            <div className="game-achievement-toast-description">{achievement.description}</div>
-          </div>
-        ))}
-      </div>
+      <GameAchievementToastStack achievements={achievementToasts} />
     </section>
   );
 }
+
+
+
+
+
+

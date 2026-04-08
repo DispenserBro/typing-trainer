@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { useTypingSession } from '../hooks/useTypingSession';
 import { TextDisplay } from '../components/TextDisplay';
-import { generateText, filterYoWords, filterYoKeys } from '../engine';
+import { generateText, filterYoWords, filterYoKeys } from '../../core/engine';
 
 export function TestPage() {
   const { layouts, currentLayout, allWords, ngramModel, settings, fmtSpeed, spdLabel, saveHistory } = useApp();
@@ -113,3 +113,4 @@ export function TestPage() {
     </section>
   );
 }
+

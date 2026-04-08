@@ -2,97 +2,14 @@ import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { useTypingSession } from '../hooks/useTypingSession';
 import { TextDisplay } from '../components/TextDisplay';
-import { NumberInput } from '../components/NumberInput';
-import { generatePracticeText, getWorstChar, formatSpeed, speedLabel, filterYoWords, filterYoKeys } from '../engine';
+import { PracticeFeedbackCard } from '../components/practice/PracticeFeedbackCard';
+import { PracticeSettingsModal } from '../components/practice/PracticeSettingsModal';
+import { generatePracticeText, getWorstChar, formatSpeed, speedLabel, filterYoWords, filterYoKeys } from '../../core/engine';
 import type {
-  DailyGoalType, CharStat, PracticeTrainingMode, LayoutPracticeInsights, FingerName,
-  PracticeAdaptationStrength, PracticeAdaptationFocus,
+  CharStat,
 } from '../../shared/types';
-import { buildPracticeInsightsDelta, getRhythmScore, mergeLayoutPracticeInsights, summarizeSessionRhythm } from '../practiceInsights';
-
-function mergeCharStats(
-  base: Record<string, CharStat> | undefined,
-  extra: Record<string, CharStat> | undefined,
-): Record<string, CharStat> {
-  const merged: Record<string, CharStat> = { ...(base ?? {}) };
-
-  for (const [ch, stat] of Object.entries(extra ?? {})) {
-    const prev = merged[ch] ?? { hits: 0, misses: 0, totalTime: 0 };
-    merged[ch] = {
-      hits: prev.hits + stat.hits,
-      misses: prev.misses + stat.misses,
-      totalTime: prev.totalTime + stat.totalTime,
-    };
-  }
-
-  return merged;
-}
-
-const PRACTICES_PER_UNLOCK = 3;
-
-const FINGER_LABELS: Record<FingerName, string> = {
-  index_left: 'Левый указательный',
-  index_right: 'Правый указательный',
-  middle_left: 'Левый средний',
-  middle_right: 'Правый средний',
-  ring_left: 'Левый безымянный',
-  ring_right: 'Правый безымянный',
-  pinky_left: 'Левый мизинец',
-  pinky_right: 'Правый мизинец',
-};
-
-type PracticeFeedback = {
-  weakestChar: string | null;
-  weakestBigram: string | null;
-  weakestFinger: string | null;
-  rhythmScore: number;
-  rhythmLabel: string;
-};
-
-function pickWeakestEntry<T extends { weakness: number; hits: number; misses: number }>(
-  entries: [string, T][],
-  minAttempts: number,
-): string | null {
-  const filtered = entries
-    .filter(([, entry]) => (entry.hits + entry.misses) >= minAttempts && entry.weakness > 0)
-    .sort((a, b) => b[1].weakness - a[1].weakness);
-
-  return filtered[0]?.[0] ?? null;
-}
-
-function getRhythmLabel(score: number) {
-  if (score >= 92) return 'Ровный темп';
-  if (score >= 82) return 'Хороший темп';
-  if (score >= 72) return 'Темп плавает';
-  return 'Ритм проседает';
-}
-
-function buildPracticeFeedback(
-  insights: LayoutPracticeInsights,
-  fallbackWorstChar: string | null,
-): PracticeFeedback {
-  const weakestChar = pickWeakestEntry(Object.entries(insights.chars), 4) ?? fallbackWorstChar;
-  const weakestBigram = pickWeakestEntry(
-    Object.entries(insights.bigrams).map(([bigram, entry]) => [
-      bigram,
-      { ...entry, totalTime: entry.totalTransitionTime },
-    ]),
-    3,
-  );
-  const weakestFingerKey = pickWeakestEntry(
-    Object.entries(insights.fingers).filter((entry): entry is [string, NonNullable<LayoutPracticeInsights['fingers'][FingerName]>] => Boolean(entry[1])),
-    4,
-  ) as FingerName | null;
-  const rhythmScore = getRhythmScore(insights.rhythm);
-
-  return {
-    weakestChar,
-    weakestBigram,
-    weakestFinger: weakestFingerKey ? FINGER_LABELS[weakestFingerKey] : null,
-    rhythmScore,
-    rhythmLabel: getRhythmLabel(rhythmScore),
-  };
-}
+import { buildPracticeInsightsDelta, getRhythmScore, mergeLayoutPracticeInsights, summarizeSessionRhythm } from '../../core/practice/insights';
+import { buildPracticeFeedback, mergeCharStats, PRACTICES_PER_UNLOCK, type PracticeFeedback } from '../../core/practice/feedback';
 
 export function PracticePage() {
   const app = useApp();
@@ -362,18 +279,6 @@ export function PracticePage() {
     stop();
   };
 
-  const adaptationStrengthLabel = {
-    low: 'Мягкая',
-    medium: 'Сбалансированная',
-    high: 'Жесткая',
-  } satisfies Record<PracticeAdaptationStrength, string>;
-  const adaptationFocusLabel = {
-    balanced: 'Баланс',
-    chars: 'Буквы',
-    bigrams: 'Сочетания',
-    rhythm: 'Ритм',
-  } satisfies Record<PracticeAdaptationFocus, string>;
-
   // Letter grid + goal
   const ks = progress.keyStats?.[currentLayout] || {};
 
@@ -542,204 +447,30 @@ export function PracticePage() {
         onOverlayClick={result ? retryAndStart : startPractice}
       />
 
-      {result && (
-        <div className="card practice-feedback-card">
-          <div className="practice-feedback-head">
-            <div>
-              <h4>Разбор практики</h4>
-              <p className="card-desc">
-                Система отметила текущие слабые места по накопленной аналитике.
-              </p>
-            </div>
-            <span className="practice-feedback-prompt">Нажмите любую клавишу для новой попытки</span>
-          </div>
-          <div className="practice-feedback-grid">
-            <div className="practice-feedback-item">
-              <span className="practice-feedback-label">Худшая буква</span>
-              <strong className="practice-feedback-value mono">
-                {result.feedback.weakestChar?.toUpperCase() ?? '—'}
-              </strong>
-              <span className="practice-feedback-note">
-                Ее стоит чаще закреплять в обычных подходах.
-              </span>
-            </div>
-            <div className="practice-feedback-item">
-              <span className="practice-feedback-label">Худшее сочетание</span>
-              <strong className="practice-feedback-value mono">
-                {result.feedback.weakestBigram?.toUpperCase() ?? '—'}
-              </strong>
-              <span className="practice-feedback-note">
-                Здесь чаще всего теряется темп при переходе между буквами.
-              </span>
-            </div>
-            <div className="practice-feedback-item">
-              <span className="practice-feedback-label">Проблемный палец</span>
-              <strong className="practice-feedback-value">
-                {result.feedback.weakestFinger ?? 'Пока не определен'}
-              </strong>
-              <span className="practice-feedback-note">
-                Полезно следить за расслаблением и точной посадкой руки.
-              </span>
-            </div>
-            <div className="practice-feedback-item">
-              <span className="practice-feedback-label">Оценка ритма</span>
-              <strong className="practice-feedback-value">
-                {Math.round(result.feedback.rhythmScore)}%
-              </strong>
-              <span className="practice-feedback-note">
-                {result.feedback.rhythmLabel}
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
+      {result && <PracticeFeedbackCard feedback={result.feedback} />}
 
-      {showSettingsModal && (
-        <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) setShowSettingsModal(false); }}>
-          <div className="modal practice-settings-modal" onClick={e => e.stopPropagation()}>
-              <div className="practice-settings-modal-head">
-                <div>
-                  <h3>Настройки практики</h3>
-                  <p className="card-desc">Длина, темп и характер тренировки.</p>
-                </div>
-                <button className="btn-secondary btn-sm" onClick={() => setShowSettingsModal(false)}>
-                  Закрыть
-              </button>
-            </div>
-
-            <div className="practice-settings-grid">
-              <div className="poption">
-                <span className="poption-label">Цель на день</span>
-                <div className="poption-row">
-                  <select className="select-minimal" value={practiceSettings.dailyGoalType}
-                    onChange={e => savePracticeSetting('dailyGoalType', e.target.value as DailyGoalType)}>
-                    <option value="minutes">Минуты</option>
-                    <option value="sessions">Кол-во практик</option>
-                  </select>
-                  <NumberInput
-                    value={practiceSettings.dailyGoalValue}
-                    min={1}
-                    max={999}
-                    className="w84"
-                    ariaLabel="Цель на день"
-                    onChange={(next) => savePracticeSetting('dailyGoalValue', Math.max(1, Math.round(next) || 15))}
-                  />
-                </div>
-              </div>
-
-              <div className="poption">
-                <span className="poption-label">Целевая скорость</span>
-                <div className="poption-row">
-                  <NumberInput
-                    value={goalDisplay}
-                    min={1}
-                    max={9999}
-                    step={unit === 'cps' ? 0.1 : 1}
-                    className="w96"
-                    ariaLabel="Целевая скорость практики"
-                    onChange={(next) => {
-                      const value = Math.max(1, next || 0);
-                      savePracticeSetting('goalSpeedCpm', Math.round(displayToCpm(value)));
-                    }}
-                  />
-                  <span className="poption-hint">{spdLabel}</span>
-                </div>
-              </div>
-
-              <div className="poption">
-                <span className="poption-label">Режим практики</span>
-                <div className="seg-group">
-                  <button
-                    className={`seg-btn${trainingMode === 'normal' ? ' active' : ''}`}
-                    onClick={() => savePracticeSetting('trainingMode', 'normal' as PracticeTrainingMode)}
-                  >
-                    Обычная
-                  </button>
-                  <button
-                    className={`seg-btn${trainingMode === 'rhythm' ? ' active' : ''}`}
-                    onClick={() => savePracticeSetting('trainingMode', 'rhythm' as PracticeTrainingMode)}
-                  >
-                    Ритм
-                  </button>
-                </div>
-                <span className="poption-hint">
-                  {trainingMode === 'rhythm' ? 'Короткий текст и ровный темп.' : 'Базовый режим на скорость и точность.'}
-                </span>
-              </div>
-
-              <div className="poption practice-settings-wide">
-                <label className="poption-toggle">
-                  <input
-                    type="checkbox"
-                    checked={smartAdaptationEnabled}
-                    onChange={e => savePracticeSetting('smartAdaptationEnabled', e.target.checked)}
-                  />
-                  <span className="toggle-switch" />
-                  <span className="poption-toggle-text">
-                    <span className="poption-label">Умная адаптация</span>
-                    <span className="poption-hint">Подбирает текст под слабые места.</span>
-                  </span>
-                </label>
-              </div>
-
-              <div className="poption practice-settings-wide">
-                <span className="poption-label">Сила адаптации</span>
-                <div className="seg-group">
-                  {(['low', 'medium', 'high'] as PracticeAdaptationStrength[]).map((value) => (
-                    <button
-                      key={value}
-                      className={`seg-btn${smartAdaptationStrength === value ? ' active' : ''}`}
-                      onClick={() => savePracticeSetting('smartAdaptationStrength', value)}
-                      disabled={!smartAdaptationEnabled}
-                    >
-                      {adaptationStrengthLabel[value]}
-                    </button>
-                  ))}
-                </div>
-                <span className="poption-hint">
-                  {smartAdaptationEnabled
-                    ? 'Выше сила — больше акцент на слабых местах.'
-                    : 'Включите адаптацию, чтобы менять ее силу.'}
-                </span>
-              </div>
-
-              <div className="poption practice-settings-wide">
-                <span className="poption-label">Главный акцент</span>
-                <div className="seg-group practice-focus-group">
-                  {(['balanced', 'chars', 'bigrams', 'rhythm'] as PracticeAdaptationFocus[]).map((value) => (
-                    <button
-                      key={value}
-                      className={`seg-btn${smartAdaptationFocus === value ? ' active' : ''}`}
-                      onClick={() => savePracticeSetting('smartAdaptationFocus', value)}
-                      disabled={!smartAdaptationEnabled}
-                    >
-                      {adaptationFocusLabel[value]}
-                    </button>
-                  ))}
-                </div>
-                <span className="poption-hint">
-                  {smartAdaptationFocus === 'balanced' && 'Баланс букв, сочетаний и темпа.'}
-                  {smartAdaptationFocus === 'chars' && 'Больше внимания отдельным буквам.'}
-                  {smartAdaptationFocus === 'bigrams' && 'Больше внимания переходам между буквами.'}
-                  {smartAdaptationFocus === 'rhythm' && 'Больше внимания ровности темпа.'}
-                </span>
-              </div>
-
-              <div className="poption practice-settings-wide">
-                <label className="poption-toggle">
-                  <input type="checkbox" checked={practiceSettings.noStepBack}
-                    onChange={e => savePracticeSetting('noStepBack', e.target.checked)} />
-                  <span className="toggle-switch" />
-                  <span className="poption-toggle-text">
-                    <span className="poption-label">Ни шагу назад</span>
-                    <span className="poption-hint">Backspace отключен.</span>
-                  </span>
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <PracticeSettingsModal
+        open={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+        dailyGoalType={practiceSettings.dailyGoalType}
+        dailyGoalValue={practiceSettings.dailyGoalValue}
+        onDailyGoalTypeChange={(value) => savePracticeSetting('dailyGoalType', value)}
+        onDailyGoalValueChange={(value) => savePracticeSetting('dailyGoalValue', value)}
+        goalDisplay={goalDisplay}
+        spdLabel={spdLabel}
+        unit={unit}
+        onGoalSpeedChange={(value) => savePracticeSetting('goalSpeedCpm', Math.round(displayToCpm(value)))}
+        trainingMode={trainingMode}
+        onTrainingModeChange={(value) => savePracticeSetting('trainingMode', value)}
+        smartAdaptationEnabled={smartAdaptationEnabled}
+        onSmartAdaptationEnabledChange={(value) => savePracticeSetting('smartAdaptationEnabled', value)}
+        smartAdaptationStrength={smartAdaptationStrength}
+        onSmartAdaptationStrengthChange={(value) => savePracticeSetting('smartAdaptationStrength', value)}
+        smartAdaptationFocus={smartAdaptationFocus}
+        onSmartAdaptationFocusChange={(value) => savePracticeSetting('smartAdaptationFocus', value)}
+        noStepBack={practiceSettings.noStepBack}
+        onNoStepBackChange={(value) => savePracticeSetting('noStepBack', value)}
+      />
 
       {unlockModalLetter && (
         <div className="modal-overlay" onClick={() => setUnlockModalLetter(null)}>
@@ -759,3 +490,6 @@ export function PracticePage() {
     </section>
   );
 }
+
+
+

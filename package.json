@@ -1,6 +1,6 @@
 {
   "name": "typing-trainer",
-  "version": "2.2.2",
+  "version": "2.3.0",
   "description": "Клавиатурный тренажёр с поддержкой русского и английского языков",
   "author": {
     "name": "DispenserBro",
@@ -17,6 +17,7 @@
     "start": "npm run build && electron .",
     "dev": "npm run build && electron .",
     "diagnostics:practice": "npm run build:debug-tools && node dist-debug/debug/runPracticeDiagnostics.js",
+    "diagnostics:game-balance": "npm run build:debug-tools && node dist-debug/debug/runGameBalanceDiagnostics.js",
     "build:win": "npm run build && electron-builder --win --publish never",
     "build:linux": "npm run build && electron-builder --linux --publish never"
   },
@@ -24,8 +25,13 @@
     "appId": "com.typing-trainer.app",
     "productName": "Typing Trainer",
     "icon": "data/app-icon.png",
+    "directories": {
+      "output": "dist-build"
+    },
     "files": [
-      "dist/**",
+      "dist/main/**",
+      "dist/renderer/**",
+      "dist/shared/**",
       "data/**"
     ],
     "win": {
@@ -48,10 +54,14 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "an-array-of-english-words": "^2.0.0",
+    "chart.js": "^4.5.1",
     "css-loader": "^7.1.4",
     "electron": "^41.0.3",
     "electron-builder": "^26.8.1",
     "html-webpack-plugin": "^5.6.6",
+    "lucide-react": "^0.577.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
     "russian-words": "^1.0.1",
     "sass": "^1.98.0",
     "sass-loader": "^16.0.7",
@@ -60,11 +70,5 @@
     "typescript": "^5.9.3",
     "webpack": "^5.105.4",
     "webpack-cli": "^7.0.2"
-  },
-  "dependencies": {
-    "chart.js": "^4.5.1",
-    "lucide-react": "^0.577.0",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4"
   }
 }

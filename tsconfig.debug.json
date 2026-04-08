@@ -15,7 +15,16 @@
   },
   "include": [
     "src/debug/**/*",
-    "src/renderer/engine.ts",
+    "src/core/engine.ts",
+    "src/core/speedUtils.ts",
+    "src/core/textFilters.ts",
+    "src/core/typingSession.ts",
+    "src/core/text/**/*",
+    "src/core/practice/engine.ts",
+    "src/core/lessons/engine.ts",
+    "src/core/lessons/utils.ts",
+    "src/core/game/gameEvents.ts",
+    "src/core/game/items/**/*",
     "src/shared/**/*"
   ],
   "exclude": ["node_modules", "dist", "dist-debug"]

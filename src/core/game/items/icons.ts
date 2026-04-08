@@ -1,0 +1,56 @@
+import type { LucideIcon } from 'lucide-react';
+import {
+  Anchor,
+  Brain,
+  Compass,
+  Crown,
+  Crosshair,
+  Dice5,
+  Eye,
+  Feather,
+  Flame,
+  Gauge,
+  Gem,
+  Glasses,
+  Lock,
+  Medal,
+  Radar,
+  Rabbit,
+  Shield,
+  ShieldPlus,
+  Sparkles,
+  Timer,
+  WandSparkles,
+  Wind,
+  Zap,
+} from 'lucide-react';
+
+const GAME_ITEM_ICONS: Record<string, LucideIcon> = {
+  anchor: Anchor,
+  brain: Brain,
+  crown: Crown,
+  gauge: Gauge,
+  dice: Dice5,
+  eye: Eye,
+  feather: Feather,
+  glasses: Glasses,
+  compass: Compass,
+  crosshair: Crosshair,
+  lock: Lock,
+  medal: Medal,
+  rabbit: Rabbit,
+  radar: Radar,
+  shieldplus: ShieldPlus,
+  sparkles: Sparkles,
+  timer: Timer,
+  shield: Shield,
+  wand: WandSparkles,
+  wind: Wind,
+  zap: Zap,
+  flame: Flame,
+  gem: Gem,
+};
+
+export function getGameItemIcon(iconKey: string) {
+  return GAME_ITEM_ICONS[iconKey] ?? Gem;
+}
