@@ -1,19 +1,25 @@
 import type {
+  CustomPresets,
   CustomThemes,
   LanguageInfo,
   Layout,
+  PresetSettings,
   UserSettings,
 } from '../../../shared/types';
 import {
+  SettingsAccessibilityCard,
   SettingsCursorCard,
+  SettingsDisplayCard,
   SettingsInputCard,
   SettingsLanguageCard,
   SettingsLayoutCard,
+  SettingsModeProfilesCard,
   SettingsSpeedUnitCard,
   SettingsTextCard,
   SettingsThemeCard,
 } from './SettingsGeneralCards';
 import { SettingsKeyboardCard } from './SettingsKeyboardCard';
+import { SettingsPresetsCard } from './SettingsPresetsCard';
 import { SettingsProgressCard } from './SettingsProgressCard';
 
 type SettingsGridProps = {
@@ -30,6 +36,16 @@ type SettingsGridProps = {
   onOpenThemeEditor: () => void;
   keyboardPreviewActive: boolean;
   setKeyboardPreviewActive: (active: boolean) => void;
+  customPresets: CustomPresets;
+  applyPreset: (presetId: string) => void;
+  saveCurrentAsPreset: (name: string) => string;
+  deletePreset: (presetId: string) => void;
+  exportConfig: () => Promise<boolean>;
+  importConfig: () => Promise<string | null>;
+  currentMode: string;
+  modeProfiles: Partial<Record<string, Partial<PresetSettings>>>;
+  saveModeProfile: (mode: string) => void;
+  clearModeProfile: (mode: string) => void;
   onResetGame: () => void;
   onResetAll: () => void;
 };
@@ -48,6 +64,16 @@ export function SettingsGrid({
   onOpenThemeEditor,
   keyboardPreviewActive,
   setKeyboardPreviewActive,
+  customPresets,
+  applyPreset,
+  saveCurrentAsPreset,
+  deletePreset,
+  exportConfig,
+  importConfig,
+  currentMode,
+  modeProfiles,
+  saveModeProfile,
+  clearModeProfile,
   onResetGame,
   onResetAll,
 }: SettingsGridProps) {
@@ -82,6 +108,23 @@ export function SettingsGrid({
       />
       <SettingsInputCard settings={settings} saveSetting={saveSetting} />
       <SettingsTextCard settings={settings} saveSetting={saveSetting} />
+      <SettingsDisplayCard settings={settings} saveSetting={saveSetting} />
+      <SettingsAccessibilityCard settings={settings} saveSetting={saveSetting} />
+      <SettingsPresetsCard
+        customPresets={customPresets}
+        settings={settings}
+        applyPreset={applyPreset}
+        saveCurrentAsPreset={saveCurrentAsPreset}
+        deletePreset={deletePreset}
+        exportConfig={exportConfig}
+        importConfig={importConfig}
+      />
+      <SettingsModeProfilesCard
+        currentMode={currentMode}
+        modeProfiles={modeProfiles}
+        saveModeProfile={saveModeProfile}
+        clearModeProfile={clearModeProfile}
+      />
       <SettingsProgressCard
         onResetGame={onResetGame}
         onResetAll={onResetAll}

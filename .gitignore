@@ -24,3 +24,18 @@ Desktop.ini
 # Logs
 *.log
 npm-debug.log*
+
+# Custom files
+pre-releases/
+
+# Codex data
+.codex/
+
+# User data (addons, mods, progress)
+data/addons/
+data/mods/
+data/progress.json
+data/custom-themes.json
+data/addon-registry.json
+data/mod-registry.json
+

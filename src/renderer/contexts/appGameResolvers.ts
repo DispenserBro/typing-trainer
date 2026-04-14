@@ -13,6 +13,7 @@ import type {
 } from '../../shared/types';
 import { GAME_ACHIEVEMENT_MAP } from '../../core/game/gameAchievements';
 import { GAME_ITEM_MAP, isBrokenInventoryItem } from '../../core/game/items';
+import { PLAYER_BASE_HP } from '../../core/game/battleSystem';
 import { defaultGameState } from './appDefaults';
 
 export function normalizeGameRunModifier(modifier?: Partial<GameRunModifier> | null): GameRunModifier | null {
@@ -229,6 +230,8 @@ export function resolveGameState(progress: Progress): GameState {
     currentRun: base.currentRun ? {
       level: Math.max(1, Math.floor(base.currentRun.level || 1)),
       lives: Math.max(0, Math.floor(base.currentRun.lives || 0)),
+      maxLives: Math.max(1, Math.floor((base.currentRun as any).maxLives || PLAYER_BASE_HP)),
+      regenTurns: Math.max(0, Math.floor((base.currentRun as any).regenTurns || 0)),
       completedLevels: Math.max(0, Math.floor(base.currentRun.completedLevels || 0)),
       targetSpeedCpm: Math.max(1, Math.floor(base.currentRun.targetSpeedCpm || 1)),
       levelText: typeof base.currentRun.levelText === 'string' ? base.currentRun.levelText : '',
@@ -243,8 +246,37 @@ export function resolveGameState(progress: Progress): GameState {
       result: base.currentRun.result ?? null,
       rewardChoices: base.currentRun.rewardChoices ?? null,
       selectedRewardMessage: base.currentRun.selectedRewardMessage ?? null,
+      battleState: (base.currentRun as any).battleState ?? null,
+      dailySeed: typeof base.currentRun.dailySeed === 'string' ? base.currentRun.dailySeed : null,
+    } : null,
+    ghostRun: base.ghostRun ? {
+      date: typeof base.ghostRun.date === 'string' ? base.ghostRun.date : new Date().toISOString(),
+      maxLevel: Math.max(0, Math.floor(base.ghostRun.maxLevel || 0)),
+      levels: Array.isArray(base.ghostRun.levels) ? base.ghostRun.levels.map(l => ({
+        level: Math.max(1, Math.floor(l.level || 1)),
+        wpm: Math.max(0, l.wpm || 0),
+        acc: Math.max(0, Math.min(100, l.acc || 0)),
+        elapsed: Math.max(0, l.elapsed || 0),
+        passed: Boolean(l.passed),
+      })) : [],
+    } : null,
+    dailyRun: base.dailyRun ? {
+      history: typeof base.dailyRun.history === 'object' && base.dailyRun.history
+        ? Object.fromEntries(
+          Object.entries(base.dailyRun.history)
+            .filter(([key, val]) => /^\d{4}-\d{2}-\d{2}$/.test(key) && val && typeof val === 'object')
+            .map(([key, val]) => [key, {
+              date: val.date ?? key,
+              maxLevel: Math.max(0, Math.floor(val.maxLevel || 0)),
+              completedLevels: Math.max(0, Math.floor(val.completedLevels || 0)),
+              bestWpm: Math.max(0, val.bestWpm || 0),
+              avgAcc: Math.max(0, Math.min(100, val.avgAcc || 0)),
+              totalTime: Math.max(0, val.totalTime || 0),
+              attempts: Math.max(0, Math.floor(val.attempts || 0)),
+            }]),
+        )
+        : {},
     } : null,
   };
 }
-
 

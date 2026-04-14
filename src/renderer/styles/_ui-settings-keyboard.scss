@@ -313,7 +313,7 @@
   overflow: visible;
 }
 .keyboard-hands-svg .hands_svg__hand {
-  opacity: 0.72;
+  opacity: var(--kb-hands-opacity, 0.72);
 }
 .keyboard-hands-svg .hands_svg__st1 {
   fill: rgba(255,255,255,0.12);
@@ -359,7 +359,7 @@
   justify-content: center;
   background: rgba(255,255,255,0.01);
   color: rgba(255,255,255,0.9);
-  border: 1.5px solid rgba(255,255,255,0.88);
+  border: var(--kb-key-stroke, 1.5px) solid rgba(255,255,255,0.88);
   border-radius: calc(var(--kb-radius-base) * var(--kb-panel-scale));
   font-family: var(--font-mono);
   font-size: calc(var(--kb-font-size-base) * var(--kb-panel-scale));
@@ -420,6 +420,9 @@
 .color-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; margin: 12px 0; }
 .color-grid label { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--text-dim); }
 .color-grid input[type="color"] { width: 32px; height: 24px; border: none; background: none; cursor: pointer; }
+.theme-ext-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; margin-bottom: 12px; }
+.theme-ext-field { display: flex; flex-direction: column; gap: 2px; font-size: 0.8rem; color: var(--text-dim); }
+.theme-ext-field .input-minimal { font-size: 0.82rem; padding: 4px 8px; }
 .modal-actions { display: flex; gap: 8px; margin-top: 16px; }
 .modal-actions button { flex: 1; }
 .reset-progress-note {

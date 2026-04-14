@@ -13,6 +13,7 @@ import { getRewardKindLabel } from '../../../core/game/runUtils';
 
 type GameResultCardProps = {
   result: GameRunResult;
+  isDailyRun: boolean;
   speedLabel: string;
   formatSpeed: (value: number) => string;
   targetSpeedDisplay: number;
@@ -23,11 +24,13 @@ type GameResultCardProps = {
   mapSelectionPending: boolean;
   totalLevels: number;
   bossLevelInterval: number;
+  ghostComparison: { ghostWpm: number; delta: number; ahead: boolean } | null;
   resultActionRef: RefObject<HTMLButtonElement | null>;
   rewardChoiceRefs: MutableRefObject<Array<HTMLButtonElement | null>>;
   onContinue: () => void;
   onRetry: () => void;
   onRestart: () => void;
+  onReturnToMainGame: () => void;
   onSelectReward: (choice: GameRunRewardChoice) => void;
 };
 
@@ -37,6 +40,7 @@ function isKeyboardActivation(event: React.KeyboardEvent<HTMLButtonElement>) {
 
 export function GameResultCard({
   result,
+  isDailyRun,
   speedLabel,
   formatSpeed,
   targetSpeedDisplay,
@@ -47,13 +51,17 @@ export function GameResultCard({
   mapSelectionPending,
   totalLevels,
   bossLevelInterval,
+  ghostComparison,
   resultActionRef,
   rewardChoiceRefs,
   onContinue,
   onRetry,
   onRestart,
+  onReturnToMainGame,
   onSelectReward,
 }: GameResultCardProps) {
+  const isTerminalDailyRun = isDailyRun && (result.victory || result.livesLeft <= 0);
+
   const handleRewardPointerDown = (event: React.PointerEvent<HTMLButtonElement>, choice: GameRunRewardChoice) => {
     if (event.button !== 0) return;
     event.preventDefault();
@@ -76,7 +84,7 @@ export function GameResultCard({
           ? (result.isBoss ? 'Босс повержен' : 'Уровень пройден')
           : result.timedOut
             ? (result.livesLeft > 0 ? 'Время вышло' : 'Игра окончена')
-            : (result.livesLeft > 0 ? 'Жизнь потеряна' : 'Игра окончена')}
+            : (result.livesLeft > 0 ? 'Потеряно HP' : 'Игра окончена')}
       </h3>
       <div className="result-big">{formatSpeed(result.wpm)} {speedLabel}</div>
       <p>
@@ -89,8 +97,29 @@ export function GameResultCard({
       {result.isBoss && result.timeLimitSeconds && (
         <p>Время: <b>{result.elapsed.toFixed(1)} c</b> / {result.timeLimitSeconds.toFixed(1)} c</p>
       )}
+      {result.rhythmDeviation != null && result.maxRhythmDeviation != null && (
+        <p>
+          Ритм: <b>{Math.round(result.rhythmDeviation)} мс</b> / макс. {result.maxRhythmDeviation} мс
+          {result.rhythmDeviation > result.maxRhythmDeviation
+            ? <span className="game-fail-tag"> — нестабильно</span>
+            : <span className="game-pass-tag"> — стабильно</span>}
+        </p>
+      )}
+      {result.maxErrors != null && result.maxErrors > 0 && (
+        <p>
+          Режим без ошибок: макс. <b>{result.maxErrors}</b> ошибок
+        </p>
+      )}
       {result.brokenItems.length > 0 && (
         <p className="game-breakage-note">Распались предметы: <b>{result.brokenItems.join(', ')}</b></p>
+      )}
+      {ghostComparison && (
+        <p className={`game-ghost-compare ${ghostComparison.ahead ? 'ahead' : 'behind'}`}>
+          👻 Призрак: {Math.round(ghostComparison.ghostWpm)} WPM ·
+          {ghostComparison.ahead
+            ? ` вы быстрее на ${Math.round(ghostComparison.delta)} WPM`
+            : ` призрак быстрее на ${Math.round(-ghostComparison.delta)} WPM`}
+        </p>
       )}
       <p>{result.victory
         ? `Вы прошли все ${totalLevels} уровней. Все реликвии этого забега рассеялись.`
@@ -101,8 +130,8 @@ export function GameResultCard({
               ? 'Уровень пройден. Теперь выбери следующую точку прямо на карте забега.'
               : `Уровень ${result.level} завершен. Дальше идет ${result.level + 1}${(result.level + 1) % bossLevelInterval === 0 ? ' — босс' : ''}.`
           : result.timedOut
-            ? `Вы не уложились в лимит времени. Осталось жизней: ${result.livesLeft}.`
-            : `Нужно держать скорость не ниже цели и точность от ${result.minAccuracy}%. Осталось жизней: ${result.livesLeft}.`}
+            ? `Вы не уложились в лимит времени. Осталось HP: ${result.livesLeft}.`
+            : `Нужно держать скорость не ниже цели и точность от ${result.minAccuracy}%. Осталось HP: ${result.livesLeft}.`}
       </p>
 
       {rewardChoices && result.passed && result.isBoss && !result.victory && (
@@ -122,10 +151,12 @@ export function GameResultCard({
                     className={`game-reward-card${rewardItem ? ` rarity-${rewardItem.rarity}` : ''}${choice.disabled ? ' disabled' : ''}`}
                   >
                     <div className="game-reward-card-head">
-                      <div className={`game-item-badge${choice.kind === 'letter' ? ' letter' : ''}`}>
+                      <div className={`game-item-badge${(choice.kind === 'letter' || choice.kind === 'event') ? ' letter' : ''}`}>
                         {choice.kind === 'letter'
                           ? (choice.letter?.toUpperCase() ?? '?')
-                          : RewardIcon && <RewardIcon size={18} />}
+                          : choice.kind === 'event'
+                            ? '✦'
+                            : RewardIcon && <RewardIcon size={18} />}
                       </div>
                       <div className="game-reward-copy">
                         <div className={`game-reward-rarity${rewardItem ? '' : ' special'}`}>{rewardRarity}</div>
@@ -160,9 +191,11 @@ export function GameResultCard({
                     >
                       {choice.kind === 'letter'
                         ? 'Пробудить символ'
-                        : choice.kind === 'simple'
-                          ? 'Забрать реликвию'
-                          : 'Рискнуть и взять'}
+                        : choice.kind === 'event'
+                          ? 'Принять'
+                          : choice.kind === 'simple'
+                            ? 'Забрать реликвию'
+                            : 'Рискнуть и взять'}
                     </button>
                   </div>
                 );
@@ -183,6 +216,15 @@ export function GameResultCard({
           <button ref={resultActionRef} className="btn-accent" onClick={onRetry}>
             <RotateCcw size={14} style={{ verticalAlign: 'middle' }} /> Повторить уровень
           </button>
+        ) : isTerminalDailyRun ? (
+          <>
+            <button ref={resultActionRef} className="btn-accent" onClick={onRestart}>
+              <RotateCcw size={14} style={{ verticalAlign: 'middle' }} /> Сыграть ещё раз
+            </button>
+            <button className="btn-secondary" onClick={onReturnToMainGame}>
+              <Swords size={14} style={{ verticalAlign: 'middle' }} /> К основной игре
+            </button>
+          </>
         ) : (
           <button ref={resultActionRef} className="btn-accent" onClick={onRestart}>
             <RotateCcw size={14} style={{ verticalAlign: 'middle' }} /> Сыграть ещё раз
@@ -192,5 +234,3 @@ export function GameResultCard({
     </div>
   );
 }
-
-

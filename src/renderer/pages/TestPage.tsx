@@ -3,10 +3,47 @@ import { useApp } from '../contexts/AppContext';
 import { useTypingSession } from '../hooks/useTypingSession';
 import { TextDisplay } from '../components/TextDisplay';
 import { generateText, filterYoWords, filterYoKeys } from '../../core/engine';
+import { AchievementsModal } from '../components/AchievementsModal';
+import { GameAchievementToastStack } from '../components/game/GameAchievementToastStack';
+import type { GameAchievementDefinition } from '../../shared/types';
+import { checkAchievements, type AchievementEvent } from '../../core/achievements/achievementEngine';
+import { Medal } from 'lucide-react';
 
 export function TestPage() {
-  const { layouts, currentLayout, allWords, ngramModel, settings, fmtSpeed, spdLabel, saveHistory } = useApp();
+  const { layouts, currentLayout, allWords, ngramModel, settings, fmtSpeed, spdLabel, saveHistory,
+    gameAchievementCatalog, unlockedAchievementIds, unlockAchievements } = useApp();
   const useYo = settings.useYo;
+
+  const [showAchievements, setShowAchievements] = useState(false);
+  const [achievementToasts, setAchievementToasts] = useState<GameAchievementDefinition[]>([]);
+
+  const handleAchievementEvent = useCallback((event: AchievementEvent) => {
+    const newlyUnlockedIds = checkAchievements(
+      gameAchievementCatalog,
+      new Set(unlockedAchievementIds),
+      event,
+    );
+    if (newlyUnlockedIds.length === 0) return;
+
+    const unlockedObjects = unlockAchievements(newlyUnlockedIds);
+    if (unlockedObjects.length > 0) {
+      setAchievementToasts(prev => [...prev, ...unlockedObjects]);
+    }
+  }, [gameAchievementCatalog, unlockedAchievementIds, unlockAchievements]);
+
+  const handleRemoveToast = useCallback((achievementIndex: number) => {
+    setAchievementToasts(prev => prev.filter((_, idx) => idx !== achievementIndex));
+  }, []);
+
+  const testAchievementCatalog = useMemo(
+    () => gameAchievementCatalog.filter(a => (a.category ?? 'game') === 'test'),
+    [gameAchievementCatalog],
+  );
+
+  const testUnlockedCount = useMemo(
+    () => testAchievementCatalog.filter(a => unlockedAchievementIds.includes(a.id)).length,
+    [testAchievementCatalog, unlockedAchievementIds],
+  );
 
   const words = useMemo(() => filterYoWords(allWords, useYo), [allWords, useYo]);
   const [duration, setDuration] = useState(60);
@@ -19,7 +56,9 @@ export function TestPage() {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     saveHistory('test', wpm, acc, { charStats: ses?.charStats });
     setResult({ wpm, acc, elapsed, chars: ses.totalChars, errors: ses.errors });
-  }, [saveHistory]);
+
+    handleAchievementEvent({ type: 'test.completed', wpm, accuracy: acc });
+  }, [saveHistory, handleAchievementEvent]);
 
   const { session, start, stop, handleKey, wpm, acc, waitingForSpace } = useTypingSession({ mode: 'test', onFinish });
 
@@ -71,8 +110,27 @@ export function TestPage() {
 
   return (
     <section className="mode-panel active">
+      <GameAchievementToastStack achievements={achievementToasts} onRemove={handleRemoveToast} />
+      <AchievementsModal
+        open={showAchievements}
+        achievementCatalog={gameAchievementCatalog}
+        unlockedAchievementIds={unlockedAchievementIds}
+        categoryFilter="test"
+        onClose={() => setShowAchievements(false)}
+      />
       <div className="panel-header">
-        <h1>Тест скорости</h1>
+        <div className="game-header-title">
+          <h1>Тест скорости</h1>
+          <button
+            type="button"
+            className="btn-secondary btn-sm game-achievements-button"
+            onClick={() => setShowAchievements(true)}
+          >
+            <Medal size={14} />
+            Достижения
+            <span className="game-achievements-count">{testUnlockedCount}/{testAchievementCatalog.length}</span>
+          </button>
+        </div>
         <div className="header-right">
           <select className="select-minimal" value={duration}
             onChange={e => setDuration(Number(e.target.value))}>

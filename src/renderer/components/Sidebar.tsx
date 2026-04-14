@@ -1,7 +1,16 @@
+import { useMemo } from 'react';
 import { useApp } from '../contexts/AppContext';
-import { Target, Clock, BookOpen, BarChart3, Settings, Keyboard, Gamepad2 } from 'lucide-react';
+import { Target, Clock, BookOpen, BarChart3, Settings, Keyboard, Gamepad2, Puzzle, Box } from 'lucide-react';
+import type { ReactElement } from 'react';
 
-const MODES = [
+interface SidebarMode {
+  id: string;
+  label: string;
+  group: 'top' | 'bottom';
+  icon: ReactElement;
+}
+
+const MODES: SidebarMode[] = [
   {
     id: 'practice', label: 'Практика', group: 'top',
     icon: <Target size={20} />,
@@ -23,22 +32,44 @@ const MODES = [
     icon: <BarChart3 size={20} />,
   },
   {
+    id: 'addons', label: 'Аддоны', group: 'bottom',
+    icon: <Puzzle size={20} />,
+  },
+  {
     id: 'settings', label: 'Настройки', group: 'bottom',
     icon: <Settings size={20} />,
   },
 ];
 
 export function Sidebar() {
-  const { currentMode, switchMode } = useApp();
-  const top = MODES.filter(m => m.group === 'top');
-  const bottom = MODES.filter(m => m.group === 'bottom');
+  const { currentMode, switchMode, disabledSections, modModes } = useApp();
+
+  const allModes = useMemo(() => {
+    const modEntries: SidebarMode[] = modModes.map(m => ({
+      id: `mod:${m.id}`,
+      label: m.label,
+      group: m.group,
+      icon: <Box size={20} />,
+    }));
+    return [...MODES, ...modEntries];
+  }, [modModes]);
+
+  const visible = allModes.filter(m => !disabledSections.includes(m.id));
+  const top = visible.filter(m => m.group === 'top');
+  const bottom = visible.filter(m => m.group === 'bottom');
+  const homeActive = currentMode === 'home';
 
   return (
     <aside id="sidebar">
       <div className="sidebar-top">
-        <div className="sidebar-logo">
+        <button
+          type="button"
+          className={`sidebar-logo sidebar-home-btn${homeActive ? ' active' : ''}`}
+          title="Главное меню"
+          onClick={() => switchMode('home')}
+        >
           <Keyboard size={28} />
-        </div>
+        </button>
         <span className="sidebar-label">режим</span>
         {top.map(m => (
           <button

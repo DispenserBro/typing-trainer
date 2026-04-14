@@ -33,6 +33,97 @@
   display: flex;
   gap: 8px;
   flex-shrink: 0;
+  align-items: center;
+}
+.game-run-hp {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface2) 80%, var(--accent));
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--surface3));
+}
+.game-run-hp-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.game-run-hp-bar {
+  width: 140px;
+  height: 8px;
+  background: var(--surface3);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.game-run-hp-fill {
+  height: 100%;
+  background: var(--green);
+  transition: width 0.3s ease;
+  &.warn { background: var(--yellow); }
+  &.danger { background: var(--red); }
+}
+.game-run-hp-value {
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+/* ── Battle HP bars ── */
+.game-battle-hp-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.game-hp-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: var(--text);
+  &.enemy {
+    color: var(--red);
+  }
+}
+.game-hp-label {
+  min-width: 56px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.game-hp-bar {
+  flex: 1;
+  height: 10px;
+  background: var(--surface2);
+  border-radius: 5px;
+  overflow: hidden;
+}
+.game-hp-bar-fill {
+  height: 100%;
+  background: var(--green);
+  border-radius: 5px;
+  transition: width 0.3s ease;
+  &.warn { background: var(--yellow); }
+  &.danger { background: var(--red); }
+  &.enemy { background: var(--red); }
+}
+.game-hp-enemy-name {
+  font-weight: 600;
+  font-size: 0.75rem;
+  opacity: 0.75;
+}
+.game-boss-debuff-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.68rem;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--red) 18%, transparent);
+  color: var(--red);
+  font-weight: 600;
 }
 .game-heart {
   display: inline-flex;
@@ -51,6 +142,11 @@
   display: flex;
   justify-content: center;
   margin-top: 14px;
+}
+.game-event-skip-row {
+  margin-top: 10px;
+  opacity: 0.65;
+  &:hover { opacity: 1; }
 }
 .game-items-card {
   margin-bottom: 14px;
@@ -607,6 +703,60 @@
 .game-achievements-modal {
   max-width: 700px;
 }
+.achievements-filter {
+  margin-top: 10px;
+}
+.achievements-category-select {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--surface3);
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 0.88rem;
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  &:hover,
+  &:focus {
+    border-color: var(--accent);
+  }
+  option {
+    background: var(--surface2);
+    color: var(--text);
+  }
+}
+.achievements-tabs {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.achievements-tab {
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--surface3);
+  background: var(--surface2);
+  color: var(--text-dim);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  &:hover {
+    border-color: var(--accent);
+    color: var(--text);
+  }
+  &.active {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--surface2) 80%, var(--accent) 20%);
+    color: var(--accent);
+  }
+}
 .game-achievements-list {
   display: flex;
   flex-direction: column;
@@ -690,6 +840,12 @@
     linear-gradient(180deg, rgba(232,117,26,0.12), transparent 55%),
     color-mix(in srgb, var(--surface) 95%, #000 5%);
   box-shadow: 0 16px 32px rgba(0, 0, 0, 0.28);
+  opacity: 1;
+  transition: opacity 0.4s ease-out;
+}
+
+.game-achievement-toast.hiding {
+  opacity: 0;
 }
 .game-achievement-toast-title {
   font-size: 0.72rem;
@@ -758,12 +914,12 @@
   gap: 12px;
   align-items: start;
   min-width: max-content;
-  min-height: 324px;
+  min-height: 420px;
   padding: 12px 0 4px;
 }
 .game-map-column {
   display: grid;
-  grid-template-rows: repeat(3, 108px);
+  grid-template-rows: repeat(5, 84px);
   gap: 0;
   align-items: stretch;
 }
@@ -790,12 +946,12 @@
   z-index: 1;
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: 6px;
   width: 138px;
-  min-height: 92px;
-  height: 92px;
+  min-height: 68px;
+  height: 68px;
   margin: 8px auto;
-  padding: 10px;
+  padding: 8px;
   border-radius: var(--radius);
   border: 1px solid var(--surface3);
   background: color-mix(in srgb, var(--surface2) 94%, #000 6%);
@@ -824,10 +980,10 @@
   opacity: 0.8;
 }
 .game-map-node-icon {
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
   flex-shrink: 0;
-  border-radius: 10px;
+  border-radius: 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -933,6 +1089,23 @@
 .game-battle-overlay .text-display {
   margin-bottom: 0;
   box-shadow: 0 20px 44px rgba(0, 0, 0, 0.28);
+}
+.game-battle-hud {
+  text-align: center;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text2);
+  padding: 6px 12px;
+  margin-bottom: 6px;
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--surface) 90%, var(--accent) 10%);
+  letter-spacing: 0.02em;
+}
+.game-battle-info-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
 }
 .game-modal-panel {
   border-radius: var(--radius);
@@ -1327,8 +1500,13 @@
 .result-card {
   background: var(--surface);
   border-radius: var(--radius);
-  padding: 28px;
+  padding: 28px 32px;
   text-align: center;
+  animation: resultSlideIn 0.35s ease both;
+}
+@keyframes resultSlideIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to   { opacity: 1; transform: none; }
 }
 .game-result-card {
   position: relative;
@@ -1337,10 +1515,30 @@
   border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--surface3));
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.24);
 }
-.result-card h3 { color: var(--accent); margin-bottom: 12px; font-size: 1.1rem; }
-.result-card .result-big { font-size: 2.2rem; font-weight: 700; color: var(--accent); font-family: var(--font-mono); }
+.result-card h3 { color: var(--accent); margin-bottom: 8px; font-size: 1.1rem; letter-spacing: 0.02em; }
+.result-card .result-big {
+  font-size: 2.6rem; font-weight: 700; color: var(--accent);
+  font-family: var(--font-mono); line-height: 1.1; margin-bottom: 6px;
+}
+.result-card .result-metrics {
+  display: flex; justify-content: center; gap: 24px;
+  margin: 14px 0 4px; padding: 12px 0;
+  border-top: 1px solid var(--surface2); border-bottom: 1px solid var(--surface2);
+}
+.result-card .result-metric {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.result-card .result-metric-value {
+  font-size: 1.2rem; font-weight: 600; font-family: var(--font-mono); color: var(--text);
+}
+.result-card .result-metric-label {
+  font-size: 0.72rem; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.04em;
+}
+.result-card .result-metric-value.good  { color: var(--green); }
+.result-card .result-metric-value.warn  { color: var(--yellow); }
+.result-card .result-metric-value.bad   { color: var(--red); }
 .result-card p { margin: 4px 0; font-size: 0.9rem; color: var(--text-dim); }
-.result-card .btn-accent { margin-top: 14px; }
+.result-card .btn-accent { margin-top: 16px; }
 
 /* ── Lesson grid ──────────────────────────────────────── */
 .lesson-grid {
@@ -1530,3 +1728,128 @@
 }
 
 /* ── Stats / charts ───────────────────────────────────── */
+
+/* ── New game systems (boss archetypes, sets, ghost, daily) ── */
+
+.game-context-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: -2px 0 10px;
+}
+.game-context-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--surface2);
+  border: 1px solid var(--surface3);
+}
+.game-context-chip.daily {
+  background: color-mix(in srgb, var(--surface2) 80%, #f59e0b);
+  border-color: color-mix(in srgb, #f59e0b 30%, var(--surface3));
+  color: #fbbf24;
+}
+.game-context-chip.boss-red {
+  background: color-mix(in srgb, var(--surface2) 80%, var(--red));
+  border-color: color-mix(in srgb, var(--red) 30%, var(--surface3));
+  color: var(--red);
+}
+.game-context-chip.boss-blue {
+  background: color-mix(in srgb, var(--surface2) 80%, #3b82f6);
+  border-color: color-mix(in srgb, #3b82f6 30%, var(--surface3));
+  color: #60a5fa;
+}
+.game-context-chip.boss-purple {
+  background: color-mix(in srgb, var(--surface2) 80%, #a855f7);
+  border-color: color-mix(in srgb, #a855f7 30%, var(--surface3));
+  color: #c084fc;
+}
+.game-context-chip.boss-orange {
+  background: color-mix(in srgb, var(--surface2) 80%, #f97316);
+  border-color: color-mix(in srgb, #f97316 30%, var(--surface3));
+  color: #fb923c;
+}
+.game-context-chip.ghost {
+  background: color-mix(in srgb, var(--surface2) 80%, #6b7280);
+  border-color: var(--surface3);
+}
+.game-context-chip.ghost.ahead {
+  color: var(--green);
+}
+.game-context-chip.ghost.behind {
+  color: var(--red);
+}
+
+.game-set-active {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--surface3));
+  background: color-mix(in srgb, var(--surface2) 75%, var(--accent));
+}
+
+.game-ghost-compare {
+  font-size: 0.85rem;
+  margin-top: 4px;
+}
+.game-ghost-compare.ahead {
+  color: var(--green);
+}
+.game-ghost-compare.behind {
+  color: var(--red);
+}
+
+.game-fail-tag {
+  color: var(--red);
+  font-weight: 600;
+}
+.game-pass-tag {
+  color: var(--green);
+  font-weight: 600;
+}
+
+.game-ghost-info {
+  margin-top: 8px;
+  font-size: 0.82rem;
+  color: var(--subtext);
+  text-align: center;
+}
+
+.game-set-bonuses {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.game-set-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  background: color-mix(in srgb, var(--surface2) 80%, var(--accent));
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--surface3));
+  border-radius: var(--radius);
+}
+.game-set-chip strong {
+  color: var(--accent);
+  font-size: 0.8rem;
+}
+.game-set-chip small {
+  color: var(--subtext);
+  font-size: 0.72rem;
+}
+
+.game-start-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.game-map-node.elite {
+  border-color: color-mix(in srgb, #f97316 40%, var(--surface3));
+}
+.game-map-node.miniboss {
+  border-color: color-mix(in srgb, #ef4444 40%, var(--surface3));
+}

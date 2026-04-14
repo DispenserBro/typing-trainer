@@ -20,6 +20,7 @@ export function Keyboard() {
   const [handsStyle, setHandsStyle] = useState<CSSProperties | undefined>(undefined);
 
   const hidden = !settings.showKeyboard
+    || currentMode === 'home'
     || currentMode === 'stats' || (currentMode === 'settings' && !keyboardPreviewActive);
   const showHands = settings.showHands;
   const {
@@ -107,6 +108,8 @@ export function Keyboard() {
     height: `${panelHeight}px`,
     ['--kb-panel-scale' as string]: `${keyboardScale}`,
     ['--kb-panel-offset' as string]: `${settings.keyboardPanelOffset}`,
+    ['--kb-hands-opacity' as string]: `${settings.handsOpacity / 100}`,
+    ['--kb-key-stroke' as string]: `${settings.keyStrokeWidth}px`,
   } as CSSProperties;
 
   return (

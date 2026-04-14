@@ -5,11 +5,36 @@ module.exports = {
   mode: 'production',
   entry: './src/renderer/index.tsx',
   output: {
-    filename: 'renderer.js',
+    filename: '[name].[contenthash:8].js',
+    chunkFilename: '[name].[contenthash:8].js',
     path: path.resolve(__dirname, 'dist', 'renderer'),
+    clean: true,
   },
   resolve: {
     extensions: ['.tsx', '.ts', '.js', '.json'],
+  },
+  optimization: {
+    splitChunks: {
+      chunks: 'all',
+      cacheGroups: {
+        vendor: {
+          test: /[\\/]node_modules[\\/]/,
+          name: 'vendor',
+          chunks: 'all',
+          priority: 10,
+        },
+        styles: {
+          name: 'styles',
+          type: 'css/mini-extract',
+          chunks: 'all',
+          enforce: true,
+        },
+      },
+    },
+  },
+  performance: {
+    // Electron bundles are not web pages — suppress size warnings
+    hints: false,
   },
   module: {
     rules: [

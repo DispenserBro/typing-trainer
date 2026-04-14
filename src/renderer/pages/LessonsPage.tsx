@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
+import { Medal } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { useTypingSession } from '../hooks/useTypingSession';
 import {
@@ -11,11 +12,45 @@ import { LessonsDetailView } from '../components/lessons/LessonsDetailView';
 import { LessonsExerciseView } from '../components/lessons/LessonsExerciseView';
 import { LessonsListView } from '../components/lessons/LessonsListView';
 import { getLessonFocusLabel, keysLabel, resolveLesson, sectionLabel } from '../../core/lessons/utils';
+import { AchievementsModal } from '../components/AchievementsModal';
+import { GameAchievementToastStack } from '../components/game/GameAchievementToastStack';
+import type { GameAchievementDefinition } from '../../shared/types';
+import { checkAchievements, type AchievementEvent } from '../../core/achievements/achievementEngine';
 
 /* ═══════════════════════════════════════════════════════ */
 export function LessonsPage() {
   const { layouts, currentLayout, ngramModel, settings, progress, fmtSpeed, spdLabel,
-    saveHistory, saveProgress, currentLanguage } = useApp();
+    saveHistory, saveProgress, currentLanguage, gameAchievementCatalog, unlockedAchievementIds, unlockAchievements } = useApp();
+
+  const [showAchievements, setShowAchievements] = useState(false);
+  const [achievementToasts, setAchievementToasts] = useState<GameAchievementDefinition[]>([]);
+
+  const handleAchievementEvent = useCallback((event: AchievementEvent) => {
+    const newlyUnlockedIds = checkAchievements(
+      gameAchievementCatalog,
+      new Set(unlockedAchievementIds),
+      event,
+    );
+    if (newlyUnlockedIds.length === 0) return;
+
+    const unlockedObjects = unlockAchievements(newlyUnlockedIds);
+    if (unlockedObjects.length > 0) {
+      setAchievementToasts(prev => [...prev, ...unlockedObjects]);
+    }
+  }, [gameAchievementCatalog, unlockedAchievementIds, unlockAchievements]);
+
+  const handleRemoveToast = useCallback((achievementIndex: number) => {
+    setAchievementToasts(prev => prev.filter((_, idx) => idx !== achievementIndex));
+  }, []);
+
+  const lessonsAchievementCatalog = useMemo(
+    () => gameAchievementCatalog.filter(a => (a.category ?? 'game') === 'lessons'),
+    [gameAchievementCatalog],
+  );
+  const lessonsUnlockedCount = useMemo(
+    () => lessonsAchievementCatalog.filter(a => unlockedAchievementIds.includes(a.id)).length,
+    [lessonsAchievementCatalog, unlockedAchievementIds],
+  );
 
   const useYo = settings.useYo;
   const layout = layouts.layouts[currentLayout];
@@ -83,10 +118,42 @@ export function LessonsPage() {
         progress.lessons[currentLayout][activeLesson] = activeExercise + 1;
       }
       saveProgress(progress);
+      
+      handleAchievementEvent({ type: 'lessons.exerciseCompleted' });
+
+      // check if lesson completed
+      if (activeExercise + 1 >= EXERCISE_COUNT && (prevNum < EXERCISE_COUNT)) {
+         handleAchievementEvent({ type: 'lessons.lessonCompleted' });
+
+         // check if current section is fully completed
+         const lesson = lessons[activeLesson];
+         if (lesson) {
+           const section = sectionLabel(lesson.section);
+           const sectionIndexes = lessonsBySection.get(section) ?? [];
+           const sectionDone = sectionIndexes.every(idx => {
+             if (idx === activeLesson) return true; // just completed
+             const done = progress.lessons?.[currentLayout]?.[idx];
+             const count = typeof done === 'number' ? done : (done ? EXERCISE_COUNT : 0);
+             return count >= EXERCISE_COUNT;
+           });
+           if (sectionDone) {
+             handleAchievementEvent({ type: 'lessons.sectionCompleted' });
+           }
+         }
+         
+         // check if all lessons completed
+         const currentDoneCount = Object.values(progress.lessons[currentLayout]).filter(done => {
+           const count = typeof done === 'number' ? done : (done ? EXERCISE_COUNT : 0);
+           return count >= EXERCISE_COUNT;
+         }).length;
+         if (currentDoneCount >= lessons.length) {
+            handleAchievementEvent({ type: 'lessons.allCompleted' });
+         }
+      }
     }
     saveHistory('lesson', wpm, acc, { charStats: ses?.charStats });
     setResult({ wpm, acc, passed });
-  }, [activeLesson, activeExercise, currentLayout, progress, saveProgress, saveHistory]);
+  }, [activeLesson, activeExercise, currentLayout, progress, saveProgress, saveHistory, handleAchievementEvent, lessons, lessonsBySection]);
 
   const { session, start, stop, handleKey, wpm, acc, waitingForSpace } = useTypingSession({
     mode: 'lesson', onFinish,
@@ -242,78 +309,99 @@ export function LessonsPage() {
   /* ═══════════════════════════════════════════════════
      VIEW: Active exercise (typing)
      ═══════════════════════════════════════════════════ */
-  if (activeLesson !== null && activeExercise !== null) {
+  const renderView = () => {
+    if (activeLesson !== null && activeExercise !== null) {
+      return (
+        <LessonsExerciseView
+          title={`${activeLessonData?.name ?? keysLabel(lessonKeys)} — ${activeLessonExerciseNames?.[activeExercise] ?? ''}`}
+          subtitle={activeLessonData?.description ?? null}
+          focusLabel={getLessonFocusLabel(activeLessonData, lessonKeys)}
+          currentSpeed={fmtSpeed(wpm)}
+          speedUnit={spdLabel}
+          currentAccuracy={acc}
+          sessionActive={session.active}
+          sessionText={session.text}
+          sessionPos={session.pos}
+          sessionErrPositions={session.errPositions}
+          exerciseText={exerciseText}
+          waitingForSpace={waitingForSpace}
+          showOverlay={showOverlay}
+          result={result}
+          hasNextExercise={activeExercise + 1 < EXERCISE_COUNT}
+          hasNextLessonTarget={nextLessonTarget !== null}
+          nextLessonTargetLabel={nextLessonTargetLabel}
+          onOverlayClick={startExercise}
+          onRetry={retryExercise}
+          onNextExercise={nextExercise}
+          onOpenNextLesson={() => openSiblingLesson(nextLessonTarget)}
+          onDone={() => { setActiveLesson(null); setActiveExercise(null); }}
+          onBack={goBack}
+        />
+      );
+    }
+
+    if (activeLesson !== null) {
+      const done = lessonsDone[activeLesson] ?? 0;
+      return (
+        <LessonsDetailView
+          title={activeLessonData?.name ?? keysLabel(lessonKeys)}
+          subtitle={activeLessonData?.description ?? sectionLabel(activeLessonData?.section)}
+          sectionTitle={activeLessonSection}
+          sectionPosition={activeSectionPosition}
+          sectionCount={activeSectionLessonIndexes.length}
+          focusLabel={getLessonFocusLabel(activeLessonData, lessonKeys)}
+          exerciseNames={activeLessonExerciseNames}
+          done={done}
+          nextLessonTargetLabel={nextLessonTargetLabel}
+          hasPrevLesson={prevLessonInSection !== null}
+          hasNextLesson={nextLessonTarget !== null}
+          onOpenExercise={openExercise}
+          onOpenPrevLesson={() => openSiblingLesson(prevLessonInSection)}
+          onOpenNextLesson={() => openSiblingLesson(nextLessonTarget)}
+          onBack={goBack}
+        />
+      );
+    }
+
     return (
-      <LessonsExerciseView
-        title={`${activeLessonData?.name ?? keysLabel(lessonKeys)} — ${activeLessonExerciseNames?.[activeExercise] ?? ''}`}
-        subtitle={activeLessonData?.description ?? null}
-        focusLabel={getLessonFocusLabel(activeLessonData, lessonKeys)}
-        currentSpeed={fmtSpeed(wpm)}
-        speedUnit={spdLabel}
-        currentAccuracy={acc}
-        sessionActive={session.active}
-        sessionText={session.text}
-        sessionPos={session.pos}
-        sessionErrPositions={session.errPositions}
-        exerciseText={exerciseText}
-        waitingForSpace={waitingForSpace}
-        showOverlay={showOverlay}
-        result={result}
-        hasNextExercise={activeExercise + 1 < EXERCISE_COUNT}
-        hasNextLessonTarget={nextLessonTarget !== null}
-        nextLessonTargetLabel={nextLessonTargetLabel}
-        onOverlayClick={startExercise}
-        onRetry={retryExercise}
-        onNextExercise={nextExercise}
-        onOpenNextLesson={() => openSiblingLesson(nextLessonTarget)}
-        onDone={() => { setActiveLesson(null); setActiveExercise(null); }}
-        onBack={goBack}
+      <LessonsListView
+        lessons={lessons}
+        lessonsDone={lessonsDone}
+        collapsedSections={collapsedSections}
+        onToggleSection={toggleSection}
+        onOpenLesson={openLesson}
+        sectionLabel={sectionLabel}
+        lessonFocusLabel={getLessonFocusLabel}
+        resolveLessonAtIndex={(index) => resolveCurrentLesson(lessons[index])}
+        getSectionUnlockState={getSectionUnlockState}
+        exerciseCount={EXERCISE_COUNT}
+        headerRight={
+          <button
+            type="button"
+            className="btn-secondary btn-sm game-achievements-button"
+            onClick={() => setShowAchievements(true)}
+          >
+            <Medal size={14} />
+            Достижения
+            <span className="game-achievements-count">{lessonsUnlockedCount}/{lessonsAchievementCatalog.length}</span>
+          </button>
+        }
       />
     );
-  }
+  };
 
-  /* ═══════════════════════════════════════════════════
-     VIEW: Lesson detail — 5 exercises
-     ═══════════════════════════════════════════════════ */
-  if (activeLesson !== null) {
-    const done = lessonsDone[activeLesson] ?? 0;
-    return (
-      <LessonsDetailView
-        title={activeLessonData?.name ?? keysLabel(lessonKeys)}
-        subtitle={activeLessonData?.description ?? sectionLabel(activeLessonData?.section)}
-        sectionTitle={activeLessonSection}
-        sectionPosition={activeSectionPosition}
-        sectionCount={activeSectionLessonIndexes.length}
-        focusLabel={getLessonFocusLabel(activeLessonData, lessonKeys)}
-        exerciseNames={activeLessonExerciseNames}
-        done={done}
-        nextLessonTargetLabel={nextLessonTargetLabel}
-        hasPrevLesson={prevLessonInSection !== null}
-        hasNextLesson={nextLessonTarget !== null}
-        onOpenExercise={openExercise}
-        onOpenPrevLesson={() => openSiblingLesson(prevLessonInSection)}
-        onOpenNextLesson={() => openSiblingLesson(nextLessonTarget)}
-        onBack={goBack}
-      />
-    );
-  }
-
-  /* ═══════════════════════════════════════════════════
-     VIEW: Lesson list (cards)
-     ═══════════════════════════════════════════════════ */
   return (
-    <LessonsListView
-      lessons={lessons}
-      lessonsDone={lessonsDone}
-      collapsedSections={collapsedSections}
-      onToggleSection={toggleSection}
-      onOpenLesson={openLesson}
-      sectionLabel={sectionLabel}
-      lessonFocusLabel={getLessonFocusLabel}
-      resolveLessonAtIndex={(index) => resolveCurrentLesson(lessons[index])}
-      getSectionUnlockState={getSectionUnlockState}
-      exerciseCount={EXERCISE_COUNT}
-    />
+    <>
+      {renderView()}
+      <GameAchievementToastStack achievements={achievementToasts} onRemove={handleRemoveToast} />
+      <AchievementsModal
+        open={showAchievements}
+        achievementCatalog={gameAchievementCatalog}
+        unlockedAchievementIds={unlockedAchievementIds}
+        categoryFilter="lessons"
+        onClose={() => setShowAchievements(false)}
+      />
+    </>
   );
 }
 

@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, type ReactNode } from 'react';
 import { Check, ChevronDown, ChevronRight, Play } from 'lucide-react';
 import type { Lesson } from '../../../shared/types';
 
@@ -13,6 +13,8 @@ type LessonsListViewProps = {
   resolveLessonAtIndex: (index: number) => Lesson | null;
   getSectionUnlockState: (lessonIndex: number) => boolean;
   exerciseCount: number;
+  /** Дополнительный элемент справа в заголовке (например, кнопка достижений). */
+  headerRight?: ReactNode;
 };
 
 export function LessonsListView({
@@ -26,10 +28,16 @@ export function LessonsListView({
   resolveLessonAtIndex,
   getSectionUnlockState,
   exerciseCount,
+  headerRight,
 }: LessonsListViewProps) {
   return (
     <section className="mode-panel active">
-      <div className="panel-header"><h1>Уроки</h1></div>
+      <div className="panel-header">
+        <div className="game-header-title">
+          <h1>Уроки</h1>
+          {headerRight}
+        </div>
+      </div>
       <div className="lesson-grid">
         {lessons.map((lesson, idx) => {
           const done = lessonsDone[idx] ?? 0;

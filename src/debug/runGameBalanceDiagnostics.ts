@@ -53,13 +53,13 @@ function main() {
 
   const scenarios: GameBalanceScenario[] = [
     {
-      label: `Стандартный забег (${options.levels} уровней, ${options.lives} жизни)`,
+      label: `Стандартный забег (${options.levels} уровней, ${options.lives} HP)`,
       runs: options.runs,
       levelsPerRun: options.levels,
       startLives: options.lives,
     },
     {
-      label: `Длинный забег (${Math.round(options.levels * 1.6)} уровней, ${options.lives} жизни)`,
+      label: `Длинный забег (${Math.round(options.levels * 1.6)} уровней, ${options.lives} HP)`,
       runs: options.runs,
       levelsPerRun: Math.round(options.levels * 1.6),
       startLives: options.lives,

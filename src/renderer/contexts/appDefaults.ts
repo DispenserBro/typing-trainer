@@ -1,6 +1,60 @@
-import type { GameState, PracticeSettings, UserSettings } from '../../shared/types';
+import type { GameState, PracticeSettings, PresetSettings, UserPreset, UserSettings } from '../../shared/types';
 
 export const BUILT_IN_THEMES = ['dark-orange', 'catppuccin', 'nord', 'monokai', 'light'];
+
+export const BUILT_IN_PRESETS: Record<string, UserPreset> = {
+  learning: {
+    name: 'Обучение',
+    builtIn: true,
+    settings: {
+      cursorStyle: 'underline', cursorSmooth: 'smooth', highlightCurrentChar: true,
+      textDisplay: 'block', theme: 'dark-orange', showKeyboard: true, showHands: true,
+      handsOpacity: 72, keyStrokeWidth: 1.5, keyboardPanelZoom: 100,
+      endWithSpace: true, textFontSize: 1.125, focusMode: false, interfaceDensity: 'default',
+      largeText: false, reducedMotion: false, highContrast: false,
+      showStats: true, showTextPanel: true, keyboardPosition: 'bottom', colorVisionMode: 'normal',
+    },
+  },
+  speed: {
+    name: 'Скоростная тренировка',
+    builtIn: true,
+    settings: {
+      cursorStyle: 'line', cursorSmooth: 'smooth', highlightCurrentChar: true,
+      textDisplay: 'running', theme: 'dark-orange', showKeyboard: false, showHands: false,
+      handsOpacity: 72, keyStrokeWidth: 1.5, keyboardPanelZoom: 100,
+      endWithSpace: true, textFontSize: 1.3, focusMode: true, interfaceDensity: 'compact',
+      largeText: false, reducedMotion: false, highContrast: false,
+      showStats: false, showTextPanel: true, keyboardPosition: 'bottom', colorVisionMode: 'normal',
+    },
+  },
+  game: {
+    name: 'Игра',
+    builtIn: true,
+    settings: {
+      cursorStyle: 'block', cursorSmooth: 'smooth', highlightCurrentChar: true,
+      textDisplay: 'block', theme: 'dark-orange', showKeyboard: true, showHands: false,
+      handsOpacity: 72, keyStrokeWidth: 1.5, keyboardPanelZoom: 80,
+      endWithSpace: true, textFontSize: 1.125, focusMode: false, interfaceDensity: 'default',
+      largeText: false, reducedMotion: false, highContrast: false,
+      showStats: true, showTextPanel: true, keyboardPosition: 'bottom', colorVisionMode: 'normal',
+    },
+  },
+};
+
+export function extractPresetSettings(s: UserSettings): PresetSettings {
+  return {
+    cursorStyle: s.cursorStyle, cursorSmooth: s.cursorSmooth,
+    highlightCurrentChar: s.highlightCurrentChar, textDisplay: s.textDisplay,
+    theme: s.theme, showKeyboard: s.showKeyboard, showHands: s.showHands,
+    handsOpacity: s.handsOpacity, keyStrokeWidth: s.keyStrokeWidth,
+    keyboardPanelZoom: s.keyboardPanelZoom, endWithSpace: s.endWithSpace,
+    textFontSize: s.textFontSize, focusMode: s.focusMode,
+    interfaceDensity: s.interfaceDensity,
+    largeText: s.largeText, reducedMotion: s.reducedMotion, highContrast: s.highContrast,
+    showStats: s.showStats, showTextPanel: s.showTextPanel,
+    keyboardPosition: s.keyboardPosition, colorVisionMode: s.colorVisionMode,
+  };
+}
 
 export function normalizeTextFontSize(value?: number): number {
   if (typeof value !== 'number' || Number.isNaN(value) || value <= 0) return 1.125;
@@ -40,11 +94,23 @@ export function defaultSettings(s?: Partial<UserSettings>): UserSettings {
     useYo: s?.useYo ?? false,
     showKeyboard: s?.showKeyboard ?? true,
     showHands: s?.showHands ?? true,
+    handsOpacity: Math.max(0, Math.min(100, Math.round(s?.handsOpacity ?? 72))),
+    keyStrokeWidth: Math.max(0, Math.min(4, s?.keyStrokeWidth ?? 1.5)),
     keyboardPanelHeight: normalizeKeyboardPanelHeight(s?.keyboardPanelHeight),
     keyboardPanelOffset: normalizeKeyboardPanelOffset(s?.keyboardPanelOffset),
     keyboardPanelZoom: normalizeKeyboardPanelZoom(s?.keyboardPanelZoom),
     endWithSpace: s?.endWithSpace ?? true,
     textFontSize: normalizeTextFontSize(s?.textFontSize ?? legacyTextFontSize),
+    focusMode: s?.focusMode ?? false,
+    interfaceDensity: s?.interfaceDensity ?? 'default',
+    largeText: s?.largeText ?? false,
+    reducedMotion: s?.reducedMotion ?? false,
+    highContrast: s?.highContrast ?? false,
+    showStats: s?.showStats ?? true,
+    showTextPanel: s?.showTextPanel ?? true,
+    keyboardPosition: s?.keyboardPosition ?? 'bottom',
+    colorVisionMode: s?.colorVisionMode ?? 'normal',
+    onboardingCompleted: s?.onboardingCompleted ?? false,
   };
 }
 
@@ -80,6 +146,8 @@ export function defaultGameState(game?: Partial<GameState>): GameState {
       slotC: hasSlotC ? (equipped.slotC ?? null) : (equipped.passiveB ?? null),
     },
     currentRun: game?.currentRun ?? null,
+    ghostRun: game?.ghostRun ?? null,
+    dailyRun: game?.dailyRun ?? null,
   };
 }
 

@@ -42,6 +42,41 @@ export function SettingsKeyboardCard({
             </span>
           </label>
 
+          {settings.showHands && (
+            <div className="poption" style={{ marginTop: 14 }}>
+              <span className="poption-label">Прозрачность рук</span>
+              <div className="poption-row">
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={settings.handsOpacity}
+                  onChange={e => saveSetting('handsOpacity', Number(e.target.value))}
+                  className="range-input"
+                  aria-label="Прозрачность рук"
+                />
+                <span className="poption-hint">{settings.handsOpacity}%</span>
+              </div>
+            </div>
+          )}
+
+          <div className="poption" style={{ marginTop: 14 }}>
+            <span className="poption-label">Толщина обводки клавиш</span>
+            <div className="poption-row">
+              <NumberInput
+                value={settings.keyStrokeWidth}
+                min={0}
+                max={4}
+                step={0.5}
+                className="w72"
+                ariaLabel="Толщина обводки клавиш"
+                onChange={(next) => saveSetting('keyStrokeWidth', Math.round(next * 10) / 10)}
+              />
+              <span className="poption-hint">px</span>
+            </div>
+          </div>
+
           <div className="poption" style={{ marginTop: 14 }}>
             <span className="poption-label">Смещение по вертикали</span>
             <div className="poption-row">

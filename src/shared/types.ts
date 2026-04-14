@@ -4,3 +4,4 @@ export * from './types/practice';
 export * from './types/game';
 export * from './types/progress';
 export * from './types/electron';
+export * from './types/addon';

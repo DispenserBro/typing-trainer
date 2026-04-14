@@ -8,8 +8,8 @@ import type {
   LayoutsData,
   Progress,
 } from '../../shared/types';
-import { GAME_ACHIEVEMENT_MAP } from '../../core/game/gameAchievements';
 import { GAME_ITEM_MAP, isBrokenInventoryItem } from '../../core/game/items';
+import { PLAYER_BASE_HP } from '../../core/game/battleSystem';
 import { createInventoryItemId } from './appDefaults';
 import { getLayoutProgress, getNextUnlockableLetter } from './appProgress';
 import { resolveGameState } from './appResolvers';
@@ -24,6 +24,7 @@ type GameActionsArgs = {
   gameStateRef: MutableRefObject<GameState>;
   currentLayout: string;
   layouts: LayoutsData;
+  achievementCatalog: GameAchievementDefinition[];
 };
 
 type GameEvent = {
@@ -71,6 +72,8 @@ const normalizeCurrentRunState = (run: GameRunState | null | undefined): GameRun
   return {
     level: Math.max(1, Math.floor(run.level || 1)),
     lives: Math.max(0, Math.floor(run.lives || 0)),
+    maxLives: Math.max(1, Math.floor(run.maxLives || PLAYER_BASE_HP)),
+    regenTurns: Math.max(0, Math.floor(run.regenTurns || 0)),
     completedLevels: Math.max(0, Math.floor(run.completedLevels || 0)),
     targetSpeedCpm: Math.max(1, Math.floor(run.targetSpeedCpm || 1)),
     levelText: typeof run.levelText === 'string' ? run.levelText : '',
@@ -81,6 +84,8 @@ const normalizeCurrentRunState = (run: GameRunState | null | undefined): GameRun
     result: run.result ?? null,
     rewardChoices: run.rewardChoices ?? null,
     selectedRewardMessage: run.selectedRewardMessage ?? null,
+    battleState: run.battleState ?? null,
+    dailySeed: typeof run.dailySeed === 'string' ? run.dailySeed : null,
   };
 };
 
@@ -177,6 +182,18 @@ const isGameRunEqual = (left: GameRunState | null | undefined, right: GameRunSta
   return JSON.stringify(normalizedLeft) === JSON.stringify(normalizedRight);
 };
 
+const isGhostRunEqual = (left: GameState['ghostRun'], right: GameState['ghostRun']) => {
+  if (left === right) return true;
+  if (!left || !right) return false;
+  return JSON.stringify(left) === JSON.stringify(right);
+};
+
+const isDailyRunEqual = (left: GameState['dailyRun'], right: GameState['dailyRun']) => {
+  if (left === right) return true;
+  if (!left || !right) return false;
+  return JSON.stringify(left) === JSON.stringify(right);
+};
+
 const isGameStateEqual = (left: GameState, right: GameState) => (
   left.highestLevel === right.highestLevel
   && isInventoryEqual(left.inventory, right.inventory)
@@ -184,6 +201,8 @@ const isGameStateEqual = (left: GameState, right: GameState) => (
   && isStringArrayEqual(left.achievements, right.achievements)
   && isEquipmentEqual(left.equipped, right.equipped)
   && isGameRunEqual(left.currentRun ?? null, right.currentRun ?? null)
+  && isGhostRunEqual(left.ghostRun ?? null, right.ghostRun ?? null)
+  && isDailyRunEqual(left.dailyRun ?? null, right.dailyRun ?? null)
 );
 
 const normalizeGameState = (next: GameState): GameState => {
@@ -197,13 +216,47 @@ const normalizeGameState = (next: GameState): GameState => {
     return unique;
   })();
 
+  const normalizedGhostRun = next.ghostRun ? {
+    date: typeof next.ghostRun.date === 'string' ? next.ghostRun.date : new Date().toISOString(),
+    maxLevel: Math.max(0, Math.floor(next.ghostRun.maxLevel || 0)),
+    levels: Array.isArray(next.ghostRun.levels)
+      ? next.ghostRun.levels.map(level => ({
+        level: Math.max(1, Math.floor(level.level || 1)),
+        wpm: Math.max(0, level.wpm || 0),
+        acc: Math.max(0, Math.min(100, level.acc || 0)),
+        elapsed: Math.max(0, level.elapsed || 0),
+        passed: Boolean(level.passed),
+      }))
+      : [],
+  } : null;
+
+  const normalizedDailyRun = next.dailyRun ? {
+    history: typeof next.dailyRun.history === 'object' && next.dailyRun.history
+      ? Object.fromEntries(
+        Object.entries(next.dailyRun.history)
+          .filter(([key, val]) => /^\d{4}-\d{2}-\d{2}$/.test(key) && val && typeof val === 'object')
+          .map(([key, val]) => [key, {
+            date: typeof val.date === 'string' ? val.date : key,
+            maxLevel: Math.max(0, Math.floor(val.maxLevel || 0)),
+            completedLevels: Math.max(0, Math.floor(val.completedLevels || 0)),
+            bestWpm: Math.max(0, val.bestWpm || 0),
+            avgAcc: Math.max(0, Math.min(100, val.avgAcc || 0)),
+            totalTime: Math.max(0, val.totalTime || 0),
+            attempts: Math.max(0, Math.floor(val.attempts || 0)),
+          }]),
+      )
+      : {},
+  } : null;
+
   return {
     highestLevel: Math.max(1, Math.floor(next.highestLevel || 1)),
     inventory: normalizedInventory,
     discoveredItemIds: Array.from(new Set(cloneStringList(next.discoveredItemIds).filter(itemId => GAME_ITEM_MAP[itemId]))),
-    achievements: Array.from(new Set(cloneStringList(next.achievements).filter(achievementId => GAME_ACHIEVEMENT_MAP[achievementId]))),
+    achievements: Array.from(new Set(cloneStringList(next.achievements))),
     equipped: normalizeEquippedState(next.equipped ?? createEmptyEquippedState(), normalizedInventory),
     currentRun: normalizeCurrentRunState(next.currentRun),
+    ghostRun: normalizedGhostRun,
+    dailyRun: normalizedDailyRun,
   };
 };
 
@@ -432,7 +485,9 @@ export function createGameActions({
   gameStateRef,
   currentLayout,
   layouts,
+  achievementCatalog,
 }: GameActionsArgs) {
+  const achievementMap = Object.fromEntries(achievementCatalog.map(a => [a.id, a]));
   const persistProgressState = (next: Progress) => {
     progressRef.current = next;
     persistProgress(next);
@@ -555,7 +610,7 @@ export function createGameActions({
     const unlocked: GameAchievementDefinition[] = [];
 
     for (const achievementId of achievementIds) {
-      const achievement = GAME_ACHIEVEMENT_MAP[achievementId];
+      const achievement = achievementMap[achievementId];
       if (!achievement || knownAchievements.has(achievementId)) continue;
       knownAchievements.add(achievementId);
       unlocked.push(achievement);

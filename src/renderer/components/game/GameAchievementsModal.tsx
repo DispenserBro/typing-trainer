@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import { Medal } from 'lucide-react';
 import type { GameAchievementDefinition } from '../../../shared/types';
 
@@ -15,6 +15,17 @@ export const GameAchievementsModal = memo(function GameAchievementsModal({
   achievementCatalog,
   onClose,
 }: GameAchievementsModalProps) {
+  // Фильтруем только игровые достижения
+  const gameAchievements = useMemo(
+    () => achievementCatalog.filter(a => (a.category ?? 'game') === 'game'),
+    [achievementCatalog]
+  );
+
+  const unlockedCount = useMemo(
+    () => gameAchievements.filter(a => unlockedAchievementIds.includes(a.id)).length,
+    [gameAchievements, unlockedAchievementIds]
+  );
+
   if (!open) return null;
 
   return (
@@ -22,10 +33,10 @@ export const GameAchievementsModal = memo(function GameAchievementsModal({
       <div className="modal game-achievements-modal">
         <h3>Достижения</h3>
         <p className="card-desc">
-          Открыто <b>{unlockedAchievementIds.length}</b> из {achievementCatalog.length}.
+          Открыто <b>{unlockedCount}</b> из {gameAchievements.length}.
         </p>
         <div className="game-achievements-list">
-          {achievementCatalog.map(achievement => {
+          {gameAchievements.map(achievement => {
             const unlocked = unlockedAchievementIds.includes(achievement.id);
             return (
               <div key={achievement.id} className={`game-achievement-card${unlocked ? ' unlocked' : ''}`}>

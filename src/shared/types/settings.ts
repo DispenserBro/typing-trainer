@@ -4,6 +4,8 @@ export type DailyGoalType = 'minutes' | 'sessions';
 export type PracticeTrainingMode = 'normal' | 'rhythm';
 export type PracticeAdaptationStrength = 'low' | 'medium' | 'high';
 export type PracticeAdaptationFocus = 'balanced' | 'chars' | 'bigrams' | 'rhythm';
+export type InterfaceDensity = 'compact' | 'default' | 'comfortable';
+export type KeyboardPosition = 'bottom' | 'below-text';
 
 export interface UserSettings {
   speedUnit: SpeedUnit;
@@ -17,11 +19,23 @@ export interface UserSettings {
   useYo: boolean;
   showKeyboard: boolean;
   showHands: boolean;
+  handsOpacity: number;
+  keyStrokeWidth: number;
   keyboardPanelHeight: number;
   keyboardPanelOffset: number;
   keyboardPanelZoom: number;
   endWithSpace: boolean;
   textFontSize: number;
+  focusMode: boolean;
+  interfaceDensity: InterfaceDensity;
+  largeText: boolean;
+  reducedMotion: boolean;
+  highContrast: boolean;
+  showStats: boolean;
+  showTextPanel: boolean;
+  keyboardPosition: KeyboardPosition;
+  colorVisionMode: string;
+  onboardingCompleted: boolean;
 }
 
 export interface PracticeSettings {
@@ -45,6 +59,31 @@ export interface CustomThemeColors {
   green: string;
   red: string;
   yellow: string;
+  /** Дополнительные параметры (шрифт, радиус, анимация) — все необязательные для обратной совместимости */
+  fontSans?: string;
+  fontMono?: string;
+  radius?: string;
+  radiusSm?: string;
+  transitionSpeed?: string;
 }
 
 export type CustomThemes = Record<string, CustomThemeColors>;
+
+/** Ключи UserSettings, которые сохраняются в пресете интерфейса */
+export type PresetSettingKey =
+  | 'cursorStyle' | 'cursorSmooth' | 'highlightCurrentChar'
+  | 'textDisplay' | 'theme' | 'showKeyboard' | 'showHands'
+  | 'handsOpacity' | 'keyStrokeWidth' | 'keyboardPanelZoom'
+  | 'endWithSpace' | 'textFontSize' | 'focusMode' | 'interfaceDensity'
+  | 'largeText' | 'reducedMotion' | 'highContrast'
+  | 'showStats' | 'showTextPanel' | 'keyboardPosition' | 'colorVisionMode';
+
+export type PresetSettings = Pick<UserSettings, PresetSettingKey>;
+
+export interface UserPreset {
+  name: string;
+  builtIn?: boolean;
+  settings: PresetSettings;
+}
+
+export type CustomPresets = Record<string, UserPreset>;

@@ -1,0 +1,17 @@
+{
+  "manifestVersion": 1,
+  "id": "hardcore-mode",
+  "name": "Hardcore Mode",
+  "version": "1.0.0",
+  "description": "Режим повышенной сложности: одна жизнь, усиленные предметы, жёсткие боссы. Устанавливается из папки мода: страница «Аддоны и модификации» → «Модификации» → «Установить мод…» → выбрать этот файл.",
+  "author": "example-author",
+  "minAppVersion": "2.3.0",
+  "type": "mod",
+  "entry": "index.js",
+  "permissions": [
+    "items",
+    "achievements",
+    "rules",
+    "events"
+  ]
+}

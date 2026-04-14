@@ -44,6 +44,7 @@ export interface PracticeState {
   sessionsToday: number;
   minutesToday: number;
   lastDate: string;
+  sessionsTotal?: number;
 }
 
 export interface LayoutProgressState {

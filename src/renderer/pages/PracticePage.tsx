@@ -1,13 +1,18 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { Medal } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { useTypingSession } from '../hooks/useTypingSession';
 import { TextDisplay } from '../components/TextDisplay';
+import { GameAchievementToastStack } from '../components/game/GameAchievementToastStack';
+import type { GameAchievementDefinition } from '../../shared/types';
+import { checkAchievements, type AchievementEvent } from '../../core/achievements/achievementEngine';
 import { PracticeFeedbackCard } from '../components/practice/PracticeFeedbackCard';
 import { PracticeSettingsModal } from '../components/practice/PracticeSettingsModal';
-import { generatePracticeText, getWorstChar, formatSpeed, speedLabel, filterYoWords, filterYoKeys } from '../../core/engine';
+import { AchievementsModal } from '../components/AchievementsModal';
 import type {
   CharStat,
 } from '../../shared/types';
+import { generatePracticeText, getWorstChar, formatSpeed, speedLabel, filterYoWords, filterYoKeys } from '../../core/engine';
 import { buildPracticeInsightsDelta, getRhythmScore, mergeLayoutPracticeInsights, summarizeSessionRhythm } from '../../core/practice/insights';
 import { buildPracticeFeedback, mergeCharStats, PRACTICES_PER_UNLOCK, type PracticeFeedback } from '../../core/practice/feedback';
 
@@ -16,7 +21,29 @@ export function PracticePage() {
   const { layouts, currentLayout, allWords, ngramModel, progress, settings,
     practiceSettings, fmtSpeed, spdLabel, savePracticeSetting,
     saveHistory, saveProgress, getLayoutProgress, getPracticeState,
-    getPracticeInsights, savePracticeInsights, savePracticeRhythmSession } = app;
+    getPracticeInsights, savePracticeInsights, savePracticeRhythmSession,
+    gameAchievementCatalog, unlockedAchievementIds, unlockAchievements } = app;
+
+  const [showAchievements, setShowAchievements] = useState(false);
+  const [achievementToasts, setAchievementToasts] = useState<GameAchievementDefinition[]>([]);
+
+  const handleAchievementEvent = useCallback((event: AchievementEvent) => {
+    const newlyUnlockedIds = checkAchievements(
+      gameAchievementCatalog,
+      new Set(unlockedAchievementIds),
+      event,
+    );
+    if (newlyUnlockedIds.length === 0) return;
+
+    const unlockedObjects = unlockAchievements(newlyUnlockedIds);
+    if (unlockedObjects.length > 0) {
+      setAchievementToasts(prev => [...prev, ...unlockedObjects]);
+    }
+  }, [gameAchievementCatalog, unlockedAchievementIds, unlockAchievements]);
+
+  const handleRemoveToast = useCallback((index: number) => {
+    setAchievementToasts(prev => prev.filter((_, i) => i !== index));
+  }, []);
 
   const layout = layouts.layouts[currentLayout];
   const useYo = settings.useYo;
@@ -78,6 +105,16 @@ export function PracticePage() {
     : unit === 'cps' ? val * 60
     : val;
   const goalDisplay = cpmToDisplay(goalCPM);
+
+  const practiceAchievementCatalog = useMemo(
+    () => gameAchievementCatalog.filter(a => (a.category ?? 'game') === 'practice'),
+    [gameAchievementCatalog],
+  );
+
+  const practiceUnlockedCount = useMemo(
+    () => practiceAchievementCatalog.filter(a => unlockedAchievementIds.includes(a.id)).length,
+    [practiceAchievementCatalog, unlockedAchievementIds],
+  );
 
   const buildPracticePreview = useCallback(() => {
     const currentUnlocked = practiceUnlockOrder.slice(0, layoutProgress.unlocked);
@@ -148,7 +185,11 @@ export function PracticePage() {
       practiceState.lastDate = today;
     }
     practiceState.sessionsToday++;
+    practiceState.sessionsTotal = (practiceState.sessionsTotal || 0) + 1;
     practiceState.minutesToday = (practiceState.minutesToday || 0) + elapsed / 60;
+
+    handleAchievementEvent({ type: 'practice.sessionCompleted', totalSessions: practiceState.sessionsTotal });
+
     const mergedStats = mergeCharStats(progress.keyStats?.[currentLayout], ses?.charStats);
     const worstCharAfterFinish = getWorstChar(mergedStats, unlocked) ?? fallbackWorstChar;
     const openedLetter = unlockedNewLetter ? (practiceUnlockOrder[layoutProgress.unlocked - 1] ?? null) : null;
@@ -165,7 +206,6 @@ export function PracticePage() {
       .map((entry: { interval: number }) => Math.round(entry.interval)) ?? [];
     const feedback = buildPracticeFeedback(nextPracticeInsights, worstCharAfterFinish);
     practiceState.worstChar = worstCharAfterFinish;
-    saveProgress(progress);
     savePracticeInsights(nextPracticeInsights);
     savePracticeRhythmSession({
       trainingMode,
@@ -180,6 +220,11 @@ export function PracticePage() {
     });
     saveHistory('practice', wpm, acc, { trainingMode, charStats: ses?.charStats });
     if (ses?.charStats) setLastCharStats(ses.charStats);
+
+    if (unlockedNewLetter) {
+        handleAchievementEvent({ type: 'practice.letterUnlocked' });
+    }
+
     if (openedLetter) setUnlockModalLetter(openedLetter);
     setResult({
       wpm,
@@ -315,9 +360,28 @@ export function PracticePage() {
   const goalVal = practiceSettings.dailyGoalValue || 15;
 
   return (
-    <section className="mode-panel active">
+    <section className={`mode-panel active${settings.focusMode && session.active ? ' focus-active' : ''}`}>
+      <GameAchievementToastStack achievements={achievementToasts} onRemove={handleRemoveToast} />
+      <AchievementsModal
+        open={showAchievements}
+        achievementCatalog={gameAchievementCatalog}
+        unlockedAchievementIds={unlockedAchievementIds}
+        categoryFilter="practice"
+        onClose={() => setShowAchievements(false)}
+      />
       <div className="panel-header">
-        <h1>Практика</h1>
+        <div className="game-header-title">
+          <h1>Практика</h1>
+          <button
+            type="button"
+            className="btn-secondary btn-sm game-achievements-button"
+            onClick={() => setShowAchievements(true)}
+          >
+            <Medal size={14} />
+            Достижения
+            <span className="game-achievements-count">{practiceUnlockedCount}/{practiceAchievementCatalog.length}</span>
+          </button>
+        </div>
         <div className="practice-header-actions">
           <button className="btn-secondary btn-sm practice-settings-trigger" onClick={() => setShowSettingsModal(true)}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -441,11 +505,64 @@ export function PracticePage() {
         waitingForSpace={waitingForSpace}
         overlay={!session.active ? (
           result
-            ? `${fmtSpeed(result.wpm)} ${spdLabel} · ${Math.round(result.acc)}%${trainingMode === 'rhythm' ? ` · Ритм: ${Math.round(result.rhythmScore)}% · Δ ${result.rhythmDeviation}мс` : ''} · Хуже всего: ${result.worstChar?.toUpperCase() ?? '—'} · Букв: ${layoutProgress.unlocked}${result.newLetter ? ' · +1 буква!' : layoutProgress.unlocked < practiceUnlockOrder.length ? ` · До новой: ${result.unlockProgress}/${PRACTICES_PER_UNLOCK}` : ''}\nНажмите или начните печатать`
+            ? null
             : (showOverlay ? 'Нажмите здесь или начните печатать' : null)
         ) : null}
         onOverlayClick={result ? retryAndStart : startPractice}
       />
+
+      {result && (
+        <div className="result-card">
+          <h3>Результат практики</h3>
+          <div className="result-big">{fmtSpeed(result.wpm)} <small className="speed-unit">{spdLabel}</small></div>
+          <div className="result-metrics">
+            <div className="result-metric">
+              <span className={`result-metric-value${result.acc >= 98 ? ' good' : result.acc >= 90 ? ' warn' : ' bad'}`}>
+                {Math.round(result.acc)}%
+              </span>
+              <span className="result-metric-label">Точность</span>
+            </div>
+            {trainingMode === 'rhythm' && (
+              <>
+                <div className="result-metric">
+                  <span className={`result-metric-value${result.rhythmScore >= 80 ? ' good' : result.rhythmScore >= 50 ? ' warn' : ' bad'}`}>
+                    {Math.round(result.rhythmScore)}%
+                  </span>
+                  <span className="result-metric-label">Ритм</span>
+                </div>
+                <div className="result-metric">
+                  <span className="result-metric-value">{result.rhythmDeviation} мс</span>
+                  <span className="result-metric-label">Δ отклонение</span>
+                </div>
+              </>
+            )}
+            <div className="result-metric">
+              <span className={`result-metric-value${result.worstChar ? ' warn' : ''}`}>
+                {result.worstChar?.toUpperCase() ?? '—'}
+              </span>
+              <span className="result-metric-label">Проблемная</span>
+            </div>
+            <div className="result-metric">
+              <span className="result-metric-value">{layoutProgress.unlocked}</span>
+              <span className="result-metric-label">Букв</span>
+            </div>
+            {result.newLetter && (
+              <div className="result-metric">
+                <span className="result-metric-value good">+1</span>
+                <span className="result-metric-label">Новая!</span>
+              </div>
+            )}
+            {!result.newLetter && layoutProgress.unlocked < practiceUnlockOrder.length && (
+              <div className="result-metric">
+                <span className="result-metric-value">{result.unlockProgress}/{PRACTICES_PER_UNLOCK}</span>
+                <span className="result-metric-label">До новой</span>
+              </div>
+            )}
+          </div>
+          <p style={{ marginTop: 10 }}>Нажмите любую клавишу или кнопку ниже</p>
+          <button className="btn-accent" onClick={retryAndStart}>Продолжить</button>
+        </div>
+      )}
 
       {result && <PracticeFeedbackCard feedback={result.feedback} />}
 
@@ -487,6 +604,13 @@ export function PracticePage() {
           </div>
         </div>
       )}
+
+      {settings.focusMode && <div className="focus-hint">Фокус-режим</div>}
+
+      <GameAchievementToastStack
+        achievements={achievementToasts}
+        onRemove={handleRemoveToast}
+      />
     </section>
   );
 }

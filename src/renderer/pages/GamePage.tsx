@@ -1,20 +1,24 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { Trophy } from 'lucide-react';
+import { Trophy, Shield, Swords } from 'lucide-react';
 import type {
   GameAchievementDefinition,
   GameEquipmentSlot,
+  GameGhostRun,
   GameRunEventChoice,
   GameRunEventState,
   GameRunMapState,
   GameRunModifier,
   GameRunRewardChoice,
   GameRunResult,
+  BossArchetypeId,
+  BattleState,
 } from '../../shared/types';
 import { useApp } from '../contexts/AppContext';
 import { useTypingSession } from '../hooks/useTypingSession';
 import { TextDisplay } from '../components/TextDisplay';
 import { NumberInput } from '../components/NumberInput';
 import { GameAchievementsModal } from '../components/game/GameAchievementsModal';
+import { AchievementsModal } from '../components/AchievementsModal';
 import { GameAchievementToastStack } from '../components/game/GameAchievementToastStack';
 import { GameHud } from '../components/game/GameHud';
 import { GameInventoryPanel } from '../components/game/GameInventoryPanel';
@@ -28,7 +32,6 @@ import {
   getGameItemIcon,
   getGameItemRarityStars,
 } from '../../core/game/items';
-import { getGameAchievementById } from '../../core/game/gameAchievements';
 import {
   createCacheEvent,
   createRestEvent,
@@ -54,15 +57,46 @@ import {
 import type { EquippedEntry, InventoryEntry } from '../../core/game/viewTypes';
 import {
   BOSS_LEVEL_INTERVAL,
-  BOSS_LEVEL_WORDS,
   BOSS_MIN_ACCURACY,
   buildBossRewardChoices,
   formatSpeedFromCpm,
+  getBossMinAccuracy,
+  getBossWordCount,
   isBossLevel,
   NORMAL_LEVEL_WORDS,
   NORMAL_MIN_ACCURACY,
   TOTAL_GAME_LEVELS,
 } from '../../core/game/runUtils';
+import { getBossArchetype, computeRhythmDeviation } from '../../core/game/bossArchetypes';
+import { computeSetBonuses, ITEM_SET_MEMBERSHIP } from '../../core/game/itemSets';
+import {
+  createEnemy,
+  createBattleState,
+  resolveBattleRound,
+  getEnemyTier,
+  sumBattleBonuses,
+  BATTLE_ROUND_WORDS,
+  BOSS_BATTLE_ROUND_WORDS,
+  PLAYER_BASE_HP,
+  REGEN_HP_PER_BATTLE,
+} from '../../core/game/battleSystem';
+import {
+  createEmptyGhostRun,
+  recordGhostLevel,
+  finalizeGhostRun,
+  shouldReplaceGhost,
+  getGhostComparison,
+} from '../../core/game/ghostRun';
+import {
+  DAILY_RUN_LEVELS,
+  getDailySeedString,
+  getDailyDateKey,
+  createDailyRng,
+  recordDailyRunAttempt,
+  getTodayDailyResult,
+  getRecentDailyResults,
+  resolveInitialDailyRunState,
+} from '../../core/game/dailyRun';
 
 type BossRewardChoice = GameRunRewardChoice;
 type LevelResult = GameRunResult;
@@ -115,7 +149,15 @@ export function GamePage() {
     gameState, grantGameItem, equipGameItem, unequipGameItem, repairGameItems, markGameLevelReached,
     wearEquippedGameItems, peekNextGameLetter, unlockNextGameLetter,
     unlockGameAchievements, saveCurrentGameRun, clearCurrentGameRun, gameAchievementCatalog,
+    saveGameState, unlockedAchievementIds, modRuleOverrides,
   } = useApp();
+
+  /** Base HP — can be overridden by mods via rules.set('game.baseHp', N) */
+  const baseHp = typeof modRuleOverrides.get('game.baseHp') === 'number'
+    ? (modRuleOverrides.get('game.baseHp') as number)
+    : (typeof modRuleOverrides.get('game.baseLives') === 'number'
+      ? (modRuleOverrides.get('game.baseLives') as number)
+      : PLAYER_BASE_HP);
 
   const useYo = settings.useYo;
   const layout = layouts.layouts[currentLayout];
@@ -158,7 +200,9 @@ export function GamePage() {
   const hasRepairTargets = useMemo(() => getHasRepairTargets(stableEquippedItems), [stableEquippedItems]);
 
   const [targetSpeedCpm, setTargetSpeedCpm] = useState(() => Math.max(1, practiceSettings.goalSpeedCpm || 150));
-  const [lives, setLives] = useState(3);
+  const [hp, setHp] = useState(baseHp);
+  const [maxHp, setMaxHp] = useState(baseHp);
+  const [regenTurns, setRegenTurns] = useState(0);
   const [level, setLevel] = useState(1);
   const [completedLevels, setCompletedLevels] = useState(0);
   const [levelText, setLevelText] = useState('');
@@ -172,18 +216,32 @@ export function GamePage() {
   const [selectedRewardMessage, setSelectedRewardMessage] = useState<string | null>(null);
   const [showAchievementsModal, setShowAchievementsModal] = useState(false);
   const [achievementToasts, setAchievementToasts] = useState<GameAchievementDefinition[]>([]);
+  const [currentGhost, setCurrentGhost] = useState<GameGhostRun>(() => createEmptyGhostRun());
+  const [dailySeed, setDailySeed] = useState<string | null>(null);
+  const [battleState, setBattleState] = useState<BattleState | null>(null);
+  const activeTotalLevels = dailySeed ? DAILY_RUN_LEVELS : TOTAL_GAME_LEVELS;
+  const [autoAdvanceLevel, setAutoAdvanceLevel] = useState<number | null>(null);
   const finishCauseRef = useRef<'completed' | 'timeout'>('completed');
   const resultActionRef = useRef<HTMLButtonElement | null>(null);
   const rewardChoiceRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const eventChoiceRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const hasHydratedRunRef = useRef(false);
+  const startSessionRef = useRef<(text: string) => void>(() => {});
   const previewMap = useMemo(() => createGameRunMap(TOTAL_GAME_LEVELS), []);
   const activeIsBoss = isBossLevel(level);
+  const achievementMap = useMemo(
+    () => Object.fromEntries(gameAchievementCatalog.map(a => [a.id, a])),
+    [gameAchievementCatalog],
+  );
   const unlockedAchievements = useMemo(
     () => gameState.achievements
-      .map(achievementId => getGameAchievementById(achievementId))
+      .map(achievementId => achievementMap[achievementId])
       .filter((achievement): achievement is GameAchievementDefinition => Boolean(achievement)),
-    [gameState.achievements],
+    [gameState.achievements, achievementMap],
+  );
+  const gameAchievementsCatalog = useMemo(
+    () => gameAchievementCatalog.filter(a => (a.category ?? 'game') === 'game'),
+    [gameAchievementCatalog],
   );
   const itemBonuses = useMemo(
     () => sumItemBonuses(stableEquippedItems, activeIsBoss),
@@ -193,11 +251,34 @@ export function GamePage() {
     () => sumModifierBonuses(activeModifiers, activeIsBoss),
     [activeIsBoss, activeModifiers],
   );
+  const equippedItemIds = useMemo(
+    () => stableEquippedItems
+      .filter(entry => entry.meta && !entry.broken)
+      .map(entry => entry.meta!.id),
+    [stableEquippedItems],
+  );
+  const setBonuses = useMemo(
+    () => computeSetBonuses(equippedItemIds),
+    [equippedItemIds],
+  );
   const totalBonuses = useMemo(() => ({
-    speedRequirementReductionPercent: itemBonuses.speedRequirementReductionPercent + modifierBonuses.speedRequirementReductionPercent,
-    accuracyRequirementReduction: itemBonuses.accuracyRequirementReduction + modifierBonuses.accuracyRequirementReduction,
-    bossTimerBonusSeconds: itemBonuses.bossTimerBonusSeconds + modifierBonuses.bossTimerBonusSeconds,
-  }), [itemBonuses, modifierBonuses]);
+    speedRequirementReductionPercent:
+      itemBonuses.speedRequirementReductionPercent
+      + modifierBonuses.speedRequirementReductionPercent
+      + setBonuses.totalSpeedReduction,
+    accuracyRequirementReduction:
+      itemBonuses.accuracyRequirementReduction
+      + modifierBonuses.accuracyRequirementReduction
+      + setBonuses.totalAccuracyReduction,
+    bossTimerBonusSeconds:
+      itemBonuses.bossTimerBonusSeconds
+      + modifierBonuses.bossTimerBonusSeconds
+      + setBonuses.totalBossTimerBonus,
+  }), [itemBonuses, modifierBonuses, setBonuses]);
+  const battleBonuses = useMemo(
+    () => sumBattleBonuses(itemBonuses, modifierBonuses),
+    [itemBonuses, modifierBonuses],
+  );
   const activeMap = runMap ?? previewMap;
   const currentMapNode = useMemo(
     () => getGameRunMapNode(activeMap, activeMap.currentNodeId),
@@ -217,6 +298,10 @@ export function GamePage() {
     if (!unlocked.length) return;
     setAchievementToasts(prev => [...prev, ...unlocked]);
   }, [unlockGameAchievements]);
+
+  const handleRemoveToast = useCallback((achievementIndex: number) => {
+    setAchievementToasts(prev => prev.filter((_, idx) => idx !== achievementIndex));
+  }, []);
 
   const handleEquipItem = useCallback((slot: GameEquipmentSlot, itemId: string) => {
     blurActiveElement();
@@ -240,9 +325,9 @@ export function GamePage() {
     setTargetSpeedCpm(Math.round(cpm));
   };
 
-  const buildLevelText = useCallback((nextLevel: number) => {
-    const wordCount = isBossLevel(nextLevel) ? BOSS_LEVEL_WORDS : NORMAL_LEVEL_WORDS;
-    return generatePracticeText(words, unlocked, weak, wordCount, ngramModel ?? undefined);
+  const buildLevelText = useCallback((nextLevel: number, wordCount?: number) => {
+    const count = wordCount ?? (isBossLevel(nextLevel) ? getBossWordCount(nextLevel) : NORMAL_LEVEL_WORDS);
+    return generatePracticeText(words, unlocked, weak, count, ngramModel ?? undefined);
   }, [words, unlocked, weak, ngramModel]);
 
   const calculateBossTimeLimit = useCallback((text: string) => {
@@ -252,12 +337,18 @@ export function GamePage() {
 
   const currentBossTimeLimit = useMemo(() => {
     if (!activeIsBoss || !levelText) return null;
-    return calculateBossTimeLimit(levelText);
-  }, [activeIsBoss, levelText, calculateBossTimeLimit]);
+    const archetype = getBossArchetype(level);
+    return calculateBossTimeLimit(levelText) * archetype.timerMultiplier;
+  }, [activeIsBoss, level, levelText, calculateBossTimeLimit]);
+
+  const currentBossArchetype = useMemo(
+    () => activeIsBoss ? getBossArchetype(level) : null,
+    [activeIsBoss, level],
+  );
 
   const generateBossRewardChoices = useCallback((): BossRewardChoice[] => {
-    return buildBossRewardChoices(peekNextGameLetter());
-  }, [peekNextGameLetter]);
+    return buildBossRewardChoices(peekNextGameLetter(), level);
+  }, [peekNextGameLetter, level]);
 
   const resetRewardState = useCallback(() => {
     setRewardChoices(null);
@@ -283,16 +374,161 @@ export function GamePage() {
 
   const onFinish = useCallback((wpm: number, acc: number, elapsed: number, ses: any) => {
     const boss = isBossLevel(level);
-    const baseMinAccuracy = boss ? BOSS_MIN_ACCURACY : NORMAL_MIN_ACCURACY;
+    const archetype = boss ? getBossArchetype(level) : null;
+    const baseMinAccuracy = boss ? getBossMinAccuracy(level) : NORMAL_MIN_ACCURACY;
     const minAccuracy = Math.max(0, baseMinAccuracy - totalBonuses.accuracyRequirementReduction);
-    const timeLimitSeconds = boss ? calculateBossTimeLimit(levelText) : null;
     const timedOut = finishCauseRef.current === 'timeout';
     finishCauseRef.current = 'completed';
-    const passed = !timedOut && wpm >= effectiveGoalWpm && acc >= minAccuracy;
-    const nextLives = passed ? lives : Math.max(0, lives - 1);
-    const victory = passed && level >= TOTAL_GAME_LEVELS;
 
     saveHistory('game', wpm, acc, { charStats: ses?.charStats });
+
+    // ── Battle round resolution ──
+    if (battleState && !battleState.finished) {
+      const currentCpm = wpm * 5;
+      const keypressesForRhythm = ses?.keypresses ?? [];
+      const rhythmIntervals = keypressesForRhythm
+        .filter((kp: any) => kp.interval > 0)
+        .map((kp: any) => kp.interval);
+      const updatedBattle = resolveBattleRound(
+        battleState, acc, currentCpm, targetSpeedCpm, rhythmIntervals, battleBonuses,
+      );
+      setBattleState(updatedBattle);
+      setHp(Math.max(0, updatedBattle.playerHp));
+
+      if (!updatedBattle.finished) {
+        // Battle continues — generate text for next round and start it
+        const nextText = buildLevelText(level, boss ? BOSS_BATTLE_ROUND_WORDS : BATTLE_ROUND_WORDS);
+        setLevelText(nextText);
+        setTimeout(() => startSessionRef.current(nextText), 300);
+        return;
+      }
+
+      // Battle finished — determine pass/fail based on whether player won
+      const passed = updatedBattle.won;
+      let nextHp = updatedBattle.playerHp;
+
+      // Regen: if player won and regenTurns > 0, heal after battle
+      if (passed && regenTurns > 0) {
+        nextHp = Math.min(maxHp, nextHp + REGEN_HP_PER_BATTLE);
+        setRegenTurns(prev => prev - 1);
+      }
+
+      setHp(nextHp);
+      const hpAfterRegen = nextHp;
+      const victory = passed && level >= activeTotalLevels;
+
+      if (passed) {
+        setCompletedLevels(level);
+        markGameLevelReached(level);
+      }
+
+      const brokenItemIds = wearEquippedGameItems({ passed, isBoss: boss });
+      const brokenItems = brokenItemIds
+        .map(itemId => stableInventoryItems.find(entry => entry.id === itemId)?.meta.name ?? null)
+        .filter((name): name is string => Boolean(name));
+      consumeActiveModifiers();
+
+      // Record ghost
+      setCurrentGhost(prev => recordGhostLevel(prev, {
+        level,
+        wpm,
+        acc,
+        elapsed,
+        passed,
+      }));
+
+      const nextMapNodeIds = runMap ? getGameRunMapOutgoingIds(runMap, runMap.currentNodeId) : [];
+
+      if (passed && boss && !victory && level < activeTotalLevels) {
+        setRewardChoices(generateBossRewardChoices());
+        setSelectedRewardMessage(null);
+        resetMapSelection();
+        resetEventState();
+      } else if (passed && !victory && nextMapNodeIds.length > 0) {
+        setRunMap(prev => (prev ? setGameRunMapSelectableNodes(prev, nextMapNodeIds) : prev));
+        resetRewardState();
+        resetEventState();
+      } else if (passed && !victory && nextMapNodeIds.length === 0) {
+        resetMapSelection();
+        resetRewardState();
+        resetEventState();
+        setAutoAdvanceLevel(level + 1);
+      } else {
+        resetMapSelection();
+        resetRewardState();
+        resetEventState();
+      }
+
+      if (victory || (!passed && hpAfterRegen <= 0)) {
+        const finalized = finalizeGhostRun(currentGhost);
+        const replaceGhost = shouldReplaceGhost(gameState.ghostRun, finalized);
+        const updatedDailyRun = dailySeed
+          ? recordDailyRunAttempt(
+              gameState.dailyRun ?? { history: {} },
+              level, level - 1, wpm, acc, elapsed,
+            )
+          : gameState.dailyRun;
+        saveGameState({
+          ...gameState,
+          ghostRun: replaceGhost ? finalized : gameState.ghostRun,
+          dailyRun: updatedDailyRun,
+        });
+        clearCurrentGameRun(true);
+      }
+
+      // Rhythm check for boss archetype
+      const keypresses = ses?.keypresses ?? [];
+      const intervals = keypresses
+        .filter((kp: any) => kp.interval > 0)
+        .map((kp: any) => kp.interval);
+      const rhythmDev = archetype?.checkRhythm ? computeRhythmDeviation(intervals) : null;
+      const maxRhythmDev = archetype?.checkRhythm ? archetype.maxRhythmDeviation : null;
+      const errorCount = ses?.errors ?? 0;
+      const maxErrors = archetype?.maxErrors ? archetype.maxErrors : null;
+      const timeLimitSeconds = boss && archetype
+        ? calculateBossTimeLimit(levelText) * archetype.timerMultiplier
+        : null;
+
+      setResult({
+        wpm,
+        acc,
+        passed,
+        livesLeft: hpAfterRegen,
+        level,
+        isBoss: boss,
+        bossArchetype: archetype?.id ?? null,
+        minAccuracy,
+        maxErrors,
+        rhythmDeviation: rhythmDev,
+        maxRhythmDeviation: maxRhythmDev,
+        timedOut,
+        elapsed,
+        timeLimitSeconds,
+        victory,
+        brokenItems,
+      });
+
+      if (passed) {
+        const achievementIds: string[] = [];
+        if (level === 1) achievementIds.push('first-level');
+        if (boss && level === 5) achievementIds.push('first-boss');
+        if (boss && level === 25) achievementIds.push('boss-25');
+        if (boss && level === 50) achievementIds.push('boss-50');
+        if (boss && level === 75) achievementIds.push('boss-75');
+        if (victory) achievementIds.push('game-complete');
+        queueAchievementToasts(achievementIds);
+      }
+
+      setBattleState(null);
+      return;
+    }
+
+    // ── Fallback: no battle state (should not normally happen) ──
+    const passed = !timedOut && wpm >= effectiveGoalWpm && acc >= minAccuracy;
+    const failPenalty = Math.max(10, Math.round(maxHp * 0.15));
+    const nextHp = passed ? hp : Math.max(0, hp - failPenalty);
+    const victory = passed && level >= activeTotalLevels;
+
     if (passed) {
       setCompletedLevels(level);
       markGameLevelReached(level);
@@ -304,9 +540,11 @@ export function GamePage() {
       .filter((name): name is string => Boolean(name));
     consumeActiveModifiers();
 
+    setCurrentGhost(prev => recordGhostLevel(prev, { level, wpm, acc, elapsed, passed }));
+
     const nextMapNodeIds = runMap ? getGameRunMapOutgoingIds(runMap, runMap.currentNodeId) : [];
 
-    if (passed && boss && !victory && level < TOTAL_GAME_LEVELS) {
+    if (passed && boss && !victory && level < activeTotalLevels) {
       setRewardChoices(generateBossRewardChoices());
       setSelectedRewardMessage(null);
       resetMapSelection();
@@ -315,45 +553,57 @@ export function GamePage() {
       setRunMap(prev => (prev ? setGameRunMapSelectableNodes(prev, nextMapNodeIds) : prev));
       resetRewardState();
       resetEventState();
+    } else if (passed && !victory && nextMapNodeIds.length === 0) {
+      resetMapSelection();
+      resetRewardState();
+      resetEventState();
+      setAutoAdvanceLevel(level + 1);
     } else {
       resetMapSelection();
       resetRewardState();
       resetEventState();
     }
 
-    if (victory) {
-      clearCurrentGameRun(true);
-    } else if (!passed && nextLives <= 0) {
+    if (victory || (!passed && nextHp <= 0)) {
+      const finalized = finalizeGhostRun(currentGhost);
+      const replaceGhost = shouldReplaceGhost(gameState.ghostRun, finalized);
+      const updatedDailyRun = dailySeed
+        ? recordDailyRunAttempt(
+            gameState.dailyRun ?? { history: {} },
+            level, level - 1, wpm, acc, elapsed,
+          )
+        : gameState.dailyRun;
+      saveGameState({
+        ...gameState,
+        ghostRun: replaceGhost ? finalized : gameState.ghostRun,
+        dailyRun: updatedDailyRun,
+      });
       clearCurrentGameRun(true);
     }
 
-    setLives(nextLives);
+    setHp(nextHp);
     setResult({
       wpm,
       acc,
       passed,
-      livesLeft: nextLives,
+      livesLeft: nextHp,
       level,
       isBoss: boss,
+      bossArchetype: archetype?.id ?? null,
       minAccuracy,
+      maxErrors: null,
+      rhythmDeviation: null,
+      maxRhythmDeviation: null,
       timedOut,
       elapsed,
-      timeLimitSeconds,
+      timeLimitSeconds: null,
       victory,
       brokenItems,
     });
-
-    if (passed) {
-      const achievementIds: string[] = [];
-      if (level === 1) achievementIds.push('first-level');
-      if (boss && level === 5) achievementIds.push('first-boss');
-      if (boss && level === 25) achievementIds.push('boss-25');
-      if (boss && level === 50) achievementIds.push('boss-50');
-      if (boss && level === 75) achievementIds.push('boss-75');
-      if (victory) achievementIds.push('game-complete');
-      queueAchievementToasts(achievementIds);
-    }
   }, [
+    battleState,
+    battleBonuses,
+    buildLevelText,
     calculateBossTimeLimit,
     effectiveGoalWpm,
     generateBossRewardChoices,
@@ -362,7 +612,9 @@ export function GamePage() {
     stableInventoryItems,
     level,
     levelText,
-    lives,
+    hp,
+    maxHp,
+    regenTurns,
     markGameLevelReached,
     clearCurrentGameRun,
     consumeActiveModifiers,
@@ -374,6 +626,11 @@ export function GamePage() {
     wearEquippedGameItems,
     queueAchievementToasts,
     runMap,
+    saveGameState,
+    gameState,
+    currentGhost,
+    dailySeed,
+    activeTotalLevels,
   ]);
 
   const { session, start, stop, finish, handleKey, wpm, acc, waitingForSpace } = useTypingSession({
@@ -381,11 +638,24 @@ export function GamePage() {
     onFinish,
   });
 
-  const startLevel = useCallback((nextLevel: number, resetGame = false) => {
+  // Keep ref in sync so onFinish can start next round without circular dep
+  useEffect(() => { startSessionRef.current = start; }, [start]);
+
+  const startLevel = useCallback((nextLevel: number, resetGame = false, nodeKind?: string) => {
     if (!layout || !words.length || !unlocked.length) return;
     finishCauseRef.current = 'completed';
     blurActiveElement();
-    const text = buildLevelText(nextLevel);
+
+    // Determine if this is a battle with an enemy
+    const boss = isBossLevel(nextLevel);
+    const combatKind = nodeKind ?? (boss ? 'boss' : 'battle');
+    const tier = getEnemyTier(combatKind);
+    const enemy = createEnemy(tier, nextLevel);
+    const bs = createBattleState(enemy, hp, maxHp);
+    setBattleState(bs);
+
+    // First round: short text for attack phase
+    const text = boss ? buildLevelText(nextLevel) : buildLevelText(nextLevel, BATTLE_ROUND_WORDS);
     setLevel(nextLevel);
     setLevelText(text);
     setResult(null);
@@ -393,14 +663,27 @@ export function GamePage() {
     resetEventState();
     resetRewardState();
     if (resetGame) {
-      setLives(3);
+      setHp(baseHp);
+      setMaxHp(baseHp);
+      setRegenTurns(0);
       setCompletedLevels(0);
       setActiveModifiers([]);
       setGameStarted(true);
+      // Re-create battle state with base HP for fresh game
+      const freshBs = createBattleState(enemy, baseHp, baseHp);
+      setBattleState(freshBs);
     }
     setShowStartPanel(false);
     start(text);
-  }, [layout, words.length, unlocked.length, buildLevelText, resetEventState, resetRewardState, resetMapSelection, start]);
+  }, [layout, words.length, unlocked.length, buildLevelText, resetEventState, resetRewardState, resetMapSelection, start, hp, maxHp, baseHp]);
+
+  // Auto-advance to next level when map has no outgoing nodes (dead-end fallback)
+  useEffect(() => {
+    if (autoAdvanceLevel != null) {
+      setAutoAdvanceLevel(null);
+      startLevel(autoAdvanceLevel);
+    }
+  }, [autoAdvanceLevel, startLevel]);
 
   const enterMapNode = useCallback((nodeId: string, clearResult = true) => {
     if (!runMap) return;
@@ -427,14 +710,15 @@ export function GamePage() {
     if (nextNode.battleLevel != null) {
       resetEventState();
       stop();
-      startLevel(nextNode.battleLevel);
+      startLevel(nextNode.battleLevel, false, nextNode.kind);
       return;
     }
 
     if (nextNode.kind === 'rest') {
       setPendingEvent(createRestEvent({
         level,
-        lives,
+        lives: hp,
+        maxLives: maxHp,
         hasRepairTargets: hasRepairTargets || stableEquippedItems.some(entry =>
           Boolean(entry.inventoryItem?.maxDurability != null),
         ),
@@ -442,7 +726,7 @@ export function GamePage() {
     } else if (nextNode.kind === 'treasure') {
       setPendingEvent(createCacheEvent({
         level,
-        lives,
+        lives: hp,
         hasRepairTargets: hasRepairTargets || stableEquippedItems.some(entry =>
           Boolean(entry.inventoryItem?.maxDurability != null),
         ),
@@ -450,7 +734,7 @@ export function GamePage() {
     } else if (nextNode.kind === 'shop') {
       setPendingEvent(createShopEvent({
         level,
-        lives,
+        lives: hp,
         hasRepairTargets: hasRepairTargets || stableEquippedItems.some(entry =>
           Boolean(entry.inventoryItem?.maxDurability != null),
         ),
@@ -458,11 +742,18 @@ export function GamePage() {
     } else if (nextNode.kind === 'risk') {
       setPendingEvent(createRiskEvent({
         level,
-        lives,
+        lives: hp,
+        maxLives: maxHp,
         hasRepairTargets: hasRepairTargets || stableEquippedItems.some(entry =>
           Boolean(entry.inventoryItem?.maxDurability != null),
         ),
       }));
+    } else if (nextNode.kind === 'elite' || nextNode.kind === 'miniboss') {
+      // Elite and miniboss nodes are combat encounters
+      resetEventState();
+      stop();
+      startLevel(level, false, nextNode.kind);
+      return;
     }
     eventChoiceRefs.current = [];
   }, [
@@ -472,7 +763,8 @@ export function GamePage() {
     stop,
     startLevel,
     level,
-    lives,
+    hp,
+    maxHp,
     hasRepairTargets,
     stableEquippedItems,
   ]);
@@ -484,13 +776,39 @@ export function GamePage() {
     enterMapNode(nextNodeId);
   }, [enterMapNode, runMap]);
 
-  const startGame = useCallback(() => {
+  const startGame = useCallback((isDaily = false) => {
     blurActiveElement();
     stop();
     clearCurrentGameRun(true);
-    setRunMap(createGameRunMap(TOTAL_GAME_LEVELS));
-    startLevel(1, true);
-  }, [clearCurrentGameRun, startLevel, stop]);
+    setCurrentGhost(createEmptyGhostRun());
+    const seed = isDaily ? getDailySeedString() : null;
+    setDailySeed(seed);
+    const totalLevels = isDaily ? DAILY_RUN_LEVELS : TOTAL_GAME_LEVELS;
+    const newMap = createGameRunMap(totalLevels);
+
+    // Reset all game state manually (no startLevel — we show the map first)
+    setHp(baseHp);
+    setMaxHp(baseHp);
+    setRegenTurns(0);
+    setCompletedLevels(0);
+    setActiveModifiers([]);
+    setLevel(1);
+    setLevelText('');
+    setResult(null);
+    setPendingEvent(null);
+    setBattleState(null);
+    setRewardChoices(null);
+    setSelectedRewardMessage(null);
+    setShowStartPanel(false);
+    setGameStarted(true);
+
+    // Show the map with the first node selectable
+    const firstNodeId = newMap.currentNodeId;
+    const mapWithSelectable = firstNodeId
+      ? setGameRunMapSelectableNodes(newMap, [firstNodeId])
+      : newMap;
+    setRunMap(mapWithSelectable);
+  }, [clearCurrentGameRun, stop, baseHp]);
 
   const openStartPanel = useCallback(() => {
     stop();
@@ -501,22 +819,54 @@ export function GamePage() {
     setShowStartPanel(true);
   }, [resetEventState, resetRewardState, resetMapSelection, stop]);
 
+  const returnToMainGame = useCallback(() => {
+    stop();
+    setDailySeed(null);
+    setResult(null);
+    setPendingEvent(null);
+    setBattleState(null);
+    resetMapSelection();
+    resetEventState();
+    resetRewardState();
+    setRunMap(createGameRunMap(TOTAL_GAME_LEVELS));
+    setLevel(1);
+    setHp(baseHp);
+    setMaxHp(baseHp);
+    setRegenTurns(0);
+    setCompletedLevels(0);
+    setLevelText('');
+    setActiveModifiers([]);
+    setGameStarted(false);
+    setShowStartPanel(true);
+  }, [resetEventState, resetRewardState, resetMapSelection, stop, baseHp]);
+
   const continueGame = useCallback(() => {
     if (pendingEvent && !pendingEvent.resolvedChoiceId) return;
     if (rewardChoices && !selectedRewardMessage) return;
-    if (lives <= 0 || level >= TOTAL_GAME_LEVELS) return;
+    if (hp <= 0 || level >= activeTotalLevels) return;
     if (selectableMapNodeIds.length > 0) {
       setResult(null);
       return;
     }
+
+    // After event/reward resolved — show map with selectable outgoing nodes instead of auto-advancing
+    if (runMap?.currentNodeId) {
+      const nextNodeIds = getGameRunMapOutgoingIds(runMap, runMap.currentNodeId);
+      if (nextNodeIds.length > 0) {
+        setRunMap(prev => (prev ? setGameRunMapSelectableNodes(prev, nextNodeIds) : prev));
+        setPendingEvent(null);
+        setResult(null);
+        return;
+      }
+    }
     continueFromMap();
-  }, [continueFromMap, level, lives, pendingEvent, rewardChoices, selectableMapNodeIds.length, selectedRewardMessage]);
+  }, [activeTotalLevels, continueFromMap, level, hp, pendingEvent, rewardChoices, runMap, selectableMapNodeIds.length, selectedRewardMessage]);
 
   const retryLevel = useCallback(() => {
-    if (lives <= 0) return;
+    if (hp <= 0) return;
     stop();
-    startLevel(level);
-  }, [level, lives, startLevel, stop]);
+    startLevel(level, false, currentMapNode?.kind);
+  }, [currentMapNode?.kind, level, hp, startLevel, stop]);
 
   const handleRewardChoice = useCallback((choice: BossRewardChoice) => {
     if (choice.disabled) return;
@@ -527,6 +877,39 @@ export function GamePage() {
         ? `Печать мастера пробудила букву «${unlockedChar.toUpperCase()}».`
         : 'Алфавит уже полностью раскрыт.');
       if (unlockedChar) queueAchievementToasts(['unlock-letter']);
+      return;
+    }
+
+    if (choice.kind === 'event' && choice.effect) {
+      const lines: string[] = [];
+      const effectiveMaxHp = maxHp + (choice.effect.maxLifeDelta ?? 0);
+      if (choice.effect.maxLifeDelta) {
+        setMaxHp(effectiveMaxHp);
+        setHp(prev => Math.min(prev + choice.effect!.maxLifeDelta!, effectiveMaxHp));
+        lines.push(`Максимальное здоровье: ${effectiveMaxHp}.`);
+      }
+      if (choice.effect.fullHeal) {
+        setHp(effectiveMaxHp);
+        lines.push('Здоровье полностью восстановлено.');
+      }
+      if (choice.effect.regenTurns) {
+        setRegenTurns(prev => prev + choice.effect!.regenTurns!);
+        lines.push(`Регенерация: +${REGEN_HP_PER_BATTLE} HP после боя на ${choice.effect.regenTurns} боёв.`);
+      }
+      if (choice.effect.lifeDelta) {
+        const nextHp = Math.max(0, Math.min(effectiveMaxHp, hp + choice.effect.lifeDelta));
+        setHp(nextHp);
+        if (choice.effect.lifeDelta > 0) {
+          lines.push(`Здоровье восстановлено: ${nextHp} HP.`);
+        } else {
+          lines.push(`Потеряно ${Math.abs(choice.effect.lifeDelta)} HP.`);
+        }
+      }
+      if (choice.effect.modifier) {
+        setActiveModifiers(prev => [...prev, choice.effect!.modifier!]);
+        lines.push(`Эффект: ${choice.effect.modifier.description}.`);
+      }
+      setSelectedRewardMessage(lines.join(' ') || choice.flavor);
       return;
     }
 
@@ -543,7 +926,7 @@ export function GamePage() {
       ...(choice.kind === 'durable' ? ['collect-durable-item'] : []),
       ...(item.rarity === 3 ? ['collect-top-rarity-item'] : []),
     ]);
-  }, [grantGameItem, queueAchievementToasts, unlockNextGameLetter]);
+  }, [grantGameItem, hp, maxHp, queueAchievementToasts, unlockNextGameLetter]);
 
   const handleMapNodeSelect = useCallback((nodeId: string) => {
     if (!runMap || !runMap.selectableNodeIds.includes(nodeId)) return;
@@ -556,14 +939,32 @@ export function GamePage() {
     const lines: string[] = [];
     const achievementIds: string[] = [];
 
+    const effectiveMaxHp = maxHp + (choice.effect.maxLifeDelta ?? 0);
+    if (choice.effect.maxLifeDelta) {
+      setMaxHp(effectiveMaxHp);
+      setHp(prev => Math.min(prev + choice.effect.maxLifeDelta!, effectiveMaxHp));
+      lines.push(`Максимальное здоровье увеличено до ${effectiveMaxHp}.`);
+    }
+
+    if (choice.effect.fullHeal) {
+      setHp(effectiveMaxHp);
+      setResult(prev => prev ? { ...prev, livesLeft: effectiveMaxHp } : prev);
+      lines.push(`Здоровье полностью восстановлено: ${effectiveMaxHp} из ${effectiveMaxHp}.`);
+    }
+
+    if (choice.effect.regenTurns) {
+      setRegenTurns(prev => prev + choice.effect.regenTurns!);
+      lines.push(`Регенерация: +${REGEN_HP_PER_BATTLE} HP после каждого боя на ${choice.effect.regenTurns} боёв.`);
+    }
+
     if (choice.effect.lifeDelta) {
-      const nextLives = Math.max(0, Math.min(3, lives + choice.effect.lifeDelta));
-      setLives(nextLives);
-      setResult(prev => prev ? { ...prev, livesLeft: nextLives } : prev);
+      const nextHp = Math.max(0, Math.min(effectiveMaxHp, hp + choice.effect.lifeDelta));
+      setHp(nextHp);
+      setResult(prev => prev ? { ...prev, livesLeft: nextHp } : prev);
       if (choice.effect.lifeDelta > 0) {
-        lines.push(`Жизни восстановлены: ${nextLives} из 3.`);
+        lines.push(`Здоровье восстановлено: ${nextHp} из ${effectiveMaxHp}.`);
       } else {
-        lines.push(`Сделка забрала ${Math.abs(choice.effect.lifeDelta)} жизнь.`);
+        lines.push(`Сделка забрала ${Math.abs(choice.effect.lifeDelta)} HP.`);
       }
     }
 
@@ -598,7 +999,21 @@ export function GamePage() {
       resolvedChoiceId: choice.id,
       resultText: lines.join(' ') || `${choice.title} приносит свои плоды.`,
     } : prev);
-  }, [grantGameItem, lives, pendingEvent, queueAchievementToasts, repairGameItems]);
+  }, [grantGameItem, hp, maxHp, pendingEvent, queueAchievementToasts, repairGameItems]);
+
+  const handleSkipEvent = useCallback(() => {
+    if (!pendingEvent || pendingEvent.resolvedChoiceId) return;
+    resetEventState();
+    // Show map with outgoing nodes so the player can continue
+    if (runMap?.currentNodeId) {
+      const nextNodeIds = getGameRunMapOutgoingIds(runMap, runMap.currentNodeId);
+      if (nextNodeIds.length > 0) {
+        setRunMap(prev => (prev ? setGameRunMapSelectableNodes(prev, nextNodeIds) : prev));
+        return;
+      }
+    }
+    continueFromMap();
+  }, [continueFromMap, pendingEvent, resetEventState, runMap]);
 
   const resumeSavedLevel = useCallback(() => {
     if (session.active || !levelText) return;
@@ -618,7 +1033,7 @@ export function GamePage() {
   }, [session.active, handleKey]);
 
   const gameWon = Boolean(result?.victory);
-  const gameOver = gameStarted && !session.active && !gameWon && lives <= 0;
+  const gameOver = gameStarted && !session.active && !gameWon && hp <= 0;
   const rewardPending = Boolean(result?.passed && result.isBoss && rewardChoices && !selectedRewardMessage);
   const showBattlePanel = gameStarted
     && !showStartPanel
@@ -627,6 +1042,10 @@ export function GamePage() {
     && selectableMapNodeIds.length === 0
     && Boolean(currentMapNode?.battleLevel)
     && Boolean(levelText);
+  const ghostComparison = useMemo(
+    () => result ? getGhostComparison(gameState.ghostRun, result.level, result.wpm) : null,
+    [gameState.ghostRun, result],
+  );
   const startOverlayContent = showStartPanel ? (
     <form
       className="game-start-panel"
@@ -652,14 +1071,73 @@ export function GamePage() {
           <small>{spdLabel}</small>
         </div>
       </label>
-      <button type="submit" className="btn-accent">
-        Старт игры
+      {setBonuses.activeSets.length > 0 && (
+        <div className="game-set-bonuses">
+          {setBonuses.activeSets.map(({ set, activeBonus, count }) => (
+            <div key={set.id} className="game-set-chip">
+              <strong>{set.name}</strong>
+              <small>{count} предмета · {activeBonus.description}</small>
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="game-start-actions">
+        <button type="submit" className="btn-accent">
+          Старт игры
         </button>
+        <button type="button" className="btn-secondary" onClick={() => startGame(true)}>
+          Ежедневный забег
+        </button>
+      </div>
+      {gameState.ghostRun && gameState.ghostRun.maxLevel > 0 && (
+        <div className="game-ghost-info">
+          👻 Призрак лучшего забега: уровень {gameState.ghostRun.maxLevel}
+        </div>
+      )}
       </form>
     ) : null;
   const battleOverlayText = !session.active && !showStartPanel && !result && levelText
-    ? `Забег сохранен\nУровень ${level} · ${Math.max(lives, 0)} жизни\nНажмите, чтобы продолжить`
+    ? `Забег сохранен\nУровень ${level} · ${Math.max(hp, 0)} HP\nНажмите, чтобы продолжить`
     : null;
+  const battleInfoPanel = battleState && !battleState.finished ? (
+    <div className="game-battle-info-panel">
+      <div className="game-battle-hud">
+        ⚔ {battleState.enemy.name} · Раунд {battleState.round} · {battleState.phase === 'attack' ? 'Атака' : 'Защита'}
+      </div>
+      <div className="game-battle-hp-section">
+        <div className="game-hp-bar-row">
+          <Swords size={14} />
+          <span className="game-hp-label">
+            {Math.max(0, battleState.playerHp)} / {battleState.playerMaxHp}
+          </span>
+          <div className="game-hp-bar">
+            <div
+              className={`game-hp-bar-fill${battleState.playerHp / battleState.playerMaxHp <= 0.25 ? ' danger' : battleState.playerHp / battleState.playerMaxHp <= 0.5 ? ' warn' : ''}`}
+              style={{ width: `${Math.max(0, Math.min(100, (battleState.playerHp / battleState.playerMaxHp) * 100))}%` }}
+            />
+          </div>
+        </div>
+        <div className="game-hp-bar-row enemy">
+          <Shield size={14} />
+          <span className="game-hp-label">
+            {Math.max(0, battleState.enemy.hp)} / {battleState.enemy.maxHp}
+          </span>
+          <div className="game-hp-bar">
+            <div
+              className="game-hp-bar-fill enemy"
+              style={{ width: `${Math.max(0, Math.min(100, (battleState.enemy.hp / battleState.enemy.maxHp) * 100))}%` }}
+            />
+          </div>
+          <span className="game-hp-enemy-name">{battleState.enemy.name}</span>
+          {battleState.enemy.debuff && (
+            <span className="game-boss-debuff-badge" title={`Дебафф: ${battleState.enemy.debuff}`}>
+              ⚡ {battleState.enemy.debuff}
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  ) : null;
 
   useEffect(() => {
     if (hasHydratedRunRef.current) return;
@@ -669,12 +1147,15 @@ export function GamePage() {
     if (!savedRun) return;
 
     setLevel(savedRun.level);
-    setLives(savedRun.lives);
+    setHp(savedRun.lives);
+    setMaxHp(savedRun.maxLives ?? baseHp);
+    setRegenTurns(savedRun.regenTurns ?? 0);
     setCompletedLevels(savedRun.completedLevels);
     setTargetSpeedCpm(savedRun.targetSpeedCpm);
     setLevelText(savedRun.levelText);
     setActiveModifiers(savedRun.activeModifiers ?? []);
     setRunMap(savedRun.map ?? createGameRunMap(TOTAL_GAME_LEVELS));
+    setBattleState(savedRun.battleState ?? null);
     setPendingEvent(savedRun.pendingEvent ?? null);
     setResult(savedRun.result);
     setRewardChoices(savedRun.rewardChoices);
@@ -688,17 +1169,21 @@ export function GamePage() {
 
     saveCurrentGameRun({
       level,
-      lives,
+      lives: hp,
+      maxLives: maxHp,
+      regenTurns,
       completedLevels,
       targetSpeedCpm,
       levelText,
       activeModifiers,
+      battleState: battleState ?? null,
       map: runMap,
       pendingRoute: null,
       pendingEvent,
       result,
       rewardChoices,
       selectedRewardMessage,
+      dailySeed,
     });
   }, [
     activeModifiers,
@@ -708,7 +1193,7 @@ export function GamePage() {
     gameWon,
     level,
     levelText,
-    lives,
+    hp,
     runMap,
     pendingEvent,
     result,
@@ -778,7 +1263,7 @@ export function GamePage() {
           <button className="btn-secondary btn-sm game-achievements-button" onClick={openAchievementsModal}>
             <Trophy size={14} />
             Достижения
-            <span className="game-achievements-count">{unlockedAchievements.length}/{gameAchievementCatalog.length}</span>
+            <span className="game-achievements-count">{unlockedAchievements.length}/{gameAchievementsCatalog.length}</span>
           </button>
         </div>
         {gameStarted && !showStartPanel && (
@@ -791,9 +1276,11 @@ export function GamePage() {
       </div>
 
       <GameHud
-        lives={lives}
+        hp={hp}
+        maxHp={maxHp}
+        regenTurns={regenTurns}
         level={level}
-        totalLevels={TOTAL_GAME_LEVELS}
+        totalLevels={activeTotalLevels}
         activeIsBoss={activeIsBoss}
         unlockedLetters={layoutProgress.unlocked}
         highestLevel={gameState.highestLevel}
@@ -803,6 +1290,13 @@ export function GamePage() {
         speedUnitLabel={spdLabel}
         activeModifiers={activeModifiers}
         bossTimeLimit={currentBossTimeLimit}
+        bossArchetype={currentBossArchetype}
+        dailySeed={dailySeed}
+        ghostComparison={ghostComparison}
+        activeSets={setBonuses.activeSets.map(({ set, activeBonus }) => ({
+          setName: set.name,
+          description: activeBonus.description,
+        }))}
         sessionActive={session.active}
         sessionStartTime={session.startTime}
         resultElapsedSeconds={result?.elapsed ?? 0}
@@ -821,6 +1315,7 @@ export function GamePage() {
         {showBattlePanel && (
           <div className="game-map-overlay">
             <div className="game-map-overlay-card game-battle-overlay">
+              {battleInfoPanel}
               <TextDisplay
                 text={session.active ? session.text : levelText}
                 pos={session.active ? session.pos : 0}
@@ -851,6 +1346,7 @@ export function GamePage() {
               resultActionRef={resultActionRef}
               onSelectEventChoice={handleEventChoice}
               onContinue={continueGame}
+              onSkip={handleSkipEvent}
             />
           </div>
         )}
@@ -859,6 +1355,7 @@ export function GamePage() {
           <div className="game-map-overlay">
             <GameResultCard
               result={result}
+              isDailyRun={Boolean(dailySeed)}
               speedLabel={spdLabel}
               formatSpeed={fmtSpeed}
               targetSpeedDisplay={targetSpeedDisplay}
@@ -867,13 +1364,15 @@ export function GamePage() {
               selectedRewardMessage={selectedRewardMessage}
               rewardPending={rewardPending}
               mapSelectionPending={mapSelectionPending}
-              totalLevels={TOTAL_GAME_LEVELS}
+              totalLevels={activeTotalLevels}
               bossLevelInterval={BOSS_LEVEL_INTERVAL}
+              ghostComparison={ghostComparison}
               resultActionRef={resultActionRef}
               rewardChoiceRefs={rewardChoiceRefs}
               onContinue={continueGame}
               onRetry={retryLevel}
               onRestart={startGame}
+              onReturnToMainGame={returnToMainGame}
               onSelectReward={handleRewardChoice}
             />
           </div>
@@ -885,26 +1384,21 @@ export function GamePage() {
           <h4><Trophy size={16} style={{ verticalAlign: 'middle' }} /> Итог игры</h4>
           <p className="card-desc">
             {gameWon
-              ? `Пройдены все ${TOTAL_GAME_LEVELS} уровней. Инвентарь забега очищен.`
+              ? `Пройдены все ${activeTotalLevels} уровней. Инвентарь забега очищен.`
               : `Пройдено уровней: ${completedLevels}. Максимум: уровень ${Math.max(level, completedLevels)}.`}
           </p>
         </div>
       )}
 
-      <GameAchievementsModal
+      <AchievementsModal
         open={showAchievementsModal}
-        unlockedAchievementIds={gameState.achievements}
+        unlockedAchievementIds={unlockedAchievementIds}
         achievementCatalog={gameAchievementCatalog}
+        categoryFilter="game"
         onClose={closeAchievementsModal}
       />
 
-      <GameAchievementToastStack achievements={achievementToasts} />
+      <GameAchievementToastStack achievements={achievementToasts} onRemove={handleRemoveToast} />
     </section>
   );
 }
-
-
-
-
-
-

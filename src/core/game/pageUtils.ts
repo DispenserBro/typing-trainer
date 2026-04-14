@@ -67,11 +67,27 @@ export function sumItemBonuses(equippedItems: EquippedEntry[], activeIsBoss: boo
     acc.speedRequirementReductionPercent += entry.meta.speedRequirementReductionPercent ?? 0;
     acc.accuracyRequirementReduction += entry.meta.accuracyRequirementReduction ?? 0;
     acc.bossTimerBonusSeconds += entry.meta.bossTimerBonusSeconds ?? 0;
+    acc.enemyAttackReduction += entry.meta.enemyAttackReduction ?? 0;
+    acc.enemyDefenseReduction += entry.meta.enemyDefenseReduction ?? 0;
+    acc.dodgeBonus += entry.meta.dodgeBonus ?? 0;
+    acc.playerAttackBonus += entry.meta.playerAttackBonus ?? 0;
+    acc.playerDamageBonus += entry.meta.playerDamageBonus ?? 0;
+    acc.dmgCoeff += entry.meta.dmgCoeff ?? 0;
+    acc.defCoeff += entry.meta.defCoeff ?? 0;
+    acc.critBonus += entry.meta.critBonus ?? 0;
     return acc;
   }, {
     speedRequirementReductionPercent: 0,
     accuracyRequirementReduction: 0,
     bossTimerBonusSeconds: 0,
+    enemyAttackReduction: 0,
+    enemyDefenseReduction: 0,
+    dodgeBonus: 0,
+    playerAttackBonus: 0,
+    playerDamageBonus: 0,
+    dmgCoeff: 0,
+    defCoeff: 0,
+    critBonus: 0,
   });
 }
 
@@ -81,11 +97,27 @@ export function sumModifierBonuses(activeModifiers: GameRunModifier[], activeIsB
     acc.speedRequirementReductionPercent += modifier.speedRequirementReductionPercent ?? 0;
     acc.accuracyRequirementReduction += modifier.accuracyRequirementReduction ?? 0;
     acc.bossTimerBonusSeconds += modifier.bossTimerBonusSeconds ?? 0;
+    acc.enemyAttackReduction += modifier.enemyAttackReduction ?? 0;
+    acc.enemyDefenseReduction += modifier.enemyDefenseReduction ?? 0;
+    acc.dodgeBonus += modifier.dodgeBonus ?? 0;
+    acc.playerAttackBonus += modifier.playerAttackBonus ?? 0;
+    acc.playerDamageBonus += modifier.playerDamageBonus ?? 0;
+    acc.dmgCoeff += modifier.dmgCoeff ?? 0;
+    acc.defCoeff += modifier.defCoeff ?? 0;
+    acc.critBonus += modifier.critBonus ?? 0;
     return acc;
   }, {
     speedRequirementReductionPercent: 0,
     accuracyRequirementReduction: 0,
     bossTimerBonusSeconds: 0,
+    enemyAttackReduction: 0,
+    enemyDefenseReduction: 0,
+    dodgeBonus: 0,
+    playerAttackBonus: 0,
+    playerDamageBonus: 0,
+    dmgCoeff: 0,
+    defCoeff: 0,
+    critBonus: 0,
   });
 }
 

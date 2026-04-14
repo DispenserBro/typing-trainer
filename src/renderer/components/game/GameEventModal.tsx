@@ -14,6 +14,7 @@ type GameEventModalProps = {
   resultActionRef: RefObject<HTMLButtonElement | null>;
   onSelectEventChoice: (choice: GameRunEventChoice) => void;
   onContinue: () => void;
+  onSkip: () => void;
 };
 
 function getEventIcon(kind: GameRunEventState['kind']) {
@@ -34,6 +35,7 @@ export function GameEventModal({
   resultActionRef,
   onSelectEventChoice,
   onContinue,
+  onSkip,
 }: GameEventModalProps) {
   const EventIcon = getEventIcon(pendingEvent.kind);
   const handleChoicePointerDown = (event: React.PointerEvent<HTMLButtonElement>, choice: GameRunEventChoice) => {
@@ -62,13 +64,14 @@ export function GameEventModal({
       <p className="game-modal-copy">{pendingEvent.description}</p>
 
       {eventPending ? (
-        <div className="game-reward-grid">
-          {pendingEvent.choices.map((choice, index) => {
+        <>
+          <div className="game-reward-grid">
+            {pendingEvent.choices.map((choice, index) => {
             const choiceItem = choice.effect.grantItemId ? getGameItemById(choice.effect.grantItemId) : null;
             const ChoiceIcon = choiceItem ? getGameItemIcon(choiceItem.icon) : null;
             const effectDescriptions = [
               choice.effect.lifeDelta
-                ? `${choice.effect.lifeDelta > 0 ? '+' : ''}${choice.effect.lifeDelta} жизнь`
+                ? `${choice.effect.lifeDelta > 0 ? '+' : ''}${choice.effect.lifeDelta} HP`
                 : null,
               choice.effect.repairEquippedBy
                 ? `Ремонт +${choice.effect.repairEquippedBy}`
@@ -130,7 +133,13 @@ export function GameEventModal({
               </div>
             );
           })}
-        </div>
+          </div>
+          <div className="game-actions game-event-skip-row">
+            <button className="btn-secondary btn-sm" onClick={onSkip}>
+              Пропустить
+            </button>
+          </div>
+        </>
       ) : (
         <>
           <div className="game-reward-picked">{pendingEvent.resultText}</div>

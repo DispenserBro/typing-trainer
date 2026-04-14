@@ -6,6 +6,8 @@ import {
   ShoppingBag,
   Swords,
   TriangleAlert,
+  Flame,
+  Skull,
 } from 'lucide-react';
 import type { GameRunMapNode, GameRunMapState } from '../../../shared/types';
 import { getMapKindLabel } from '../../../core/game/routes';
@@ -21,6 +23,8 @@ function getMapNodeIcon(kind: GameRunMapNode['kind']) {
   if (kind === 'treasure') return Gift;
   if (kind === 'shop') return ShoppingBag;
   if (kind === 'risk') return TriangleAlert;
+  if (kind === 'elite') return Flame;
+  if (kind === 'miniboss') return Skull;
   return Swords;
 }
 
@@ -175,6 +179,8 @@ export const GameRunMap = memo(function GameRunMap({ map, onSelectNode }: GameRu
         <span><Gift size={14} /> Тайник</span>
         <span><ShoppingBag size={14} /> Лавка</span>
         <span><TriangleAlert size={14} /> Риск</span>
+        <span><Flame size={14} /> Элита</span>
+        <span><Skull size={14} /> Мини-босс</span>
       </div>
     </div>
   );

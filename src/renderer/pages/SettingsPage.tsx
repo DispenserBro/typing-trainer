@@ -12,6 +12,9 @@ export function SettingsPage() {
     keyboardPreviewActive, setKeyboardPreviewActive,
     progress, saveProgress, resetGameProgress,
     customThemes, applyTheme,
+    customPresets, applyPreset, saveCurrentAsPreset, deletePreset,
+    exportConfig, importConfig,
+    currentMode, modeProfiles, saveModeProfile, clearModeProfile,
   } = useApp();
 
   const handleResetProgress = () => {
@@ -48,6 +51,16 @@ export function SettingsPage() {
         onOpenThemeEditor={() => setShowThemeModal(true)}
         keyboardPreviewActive={keyboardPreviewActive}
         setKeyboardPreviewActive={setKeyboardPreviewActive}
+        customPresets={customPresets}
+        applyPreset={applyPreset}
+        saveCurrentAsPreset={saveCurrentAsPreset}
+        deletePreset={deletePreset}
+        exportConfig={exportConfig}
+        importConfig={importConfig}
+        currentMode={currentMode}
+        modeProfiles={modeProfiles}
+        saveModeProfile={saveModeProfile}
+        clearModeProfile={clearModeProfile}
         onResetGame={() => setShowResetGameModal(true)}
         onResetAll={() => setShowResetModal(true)}
       />
