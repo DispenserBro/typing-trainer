@@ -19,6 +19,7 @@ function resourceTags(addon: InstalledAddon): string[] {
   if (r.items?.items?.length) tags.push('Предметы');
   if (r.achievements?.achievements?.length) tags.push('Достижения');
   if (r.themes && Object.keys(r.themes.themes).length) tags.push('Темы');
+  if (r.practicePacks?.packs?.length) tags.push('Контент-паки');
   return tags;
 }
 

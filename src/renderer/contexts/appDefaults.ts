@@ -1,4 +1,11 @@
-import type { GameState, PracticeSettings, PresetSettings, UserPreset, UserSettings } from '../../shared/types';
+import type {
+  GameState,
+  ModePracticeSettings,
+  PracticeSettings,
+  PresetSettings,
+  UserPreset,
+  UserSettings,
+} from '../../shared/types';
 
 export const BUILT_IN_THEMES = ['dark-orange', 'catppuccin', 'nord', 'monokai', 'light'];
 
@@ -115,15 +122,30 @@ export function defaultSettings(s?: Partial<UserSettings>): UserSettings {
 }
 
 export function defaultPracticeSettings(p?: Partial<PracticeSettings>): PracticeSettings {
+  const legacy = p as (Partial<PracticeSettings> & { selectedCustomContentId?: string }) | undefined;
   return {
     dailyGoalType: p?.dailyGoalType ?? 'minutes',
     dailyGoalValue: p?.dailyGoalValue ?? 15,
     goalSpeedCpm: p?.goalSpeedCpm ?? 150,
     trainingMode: p?.trainingMode ?? 'normal',
+    contentMode: p?.contentMode ?? 'adaptive-words',
+    selectedContentPackId: p?.selectedContentPackId ?? legacy?.selectedCustomContentId ?? '',
     smartAdaptationEnabled: p?.smartAdaptationEnabled ?? true,
     smartAdaptationStrength: p?.smartAdaptationStrength ?? 'medium',
     smartAdaptationFocus: p?.smartAdaptationFocus ?? 'balanced',
     noStepBack: p?.noStepBack ?? false,
+  };
+}
+
+export function defaultModePracticeSettings(settings?: Partial<ModePracticeSettings>): ModePracticeSettings {
+  const sprintDurationSeconds = settings?.sprintDurationSeconds == null
+    ? undefined
+    : Math.max(15, Math.min(60, Math.round(settings.sprintDurationSeconds / 15) * 15));
+
+  return {
+    contentMode: settings?.contentMode,
+    selectedContentPackId: settings?.selectedContentPackId ?? '',
+    sprintDurationSeconds,
   };
 }
 

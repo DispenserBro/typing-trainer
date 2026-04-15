@@ -12,6 +12,20 @@ import {
   type PracticeBuildOptions,
 } from '../text/ngramUtils';
 
+function countRecentCharMatches(words: string[], target: string | null | undefined) {
+  if (!target) return 0;
+  return words.filter(word => word.includes(target)).length;
+}
+
+function countRecentBigramMatches(words: string[], target: string | null | undefined) {
+  if (!target) return 0;
+  return words.filter(word => word.includes(target)).length;
+}
+
+function hasRecentWordDuplicate(words: string[], candidate: string | null) {
+  return candidate ? words.includes(candidate) : false;
+}
+
 function buildPool(
   allWords: string[],
   chars: string[],
@@ -64,12 +78,16 @@ function buildPool(
 
   for (let i = 0; i < count; i++) {
     let word: string | null = null;
+    const recentWords = result.slice(-4);
 
-    if (preferChars && Math.random() < 0.3) {
+    if (preferChars && Math.random() < 0.18) {
       if (preferExact.length > 0 && Math.random() < 0.6) {
         word = pick(preferExact);
       } else if (preferAdapted.length > 0) {
         word = pick(preferAdapted);
+      }
+      if (countRecentCharMatches(recentWords, preferChars) >= 3) {
+        word = null;
       }
     }
 
@@ -77,10 +95,10 @@ function buildPool(
       const r = Math.random();
       if (hasAdaptiveSignals) {
         const bigramThreshold = rankedBigrams.length > 0
-          ? clamp((0.12 + focusStrength * 0.18) * bigramPriority, 0, 0.45)
+          ? clamp((0.1 + focusStrength * 0.16) * bigramPriority, 0, 0.38)
           : 0;
         const charThreshold = rankedChars.length > 0
-          ? clamp(bigramThreshold + (0.14 + focusStrength * 0.18) * charPriority, bigramThreshold, 0.82)
+          ? clamp(bigramThreshold + (0.1 + focusStrength * 0.14) * charPriority, bigramThreshold, 0.66)
           : bigramThreshold;
 
         if (r < bigramThreshold && rankedBigrams.length > 0) {
@@ -92,6 +110,9 @@ function buildPool(
           } else if (charArr.length >= 2) {
             word = generateSeededNgramWord(localNgram, charArr, targetBigram, 3, Math.min(7, charArr.length + 2));
           }
+          if (countRecentBigramMatches(recentWords, targetBigram) >= 2) {
+            word = null;
+          }
         } else if (r < charThreshold && rankedChars.length > 0) {
           const targetChar = pick(rankedChars);
           if (charTargetedExact.length > 0 && Math.random() < 0.65) {
@@ -100,6 +121,9 @@ function buildPool(
             word = pick(charTargetedAdapted);
           } else if (charArr.length >= 2) {
             word = generateSeededNgramWord(localNgram, charArr, targetChar, 3, Math.min(7, charArr.length + 2));
+          }
+          if (countRecentCharMatches(recentWords, targetChar) >= 3) {
+            word = null;
           }
         }
       }
@@ -136,6 +160,13 @@ function buildPool(
           word = charArr[0].repeat(3);
         }
       }
+    }
+
+    if (hasRecentWordDuplicate(recentWords, word) && charArr.length >= 2) {
+      const cleanerWords = trainingMode === 'rhythm' || (options?.smartAdaptationFocus ?? 'balanced') === 'rhythm';
+      const minLen = cleanerWords ? 2 : 3;
+      const maxLen = cleanerWords ? Math.min(5, charArr.length + 1) : Math.min(7, charArr.length + 2);
+      word = generateNgramWord(localNgram, charArr, minLen, maxLen);
     }
 
     if (word && word.length === 1) {

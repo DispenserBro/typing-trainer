@@ -25,7 +25,7 @@ import { GameInventoryPanel } from '../components/game/GameInventoryPanel';
 import { GameEventModal } from '../components/game/GameEventModal';
 import { GameRunMap } from '../components/game/GameRunMap';
 import { GameResultCard } from '../components/game/GameResultCard';
-import { generatePracticeText, getWorstChar, filterYoWords, filterYoKeys } from '../../core/engine';
+import { buildPracticeContentText, getWorstChar, filterYoWords, filterYoKeys } from '../../core/engine';
 import {
   GAME_EQUIPMENT_SLOTS,
   getGameItemById,
@@ -97,6 +97,15 @@ import {
   getRecentDailyResults,
   resolveInitialDailyRunState,
 } from '../../core/game/dailyRun';
+import {
+  getActiveMotivationGoalSnapshots,
+  getMotivationStreakSnapshots,
+  updateMotivationAfterGame,
+} from '../../core/motivation/progress';
+import {
+  buildGameResultComparison,
+  buildLayoutMasteryResultSummary,
+} from '../../core/motivation/records';
 
 type BossRewardChoice = GameRunRewardChoice;
 type LevelResult = GameRunResult;
@@ -149,7 +158,7 @@ export function GamePage() {
     gameState, grantGameItem, equipGameItem, unequipGameItem, repairGameItems, markGameLevelReached,
     wearEquippedGameItems, peekNextGameLetter, unlockNextGameLetter,
     unlockGameAchievements, saveCurrentGameRun, clearCurrentGameRun, gameAchievementCatalog,
-    saveGameState, unlockedAchievementIds, modRuleOverrides,
+    saveGameState, unlockedAchievementIds, modRuleOverrides, motivationProgress, updateMotivationProgress,
   } = useApp();
 
   /** Base HP — can be overridden by mods via rules.set('game.baseHp', N) */
@@ -202,6 +211,7 @@ export function GamePage() {
   const [targetSpeedCpm, setTargetSpeedCpm] = useState(() => Math.max(1, practiceSettings.goalSpeedCpm || 150));
   const [hp, setHp] = useState(baseHp);
   const [maxHp, setMaxHp] = useState(baseHp);
+  const [runDamageTaken, setRunDamageTaken] = useState(0);
   const [regenTurns, setRegenTurns] = useState(0);
   const [level, setLevel] = useState(1);
   const [completedLevels, setCompletedLevels] = useState(0);
@@ -292,6 +302,14 @@ export function GamePage() {
   const effectiveGoalWpm = goalWpm * (1 - totalBonuses.speedRequirementReductionPercent / 100);
   const effectiveTargetSpeedCpm = targetSpeedCpm * (1 - totalBonuses.speedRequirementReductionPercent / 100);
   const effectiveTargetSpeedDisplay = formatSpeedFromCpm(effectiveTargetSpeedCpm, unit);
+  const gameGoalHighlights = useMemo(
+    () => getActiveMotivationGoalSnapshots(motivationProgress, 1, ['game-victories']),
+    [motivationProgress],
+  );
+  const gameStreakHighlights = useMemo(
+    () => getMotivationStreakSnapshots(motivationProgress, ['clean-game-victories']),
+    [motivationProgress],
+  );
 
   const queueAchievementToasts = useCallback((achievementIds: string[]) => {
     const unlocked = unlockGameAchievements(achievementIds);
@@ -327,7 +345,15 @@ export function GamePage() {
 
   const buildLevelText = useCallback((nextLevel: number, wordCount?: number) => {
     const count = wordCount ?? (isBossLevel(nextLevel) ? getBossWordCount(nextLevel) : NORMAL_LEVEL_WORDS);
-    return generatePracticeText(words, unlocked, weak, count, ngramModel ?? undefined);
+    return buildPracticeContentText({
+      allWords: words,
+      unlockedChars: unlocked,
+      weakChar: weak,
+      contentMode: 'adaptive-words',
+      scenarioId: isBossLevel(nextLevel) ? 'flawless' : 'survival',
+      wordCountOverride: count,
+      ngramModel: ngramModel ?? undefined,
+    });
   }, [words, unlocked, weak, ngramModel]);
 
   const calculateBossTimeLimit = useCallback((text: string) => {
@@ -380,8 +406,6 @@ export function GamePage() {
     const timedOut = finishCauseRef.current === 'timeout';
     finishCauseRef.current = 'completed';
 
-    saveHistory('game', wpm, acc, { charStats: ses?.charStats });
-
     // ── Battle round resolution ──
     if (battleState && !battleState.finished) {
       const currentCpm = wpm * 5;
@@ -392,8 +416,12 @@ export function GamePage() {
       const updatedBattle = resolveBattleRound(
         battleState, acc, currentCpm, targetSpeedCpm, rhythmIntervals, battleBonuses,
       );
+      const damageTakenThisRound = Math.max(0, hp - updatedBattle.playerHp);
       setBattleState(updatedBattle);
       setHp(Math.max(0, updatedBattle.playerHp));
+      if (damageTakenThisRound > 0) {
+        setRunDamageTaken(prev => prev + damageTakenThisRound);
+      }
 
       if (!updatedBattle.finished) {
         // Battle continues — generate text for next round and start it
@@ -459,7 +487,15 @@ export function GamePage() {
         resetEventState();
       }
 
-      if (victory || (!passed && hpAfterRegen <= 0)) {
+      const runCompleted = victory || (!passed && hpAfterRegen <= 0);
+      updateMotivationProgress((current) => updateMotivationAfterGame(current, {
+        passedLevel: passed,
+        runCompleted,
+        victory,
+        cleanVictory: victory && (runDamageTaken + damageTakenThisRound) <= 0,
+      }));
+
+      if (runCompleted) {
         const finalized = finalizeGhostRun(currentGhost);
         const replaceGhost = shouldReplaceGhost(gameState.ghostRun, finalized);
         const updatedDailyRun = dailySeed
@@ -488,6 +524,15 @@ export function GamePage() {
       const timeLimitSeconds = boss && archetype
         ? calculateBossTimeLimit(levelText) * archetype.timerMultiplier
         : null;
+      saveHistory('game', wpm, acc, {
+        durationSeconds: elapsed,
+        gameLevel: level,
+        gameStageType: boss ? 'boss' : 'normal',
+        passed,
+        victory,
+        timedOut,
+        charStats: ses?.charStats,
+      });
 
       setResult({
         wpm,
@@ -527,7 +572,17 @@ export function GamePage() {
     const passed = !timedOut && wpm >= effectiveGoalWpm && acc >= minAccuracy;
     const failPenalty = Math.max(10, Math.round(maxHp * 0.15));
     const nextHp = passed ? hp : Math.max(0, hp - failPenalty);
+    const nextRunDamageTaken = passed ? runDamageTaken : runDamageTaken + failPenalty;
     const victory = passed && level >= activeTotalLevels;
+    saveHistory('game', wpm, acc, {
+      durationSeconds: elapsed,
+      gameLevel: level,
+      gameStageType: boss ? 'boss' : 'normal',
+      passed,
+      victory,
+      timedOut,
+      charStats: ses?.charStats,
+    });
 
     if (passed) {
       setCompletedLevels(level);
@@ -564,7 +619,15 @@ export function GamePage() {
       resetEventState();
     }
 
-    if (victory || (!passed && nextHp <= 0)) {
+    const runCompleted = victory || (!passed && nextHp <= 0);
+    updateMotivationProgress((current) => updateMotivationAfterGame(current, {
+      passedLevel: passed,
+      runCompleted,
+      victory,
+      cleanVictory: victory && nextRunDamageTaken <= 0,
+    }));
+
+    if (runCompleted) {
       const finalized = finalizeGhostRun(currentGhost);
       const replaceGhost = shouldReplaceGhost(gameState.ghostRun, finalized);
       const updatedDailyRun = dailySeed
@@ -582,6 +645,7 @@ export function GamePage() {
     }
 
     setHp(nextHp);
+    setRunDamageTaken(nextRunDamageTaken);
     setResult({
       wpm,
       acc,
@@ -614,10 +678,12 @@ export function GamePage() {
     levelText,
     hp,
     maxHp,
+    runDamageTaken,
     regenTurns,
     markGameLevelReached,
     clearCurrentGameRun,
     consumeActiveModifiers,
+    updateMotivationProgress,
     resetEventState,
     resetMapSelection,
     resetRewardState,
@@ -665,6 +731,7 @@ export function GamePage() {
     if (resetGame) {
       setHp(baseHp);
       setMaxHp(baseHp);
+      setRunDamageTaken(0);
       setRegenTurns(0);
       setCompletedLevels(0);
       setActiveModifiers([]);
@@ -789,6 +856,7 @@ export function GamePage() {
     // Reset all game state manually (no startLevel — we show the map first)
     setHp(baseHp);
     setMaxHp(baseHp);
+    setRunDamageTaken(0);
     setRegenTurns(0);
     setCompletedLevels(0);
     setActiveModifiers([]);
@@ -832,6 +900,7 @@ export function GamePage() {
     setLevel(1);
     setHp(baseHp);
     setMaxHp(baseHp);
+    setRunDamageTaken(0);
     setRegenTurns(0);
     setCompletedLevels(0);
     setLevelText('');
@@ -897,12 +966,16 @@ export function GamePage() {
         lines.push(`Регенерация: +${REGEN_HP_PER_BATTLE} HP после боя на ${choice.effect.regenTurns} боёв.`);
       }
       if (choice.effect.lifeDelta) {
-        const nextHp = Math.max(0, Math.min(effectiveMaxHp, hp + choice.effect.lifeDelta));
+        const lifeDelta = choice.effect.lifeDelta;
+        const nextHp = Math.max(0, Math.min(effectiveMaxHp, hp + lifeDelta));
         setHp(nextHp);
-        if (choice.effect.lifeDelta > 0) {
+        if (lifeDelta < 0) {
+          setRunDamageTaken(prev => prev + Math.abs(lifeDelta));
+        }
+        if (lifeDelta > 0) {
           lines.push(`Здоровье восстановлено: ${nextHp} HP.`);
         } else {
-          lines.push(`Потеряно ${Math.abs(choice.effect.lifeDelta)} HP.`);
+          lines.push(`Потеряно ${Math.abs(lifeDelta)} HP.`);
         }
       }
       if (choice.effect.modifier) {
@@ -958,13 +1031,17 @@ export function GamePage() {
     }
 
     if (choice.effect.lifeDelta) {
-      const nextHp = Math.max(0, Math.min(effectiveMaxHp, hp + choice.effect.lifeDelta));
+      const lifeDelta = choice.effect.lifeDelta;
+      const nextHp = Math.max(0, Math.min(effectiveMaxHp, hp + lifeDelta));
       setHp(nextHp);
+      if (lifeDelta < 0) {
+        setRunDamageTaken(prev => prev + Math.abs(lifeDelta));
+      }
       setResult(prev => prev ? { ...prev, livesLeft: nextHp } : prev);
-      if (choice.effect.lifeDelta > 0) {
+      if (lifeDelta > 0) {
         lines.push(`Здоровье восстановлено: ${nextHp} из ${effectiveMaxHp}.`);
       } else {
-        lines.push(`Сделка забрала ${Math.abs(choice.effect.lifeDelta)} HP.`);
+        lines.push(`Сделка забрала ${Math.abs(lifeDelta)} HP.`);
       }
     }
 
@@ -1045,6 +1122,25 @@ export function GamePage() {
   const ghostComparison = useMemo(
     () => result ? getGhostComparison(gameState.ghostRun, result.level, result.wpm) : null,
     [gameState.ghostRun, result],
+  );
+  const historyEntries = progress.history?.[currentLayout] ?? [];
+  const gameResultComparison = useMemo(
+    () => result ? buildGameResultComparison(historyEntries, {
+      wpm: result.wpm,
+      acc: result.acc,
+      gameLevel: result.level,
+      gameStageType: result.isBoss ? 'boss' : 'normal',
+    }) : null,
+    [historyEntries, result],
+  );
+  const gameMasterySummary = useMemo(
+    () => result ? buildLayoutMasteryResultSummary(progress, layouts, currentLayout, {
+      previousHistoryEntriesOverride: historyEntries.slice(0, -1),
+      currentHistoryEntriesOverride: historyEntries,
+      previousUnlockedLettersOverride: layoutProgress.unlocked,
+      currentUnlockedLettersOverride: layoutProgress.unlocked,
+    }) : null,
+    [currentLayout, historyEntries, layoutProgress.unlocked, layouts, progress, result],
   );
   const startOverlayContent = showStartPanel ? (
     <form
@@ -1149,6 +1245,7 @@ export function GamePage() {
     setLevel(savedRun.level);
     setHp(savedRun.lives);
     setMaxHp(savedRun.maxLives ?? baseHp);
+    setRunDamageTaken(savedRun.damageTaken ?? 0);
     setRegenTurns(savedRun.regenTurns ?? 0);
     setCompletedLevels(savedRun.completedLevels);
     setTargetSpeedCpm(savedRun.targetSpeedCpm);
@@ -1171,6 +1268,7 @@ export function GamePage() {
       level,
       lives: hp,
       maxLives: maxHp,
+      damageTaken: runDamageTaken,
       regenTurns,
       completedLevels,
       targetSpeedCpm,
@@ -1194,6 +1292,7 @@ export function GamePage() {
     level,
     levelText,
     hp,
+    runDamageTaken,
     runMap,
     pendingEvent,
     result,
@@ -1367,6 +1466,10 @@ export function GamePage() {
               totalLevels={activeTotalLevels}
               bossLevelInterval={BOSS_LEVEL_INTERVAL}
               ghostComparison={ghostComparison}
+              comparison={gameResultComparison}
+              masterySummary={gameMasterySummary}
+              motivationGoals={gameGoalHighlights}
+              motivationStreaks={gameStreakHighlights}
               resultActionRef={resultActionRef}
               rewardChoiceRefs={rewardChoiceRefs}
               onContinue={continueGame}

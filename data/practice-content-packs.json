@@ -1,0 +1,75 @@
+[
+  {
+    "id": "builtin-programming-en",
+    "name": "Программирование",
+    "description": "Словарь разработки: API, архитектура, сборка, CI и frontend/backend термины.",
+    "kind": "words",
+    "language": "en",
+    "origin": "built-in",
+    "sourceLabel": "Базовый набор",
+    "items": [
+      "function", "variable", "promise", "component", "backend", "frontend",
+      "typescript", "javascript", "resolver", "interface", "pipeline", "deployment",
+      "hook", "context", "request", "response", "schema", "migration",
+      "bundle", "webpack", "linting", "testing", "refactor", "module"
+    ]
+  },
+  {
+    "id": "builtin-office-ru",
+    "name": "Офисный русский",
+    "description": "Тексты для деловой и административной переписки.",
+    "kind": "sentences",
+    "language": "ru",
+    "origin": "built-in",
+    "sourceLabel": "Базовый набор",
+    "items": [
+      "Подготовьте итоговый отчёт по проекту к концу дня.",
+      "Отправьте обновлённую версию документа всем участникам встречи.",
+      "Согласуйте изменения в расписании и подтвердите новые сроки.",
+      "Пожалуйста, проверьте таблицу и уточните недостающие данные.",
+      "Команда завершила задачу и подготовила краткую сводку результатов."
+    ]
+  },
+  {
+    "id": "builtin-literature-ru",
+    "name": "Литературный русский",
+    "description": "Небольшие фразы и словарь с более художественной подачей.",
+    "kind": "mixed",
+    "language": "ru",
+    "origin": "built-in",
+    "sourceLabel": "Базовый набор",
+    "items": [
+      "вечерний", "рассветный", "тихая долина", "звонкая река", "дальний берег",
+      "золотая листва", "лёгкий ветер", "спокойный шаг", "мягкий свет", "ясное небо",
+      "Старая аллея тонула в мягком вечернем свете.",
+      "Тёплый ветер приносил запах трав и далёкой реки."
+    ]
+  },
+  {
+    "id": "builtin-english-bigrams",
+    "name": "English Bigrams",
+    "description": "Частые английские сочетания и слова для раскатки переходов между буквами.",
+    "kind": "words",
+    "language": "en",
+    "origin": "built-in",
+    "sourceLabel": "Базовый набор",
+    "items": [
+      "there", "their", "these", "other", "where", "while", "those", "after",
+      "through", "another", "within", "better", "system", "between", "should",
+      "little", "people", "within", "thought", "stream"
+    ]
+  },
+  {
+    "id": "builtin-numbers-ru",
+    "name": "Числовые ряды",
+    "description": "Слова и короткие фразы на тему чисел, последовательностей и счёта.",
+    "kind": "mixed",
+    "language": "ru",
+    "origin": "built-in",
+    "sourceLabel": "Базовый набор",
+    "items": [
+      "первый", "второй", "третий", "десятый", "сотня", "тысяча", "порядок", "формула",
+      "пять шагов", "ровный счёт", "серия чисел", "точная последовательность"
+    ]
+  }
+]

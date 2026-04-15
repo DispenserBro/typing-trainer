@@ -1,4 +1,4 @@
-import { useApp } from '../contexts/AppContext';
+import { useApp, useAppUi } from '../contexts/AppContext';
 import { SettingsGrid } from '../components/settings/SettingsGrid';
 import { SettingsOverlays } from '../components/settings/SettingsOverlays';
 import { useSettingsPageState } from '../hooks/useSettingsPageState';
@@ -9,13 +9,13 @@ export function SettingsPage() {
     currentLanguage, setCurrentLanguage,
     languages, layoutsForLanguage,
     settings, saveSetting,
-    keyboardPreviewActive, setKeyboardPreviewActive,
     progress, saveProgress, resetGameProgress,
     customThemes, applyTheme,
     customPresets, applyPreset, saveCurrentAsPreset, deletePreset,
     exportConfig, importConfig,
     currentMode, modeProfiles, saveModeProfile, clearModeProfile,
   } = useApp();
+  const { keyboardPreviewActive, setKeyboardPreviewActive } = useAppUi();
 
   const handleResetProgress = () => {
     const empty = { settings: progress.settings, practiceSettings: progress.practiceSettings };

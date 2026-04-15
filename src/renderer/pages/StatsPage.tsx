@@ -15,6 +15,7 @@ import { StatsSummaryCards } from '../components/stats/StatsSummaryCards';
 import { useApp } from '../contexts/AppContext';
 import { formatSpeed, speedLabel } from '../../core/engine';
 import { getRhythmScore } from '../../core/practice/insights';
+import { buildModeFocusSnapshots } from '../../core/motivation/records';
 import {
   FINGER_LABELS,
   MODE_OPTIONS,
@@ -22,9 +23,9 @@ import {
   ROW_LABELS,
   aggregateCharStats,
   findMatchingRhythmSession,
+  formatEntryModeLabel,
   formatAggregateMeta,
   formatBigramMeta,
-  formatModeLabel,
   formatSessionTimestamp,
   formatSessionTooltipTimestamp,
   getBestStableRun,
@@ -330,6 +331,10 @@ export function StatsPage() {
     layoutInsights
     && (weakestChars.length || weakestBigrams.length || weakestFingers.length || rowInsights.length || rhythmInsight),
   );
+  const modeFocusSnapshots = useMemo(
+    () => buildModeFocusSnapshots(filteredHistory),
+    [filteredHistory],
+  );
 
   return (
     <section className="mode-panel active">
@@ -337,9 +342,9 @@ export function StatsPage() {
 
       <StatsSummaryCards
         bestSpeedLabel={bestSpeedEntry ? `${formatSpeed(bestSpeedEntry.wpm, unit)} ${speedLabel(unit)}` : '—'}
-        bestSpeedNote={bestSpeedEntry ? `${formatModeLabel(bestSpeedEntry.mode)} · ${formatSessionTimestamp(bestSpeedEntry.date)}` : summaryScopeLabel}
+        bestSpeedNote={bestSpeedEntry ? `${formatEntryModeLabel(bestSpeedEntry)} · ${formatSessionTimestamp(bestSpeedEntry.date)}` : summaryScopeLabel}
         bestAccuracyLabel={bestAccuracyEntry ? `${Math.round(bestAccuracyEntry.acc)}%` : '—'}
-        bestAccuracyNote={bestAccuracyEntry ? `${formatModeLabel(bestAccuracyEntry.mode)} · ${formatSessionTimestamp(bestAccuracyEntry.date)}` : summaryScopeLabel}
+        bestAccuracyNote={bestAccuracyEntry ? `${formatEntryModeLabel(bestAccuracyEntry)} · ${formatSessionTimestamp(bestAccuracyEntry.date)}` : summaryScopeLabel}
         bestRhythmLabel={bestRhythmSession ? `${Math.round(bestRhythmSession.session.rhythmScore)}%` : '—'}
         bestRhythmNote={bestRhythmSession
           ? `${bestRhythmSession.session.trainingMode === 'rhythm' ? 'Ритм' : 'Обычная'} · ${formatSessionTimestamp(bestRhythmSession.session.date)}`
@@ -368,6 +373,29 @@ export function StatsPage() {
         layoutScope={layoutScope}
         setLayoutScope={setLayoutScope}
       />
+
+      <div className="card stats-section-card mt-16">
+        <div style={{ marginBottom: 14 }}>
+          <h4>Режимный срез</h4>
+          <p className="card-desc">Как распределяется прогресс между практикой, спринтом и challenge-режимами по текущим фильтрам.</p>
+        </div>
+        <div className="stats-summary-grid">
+          {modeFocusSnapshots.map((snapshot) => (
+            <div key={snapshot.id} className="card stats-summary-card">
+              <span className="stats-summary-label">{snapshot.title}</span>
+              <b className="stats-summary-value">
+                {snapshot.bestEntry ? `${formatSpeed(snapshot.bestEntry.wpm, unit)} ${speedLabel(unit)}` : '—'}
+              </b>
+              <span className="stats-summary-note">
+                {snapshot.attempts > 0
+                  ? `${snapshot.attempts} попыток · ${snapshot.lastEntry ? formatSessionTimestamp(snapshot.lastEntry.date) : 'нет даты'}`
+                  : snapshot.description}
+              </span>
+              <span className="stats-summary-note">{snapshot.recommendation}</span>
+            </div>
+          ))}
+        </div>
+      </div>
 
       <div className="card stats-section-card mt-16">
         <button

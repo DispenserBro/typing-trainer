@@ -4,15 +4,16 @@ import {
 } from 'react';
 import { flushSync } from 'react-dom';
 import type {
-  LayoutsData, Layout, Progress, CustomThemes, CustomPresets, UserPreset, Session, CharStat,
+  LayoutsData, Layout, Progress, CustomThemes, CustomPresets, UserPreset, CharStat,
   UserSettings, PracticeSettings, PresetSettings, PracticeState, LayoutProgressState,
   LanguageInfo, GameState, GameItemDefinition,
   GameEquipmentSlot, GameRunState, GameAchievementDefinition,
-  PracticeInsightsState, LayoutPracticeInsights, PracticeRhythmSessionEntry,
-  PracticeTrainingMode, ExportPayload, InstalledAddon, InstalledMod, AddonInstallResult, ModInstallResult,
+  PracticeInsightsState, LayoutPracticeInsights, PracticeRhythmSessionEntry, PracticeContentPack,
+  MotivationProgress,
+  ModePracticeSettings, ModePracticeSettingsId, PracticeContentMode, PracticeTrainingMode, PracticeContentScenarioId, ExportPayload, InstalledAddon, InstalledMod, AddonInstallResult, ModInstallResult,
 } from '../../shared/types';
 import {
-  createSession, formatSpeed, speedLabel,
+  formatSpeed, speedLabel,
   buildNgramModel, type NgramModel,
 } from '../../core/engine';
 import { GAME_ITEM_CATALOG } from '../../core/game/items';
@@ -20,6 +21,7 @@ import { GAME_ACHIEVEMENT_CATALOG } from '../../core/game/gameAchievements';
 import {
   BUILT_IN_THEMES,
   BUILT_IN_PRESETS,
+  defaultModePracticeSettings,
   extractPresetSettings,
   defaultSettings,
   defaultPracticeSettings,
@@ -38,9 +40,17 @@ import {
 import { createPracticeActions } from './appActionsPractice';
 import { createStatsActions } from './appActionsStats';
 import { createGameActions } from './appActionsGame';
-import { mergeAddonWords, mergeAddonLayouts, mergeAddonThemes, mergeAddonItems, mergeAddonAchievements } from '../../core/addons/addonMerger';
+import {
+  mergeAddonWords,
+  mergeAddonLayouts,
+  mergeAddonThemes,
+  mergeAddonItems,
+  mergeAddonAchievements,
+  mergeAddonPracticePacks,
+} from '../../core/addons/addonMerger';
 import { runAllMods } from '../../core/addons/modRunner';
 import type { ModAPIState } from '../../core/addons/modApi';
+import { normalizeMotivationProgress } from '../../core/motivation/progress';
 
 export { BUILT_IN_THEMES } from './appDefaults';
 
@@ -50,8 +60,10 @@ export interface AppContextValue {
   allWords: string[];
   ngramModel: NgramModel | null;
   progress: Progress;
+  motivationProgress: MotivationProgress;
   practiceInsights: PracticeInsightsState;
   practiceRhythmHistory: Record<string, PracticeRhythmSessionEntry[]>;
+  practiceContentPacks: PracticeContentPack[];
   customThemes: CustomThemes;
   gameState: GameState;
   gameItemCatalog: GameItemDefinition[];
@@ -66,19 +78,15 @@ export interface AppContextValue {
   languages: LanguageInfo[];
   layoutsForLanguage: [string, Layout][];
 
-  session: Session;
-  setSession: (s: Session) => void;
-  activeChar: string | undefined;
-  setActiveChar: (ch: string | undefined) => void;
-  keyboardPreviewActive: boolean;
-  setKeyboardPreviewActive: (active: boolean) => void;
-
   switchMode: (mode: string) => void;
   setCurrentLayout: (layout: string) => void;
   setCurrentLanguage: (lang: string) => void;
   saveSetting: <K extends keyof UserSettings>(key: K, val: UserSettings[K]) => void;
   savePracticeSetting: <K extends keyof PracticeSettings>(key: K, val: PracticeSettings[K]) => void;
+  getModePracticeSettings: (mode: ModePracticeSettingsId) => ModePracticeSettings;
+  saveModePracticeSettings: (mode: ModePracticeSettingsId, patch: Partial<ModePracticeSettings>) => ModePracticeSettings;
   saveProgress: (p: Progress) => void;
+  updateMotivationProgress: (updater: (current: MotivationProgress) => MotivationProgress) => MotivationProgress;
   saveCustomThemes: (t: CustomThemes) => void;
   applyTheme: (name: string) => void;
   reloadWords: () => Promise<void>;
@@ -100,7 +108,18 @@ export interface AppContextValue {
     mode: 'test' | 'lesson' | 'practice' | 'game',
     wpm: number,
     acc: number,
-    extras?: { trainingMode?: PracticeTrainingMode; charStats?: Record<string, CharStat> },
+    extras?: {
+      contentScenarioId?: PracticeContentScenarioId;
+      trainingMode?: PracticeTrainingMode;
+      contentMode?: PracticeContentMode;
+      durationSeconds?: number;
+      gameLevel?: number;
+      gameStageType?: 'normal' | 'boss';
+      passed?: boolean;
+      victory?: boolean;
+      timedOut?: boolean;
+      charStats?: Record<string, CharStat>;
+    },
   ) => void;
   saveGameState: (game: GameState) => void;
   grantGameItem: (itemId: string) => string | null;
@@ -160,8 +179,17 @@ export interface AppContextValue {
   modModes: import('../../core/addons/modApi').ModModeDefinition[];
 }
 
+export interface AppUiContextValue {
+  activeChar: string | undefined;
+  setActiveChar: (ch: string | undefined) => void;
+  keyboardPreviewActive: boolean;
+  setKeyboardPreviewActive: (active: boolean) => void;
+}
+
 const AppContext = createContext<AppContextValue>(null!);
+const AppUiContext = createContext<AppUiContextValue>(null!);
 export const useApp = () => useContext(AppContext);
+export const useAppUi = () => useContext(AppUiContext);
 
 function isStringListEqual(left: string[], right: string[]) {
   if (left.length !== right.length) return false;
@@ -251,13 +279,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const [progress, setProgress] = useState<Progress>({});
   const [customThemes, setCustomThemes] = useState<CustomThemes>({});
+  const [practiceContentPacks, setPracticeContentPacks] = useState<PracticeContentPack[]>([]);
   const [settingsState, setSettingsState] = useState<UserSettings>(() => resolveSettings({}));
   const [practiceSettingsState, setPracticeSettingsState] = useState<PracticeSettings>(() => defaultPracticeSettings());
   const [gameState, setGameState] = useState<GameState>(() => resolveGameState({}));
   const [currentLayout, setCurrentLayoutState] = useState('');
   const [currentLanguage, setCurrentLanguageState] = useState('');
   const [currentMode, setCurrentMode] = useState('home');
-  const [session, setSession] = useState<Session>(createSession('', '', -1));
   const [activeChar, setActiveChar] = useState<string | undefined>(undefined);
   const [keyboardPreviewActive, setKeyboardPreviewActive] = useState(false);
   const [installedAddons, setInstalledAddons] = useState<InstalledAddon[]>([]);
@@ -291,8 +319,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const settings = settingsState;
   const practiceSettings = practiceSettingsState;
-  const practiceInsights = resolvePracticeInsights(progress);
-  const practiceRhythmHistory = resolvePracticeRhythmHistory(progress);
+  const practiceInsights = useMemo(
+    () => resolvePracticeInsights(progress),
+    [progress.practiceInsights],
+  );
+  const practiceRhythmHistory = useMemo(
+    () => resolvePracticeRhythmHistory(progress),
+    [progress.practiceRhythmHistory],
+  );
+  const motivationProgress = useMemo(
+    () => normalizeMotivationProgress(progress.motivation),
+    [progress.motivation],
+  );
   const layoutsForLanguage = useMemo<[string, Layout][]>(() => {
     if (!currentLanguage) return [];
     return Object.entries(layouts.layouts).filter(([, layout]) => layout.lang === currentLanguage);
@@ -466,10 +504,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     (async () => {
-      const [loadedLayouts, loadedProgress, loadedThemes, loadedAddons, loadedMods] = await Promise.all([
+      const [loadedLayouts, loadedProgress, loadedThemes, loadedPracticeContentPacks, loadedAddons, loadedMods] = await Promise.all([
         window.api.getLayouts(),
         window.api.getProgress(),
         window.api.getCustomThemes(),
+        window.api.getPracticeContentPacks(),
         window.api.scanAddons(),
         window.api.scanMods(),
       ]);
@@ -481,6 +520,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       /* Merge addon resources into base data */
       const mergedLayouts = mergeAddonLayouts(loadedLayouts, loadedAddons);
       const mergedThemes = mergeAddonThemes(loadedThemes, loadedAddons);
+      const mergedPracticeContentPacks = mergeAddonPracticePacks(loadedPracticeContentPacks, loadedAddons);
 
       const normalizedProgress = (() => {
         const base = {
@@ -498,6 +538,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const normalizedPracticeSettings = defaultPracticeSettings(normalizedProgress.practiceSettings);
 
       setLayouts(mergedLayouts);
+      setPracticeContentPacks(mergedPracticeContentPacks);
       setProgress(normalizedProgress);
       setSettingsState(normalizedSettings);
       setPracticeSettingsState(normalizedPracticeSettings);
@@ -552,10 +593,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const switchMode = useCallback((mode: string) => {
     setCurrentMode(mode);
     if (mode !== 'settings') setKeyboardPreviewActive(false);
-    setSession(prev => {
-      if (prev.active && prev.timer) clearInterval(prev.timer);
-      return { ...prev, active: false, timer: null };
-    });
     /* Применить профиль режима, если есть */
     const profile = progressRef.current.modeProfiles?.[mode];
     if (profile && Object.keys(profile).length > 0) {
@@ -627,12 +664,55 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const getModePracticeSettings = useCallback((mode: ModePracticeSettingsId) => {
+    return defaultModePracticeSettings(progressRef.current.modePracticeSettings?.[mode]);
+  }, []);
+
+  const saveModePracticeSettings = useCallback((mode: ModePracticeSettingsId, patch: Partial<ModePracticeSettings>) => {
+    let nextModeSettings = defaultModePracticeSettings({
+      ...progressRef.current.modePracticeSettings?.[mode],
+      ...patch,
+    });
+
+    setProgress(prev => {
+      nextModeSettings = defaultModePracticeSettings({
+        ...prev.modePracticeSettings?.[mode],
+        ...patch,
+      });
+      const next = {
+        ...prev,
+        modePracticeSettings: {
+          ...(prev.modePracticeSettings ?? {}),
+          [mode]: nextModeSettings,
+        },
+      };
+      progressRef.current = next;
+      window.api.saveProgress(next);
+      return next;
+    });
+
+    return nextModeSettings;
+  }, []);
+
   const saveProgressCb = useCallback((nextProgress: Progress) => {
     setSettingsState(resolveSettings(nextProgress));
     setPracticeSettingsState(defaultPracticeSettings(nextProgress.practiceSettings));
     setGameState(prev => stabilizeGameState(prev, resolveGameState(nextProgress)));
     setProgress(nextProgress);
     window.api.saveProgress(nextProgress);
+  }, []);
+
+  const updateMotivationProgress = useCallback((updater: (current: MotivationProgress) => MotivationProgress) => {
+    let nextMotivation = normalizeMotivationProgress(progressRef.current.motivation);
+    setProgress(prev => {
+      const current = normalizeMotivationProgress(prev.motivation);
+      nextMotivation = normalizeMotivationProgress(updater(current));
+      const next = { ...prev, motivation: nextMotivation };
+      progressRef.current = next;
+      window.api.saveProgress(next);
+      return next;
+    });
+    return nextMotivation;
   }, []);
 
   const saveCustomThemesCb = useCallback((themes: CustomThemes) => {
@@ -849,7 +929,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const getLayoutProgressCb = useCallback(() => getLayoutProgress(progressRef.current, currentLayout), [currentLayout]);
   const getPracticeInsightsCb = useCallback(() => getLayoutPracticeInsights(progressRef.current, currentLayout), [currentLayout]);
 
-  const modeProfiles = progress.modeProfiles ?? {};
+  const modeProfiles = useMemo(
+    () => progress.modeProfiles ?? {},
+    [progress.modeProfiles],
+  );
 
   const saveModeProfile = useCallback((mode: string) => {
     const preset = extractPresetSettings(settingsRef.current);
@@ -884,16 +967,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
       type: 'full',
       settings: p.settings,
       practiceSettings: p.practiceSettings,
+      modePracticeSettings: p.modePracticeSettings,
       customPresets: p.customPresets,
+      customPracticePacks: p.customPracticePacks,
     };
     return window.api.exportFile('typing-trainer-config.json', JSON.stringify(payload, null, 2));
   }, []);
 
   const importConfig = useCallback(async (): Promise<string | null> => {
-    const raw = await window.api.importFile();
-    if (!raw) return null;
+    const imported = await window.api.importFile();
+    if (!imported) return null;
     try {
-      const data = JSON.parse(raw) as ExportPayload;
+      const data = JSON.parse(imported.content) as ExportPayload;
       if (!data || data.version !== 1) return 'Неподдерживаемый формат файла';
 
       if (data.type === 'theme' && data.theme) {
@@ -919,7 +1004,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
             ...prev,
             settings: merged,
             ...(data.practiceSettings ? { practiceSettings: defaultPracticeSettings(data.practiceSettings) } : {}),
+            ...(data.modePracticeSettings ? { modePracticeSettings: data.modePracticeSettings } : {}),
             ...(data.customPresets ? { customPresets: { ...(prev.customPresets ?? {}), ...data.customPresets } } : {}),
+            ...(data.customPracticePacks ? { customPracticePacks: { ...(prev.customPracticePacks ?? {}), ...data.customPracticePacks } } : {}),
           };
           window.api.saveProgress(next);
           return next;
@@ -950,6 +1037,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const mergedThemes = mergeAddonThemes(baseThemes, addons);
     setCustomThemes(mergedThemes);
     customThemesRef.current = mergedThemes;
+
+    const basePracticeContentPacks = await window.api.getPracticeContentPacks();
+    setPracticeContentPacks(mergeAddonPracticePacks(basePracticeContentPacks, addons));
 
     // Re-merge words
     const baseWords = await window.api.getWords(currentLanguage);
@@ -1002,17 +1092,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Мемоизируем unlockedAchievementIds чтобы оно пересчитывалось при изменении progress
   const unlockedAchievementIds = useMemo(() => {
     return progress.achievements ?? [];
-  }, [progress]);
+  }, [progress.achievements]);
 
-  const value: AppContextValue = {
+  const value = useMemo<AppContextValue>(() => ({
     ready,
     layouts,
     allWords,
     ngramModel,
-      progress,
-      practiceInsights,
-      practiceRhythmHistory,
-      customThemes,
+    progress,
+    motivationProgress,
+    practiceInsights,
+    practiceRhythmHistory,
+    practiceContentPacks,
+    customThemes,
     gameState,
     gameItemCatalog: mergedItemCatalog,
     gameAchievementCatalog: mergedAchievementCatalog,
@@ -1023,18 +1115,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     currentMode,
     languages,
     layoutsForLanguage,
-    session,
-    setSession,
-    activeChar,
-    setActiveChar,
-    keyboardPreviewActive,
-    setKeyboardPreviewActive,
     switchMode,
     setCurrentLayout,
     setCurrentLanguage,
     saveSetting,
     savePracticeSetting,
+    getModePracticeSettings,
+    saveModePracticeSettings,
     saveProgress: saveProgressCb,
+    updateMotivationProgress,
     saveCustomThemes: saveCustomThemesCb,
     applyTheme,
     reloadWords,
@@ -1045,11 +1134,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     fmtSpeed,
     spdLabel,
     getLayoutProgress: getLayoutProgressCb,
-      getPracticeState: getPracticeStateCb,
-      getPracticeInsights: getPracticeInsightsCb,
-      savePracticeInsights,
-      savePracticeRhythmSession,
-      saveCharStats,
+    getPracticeState: getPracticeStateCb,
+    getPracticeInsights: getPracticeInsightsCb,
+    savePracticeInsights,
+    savePracticeRhythmSession,
+    saveCharStats,
     saveHistory,
     saveGameState,
     grantGameItem,
@@ -1089,7 +1178,102 @@ export function AppProvider({ children }: { children: ReactNode }) {
     modCssSnippets,
     modPanels,
     modModes,
-  };
+  }), [
+    ready,
+    layouts,
+    allWords,
+    ngramModel,
+    progress,
+    motivationProgress,
+    practiceInsights,
+    practiceRhythmHistory,
+    practiceContentPacks,
+    customThemes,
+    gameState,
+    mergedItemCatalog,
+    mergedAchievementCatalog,
+    settings,
+    practiceSettings,
+    currentLayout,
+    currentLanguage,
+    currentMode,
+    languages,
+    layoutsForLanguage,
+    switchMode,
+    setCurrentLayout,
+    setCurrentLanguage,
+    saveSetting,
+    savePracticeSetting,
+    getModePracticeSettings,
+    saveModePracticeSettings,
+    saveProgressCb,
+    updateMotivationProgress,
+    saveCustomThemesCb,
+    applyTheme,
+    reloadWords,
+    customPresets,
+    applyPreset,
+    saveCurrentAsPreset,
+    deletePreset,
+    fmtSpeed,
+    spdLabel,
+    getLayoutProgressCb,
+    getPracticeStateCb,
+    getPracticeInsightsCb,
+    savePracticeInsights,
+    savePracticeRhythmSession,
+    saveCharStats,
+    saveHistory,
+    saveGameState,
+    grantGameItem,
+    equipGameItem,
+    unequipGameItem,
+    repairGameItems,
+    wearEquippedGameItems,
+    resetGameInventory,
+    resetGameProgress,
+    markGameLevelReached,
+    peekNextGameLetter,
+    unlockNextGameLetter,
+    unlockGameAchievements,
+    unlockedAchievementIds,
+    unlockAchievements,
+    saveCurrentGameRun,
+    clearCurrentGameRun,
+    exportTheme,
+    exportConfig,
+    importConfig,
+    modeProfiles,
+    saveModeProfile,
+    clearModeProfile,
+    installedAddons,
+    installAddonCb,
+    removeAddonCb,
+    toggleAddonCb,
+    refreshAddons,
+    installedMods,
+    installModCb,
+    removeModCb,
+    toggleModCb,
+    refreshMods,
+    disabledSections,
+    modRuleOverrides,
+    modSettingOverrides,
+    modCssSnippets,
+    modPanels,
+    modModes,
+  ]);
 
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+  const uiValue = useMemo<AppUiContextValue>(() => ({
+    activeChar,
+    setActiveChar,
+    keyboardPreviewActive,
+    setKeyboardPreviewActive,
+  }), [activeChar, keyboardPreviewActive]);
+
+  return (
+    <AppContext.Provider value={value}>
+      <AppUiContext.Provider value={uiValue}>{children}</AppUiContext.Provider>
+    </AppContext.Provider>
+  );
 }

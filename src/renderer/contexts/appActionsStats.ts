@@ -1,5 +1,11 @@
 import type { Dispatch, SetStateAction } from 'react';
-import type { CharStat, PracticeTrainingMode, Progress } from '../../shared/types';
+import type {
+  CharStat,
+  PracticeContentMode,
+  PracticeContentScenarioId,
+  PracticeTrainingMode,
+  Progress,
+} from '../../shared/types';
 
 type PersistProgress = (next: Progress) => void;
 
@@ -37,7 +43,18 @@ export function createStatsActions({
     mode: 'test' | 'lesson' | 'practice' | 'game',
     wpm: number,
     acc: number,
-    extras?: { trainingMode?: PracticeTrainingMode; charStats?: Record<string, CharStat> },
+    extras?: {
+      contentScenarioId?: PracticeContentScenarioId;
+      trainingMode?: PracticeTrainingMode;
+      contentMode?: PracticeContentMode;
+      durationSeconds?: number;
+      gameLevel?: number;
+      gameStageType?: 'normal' | 'boss';
+      passed?: boolean;
+      victory?: boolean;
+      timedOut?: boolean;
+      charStats?: Record<string, CharStat>;
+    },
   ) => {
     setProgress(prev => {
       const next = { ...prev };
@@ -49,7 +66,17 @@ export function createStatsActions({
         mode,
         wpm: Math.round(wpm),
         acc: Math.round(acc * 10) / 10,
+        contentScenarioId: extras?.contentScenarioId,
         trainingMode: extras?.trainingMode,
+        contentMode: extras?.contentMode,
+        durationSeconds: extras?.durationSeconds != null
+          ? Math.max(0, Math.round(extras.durationSeconds * 10) / 10)
+          : undefined,
+        gameLevel: extras?.gameLevel != null ? Math.max(1, Math.floor(extras.gameLevel)) : undefined,
+        gameStageType: extras?.gameStageType,
+        passed: extras?.passed,
+        victory: extras?.victory,
+        timedOut: extras?.timedOut,
         charStats: extras?.charStats
           ? Object.fromEntries(
             Object.entries(extras.charStats).map(([char, stat]) => [

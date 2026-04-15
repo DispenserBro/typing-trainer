@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { Medal, Zap } from 'lucide-react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { Medal, Shield } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { useTypingSession } from '../hooks/useTypingSession';
 import { TextDisplay } from '../components/TextDisplay';
@@ -12,6 +12,7 @@ import type {
   PracticeContentMode,
   PracticeContentPack,
   PracticeContentPackQuickAction,
+  PracticeContentScenarioId,
 } from '../../shared/types';
 import { checkAchievements, type AchievementEvent } from '../../core/achievements/achievementEngine';
 import {
@@ -30,7 +31,7 @@ import {
 } from '../../core/motivation/progress';
 import {
   buildModeResultFollowupRecommendation,
-  buildSprintResultComparison,
+  buildPracticeResultComparison,
 } from '../../core/motivation/records';
 
 const CONTENT_MODE_LABELS: Record<PracticeContentMode, string> = {
@@ -41,47 +42,114 @@ const CONTENT_MODE_LABELS: Record<PracticeContentMode, string> = {
   custom: 'Свои наборы',
 };
 
-const SPRINT_DURATION_OPTIONS = [15, 30, 45, 60];
+type ChallengeModeConfig = {
+  modeId: 'survival' | 'flawless';
+  title: string;
+  description: string;
+  scenarioId: PracticeContentScenarioId;
+  allowedErrors: number;
+  wordMultiplier: number;
+  startLabel: string;
+  successTitle: string;
+  failureTitle: string;
+};
 
-function buildSprintWordCount(duration: number, baseWordCount: number) {
-  return Math.max(baseWordCount * 4, Math.ceil((duration / 15) * baseWordCount * 4));
+const CHALLENGE_MODE_CONFIGS: Record<ChallengeModeConfig['modeId'], ChallengeModeConfig> = {
+  survival: {
+    modeId: 'survival',
+    title: 'Выживание',
+    description: 'Длинная серия с ограничением по ошибкам. Держитесь до конца текста и не растеряйте все жизни.',
+    scenarioId: 'survival',
+    allowedErrors: 2,
+    wordMultiplier: 2.1,
+    startLabel: 'Начать выживание',
+    successTitle: 'Выдержано',
+    failureTitle: 'Жизни закончились',
+  },
+  flawless: {
+    modeId: 'flawless',
+    title: 'Безошибочный режим',
+    description: 'Один промах завершает попытку. Нужен чистый проход по всему тексту без права на сбой.',
+    scenarioId: 'flawless',
+    allowedErrors: 0,
+    wordMultiplier: 1.5,
+    startLabel: 'Начать чистый проход',
+    successTitle: 'Чистый проход',
+    failureTitle: 'Ошибка завершила попытку',
+  },
+};
+
+function buildChallengeWordCount(baseWordCount: number, multiplier: number) {
+  return Math.max(baseWordCount + 4, Math.ceil(baseWordCount * multiplier));
 }
 
-function buildSprintResultCallout(
-  result: { wpm: number; acc: number; errors: number },
-  comparison: ReturnType<typeof buildSprintResultComparison> | null,
+function buildChallengeResultCallout(
+  config: ChallengeModeConfig,
+  result: { passed: boolean; acc: number; errors: number; livesLeft: number; progressPercent: number },
+  comparison: ReturnType<typeof buildPracticeResultComparison> | null,
+  totalLives: number,
 ) {
-  if (comparison?.recentBestDelta?.tone === 'up' && comparison.recentBestDelta.speedDelta > 0 && comparison.recentBestDelta.accuracyDelta >= 0) {
+  if (result.passed && result.errors === 0) {
     return {
-      title: 'Спринт стал сильнее',
-      detail: 'Новый результат выше лучшей недавней попытки без просадки по точности. Режим начинает работать как реальный контрольный забег на темп.',
+      title: config.modeId === 'flawless' ? 'Идеально чистый проход' : 'Серия выдержана без потерь',
+      detail: config.modeId === 'flawless'
+        ? 'Режим прошёлся без единого сбоя. Это уже не просто успешная попытка, а хороший контроль стабильности.'
+        : 'Выживание пройдено без расхода жизней. Значит, темп и дисциплина держались до самого конца текста.',
     };
   }
-  if (result.errors === 0 && result.acc >= 98) {
+  if (result.passed && result.livesLeft === 1) {
     return {
-      title: 'Чистый спринт',
-      detail: 'Темп набран без шума и лишних промахов. Такой результат хорошо использовать как эталон короткой разогревающей сессии.',
+      title: 'Финиш на грани',
+      detail: 'Попытка успешная, но запас прочности почти закончился. Следующий шаг — сделать такой же проход спокойнее и чище.',
     };
   }
-  if (result.acc < 92 || result.errors >= 6) {
+  if (!result.passed && config.modeId === 'flawless') {
+    if (result.progressPercent >= 75) {
+      return {
+        title: 'Срыв в финальной части',
+        detail: 'Чистый проход почти сложился, но поздняя ошибка оборвала попытку. Это хороший знак: база уже близка к рабочему flawless-результату.',
+      };
+    }
+    if (result.progressPercent <= 30) {
+      return {
+        title: 'Срыв на старте',
+        detail: 'Ошибки приходят слишком рано, поэтому режим ещё не успевает раскрыться. Лучше слегка снизить темп и пройти старт ровнее.',
+      };
+    }
     return {
-      title: 'Темп съели ошибки',
-      detail: 'Спринт ещё не удерживает качество под таймером. Полезнее сохранить ритм чуть спокойнее, чем разгоняться ценой серии промахов.',
+      title: 'Один промах ломает серию',
+      detail: 'Режим показывает, что чистота пока нестабильна в середине текста. Полезно добрать ещё несколько аккуратных проходов без гонки за скоростью.',
     };
   }
-  if (comparison?.previousDelta?.tone === 'down') {
+  if (!result.passed && config.modeId === 'survival') {
+    if (result.progressPercent >= 70) {
+      return {
+        title: 'Не хватило концовки',
+        detail: 'Основную дистанцию вы уже держите, но финальная часть текста съедает остаток жизней. Стоит поработать над устойчивостью на длинной серии.',
+      };
+    }
+    if (result.acc < 93 || result.errors >= totalLives) {
+      return {
+        title: 'Выживание упёрлось в стабильность',
+        detail: 'Проблема не в одном провале, а в накоплении ошибок. Здесь важнее ровный проход, чем резкий пик скорости на начале текста.',
+      };
+    }
+  }
+  if (comparison?.recentBestDelta?.tone === 'up' && comparison.recentBestDelta.speedDelta > 0) {
     return {
-      title: 'Попытка ниже прошлой',
-      detail: 'Просадка небольшая, но заметная. Обычно это знак, что старт был резким или середина спринта рассыпалась по точности.',
+      title: 'Режим прогрессирует',
+      detail: 'Даже если проход не идеален, результат уже лучше недавнего ориентира. Значит, текущая стратегия тренировки движется в нужную сторону.',
     };
   }
   return {
-    title: 'Рабочий темповый проход',
-    detail: 'Спринт уже даёт полезный срез по скорости и плотности набора. Ещё несколько повторов помогут сделать пик результата стабильнее.',
+    title: 'Режим даёт честный срез',
+    detail: config.modeId === 'flawless'
+      ? 'Этот результат хорошо показывает текущий запас по чистоте набора. Повтор через несколько спокойных практик даст более ровный сигнал.'
+      : 'Попытка уже полезна как проверка длинной дистанции. Ещё несколько проходов покажут, где именно стабильно теряются жизни.',
   };
 }
 
-export function SprintPage() {
+function ChallengeModePage({ config }: { config: ChallengeModeConfig }) {
   const {
     layouts,
     currentLayout,
@@ -98,6 +166,7 @@ export function SprintPage() {
     savePracticeSetting,
     getModePracticeSettings,
     getLayoutProgress,
+    getPracticeState,
     getPracticeInsights,
     saveModePracticeSettings,
     practiceContentPacks,
@@ -108,22 +177,25 @@ export function SprintPage() {
     updateMotivationProgress,
   } = useApp();
   const useYo = settings.useYo;
-  const sprintScenario = getPracticeContentScenario('sprint');
-  const sprintModeSettings = getModePracticeSettings('test');
+  const scenario = getPracticeContentScenario(config.scenarioId);
+  const challengeModeSettings = getModePracticeSettings(config.modeId);
 
   const [showAchievements, setShowAchievements] = useState(false);
   const [achievementToasts, setAchievementToasts] = useState<GameAchievementDefinition[]>([]);
   const [showOverlay, setShowOverlay] = useState(true);
-  const [timerValue, setTimerValue] = useState(sprintModeSettings.sprintDurationSeconds ?? 30);
-  const [sprintText, setSprintText] = useState('');
+  const [challengeText, setChallengeText] = useState('');
   const [result, setResult] = useState<{
+    passed: boolean;
     wpm: number;
     acc: number;
     elapsed: number;
     chars: number;
     errors: number;
+    livesLeft: number;
+    progressPercent: number;
   } | null>(null);
   const previewKeyRef = useRef('');
+  const totalLives = config.allowedErrors + 1;
 
   const handleAchievementEvent = useCallback((event: AchievementEvent) => {
     const newlyUnlockedIds = checkAchievements(
@@ -143,14 +215,14 @@ export function SprintPage() {
     setAchievementToasts(prev => prev.filter((_, idx) => idx !== achievementIndex));
   }, []);
 
-  const sprintAchievementCatalog = useMemo(
-    () => gameAchievementCatalog.filter(a => (a.category ?? 'game') === 'test'),
+  const practiceAchievementCatalog = useMemo(
+    () => gameAchievementCatalog.filter(a => (a.category ?? 'game') === 'practice'),
     [gameAchievementCatalog],
   );
 
-  const sprintUnlockedCount = useMemo(
-    () => sprintAchievementCatalog.filter(a => unlockedAchievementIds.includes(a.id)).length,
-    [sprintAchievementCatalog, unlockedAchievementIds],
+  const practiceUnlockedCount = useMemo(
+    () => practiceAchievementCatalog.filter(a => unlockedAchievementIds.includes(a.id)).length,
+    [practiceAchievementCatalog, unlockedAchievementIds],
   );
 
   const layout = layouts.layouts[currentLayout];
@@ -171,40 +243,40 @@ export function SprintPage() {
     const builtInAndAddon = practiceContentPacks.filter(pack => pack.language === 'any' || pack.language === currentLanguage);
     return [...builtInAndAddon, ...customPracticePacks];
   }, [practiceContentPacks, customPracticePacks, currentLanguage]);
-  const contentMode = sprintModeSettings.contentMode ?? practiceSettings.contentMode;
-  const selectedContentPackId = sprintModeSettings.selectedContentPackId || practiceSettings.selectedContentPackId;
+  const contentMode = challengeModeSettings.contentMode ?? practiceSettings.contentMode;
+  const selectedContentPackId = challengeModeSettings.selectedContentPackId || practiceSettings.selectedContentPackId;
   const selectedContentPack = useMemo<PracticeContentPack | null>(() => {
     const selected = availableContentPacks.find(pack => pack.id === selectedContentPackId);
     return selected ?? availableContentPacks[0] ?? null;
   }, [availableContentPacks, selectedContentPackId]);
   const selectedContentPackSummary = useMemo(
     () => selectedContentPack
-      ? buildPracticeContentPackQualitySummary(selectedContentPack, 'sprint')
+      ? buildPracticeContentPackQualitySummary(selectedContentPack, config.scenarioId)
       : null,
-    [selectedContentPack],
+    [config.scenarioId, selectedContentPack],
   );
   const effectiveContentMode = contentMode === 'custom' && !selectedContentPack ? 'adaptive-words' : contentMode;
   const selectedContentPackPreflight = useMemo(
     () => effectiveContentMode === 'custom' && selectedContentPack
-      ? buildPracticeContentPackPreflightSummary(selectedContentPack, 'sprint')
+      ? buildPracticeContentPackPreflightSummary(selectedContentPack, config.scenarioId)
       : null,
-    [effectiveContentMode, selectedContentPack],
+    [config.scenarioId, effectiveContentMode, selectedContentPack],
   );
-  const duration = sprintModeSettings.sprintDurationSeconds ?? 30;
-  const sprintWordCount = useMemo(
-    () => buildSprintWordCount(duration, sprintScenario.targetWordCount),
-    [duration, sprintScenario.targetWordCount],
+  const challengeWordCount = useMemo(
+    () => buildChallengeWordCount(scenario.targetWordCount, config.wordMultiplier),
+    [config.wordMultiplier, scenario.targetWordCount],
   );
   const practiceInsights = getPracticeInsights();
+  const practiceState = getPracticeState();
 
-  const buildSprintText = useCallback(() => buildPracticeContentText({
+  const buildChallengeText = useCallback(() => buildPracticeContentText({
     allWords: words,
     unlockedChars,
     weakChar,
     contentMode: effectiveContentMode,
     contentPack: selectedContentPack,
-    scenarioId: 'sprint',
-    wordCountOverride: sprintWordCount,
+    scenarioId: config.scenarioId,
+    wordCountOverride: challengeWordCount,
     ngramModel: ngramModel ?? undefined,
     insights: practiceInsights,
     buildOptions: {
@@ -214,25 +286,42 @@ export function SprintPage() {
       smartAdaptationFocus: practiceSettings.smartAdaptationFocus ?? 'balanced',
     },
   }), [
-    words,
-    unlockedChars,
-    weakChar,
-    effectiveContentMode,
-    selectedContentPack,
-    sprintWordCount,
+    challengeWordCount,
+    config.scenarioId,
     ngramModel,
     practiceInsights,
+    effectiveContentMode,
     practiceSettings.smartAdaptationEnabled,
-    practiceSettings.smartAdaptationStrength,
     practiceSettings.smartAdaptationFocus,
+    practiceSettings.smartAdaptationStrength,
+    selectedContentPack,
+    unlockedChars,
+    weakChar,
+    words,
   ]);
 
   const onFinish = useCallback((wpm: number, acc: number, elapsed: number, ses: any) => {
-    saveHistory('test', wpm, acc, {
-      contentScenarioId: 'sprint',
+    const passed = ses.pos >= ses.text.length;
+    const livesLeft = Math.max(0, totalLives - (ses?.errors ?? 0));
+    const progressPercent = ses?.text?.length
+      ? Math.round((ses.pos / ses.text.length) * 100)
+      : 0;
+    const today = new Date().toISOString().slice(0, 10);
+    if (practiceState.lastDate !== today) {
+      practiceState.sessionsToday = 0;
+      practiceState.minutesToday = 0;
+      practiceState.lastDate = today;
+    }
+    practiceState.sessionsToday += 1;
+    practiceState.sessionsTotal = (practiceState.sessionsTotal || 0) + 1;
+    practiceState.minutesToday = (practiceState.minutesToday || 0) + elapsed / 60;
+
+    saveHistory('practice', wpm, acc, {
+      contentScenarioId: config.scenarioId,
       trainingMode: 'normal',
       contentMode: effectiveContentMode,
       durationSeconds: elapsed,
+      passed,
       charStats: ses?.charStats,
     });
     updateMotivationProgress((current) => updateMotivationAfterPractice(current, {
@@ -240,56 +329,63 @@ export function SprintPage() {
       cpm: wpm * 5,
       acc,
       trainingMode: 'normal',
-      successfulSession: wpm * 5 >= Math.max(1, practiceSettings.goalSpeedCpm || 150) && acc >= 95,
-      flawlessSession: (ses?.errors ?? 0) === 0,
+      successfulSession: passed && wpm * 5 >= Math.max(1, practiceSettings.goalSpeedCpm || 150) && acc >= 95,
+      flawlessSession: passed && (ses?.errors ?? 0) === 0,
     }));
     setResult({
+      passed,
       wpm,
       acc,
       elapsed,
       chars: ses?.totalChars ?? 0,
       errors: ses?.errors ?? 0,
+      livesLeft,
+      progressPercent,
     });
 
-    handleAchievementEvent({ type: 'test.completed', wpm, accuracy: acc });
+    handleAchievementEvent({ type: 'practice.sessionCompleted', totalSessions: practiceState.sessionsTotal });
   }, [
+    config.scenarioId,
     effectiveContentMode,
     handleAchievementEvent,
     practiceSettings.goalSpeedCpm,
+    practiceState,
     saveHistory,
+    totalLives,
     updateMotivationProgress,
   ]);
 
-  const { session, start, stop, finish, handleKey, wpm, acc, waitingForSpace } = useTypingSession({
-    mode: 'test',
+  const { session, start, stop, handleKey, wpm, acc, waitingForSpace } = useTypingSession({
+    mode: 'practice',
     noStepBack: practiceSettings.noStepBack,
+    maxErrors: config.allowedErrors,
     onFinish,
   });
 
-  const startSprint = useCallback(() => {
+  const startChallenge = useCallback(() => {
     if (session.active) return;
-    const nextText = buildSprintText();
+    const nextText = buildChallengeText();
     previewKeyRef.current = '';
-    setSprintText(nextText);
+    setChallengeText(nextText);
     setShowOverlay(false);
     setResult(null);
-    setTimerValue(duration);
     start(nextText);
-  }, [buildSprintText, duration, session.active, start]);
+  }, [buildChallengeText, session.active, start]);
 
-  const retrySprint = useCallback(() => {
+  const retryChallenge = useCallback(() => {
     stop();
-    startSprint();
-  }, [startSprint, stop]);
+    startChallenge();
+  }, [startChallenge, stop]);
 
   useEffect(() => {
     if (!layout || !words.length) return;
     const previewKey = [
+      config.scenarioId,
       currentLayout,
       useYo ? 'yo' : 'no-yo',
       effectiveContentMode,
       selectedContentPack?.id ?? 'no-pack',
-      sprintWordCount,
+      challengeWordCount,
       practiceUnlockOrder.join(''),
       layoutProgress.unlocked,
       practiceSettings.smartAdaptationEnabled ? 'smart-on' : 'smart-off',
@@ -298,14 +394,14 @@ export function SprintPage() {
     ].join('|');
     if (previewKeyRef.current === previewKey) return;
     previewKeyRef.current = previewKey;
-    setSprintText(buildSprintText());
+    setChallengeText(buildChallengeText());
     setShowOverlay(true);
     setResult(null);
-    setTimerValue(duration);
   }, [
-    buildSprintText,
+    buildChallengeText,
+    challengeWordCount,
+    config.scenarioId,
     currentLayout,
-    duration,
     effectiveContentMode,
     layout,
     layoutProgress.unlocked,
@@ -314,28 +410,9 @@ export function SprintPage() {
     practiceSettings.smartAdaptationStrength,
     practiceUnlockOrder,
     selectedContentPack,
-    sprintWordCount,
     useYo,
     words.length,
   ]);
-
-  useEffect(() => {
-    if (!session.active) {
-      setTimerValue(duration);
-      return;
-    }
-
-    const tick = () => {
-      const elapsedSeconds = (performance.now() - session.startTime) / 1000;
-      const remaining = Math.max(0, duration - elapsedSeconds);
-      setTimerValue(remaining);
-      if (remaining <= 0.05) finish();
-    };
-
-    tick();
-    const interval = setInterval(tick, 100);
-    return () => clearInterval(interval);
-  }, [duration, finish, session.active, session.startTime]);
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
@@ -343,12 +420,12 @@ export function SprintPage() {
       const isBackspace = event.key === 'Backspace';
 
       if (!session.active && result && isPrintable) {
-        retrySprint();
+        retryChallenge();
         return;
       }
 
-      if (!session.active && showOverlay && sprintText && isPrintable) {
-        startSprint();
+      if (!session.active && showOverlay && challengeText && isPrintable) {
+        startChallenge();
         return;
       }
 
@@ -358,7 +435,14 @@ export function SprintPage() {
 
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [handleKey, result, retrySprint, session.active, showOverlay, sprintText, startSprint]);
+  }, [challengeText, handleKey, result, retryChallenge, session.active, showOverlay, startChallenge]);
+
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    if (!session.active) return;
+    const interval = setInterval(() => setTick(current => current + 1), 200);
+    return () => clearInterval(interval);
+  }, [session.active]);
 
   useEffect(() => {
     if (!achievementToasts.length) return;
@@ -369,17 +453,18 @@ export function SprintPage() {
   }, [achievementToasts]);
 
   const historyEntries = progress.history?.[currentLayout] ?? [];
-  const sprintResultComparison = useMemo(
-    () => result ? buildSprintResultComparison(historyEntries, {
+  const scenarioHistory = historyEntries.filter(entry => entry.mode === 'practice' && entry.contentScenarioId === config.scenarioId);
+  const resultComparison = useMemo(
+    () => result ? buildPracticeResultComparison(historyEntries, {
       wpm: result.wpm,
       acc: result.acc,
-      contentScenarioId: 'sprint',
-      durationSeconds: result.elapsed,
+      contentScenarioId: config.scenarioId,
+      trainingMode: 'normal',
       contentMode: effectiveContentMode,
     }) : null,
-    [effectiveContentMode, historyEntries, result],
+    [config.scenarioId, effectiveContentMode, historyEntries, result],
   );
-  const activeSprintGoals = useMemo(
+  const activeGoals = useMemo(
     () => getActiveMotivationGoalSnapshots(motivationProgress, 2, [
       'practice-sessions',
       'practice-minutes',
@@ -388,33 +473,33 @@ export function SprintPage() {
     ]),
     [motivationProgress],
   );
-  const sprintStreaks = useMemo(
+  const activeStreaks = useMemo(
     () => getMotivationStreakSnapshots(motivationProgress, [
       'flawless-practice',
       'successful-practice',
     ]),
     [motivationProgress],
   );
-  const bestSprint = historyEntries
-    .filter(entry => entry.mode === 'test')
-    .reduce<typeof historyEntries[number] | null>((best, entry) => {
-      if (!best) return entry;
-      if (entry.wpm !== best.wpm) return entry.wpm > best.wpm ? entry : best;
-      if (entry.acc !== best.acc) return entry.acc > best.acc ? entry : best;
-      return new Date(entry.date).getTime() > new Date(best.date).getTime() ? entry : best;
-    }, null);
-  const sprintCallout = useMemo(
-    () => result ? buildSprintResultCallout(result, sprintResultComparison) : null,
-    [result, sprintResultComparison],
+  const bestScenarioRun = scenarioHistory.reduce<typeof scenarioHistory[number] | null>((best, entry) => {
+    if (!best) return entry;
+    if (entry.wpm !== best.wpm) return entry.wpm > best.wpm ? entry : best;
+    if (entry.acc !== best.acc) return entry.acc > best.acc ? entry : best;
+    return new Date(entry.date).getTime() > new Date(best.date).getTime() ? entry : best;
+  }, null);
+  const livesLeft = Math.max(0, totalLives - session.errors);
+  const challengeCallout = useMemo(
+    () => result ? buildChallengeResultCallout(config, result, resultComparison, totalLives) : null,
+    [config, result, resultComparison, totalLives],
   );
   const followupRecommendation = useMemo(
     () => result ? buildModeResultFollowupRecommendation({
-      mode: 'test',
+      mode: config.modeId,
       wpm: result.wpm,
       acc: result.acc,
+      passed: result.passed,
       errors: result.errors,
     }) : null,
-    [result],
+    [config.modeId, result],
   );
 
   const handleContentPackAction = useCallback((guidedAction: PracticeContentPackQuickAction) => {
@@ -441,7 +526,7 @@ export function SprintPage() {
         selectedContentPackId: selectedContentPack.id,
         ...(options.sprintDurationSeconds ? { sprintDurationSeconds: options.sprintDurationSeconds } : {}),
       });
-      if (targetMode !== 'test') {
+      if (targetMode !== config.modeId) {
         switchMode(targetMode);
       }
     };
@@ -466,13 +551,16 @@ export function SprintPage() {
         selectedContentPackId: '',
         ...(options.sprintDurationSeconds ? { sprintDurationSeconds: options.sprintDurationSeconds } : {}),
       });
-      if (targetMode !== 'test') {
+      if (targetMode !== config.modeId) {
         switchMode(targetMode);
       }
     };
 
     if (action.kind === 'shorten-distance') {
-      saveModePracticeSettings('test', { sprintDurationSeconds: 15 });
+      savePracticeSetting('contentMode', 'custom');
+      savePracticeSetting('selectedContentPackId', selectedContentPack.id);
+      savePracticeSetting('trainingMode', 'rhythm');
+      switchMode('practice');
       return;
     }
 
@@ -488,7 +576,7 @@ export function SprintPage() {
       trainingMode: action.trainingMode,
       sprintDurationSeconds: action.sprintDurationSeconds,
     });
-  }, [saveModePracticeSettings, savePracticeSetting, selectedContentPack, switchMode]);
+  }, [config.modeId, saveModePracticeSettings, savePracticeSetting, selectedContentPack, switchMode]);
 
   return (
     <section className="mode-panel active">
@@ -497,17 +585,15 @@ export function SprintPage() {
         open={showAchievements}
         achievementCatalog={gameAchievementCatalog}
         unlockedAchievementIds={unlockedAchievementIds}
-        categoryFilter="test"
+        categoryFilter="practice"
         onClose={() => setShowAchievements(false)}
       />
 
       <div className="panel-header">
         <div className="game-header-title">
           <div>
-            <h1>Спринт</h1>
-            <p className="card-desc">
-              Короткий таймерный забег на темп и точность поверх общего content-pipeline.
-            </p>
+            <h1>{config.title}</h1>
+            <p className="card-desc">{config.description}</p>
           </div>
           <button
             type="button"
@@ -516,11 +602,13 @@ export function SprintPage() {
           >
             <Medal size={14} />
             Достижения
-            <span className="game-achievements-count">{sprintUnlockedCount}/{sprintAchievementCatalog.length}</span>
+            <span className="game-achievements-count">{practiceUnlockedCount}/{practiceAchievementCatalog.length}</span>
           </button>
         </div>
         <div className="header-right">
-          <button className="btn-accent" disabled={session.active} onClick={startSprint}>Начать спринт</button>
+          <button className="btn-accent" disabled={session.active} onClick={startChallenge}>
+            {config.startLabel}
+          </button>
         </div>
       </div>
 
@@ -531,29 +619,19 @@ export function SprintPage() {
         selectedContentPack={selectedContentPack}
         contentPackSummary={selectedContentPackSummary}
         contentPackPreflight={selectedContentPackPreflight}
-        onContentModeChange={(value) => saveModePracticeSettings('test', { contentMode: value })}
-        onSelectedContentPackIdChange={(value) => saveModePracticeSettings('test', { selectedContentPackId: value })}
+        onContentModeChange={(value) => saveModePracticeSettings(config.modeId, { contentMode: value })}
+        onSelectedContentPackIdChange={(value) => saveModePracticeSettings(config.modeId, { selectedContentPackId: value })}
         onContentPackAction={handleContentPackAction}
         actionsDisabled={session.active}
-        extraControls={(
-          <div className="pstat daily-goal-row">
-            <Zap size={16} />
-            <span className="daily-goal-label">Длительность</span>
-            <select
-              className="select-minimal"
-              value={duration}
-              disabled={session.active}
-              onChange={(event) => saveModePracticeSettings('test', { sprintDurationSeconds: Number(event.target.value) })}
-            >
-              {SPRINT_DURATION_OPTIONS.map((value) => (
-                <option key={value} value={value}>{value} сек</option>
-              ))}
-            </select>
-          </div>
-        )}
       />
 
       <div className="practice-stats-row">
+        <div className="pstat daily-goal-row">
+          <Shield size={16} />
+          <span className="daily-goal-label">
+            Ошибок допустимо: {config.allowedErrors} · жизней сейчас: {session.active ? livesLeft : totalLives}
+          </span>
+        </div>
         <div className="pstat daily-goal-row">
           <span className="daily-goal-label">
             Материал: {CONTENT_MODE_LABELS[effectiveContentMode]}
@@ -562,31 +640,32 @@ export function SprintPage() {
         </div>
         <div className="pstat daily-goal-row">
           <span className="daily-goal-label">
-            Лучший спринт: {bestSprint ? `${fmtSpeed(bestSprint.wpm)} ${spdLabel} · ${Math.round(bestSprint.acc)}%` : 'ещё нет результатов'}
+            Лучший результат: {bestScenarioRun ? `${fmtSpeed(bestScenarioRun.wpm)} ${spdLabel} · ${Math.round(bestScenarioRun.acc)}%` : 'ещё нет результатов'}
           </span>
         </div>
       </div>
 
       {session.active && (
         <div className="stats-bar">
-          <div className="metric"><b>{timerValue.toFixed(timerValue >= 10 ? 0 : 1)}</b> с</div>
+          <div className="metric"><b>{livesLeft}</b> / {totalLives}</div>
           <div className="metric"><b>{fmtSpeed(wpm)}</b> <small className="speed-unit">{spdLabel}</small></div>
           <div className="metric"><b>{Math.round(acc)}</b>%</div>
+          <div className="metric"><b>{session.text.length > 0 ? Math.round((session.pos / session.text.length) * 100) : 0}</b>%</div>
         </div>
       )}
 
       <TextDisplay
-        text={session.active ? session.text : sprintText}
+        text={session.active ? session.text : challengeText}
         pos={session.active ? session.pos : 0}
         errPositions={session.active ? session.errPositions : new Set()}
         waitingForSpace={waitingForSpace}
-        overlay={showOverlay ? 'Нажмите здесь или «Начать спринт» для старта' : null}
-        onOverlayClick={startSprint}
+        overlay={showOverlay ? `Нажмите здесь или «${config.startLabel}»` : null}
+        onOverlayClick={startChallenge}
       />
 
       {result && (
         <div className="result-card">
-          <h3>Результат спринта</h3>
+          <h3>{result.passed ? config.successTitle : config.failureTitle}</h3>
           <div className="result-big">{fmtSpeed(result.wpm)} {spdLabel}</div>
           <p>
             Точность: <b>{Math.round(result.acc)}%</b> ·
@@ -595,22 +674,24 @@ export function SprintPage() {
           </p>
           <div className="result-metrics">
             <div className="result-metric">
-              <span className="result-metric-value">{result.chars}</span>
-              <span className="result-metric-label">Символов</span>
+              <span className={`result-metric-value${result.passed ? ' good' : result.livesLeft > 0 ? ' warn' : ' bad'}`}>
+                {result.livesLeft}
+              </span>
+              <span className="result-metric-label">Жизней осталось</span>
             </div>
             <div className="result-metric">
-              <span className={`result-metric-value${result.errors === 0 ? ' good' : result.errors <= 3 ? ' warn' : ' bad'}`}>
+              <span className={`result-metric-value${result.errors === 0 ? ' good' : result.errors <= config.allowedErrors ? ' warn' : ' bad'}`}>
                 {result.errors}
               </span>
               <span className="result-metric-label">Ошибок</span>
             </div>
             <div className="result-metric">
-              <span className="result-metric-value">{Math.max(1, Math.round(result.elapsed))} с</span>
-              <span className="result-metric-label">Длительность</span>
+              <span className="result-metric-value">{result.chars}</span>
+              <span className="result-metric-label">Символов</span>
             </div>
           </div>
           <div className="result-metrics" style={{ marginTop: 12 }}>
-            {activeSprintGoals.map((goal) => (
+            {activeGoals.map((goal) => (
               <div key={goal.definition.id} className="result-metric">
                 <span className="result-metric-value">
                   {goal.nextTarget != null
@@ -620,27 +701,27 @@ export function SprintPage() {
                 <span className="result-metric-label">{goal.definition.title}</span>
               </div>
             ))}
-            {sprintStreaks.map((streak) => (
+            {activeStreaks.map((streak) => (
               <div key={streak.definition.id} className="result-metric">
                 <span className={`result-metric-value${streak.current > 0 ? ' good' : ''}`}>{streak.current}</span>
                 <span className="result-metric-label">{streak.definition.title}</span>
               </div>
             ))}
           </div>
-          {sprintResultComparison && (
+          {resultComparison && (
             <ResultComparisonPanel
-              comparison={sprintResultComparison}
+              comparison={resultComparison}
               formatSpeed={fmtSpeed}
               speedLabel={spdLabel}
             />
           )}
-          {sprintCallout && (
+          {challengeCallout && (
             <p style={{ marginTop: 10 }}>
-              <b>{sprintCallout.title}.</b> {sprintCallout.detail}
+              <b>{challengeCallout.title}.</b> {challengeCallout.detail}
             </p>
           )}
           <div className="game-actions">
-            <button className="btn-accent" onClick={retrySprint}>Ещё раз</button>
+            <button className="btn-accent" onClick={retryChallenge}>Ещё раз</button>
             {followupRecommendation && (
               <button className="btn-secondary" onClick={() => switchMode(followupRecommendation.actionMode)}>
                 {followupRecommendation.actionLabel}
@@ -656,4 +737,12 @@ export function SprintPage() {
       )}
     </section>
   );
+}
+
+export function SurvivalPage() {
+  return <ChallengeModePage config={CHALLENGE_MODE_CONFIGS.survival} />;
+}
+
+export function FlawlessPage() {
+  return <ChallengeModePage config={CHALLENGE_MODE_CONFIGS.flawless} />;
 }

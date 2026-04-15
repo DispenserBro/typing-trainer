@@ -1,6 +1,7 @@
 import { formatSpeed, speedLabel } from '../../../core/engine';
 import {
-  formatModeLabel,
+  formatEntryModeLabel,
+  formatScenarioLabel,
   formatSessionTimestamp,
   type SessionHistoryItem,
 } from '../../../core/stats/utils';
@@ -36,12 +37,14 @@ export function StatsSessionHistoryList({
             onClick={() => onSelectSession(item.id)}
           >
             <div className="stats-session-item-top">
-              <strong>{formatModeLabel(item.entry.mode)}</strong>
+              <strong>{formatEntryModeLabel(item.entry)}</strong>
               <span>{formatSessionTimestamp(item.entry.date)}</span>
             </div>
             <div className="stats-session-item-meta">
               <span>{getLayoutLabel(item.layoutId)}</span>
-              {item.entry.trainingMode && (
+              {item.entry.contentScenarioId ? (
+                <span>{formatScenarioLabel(item.entry.contentScenarioId)}</span>
+              ) : item.entry.trainingMode && (
                 <span>{item.entry.trainingMode === 'rhythm' ? 'Ритм' : 'Обычная'}</span>
               )}
             </div>

@@ -1,6 +1,7 @@
 import type { Lesson, Layout, LanguageInfo } from './layout';
 import type { GameItemDefinition, GameAchievementDefinition } from './game';
 import type { CustomThemeColors } from './settings';
+import type { CustomPracticePackKind } from './practice';
 
 /* ── Manifest version ───────────────────────────────────── */
 export const ADDON_MANIFEST_VERSION = 1;
@@ -41,6 +42,19 @@ export interface AddonThemesResource {
   themes: Record<string, CustomThemeColors>;
 }
 
+export interface AddonPracticeContentPack {
+  id: string;
+  name: string;
+  description?: string;
+  language: string;
+  kind: CustomPracticePackKind;
+  items: string[];
+}
+
+export interface AddonPracticePacksResource {
+  packs: AddonPracticeContentPack[];
+}
+
 export interface AddonResources {
   words?: AddonWordsResource[];
   lessons?: AddonLessonsResource[];
@@ -49,6 +63,7 @@ export interface AddonResources {
   items?: AddonItemsResource;
   achievements?: AddonAchievementsResource;
   themes?: AddonThemesResource;
+  practicePacks?: AddonPracticePacksResource;
 }
 
 export interface AddonManifest {

@@ -6,7 +6,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   game: 'Игра',
   practice: 'Практика',
   lessons: 'Уроки',
-  test: 'Тест',
+  test: 'Спринт',
 };
 
 function getCategoryLabel(category: string): string {

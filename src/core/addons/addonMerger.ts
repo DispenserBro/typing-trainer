@@ -7,6 +7,7 @@ import type {
   LayoutsData, Layout, LanguageInfo, Lesson,
   GameItemDefinition, GameAchievementDefinition,
   CustomThemes, CustomThemeColors,
+  PracticeContentPack,
 } from '../../shared/types';
 import type { InstalledAddon, AddonResources } from '../../shared/types/addon';
 
@@ -165,6 +166,33 @@ export function mergeAddonThemes(
   }
 
   return changed ? merged : baseThemes;
+}
+
+/* ── Merge practice content packs ──────────────────────── */
+
+export function mergeAddonPracticePacks(
+  basePacks: PracticeContentPack[],
+  addons: InstalledAddon[],
+): PracticeContentPack[] {
+  const merged = [...basePacks];
+  const knownIds = new Set(basePacks.map(pack => pack.id));
+
+  for (const addon of addons) {
+    const res = enabledResources(addon);
+    if (!res?.practicePacks?.packs) continue;
+    for (const pack of res.practicePacks.packs) {
+      if (knownIds.has(pack.id)) continue;
+      merged.push({
+        ...pack,
+        origin: 'addon',
+        sourceLabel: addon.manifest.name,
+        addonId: addon.id,
+      });
+      knownIds.add(pack.id);
+    }
+  }
+
+  return merged;
 }
 
 /* ── Collect extra words for addon languages ────────────── */

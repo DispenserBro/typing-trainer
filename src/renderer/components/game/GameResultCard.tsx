@@ -10,6 +10,13 @@ import type {
 } from '../../../shared/types';
 import { getGameItemById, getGameItemIcon, getGameItemRarityStars } from '../../../core/game/items';
 import { getRewardKindLabel } from '../../../core/game/runUtils';
+import type { MotivationGoalSnapshot, MotivationStreakSnapshot } from '../../../core/motivation/progress';
+import type {
+  LayoutMasteryResultSummary,
+  ResultComparisonSummary,
+} from '../../../core/motivation/records';
+import { LayoutMasteryPanel } from '../LayoutMasteryPanel';
+import { ResultComparisonPanel } from '../ResultComparisonPanel';
 
 type GameResultCardProps = {
   result: GameRunResult;
@@ -25,6 +32,10 @@ type GameResultCardProps = {
   totalLevels: number;
   bossLevelInterval: number;
   ghostComparison: { ghostWpm: number; delta: number; ahead: boolean } | null;
+  comparison: ResultComparisonSummary | null;
+  masterySummary: LayoutMasteryResultSummary | null;
+  motivationGoals: MotivationGoalSnapshot[];
+  motivationStreaks: MotivationStreakSnapshot[];
   resultActionRef: RefObject<HTMLButtonElement | null>;
   rewardChoiceRefs: MutableRefObject<Array<HTMLButtonElement | null>>;
   onContinue: () => void;
@@ -52,6 +63,10 @@ export function GameResultCard({
   totalLevels,
   bossLevelInterval,
   ghostComparison,
+  comparison,
+  masterySummary,
+  motivationGoals,
+  motivationStreaks,
   resultActionRef,
   rewardChoiceRefs,
   onContinue,
@@ -133,6 +148,42 @@ export function GameResultCard({
             ? `Вы не уложились в лимит времени. Осталось HP: ${result.livesLeft}.`
             : `Нужно держать скорость не ниже цели и точность от ${result.minAccuracy}%. Осталось HP: ${result.livesLeft}.`}
       </p>
+      {(result.victory || result.livesLeft <= 0) && (motivationGoals.length > 0 || motivationStreaks.length > 0) && (
+        <div className="result-metrics" style={{ marginTop: 12 }}>
+          {motivationGoals.map((goal) => (
+            <div key={goal.definition.id} className="result-metric">
+              <span className="result-metric-value">
+                {Math.round(goal.current)}
+                {goal.nextTarget != null ? ` / ${goal.nextTarget}` : ''}
+              </span>
+              <span className="result-metric-label">{goal.definition.title}</span>
+            </div>
+          ))}
+          {motivationStreaks.map((streak) => (
+            <div key={streak.definition.id} className="result-metric">
+              <span className={`result-metric-value${streak.current > 0 ? ' good' : ''}`}>{streak.current}</span>
+              <span className="result-metric-label">{streak.definition.title}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      {comparison && (
+        <ResultComparisonPanel
+          comparison={comparison}
+          formatSpeed={formatSpeed}
+          speedLabel={speedLabel}
+        />
+      )}
+      {masterySummary && (
+        <div style={{ marginTop: 12 }}>
+          <LayoutMasteryPanel
+            snapshot={masterySummary.current}
+            summary={masterySummary}
+            formatSpeed={formatSpeed}
+            speedLabel={speedLabel}
+          />
+        </div>
+      )}
 
       {rewardChoices && result.passed && result.isBoss && !result.victory && (
         <div className="game-reward-block">

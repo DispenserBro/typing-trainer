@@ -391,7 +391,9 @@ export function SettingsModeProfilesCard({
 }) {
   const modes = [
     { id: 'practice', label: 'Практика' },
-    { id: 'test', label: 'Тест' },
+    { id: 'test', label: 'Спринт' },
+    { id: 'survival', label: 'Выживание' },
+    { id: 'flawless', label: 'Без ошибок' },
     { id: 'lessons', label: 'Уроки' },
     { id: 'game', label: 'Игра' },
   ];

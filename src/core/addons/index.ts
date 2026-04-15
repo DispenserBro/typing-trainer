@@ -30,6 +30,7 @@ export {
   mergeAddonItems,
   mergeAddonAchievements,
   mergeAddonThemes,
+  mergeAddonPracticePacks,
   getAddonLanguageWords,
 } from './addonMerger';
 

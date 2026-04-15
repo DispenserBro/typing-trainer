@@ -1,7 +1,8 @@
 import type { CharStat } from '../../../shared/types';
 import { formatSpeed, speedLabel } from '../../../core/engine';
 import {
-  formatModeLabel,
+  formatEntryModeLabel,
+  formatScenarioLabel,
   type ScopedRhythmSession,
   type SessionHistoryItem,
 } from '../../../core/stats/utils';
@@ -38,8 +39,14 @@ export function StatsSessionDetail({
       <div className="stats-session-summary">
         <div className="stats-rhythm-metric">
           <span>Режим</span>
-          <b>{formatModeLabel(selectedHistorySession.entry.mode)}</b>
+          <b>{formatEntryModeLabel(selectedHistorySession.entry)}</b>
         </div>
+        {selectedHistorySession.entry.contentScenarioId && (
+          <div className="stats-rhythm-metric">
+            <span>Сценарий</span>
+            <b>{formatScenarioLabel(selectedHistorySession.entry.contentScenarioId)}</b>
+          </div>
+        )}
         <div className="stats-rhythm-metric">
           <span>Раскладка</span>
           <b>{getLayoutLabel(selectedHistorySession.layoutId)}</b>

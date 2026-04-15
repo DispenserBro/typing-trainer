@@ -13,6 +13,15 @@ export {
   getWorstChar,
 } from './practice/engine';
 export {
+  buildPracticeContentPackPreflightSummary,
+  buildPracticeContentPackQualitySummary,
+  buildPracticeContentText,
+  getPracticeContentScenario,
+  getPracticeContentScenarioForTrainingMode,
+  resolveImportedPracticePackPreset,
+  resolvePracticeContentTargetWordCount,
+} from './practice/contentPipeline';
+export {
   generateLessonText,
   generateExerciseText,
   EXERCISE_NAMES,

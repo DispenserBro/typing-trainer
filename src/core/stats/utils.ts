@@ -4,6 +4,7 @@ import type {
   HistoryEntry,
   PracticeBigramInsight,
   PracticeInsightAggregate,
+  PracticeContentScenarioId,
   PracticeRhythmSessionEntry,
 } from '../../shared/types';
 
@@ -44,13 +45,21 @@ export const MODE_OPTIONS: Array<{ value: StatsModeFilter; label: string }> = [
   { value: 'practice', label: 'Практика' },
   { value: 'game', label: 'Игра' },
   { value: 'lesson', label: 'Уроки' },
-  { value: 'test', label: 'Тест' },
+  { value: 'test', label: 'Спринт' },
 ];
 
 export const LAYOUT_SCOPE_OPTIONS: Array<{ value: StatsLayoutScope; label: string }> = [
   { value: 'current', label: 'Текущая раскладка' },
   { value: 'all', label: 'Все раскладки' },
 ];
+
+const SCENARIO_LABELS: Record<PracticeContentScenarioId, string> = {
+  'practice-normal': 'Обычная практика',
+  'practice-rhythm': 'Ритм-практика',
+  sprint: 'Спринт',
+  survival: 'Выживание',
+  flawless: 'Безошибочный режим',
+};
 
 export function formatAggregateMeta(entry: PracticeInsightAggregate) {
   const attempts = entry.hits + entry.misses;
@@ -193,9 +202,25 @@ export function formatModeLabel(mode: HistoryEntry['mode']) {
     case 'practice': return 'Практика';
     case 'game': return 'Игра';
     case 'lesson': return 'Урок';
-    case 'test': return 'Тест';
+    case 'test': return 'Спринт';
     default: return mode;
   }
+}
+
+export function formatScenarioLabel(scenarioId?: PracticeContentScenarioId) {
+  if (!scenarioId) return '';
+  return SCENARIO_LABELS[scenarioId] ?? scenarioId;
+}
+
+export function formatEntryModeLabel(entry: HistoryEntry) {
+  const scenarioLabel = formatScenarioLabel(entry.contentScenarioId);
+  if (!scenarioLabel || scenarioLabel === 'Обычная практика') {
+    return formatModeLabel(entry.mode);
+  }
+  if (entry.mode === 'practice' && entry.contentScenarioId === 'practice-rhythm') {
+    return scenarioLabel;
+  }
+  return scenarioLabel;
 }
 
 export function getWorstKeysFromCharStats(charStats?: Record<string, CharStat>, limit = 4) {

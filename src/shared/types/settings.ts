@@ -2,10 +2,12 @@ export type SpeedUnit = 'wpm' | 'cpm' | 'cps';
 export type TextDisplayMode = 'block' | 'running';
 export type DailyGoalType = 'minutes' | 'sessions';
 export type PracticeTrainingMode = 'normal' | 'rhythm';
+export type PracticeContentMode = 'adaptive-words' | 'syllables' | 'pseudo-words' | 'sentences' | 'custom';
 export type PracticeAdaptationStrength = 'low' | 'medium' | 'high';
 export type PracticeAdaptationFocus = 'balanced' | 'chars' | 'bigrams' | 'rhythm';
 export type InterfaceDensity = 'compact' | 'default' | 'comfortable';
 export type KeyboardPosition = 'bottom' | 'below-text';
+export type ModePracticeSettingsId = 'test' | 'survival' | 'flawless';
 
 export interface UserSettings {
   speedUnit: SpeedUnit;
@@ -43,10 +45,18 @@ export interface PracticeSettings {
   dailyGoalValue: number;
   goalSpeedCpm: number;
   trainingMode: PracticeTrainingMode;
+  contentMode: PracticeContentMode;
+  selectedContentPackId: string;
   smartAdaptationEnabled: boolean;
   smartAdaptationStrength: PracticeAdaptationStrength;
   smartAdaptationFocus: PracticeAdaptationFocus;
   noStepBack: boolean;
+}
+
+export interface ModePracticeSettings {
+  contentMode?: PracticeContentMode;
+  selectedContentPackId?: string;
+  sprintDurationSeconds?: number;
 }
 
 export interface CustomThemeColors {

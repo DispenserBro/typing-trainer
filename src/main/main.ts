@@ -45,6 +45,7 @@ ipcMain.handle('get-layouts', () => loadDataFile('data/layouts.json'));
 ipcMain.handle('get-words', (_e: Electron.IpcMainInvokeEvent, lang: string) =>
   loadDataFile(`data/words_${lang}.json`),
 );
+ipcMain.handle('get-practice-content-packs', () => loadDataFile('data/practice-content-packs.json'));
 ipcMain.handle('get-lesson-bigrams', (_e: Electron.IpcMainInvokeEvent, lang: string) =>
   loadDataFile(`data/lesson_bigrams_${lang}.json`),
 );
@@ -69,13 +70,24 @@ ipcMain.handle('export-file', async (_e: Electron.IpcMainInvokeEvent, defaultNam
   return true;
 });
 
-ipcMain.handle('import-file', async () => {
+ipcMain.handle('import-file', async (_e: Electron.IpcMainInvokeEvent, options?: {
+  title?: string;
+  filters?: Array<{ name: string; extensions: string[] }>;
+}) => {
   const result = await dialog.showOpenDialog({
-    filters: [{ name: 'JSON', extensions: ['json'] }],
+    title: options?.title,
+    filters: options?.filters && options.filters.length > 0
+      ? options.filters
+      : [{ name: 'JSON', extensions: ['json'] }],
     properties: ['openFile'],
   });
   if (result.canceled || result.filePaths.length === 0) return null;
-  return fs.readFileSync(result.filePaths[0], 'utf-8');
+  const filePath = result.filePaths[0];
+  return {
+    name: path.basename(filePath),
+    path: filePath,
+    content: fs.readFileSync(filePath, 'utf-8'),
+  };
 });
 
 /* ── Addon IPC handlers (content JSON files) ─────────────── */

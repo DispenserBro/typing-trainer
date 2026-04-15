@@ -231,6 +231,7 @@ export function resolveGameState(progress: Progress): GameState {
       level: Math.max(1, Math.floor(base.currentRun.level || 1)),
       lives: Math.max(0, Math.floor(base.currentRun.lives || 0)),
       maxLives: Math.max(1, Math.floor((base.currentRun as any).maxLives || PLAYER_BASE_HP)),
+      damageTaken: Math.max(0, Math.floor((base.currentRun as any).damageTaken || 0)),
       regenTurns: Math.max(0, Math.floor((base.currentRun as any).regenTurns || 0)),
       completedLevels: Math.max(0, Math.floor(base.currentRun.completedLevels || 0)),
       targetSpeedCpm: Math.max(1, Math.floor(base.currentRun.targetSpeedCpm || 1)),
@@ -279,4 +280,3 @@ export function resolveGameState(progress: Progress): GameState {
     } : null,
   };
 }
-

@@ -73,6 +73,7 @@ const normalizeCurrentRunState = (run: GameRunState | null | undefined): GameRun
     level: Math.max(1, Math.floor(run.level || 1)),
     lives: Math.max(0, Math.floor(run.lives || 0)),
     maxLives: Math.max(1, Math.floor(run.maxLives || PLAYER_BASE_HP)),
+    damageTaken: Math.max(0, Math.floor(run.damageTaken || 0)),
     regenTurns: Math.max(0, Math.floor(run.regenTurns || 0)),
     completedLevels: Math.max(0, Math.floor(run.completedLevels || 0)),
     targetSpeedCpm: Math.max(1, Math.floor(run.targetSpeedCpm || 1)),

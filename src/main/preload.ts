@@ -1,9 +1,21 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { Progress, CustomThemes, LayoutsData, ElectronAPI, InstalledAddon, InstalledMod, AddonInstallResult, ModInstallResult } from '../shared/types';
+import type {
+  Progress,
+  CustomThemes,
+  LayoutsData,
+  ElectronAPI,
+  InstalledAddon,
+  InstalledMod,
+  AddonInstallResult,
+  ModInstallResult,
+  ImportFileOptions,
+  ImportedFile,
+} from '../shared/types';
 
 const api: ElectronAPI = {
   getLayouts: () => ipcRenderer.invoke('get-layouts') as Promise<LayoutsData>,
   getWords: (lang: string) => ipcRenderer.invoke('get-words', lang) as Promise<string[]>,
+  getPracticeContentPacks: () => ipcRenderer.invoke('get-practice-content-packs') as Promise<import('../shared/types').PracticeContentPack[]>,
   getLessonBigrams: (lang: string) => ipcRenderer.invoke('get-lesson-bigrams', lang) as Promise<Record<string, string[]>>,
   getProgress: () => ipcRenderer.invoke('get-progress') as Promise<Progress>,
   saveProgress: (data: Progress) => ipcRenderer.invoke('save-progress', data) as Promise<boolean>,
@@ -12,8 +24,8 @@ const api: ElectronAPI = {
     ipcRenderer.invoke('save-custom-themes', data) as Promise<boolean>,
   exportFile: (defaultName: string, content: string) =>
     ipcRenderer.invoke('export-file', defaultName, content) as Promise<boolean>,
-  importFile: () =>
-    ipcRenderer.invoke('import-file') as Promise<string | null>,
+  importFile: (options?: ImportFileOptions) =>
+    ipcRenderer.invoke('import-file', options) as Promise<ImportedFile | null>,
 
   /* Addons — content JSON files */
   scanAddons: () =>

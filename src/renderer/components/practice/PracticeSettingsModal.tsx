@@ -3,6 +3,11 @@ import type {
   DailyGoalType,
   PracticeAdaptationFocus,
   PracticeAdaptationStrength,
+  PracticeContentPack,
+  PracticeContentPackPreflightSummary,
+  PracticeContentPackQualitySummary,
+  PracticeContentPackQuickAction,
+  PracticeContentMode,
   PracticeTrainingMode,
 } from '../../../shared/types';
 
@@ -19,6 +24,20 @@ type PracticeSettingsModalProps = {
   onGoalSpeedChange: (value: number) => void;
   trainingMode: PracticeTrainingMode;
   onTrainingModeChange: (value: PracticeTrainingMode) => void;
+  contentMode: PracticeContentMode;
+  onContentModeChange: (value: PracticeContentMode) => void;
+  availableContentPacks: PracticeContentPack[];
+  selectedContentPack: PracticeContentPack | null;
+  selectedContentPackId: string;
+  onSelectedContentPackIdChange: (value: string) => void;
+  contentScenarioLabel: string;
+  contentPackSummary: PracticeContentPackQualitySummary | null;
+  contentPackPreflight: PracticeContentPackPreflightSummary | null;
+  onContentPackAction: (action: PracticeContentPackQuickAction) => void;
+  contentPackActionsDisabled?: boolean;
+  onImportCustomContent: () => void;
+  onDeleteCustomContent: (packId: string) => void;
+  importStatus: string | null;
   smartAdaptationEnabled: boolean;
   onSmartAdaptationEnabledChange: (value: boolean) => void;
   smartAdaptationStrength: PracticeAdaptationStrength;
@@ -42,6 +61,14 @@ const adaptationFocusLabel = {
   rhythm: 'Ритм',
 } satisfies Record<PracticeAdaptationFocus, string>;
 
+const contentModeLabel = {
+  'adaptive-words': 'Слова',
+  syllables: 'Слоги',
+  'pseudo-words': 'Псевдослова',
+  sentences: 'Предложения',
+  custom: 'Мой набор',
+} satisfies Record<PracticeContentMode, string>;
+
 export function PracticeSettingsModal({
   open,
   onClose,
@@ -55,6 +82,20 @@ export function PracticeSettingsModal({
   onGoalSpeedChange,
   trainingMode,
   onTrainingModeChange,
+  contentMode,
+  onContentModeChange,
+  availableContentPacks,
+  selectedContentPack,
+  selectedContentPackId,
+  onSelectedContentPackIdChange,
+  contentScenarioLabel,
+  contentPackSummary,
+  contentPackPreflight,
+  onContentPackAction,
+  contentPackActionsDisabled = false,
+  onImportCustomContent,
+  onDeleteCustomContent,
+  importStatus,
   smartAdaptationEnabled,
   onSmartAdaptationEnabledChange,
   smartAdaptationStrength,
@@ -137,6 +178,103 @@ export function PracticeSettingsModal({
             <span className="poption-hint">
               {trainingMode === 'rhythm' ? 'Короткий текст и ровный темп.' : 'Базовый режим на скорость и точность.'}
             </span>
+          </div>
+
+          <div className="poption practice-settings-wide">
+            <span className="poption-label">Тренировочный материал</span>
+            <div className="seg-group practice-focus-group">
+              {(['adaptive-words', 'syllables', 'pseudo-words', 'sentences', 'custom'] as PracticeContentMode[]).map((value) => (
+                <button
+                  key={value}
+                  className={`seg-btn${contentMode === value ? ' active' : ''}`}
+                  onClick={() => onContentModeChange(value)}
+                >
+                  {value === 'custom' ? 'Набор' : contentModeLabel[value]}
+                </button>
+              ))}
+            </div>
+            <span className="poption-hint">
+              {contentMode === 'adaptive-words' && 'Адаптивные словари с учётом слабых мест.'}
+              {contentMode === 'syllables' && 'Короткие слоги и фонетические связки.'}
+              {contentMode === 'pseudo-words' && 'Синтетические слова из доступных букв.'}
+              {contentMode === 'sentences' && 'Короткие предложения и связный набор текста.'}
+              {contentMode === 'custom' && 'Встроенные, аддонные и пользовательские наборы контента.'}
+            </span>
+          </div>
+
+          <div className="poption practice-settings-wide">
+            <span className="poption-label">Наборы контента</span>
+            <div className="poption-row">
+              <select
+                className="select-minimal"
+                value={selectedContentPackId}
+                onChange={e => onSelectedContentPackIdChange(e.target.value)}
+                disabled={availableContentPacks.length === 0}
+              >
+                <option value="">Выберите набор…</option>
+                {availableContentPacks.map((pack) => (
+                  <option key={pack.id} value={pack.id}>
+                    {pack.name} · {pack.items.length}
+                  </option>
+                ))}
+              </select>
+              <button className="btn-secondary btn-sm" onClick={onImportCustomContent}>
+                Импорт TXT/JSON
+              </button>
+              <button
+                className="btn-ghost btn-sm"
+                onClick={() => onDeleteCustomContent(selectedContentPackId)}
+                disabled={!selectedContentPackId || availableContentPacks.find(pack => pack.id === selectedContentPackId)?.origin !== 'custom'}
+              >
+                Удалить
+              </button>
+            </div>
+            <span className="poption-hint">
+              {importStatus
+                ? importStatus
+                : availableContentPacks.length > 0
+                  ? 'Базовые, аддонные и импортированные наборы доступны в одном списке.'
+                  : 'Пока нет доступных наборов контента.'}
+            </span>
+            {contentMode === 'custom' && selectedContentPack && contentPackSummary && (
+              <div className="poption-hint" style={{ marginTop: 8 }}>
+                <div>
+                  Пул: <b>{contentPackSummary.itemCount}</b> эл. · Тип: <b>{selectedContentPack.kind}</b> ·
+                  Сейчас для <b>{contentScenarioLabel.toLowerCase()}</b> ожидается около <b>{contentPackSummary.estimatedWordsPerText}</b> слов.
+                </div>
+                <div>
+                  Риск повторов: <b>{contentPackSummary.repetitionRiskLabel.toLowerCase()}</b>. Лучше всего подходит: <b>{contentPackSummary.recommendedModeLabel}</b>.
+                </div>
+                <div>{contentPackSummary.fitMessage}</div>
+                <div>{contentPackSummary.recommendationReason}</div>
+                {contentPackSummary.notes.map((note) => (
+                  <div key={note}>{note}</div>
+                ))}
+                {contentPackPreflight && (
+                  <>
+                    <div style={{ marginTop: 8 }}>
+                      <b>{contentPackPreflight.title}.</b> {contentPackPreflight.detail}
+                    </div>
+                    {contentPackPreflight.actions.length > 0 && (
+                      <div className="game-actions" style={{ marginTop: 8 }}>
+                        {contentPackPreflight.actions.map((action) => (
+                          <button
+                            key={action.id}
+                            type="button"
+                            className="btn-secondary btn-sm"
+                            disabled={contentPackActionsDisabled}
+                            title={action.description}
+                            onClick={() => onContentPackAction(action)}
+                          >
+                            {action.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="poption practice-settings-wide">

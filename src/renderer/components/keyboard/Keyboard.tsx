@@ -3,7 +3,7 @@ import {
   type CSSProperties,
 } from 'react';
 import type { FingerName } from '../../../shared/types';
-import { useApp } from '../../contexts/AppContext';
+import { useApp, useAppUi } from '../../contexts/AppContext';
 import { KeyboardHands } from './KeyboardHands';
 import { getKeyboardRows } from '../../../core/keyboard/layout';
 import { useKeyboardPanel } from '../../hooks/keyboard/useKeyboardPanel';
@@ -11,8 +11,9 @@ import { computeHandsStyle, FINGER_COLORS, getActiveHand, getKeyboardActivePose 
 
 export function Keyboard() {
   const {
-    currentLayout, layouts, activeChar, currentMode, settings, saveSetting, keyboardPreviewActive,
+    currentLayout, layouts, currentMode, settings, saveSetting,
   } = useApp();
+  const { activeChar, keyboardPreviewActive } = useAppUi();
   const layout = layouts.layouts[currentLayout];
   const stageRef = useRef<HTMLDivElement | null>(null);
   const keyboardRef = useRef<HTMLDivElement | null>(null);
@@ -165,5 +166,4 @@ export function Keyboard() {
     </div>
   );
 }
-
 

@@ -292,6 +292,8 @@ export interface GameRunState {
   lives: number;
   /** Максимальное HP (начинается с baseHp, может расти через передышки) */
   maxLives: number;
+  /** Суммарно потерянное HP по ходу забега, даже если часть затем восстановили. */
+  damageTaken: number;
   /** Оставшиеся раунды регенерации (восстановление 1 HP после боя) */
   regenTurns: number;
   completedLevels: number;

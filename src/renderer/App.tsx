@@ -6,13 +6,14 @@ import { Sidebar } from './components/Sidebar';
 import { Keyboard } from './components/keyboard/Keyboard';
 import { OnboardingWizard } from './components/OnboardingWizard';
 import { PracticePage } from './pages/PracticePage';
-import { TestPage } from './pages/TestPage';
+import { SprintPage } from './pages/TestPage';
 import { LessonsPage } from './pages/LessonsPage';
 import { GamePage } from './pages/GamePage';
 import { StatsPage } from './pages/StatsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { HomePage } from './pages/HomePage';
 import { AddonsPage } from './pages/AddonsPage';
+import { FlawlessPage, SurvivalPage } from './pages/ChallengeModePage';
 
 /** Render sanitised HTML from a mod inside a sandboxed container */
 function ModPage({ html }: { html: string }) {
@@ -92,7 +93,9 @@ function AppInner() {
   } else {
     switch (currentMode) {
       case 'home':     page = <HomePage />;     break;
-      case 'test':     page = <TestPage />;     break;
+      case 'test':     page = <SprintPage />;   break;
+      case 'survival': page = <SurvivalPage />; break;
+      case 'flawless': page = <FlawlessPage />; break;
       case 'lessons':  page = <LessonsPage />;  break;
       case 'game':     page = <GamePage />;     break;
       case 'stats':    page = <StatsPage />;    break;

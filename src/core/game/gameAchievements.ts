@@ -132,25 +132,25 @@ export const GAME_ACHIEVEMENT_CATALOG: GameAchievementDefinition[] = [
     conditions: [{ type: 'lessons.allCompleted' }],
   },
 
-  // ── Тест ──────────────────────────────────────────────
+  // ── Спринт ────────────────────────────────────────────
   {
     id: 'test-first-complete',
     name: 'Проверка связи',
-    description: 'Завершить первый тест скорости.',
+    description: 'Завершить первый спринт.',
     category: 'test',
     conditions: [{ type: 'test.completed' }],
   },
   {
     id: 'test-high-accuracy',
     name: 'Снайпер',
-    description: 'Завершить тест с точностью 98% или выше.',
+    description: 'Завершить спринт с точностью 98% или выше.',
     category: 'test',
     conditions: [{ type: 'test.completed', accuracy: { operator: '>=', value: 98 } }],
   },
   {
     id: 'test-speed-60',
     name: 'Скоростной режим',
-    description: 'Набрать 60 WPM или выше в тесте.',
+    description: 'Набрать 60 WPM или выше в спринте.',
     category: 'test',
     conditions: [{ type: 'test.completed', wpm: { operator: '>=', value: 60 } }],
   },

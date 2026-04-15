@@ -9,20 +9,43 @@ import { checkAchievements, type AchievementEvent } from '../../core/achievement
 import { PracticeFeedbackCard } from '../components/practice/PracticeFeedbackCard';
 import { PracticeSettingsModal } from '../components/practice/PracticeSettingsModal';
 import { AchievementsModal } from '../components/AchievementsModal';
+import { ResultComparisonPanel } from '../components/ResultComparisonPanel';
+import { LayoutMasteryPanel } from '../components/LayoutMasteryPanel';
 import type {
   CharStat,
+  PracticeContentPack,
+  PracticeContentPackQuickAction,
+  PracticeContentMode,
 } from '../../shared/types';
-import { generatePracticeText, getWorstChar, formatSpeed, speedLabel, filterYoWords, filterYoKeys } from '../../core/engine';
+import {
+  buildPracticeContentPackPreflightSummary,
+  buildPracticeContentPackQualitySummary,
+  buildPracticeContentText,
+  getPracticeContentScenarioForTrainingMode,
+  getWorstChar,
+  filterYoWords,
+  filterYoKeys,
+  resolveImportedPracticePackPreset,
+  resolvePracticeContentTargetWordCount,
+} from '../../core/engine';
 import { buildPracticeInsightsDelta, getRhythmScore, mergeLayoutPracticeInsights, summarizeSessionRhythm } from '../../core/practice/insights';
 import { buildPracticeFeedback, mergeCharStats, PRACTICES_PER_UNLOCK, type PracticeFeedback } from '../../core/practice/feedback';
+import { createCustomPracticePackFromFile } from '../../core/practice/content';
+import {
+  getActiveMotivationGoalSnapshots,
+  getMotivationStreakSnapshots,
+  updateMotivationAfterPractice,
+} from '../../core/motivation/progress';
+import { buildLayoutMasteryResultSummary, buildPracticeResultComparison } from '../../core/motivation/records';
 
 export function PracticePage() {
   const app = useApp();
-  const { layouts, currentLayout, allWords, ngramModel, progress, settings,
-    practiceSettings, fmtSpeed, spdLabel, savePracticeSetting,
+  const { layouts, currentLayout, currentLanguage, allWords, ngramModel, progress, settings,
+    practiceSettings, fmtSpeed, spdLabel, savePracticeSetting, saveModePracticeSettings, switchMode,
     saveHistory, saveProgress, getLayoutProgress, getPracticeState,
     getPracticeInsights, savePracticeInsights, savePracticeRhythmSession,
-    gameAchievementCatalog, unlockedAchievementIds, unlockAchievements } = app;
+    gameAchievementCatalog, unlockedAchievementIds, unlockAchievements,
+    practiceContentPacks, motivationProgress, updateMotivationProgress } = app;
 
   const [showAchievements, setShowAchievements] = useState(false);
   const [achievementToasts, setAchievementToasts] = useState<GameAchievementDefinition[]>([]);
@@ -65,6 +88,7 @@ export function PracticePage() {
 
   const [showOverlay, setShowOverlay] = useState(true);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [importStatus, setImportStatus] = useState<string | null>(null);
   const [result, setResult] = useState<{
     wpm: number;
     acc: number;
@@ -83,7 +107,39 @@ export function PracticePage() {
   const previewKeyRef = useRef<string>('');
   const goalCPM = Math.max(1, practiceSettings.goalSpeedCpm || 150);
   const trainingMode = practiceSettings.trainingMode ?? 'normal';
-  const practiceWordCount = trainingMode === 'rhythm' ? 18 : 25;
+  const contentMode = practiceSettings.contentMode ?? 'adaptive-words';
+  const customPracticePacks = useMemo(
+    () => Object.values(progress.customPracticePacks ?? {}).sort((left, right) => right.importedAt.localeCompare(left.importedAt)),
+    [progress.customPracticePacks],
+  );
+  const availableContentPacks = useMemo<PracticeContentPack[]>(() => {
+    const builtInAndAddon = practiceContentPacks.filter(pack => pack.language === 'any' || pack.language === currentLanguage);
+    return [...builtInAndAddon, ...customPracticePacks];
+  }, [practiceContentPacks, customPracticePacks, currentLanguage]);
+  const selectedContentPack = useMemo<PracticeContentPack | null>(() => {
+    const selected = availableContentPacks.find(pack => pack.id === practiceSettings.selectedContentPackId);
+    return selected ?? availableContentPacks[0] ?? null;
+  }, [availableContentPacks, practiceSettings.selectedContentPackId]);
+  const contentScenario = useMemo(
+    () => getPracticeContentScenarioForTrainingMode(trainingMode),
+    [trainingMode],
+  );
+  const practiceWordCount = useMemo(
+    () => resolvePracticeContentTargetWordCount(contentScenario, contentMode, selectedContentPack),
+    [contentMode, contentScenario, selectedContentPack],
+  );
+  const selectedContentPackSummary = useMemo(
+    () => selectedContentPack
+      ? buildPracticeContentPackQualitySummary(selectedContentPack, contentScenario.id)
+      : null,
+    [contentScenario.id, selectedContentPack],
+  );
+  const selectedContentPackPreflight = useMemo(
+    () => contentMode === 'custom' && selectedContentPack
+      ? buildPracticeContentPackPreflightSummary(selectedContentPack, contentScenario.id)
+      : null,
+    [contentMode, contentScenario.id, selectedContentPack],
+  );
   const smartAdaptationEnabled = practiceSettings.smartAdaptationEnabled ?? true;
   const smartAdaptationStrength = practiceSettings.smartAdaptationStrength ?? 'medium';
   const smartAdaptationFocus = practiceSettings.smartAdaptationFocus ?? 'balanced';
@@ -93,6 +149,31 @@ export function PracticePage() {
     smartAdaptationStrength,
     smartAdaptationFocus,
   }), [trainingMode, smartAdaptationEnabled, smartAdaptationStrength, smartAdaptationFocus]);
+
+  const buildPracticeMaterialText = useCallback((
+    unlockedChars: string[],
+    worstChar: string | null,
+  ) => buildPracticeContentText({
+    allWords: words,
+    unlockedChars,
+    weakChar: worstChar,
+    contentMode,
+    contentPack: selectedContentPack,
+    scenarioId: contentScenario.id,
+    wordCountOverride: practiceWordCount,
+    ngramModel: ngramModel ?? undefined,
+    insights: practiceInsights,
+    buildOptions: practiceBuildOptions,
+  }), [
+    words,
+    contentMode,
+    selectedContentPack,
+    contentScenario.id,
+    practiceWordCount,
+    ngramModel,
+    practiceInsights,
+    practiceBuildOptions,
+  ]);
 
   // Convert CPM to display unit and back
   const unit = settings.speedUnit;
@@ -119,16 +200,8 @@ export function PracticePage() {
   const buildPracticePreview = useCallback(() => {
     const currentUnlocked = practiceUnlockOrder.slice(0, layoutProgress.unlocked);
     const worstChar = getWorstChar(progress.keyStats?.[currentLayout], currentUnlocked);
-    return generatePracticeText(
-      words,
-      currentUnlocked,
-      worstChar,
-      practiceWordCount,
-      ngramModel ?? undefined,
-      practiceInsights,
-      practiceBuildOptions,
-    );
-  }, [practiceUnlockOrder, layoutProgress.unlocked, progress.keyStats, currentLayout, words, ngramModel, practiceInsights, practiceWordCount, practiceBuildOptions]);
+    return buildPracticeMaterialText(currentUnlocked, worstChar);
+  }, [practiceUnlockOrder, layoutProgress.unlocked, progress.keyStats, currentLayout, buildPracticeMaterialText]);
 
   // Generate / regenerate text only when preview conditions actually change
   useEffect(() => {
@@ -138,12 +211,15 @@ export function PracticePage() {
       layoutProgress.unlocked,
       useYo ? 'yo' : 'no-yo',
       trainingMode,
+      contentMode,
       practiceWordCount,
       smartAdaptationEnabled ? 'smart-on' : 'smart-off',
       smartAdaptationStrength,
       smartAdaptationFocus,
       words.length,
       practiceUnlockOrder.join(''),
+      selectedContentPack?.id ?? 'no-selected-pack',
+      selectedContentPack?.items.length ?? 0,
     ].join('|');
     if (previewKeyRef.current === previewKey) return;
     previewKeyRef.current = previewKey;
@@ -153,9 +229,143 @@ export function PracticePage() {
     setUnlockModalLetter(null);
   }, [
     currentLayout, layout, words.length, useYo, practiceUnlockOrder, layoutProgress.unlocked,
-    buildPracticePreview, trainingMode, practiceWordCount,
+    buildPracticePreview, trainingMode, contentMode, practiceWordCount,
     smartAdaptationEnabled, smartAdaptationStrength, smartAdaptationFocus,
+    selectedContentPack,
   ]);
+
+  const handleImportCustomContent = useCallback(async () => {
+    const imported = await window.api.importFile({
+      title: 'Импортировать пользовательский набор',
+      filters: [
+        { name: 'Text or JSON', extensions: ['txt', 'json'] },
+        { name: 'Text', extensions: ['txt'] },
+        { name: 'JSON', extensions: ['json'] },
+      ],
+    });
+    if (!imported) return;
+
+    try {
+      const pack = createCustomPracticePackFromFile(imported);
+      const importedPackSummary = buildPracticeContentPackQualitySummary(pack, contentScenario.id);
+      const importPreset = resolveImportedPracticePackPreset(pack);
+      const nextPracticeSettings = {
+        ...practiceSettings,
+        trainingMode: importPreset.trainingMode,
+        contentMode: 'custom' as PracticeContentMode,
+        selectedContentPackId: pack.id,
+      };
+      saveProgress({
+        ...progress,
+        practiceSettings: nextPracticeSettings,
+        customPracticePacks: {
+          ...(progress.customPracticePacks ?? {}),
+          [pack.id]: pack,
+        },
+      });
+      setImportStatus(
+        `Импортирован набор «${pack.name}». Около ${importedPackSummary.estimatedWordsPerText} слов на попытку, лучше всего подходит: ${importedPackSummary.recommendedModeLabel}. Стартовый пресет: ${importPreset.label}.`,
+      );
+    } catch (error) {
+      setImportStatus(error instanceof Error ? error.message : 'Не удалось импортировать набор.');
+    }
+  }, [contentScenario.id, practiceSettings, saveProgress, progress]);
+
+  const handleDeleteCustomContent = useCallback((packId: string) => {
+    if (!packId) return;
+    const { [packId]: _removed, ...rest } = progress.customPracticePacks ?? {};
+    const nextSelectedId = practiceSettings.selectedContentPackId === packId
+      ? (Object.keys(rest)[0] ?? '')
+      : practiceSettings.selectedContentPackId;
+    const nextPracticeSettings = {
+      ...practiceSettings,
+      selectedContentPackId: nextSelectedId,
+      contentMode: Object.keys(rest).length > 0 || practiceSettings.contentMode !== 'custom'
+        ? practiceSettings.contentMode
+        : ('adaptive-words' as PracticeContentMode),
+    };
+
+    saveProgress({
+      ...progress,
+      practiceSettings: nextPracticeSettings,
+      customPracticePacks: rest,
+    });
+    setImportStatus('Набор удалён.');
+  }, [practiceSettings, progress, saveProgress]);
+
+  const handleContentPackAction = useCallback((guidedAction: PracticeContentPackQuickAction) => {
+    if (!selectedContentPack) return;
+
+    const applyCustomPackToMode = (
+      targetMode: 'practice' | 'test' | 'survival' | 'flawless',
+      options: {
+        trainingMode?: 'normal' | 'rhythm';
+        sprintDurationSeconds?: number;
+      } = {},
+    ) => {
+      if (targetMode === 'practice') {
+        savePracticeSetting('contentMode', 'custom');
+        savePracticeSetting('selectedContentPackId', selectedContentPack.id);
+        if (options.trainingMode) {
+          savePracticeSetting('trainingMode', options.trainingMode);
+        }
+        switchMode('practice');
+        return;
+      }
+
+      saveModePracticeSettings(targetMode, {
+        contentMode: 'custom',
+        selectedContentPackId: selectedContentPack.id,
+        ...(options.sprintDurationSeconds ? { sprintDurationSeconds: options.sprintDurationSeconds } : {}),
+      });
+      switchMode(targetMode);
+    };
+
+    const applyBaseMaterialToMode = (
+      targetMode: 'practice' | 'test' | 'survival' | 'flawless',
+      options: {
+        trainingMode?: 'normal' | 'rhythm';
+        sprintDurationSeconds?: number;
+      } = {},
+    ) => {
+      if (targetMode === 'practice') {
+        savePracticeSetting('contentMode', 'adaptive-words');
+        savePracticeSetting('selectedContentPackId', '');
+        if (options.trainingMode) {
+          savePracticeSetting('trainingMode', options.trainingMode);
+        }
+        switchMode('practice');
+        return;
+      }
+
+      saveModePracticeSettings(targetMode, {
+        contentMode: 'adaptive-words',
+        selectedContentPackId: '',
+        ...(options.sprintDurationSeconds ? { sprintDurationSeconds: options.sprintDurationSeconds } : {}),
+      });
+      switchMode(targetMode);
+    };
+
+    const { action } = guidedAction;
+    if (action.kind === 'shorten-distance') {
+      savePracticeSetting('trainingMode', 'rhythm');
+      switchMode('practice');
+      return;
+    }
+
+    if (action.kind === 'switch-mode') {
+      applyCustomPackToMode(action.targetMode, {
+        trainingMode: action.trainingMode,
+        sprintDurationSeconds: action.sprintDurationSeconds,
+      });
+      return;
+    }
+
+    applyBaseMaterialToMode(action.targetMode, {
+      trainingMode: action.trainingMode,
+      sprintDurationSeconds: action.sprintDurationSeconds,
+    });
+  }, [saveModePracticeSettings, savePracticeSetting, selectedContentPack, switchMode]);
 
   const onFinish = useCallback((wpm: number, acc: number, elapsed: number, ses: any) => {
     const goalAcc = 95;
@@ -206,6 +416,14 @@ export function PracticePage() {
       .map((entry: { interval: number }) => Math.round(entry.interval)) ?? [];
     const feedback = buildPracticeFeedback(nextPracticeInsights, worstCharAfterFinish);
     practiceState.worstChar = worstCharAfterFinish;
+    updateMotivationProgress((current) => updateMotivationAfterPractice(current, {
+      elapsedSeconds: elapsed,
+      cpm: wpm * 5,
+      acc,
+      trainingMode,
+      successfulSession: enoughForProgress,
+      flawlessSession: (ses?.errors ?? 0) === 0,
+    }));
     savePracticeInsights(nextPracticeInsights);
     savePracticeRhythmSession({
       trainingMode,
@@ -218,7 +436,13 @@ export function PracticePage() {
       rhythmScore,
       worstInterval: Math.max(0, ...(sessionIntervals.length ? sessionIntervals : [0])),
     });
-    saveHistory('practice', wpm, acc, { trainingMode, charStats: ses?.charStats });
+    saveHistory('practice', wpm, acc, {
+      contentScenarioId: contentScenario.id,
+      trainingMode,
+      contentMode,
+      durationSeconds: elapsed,
+      charStats: ses?.charStats,
+    });
     if (ses?.charStats) setLastCharStats(ses.charStats);
 
     if (unlockedNewLetter) {
@@ -237,7 +461,7 @@ export function PracticePage() {
       rhythmDeviation: Math.round(rhythm.averageDeviation),
       feedback,
     });
-  }, [layoutProgress, practiceUnlockOrder, practiceState, currentLayout, progress, saveProgress, saveHistory, goalCPM, unlocked, fallbackWorstChar, getPracticeInsights, savePracticeInsights, savePracticeRhythmSession, layout, trainingMode]);
+  }, [layoutProgress, practiceUnlockOrder, practiceState, currentLayout, progress, saveProgress, saveHistory, goalCPM, unlocked, fallbackWorstChar, getPracticeInsights, savePracticeInsights, savePracticeRhythmSession, layout, trainingMode, updateMotivationProgress]);
 
   const { session, start, stop, handleKey, wpm, acc, renderTick, waitingForSpace } = useTypingSession({
     mode: 'practice',
@@ -256,9 +480,7 @@ export function PracticePage() {
 
   // Retry + immediately start (used when typing after result)
   const retryAndStart = useCallback(() => {
-    const ul = practiceUnlockOrder.slice(0, layoutProgress.unlocked);
-    const w = getWorstChar(progress.keyStats?.[currentLayout], ul);
-    const text = generatePracticeText(words, ul, w, practiceWordCount, ngramModel ?? undefined, practiceInsights, practiceBuildOptions);
+    const text = buildPracticePreview();
     previewKeyRef.current = '';
     setPracticeText(text);
     setShowOverlay(false);
@@ -266,7 +488,7 @@ export function PracticePage() {
     setUnlockModalLetter(null);
     stop();
     start(text);
-  }, [practiceUnlockOrder, layoutProgress.unlocked, progress, currentLayout, words, stop, start, ngramModel, practiceInsights, practiceWordCount, practiceBuildOptions]);
+  }, [buildPracticePreview, stop, start]);
 
   // keydown listener
   useEffect(() => {
@@ -313,9 +535,7 @@ export function PracticePage() {
   }, [session.active]);
 
   const retry = () => {
-    const ul = practiceUnlockOrder.slice(0, layoutProgress.unlocked);
-    const w = getWorstChar(progress.keyStats?.[currentLayout], ul);
-    const text = generatePracticeText(words, ul, w, practiceWordCount, ngramModel ?? undefined, practiceInsights, practiceBuildOptions);
+    const text = buildPracticePreview();
     previewKeyRef.current = '';
     setPracticeText(text);
     setShowOverlay(true);
@@ -332,6 +552,25 @@ export function PracticePage() {
   const practiceHist = hist.filter(h => h.mode === 'practice');
   const last = practiceHist.length ? practiceHist[practiceHist.length - 1] : null;
   const top = practiceHist.reduce((m, h) => Math.max(m, h.wpm), 0);
+  const practiceResultComparison = useMemo(
+    () => result ? buildPracticeResultComparison(hist, {
+      wpm: result.wpm,
+      acc: result.acc,
+      contentScenarioId: contentScenario.id,
+      trainingMode,
+      contentMode,
+    }) : null,
+    [contentMode, contentScenario.id, hist, result, trainingMode],
+  );
+  const masterySummary = useMemo(
+    () => result ? buildLayoutMasteryResultSummary(progress, layouts, currentLayout, {
+      previousHistoryEntriesOverride: hist.slice(0, -1),
+      currentHistoryEntriesOverride: hist,
+      previousUnlockedLettersOverride: result.newLetter ? Math.max(0, layoutProgress.unlocked - 1) : layoutProgress.unlocked,
+      currentUnlockedLettersOverride: layoutProgress.unlocked,
+    }) : null,
+    [currentLayout, hist, layoutProgress.unlocked, layouts, progress, result],
+  );
 
   let speedDelta = 0, accDelta = 0;
   if (practiceHist.length >= 2) {
@@ -358,6 +597,22 @@ export function PracticePage() {
 
   // Daily goal
   const goalVal = practiceSettings.dailyGoalValue || 15;
+  const activePracticeGoals = useMemo(
+    () => getActiveMotivationGoalSnapshots(motivationProgress, 2, [
+      'practice-sessions',
+      'practice-minutes',
+      'target-speed-sessions',
+      'high-accuracy-sessions',
+    ]),
+    [motivationProgress],
+  );
+  const practiceStreaks = useMemo(
+    () => getMotivationStreakSnapshots(motivationProgress, [
+      'flawless-practice',
+      'successful-practice',
+    ]),
+    [motivationProgress],
+  );
 
   return (
     <section className={`mode-panel active${settings.focusMode && session.active ? ' focus-active' : ''}`}>
@@ -420,6 +675,44 @@ export function PracticePage() {
           </span>
         </div>
       </div>
+
+      {contentMode === 'custom' && selectedContentPack && selectedContentPackSummary && (
+        <div style={{ marginTop: 8 }}>
+          <div className="practice-stats-row">
+            <div className="pstat daily-goal-row">
+              <span className="daily-goal-label">
+                Набор: {selectedContentPack.name} · {selectedContentPack.kind} · ~{selectedContentPackSummary.estimatedWordsPerText} слов
+              </span>
+            </div>
+            <div className="pstat daily-goal-row">
+              <span className="daily-goal-label">
+                Повторы: {selectedContentPackSummary.repetitionRiskLabel.toLowerCase()} · Лучше: {selectedContentPackSummary.recommendedModeLabel}
+              </span>
+            </div>
+          </div>
+          {selectedContentPackPreflight && (
+            <div style={{ marginTop: 8 }}>
+              <p className="card-desc">
+                <b>{selectedContentPackPreflight.title}.</b> {selectedContentPackPreflight.detail}
+              </p>
+              <div className="game-actions" style={{ marginTop: 8 }}>
+                {selectedContentPackPreflight.actions.map((action) => (
+                  <button
+                    key={action.id}
+                    type="button"
+                    className="btn-secondary btn-sm"
+                    disabled={session.active}
+                    title={action.description}
+                    onClick={() => handleContentPackAction(action)}
+                  >
+                    {action.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Metrics — overall stats */}
       <div className="practice-metrics">
@@ -559,6 +852,43 @@ export function PracticePage() {
               </div>
             )}
           </div>
+          <div className="result-metrics" style={{ marginTop: 12 }}>
+            {activePracticeGoals.map((goal) => (
+              <div key={goal.definition.id} className="result-metric">
+                <span className="result-metric-value">
+                  {goal.nextTarget != null
+                    ? `${Math.round(goal.current)} / ${goal.nextTarget}`
+                    : `${Math.round(goal.current)}`}
+                </span>
+                <span className="result-metric-label">{goal.definition.title}</span>
+              </div>
+            ))}
+            {practiceStreaks.map((streak) => (
+              <div key={streak.definition.id} className="result-metric">
+                <span className={`result-metric-value${streak.current > 0 ? ' good' : ''}`}>
+                  {streak.current}
+                </span>
+                <span className="result-metric-label">{streak.definition.title}</span>
+              </div>
+            ))}
+          </div>
+          {practiceResultComparison && (
+            <ResultComparisonPanel
+              comparison={practiceResultComparison}
+              formatSpeed={fmtSpeed}
+              speedLabel={spdLabel}
+            />
+          )}
+          {masterySummary && (
+            <div style={{ marginTop: 12 }}>
+              <LayoutMasteryPanel
+                snapshot={masterySummary.current}
+                summary={masterySummary}
+                formatSpeed={fmtSpeed}
+                speedLabel={spdLabel}
+              />
+            </div>
+          )}
           <p style={{ marginTop: 10 }}>Нажмите любую клавишу или кнопку ниже</p>
           <button className="btn-accent" onClick={retryAndStart}>Продолжить</button>
         </div>
@@ -579,6 +909,20 @@ export function PracticePage() {
         onGoalSpeedChange={(value) => savePracticeSetting('goalSpeedCpm', Math.round(displayToCpm(value)))}
         trainingMode={trainingMode}
         onTrainingModeChange={(value) => savePracticeSetting('trainingMode', value)}
+        contentMode={contentMode}
+        onContentModeChange={(value) => savePracticeSetting('contentMode', value)}
+        availableContentPacks={availableContentPacks}
+        selectedContentPack={selectedContentPack}
+        selectedContentPackId={selectedContentPack?.id ?? ''}
+        onSelectedContentPackIdChange={(value) => savePracticeSetting('selectedContentPackId', value)}
+        contentScenarioLabel={contentScenario.label}
+        contentPackSummary={selectedContentPackSummary}
+        contentPackPreflight={selectedContentPackPreflight}
+        onContentPackAction={handleContentPackAction}
+        contentPackActionsDisabled={session.active}
+        onImportCustomContent={handleImportCustomContent}
+        onDeleteCustomContent={handleDeleteCustomContent}
+        importStatus={importStatus}
         smartAdaptationEnabled={smartAdaptationEnabled}
         onSmartAdaptationEnabledChange={(value) => savePracticeSetting('smartAdaptationEnabled', value)}
         smartAdaptationStrength={smartAdaptationStrength}
@@ -606,14 +950,6 @@ export function PracticePage() {
       )}
 
       {settings.focusMode && <div className="focus-hint">Фокус-режим</div>}
-
-      <GameAchievementToastStack
-        achievements={achievementToasts}
-        onRemove={handleRemoveToast}
-      />
     </section>
   );
 }
-
-
-

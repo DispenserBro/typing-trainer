@@ -1,16 +1,18 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import type { Session, CharStat } from '../../shared/types';
 import { createSession } from '../../core/engine';
-import { useApp } from '../contexts/AppContext';
+import { useApp, useAppUi } from '../contexts/AppContext';
 
 interface UseTypingSessionOptions {
   mode: Session['mode'];
   noStepBack?: boolean;
+  maxErrors?: number;
   onFinish?: (wpm: number, acc: number, elapsed: number, session: Session) => void;
 }
 
-export function useTypingSession({ mode, noStepBack, onFinish }: UseTypingSessionOptions) {
-  const { settings, setActiveChar, saveCharStats } = useApp();
+export function useTypingSession({ mode, noStepBack, maxErrors, onFinish }: UseTypingSessionOptions) {
+  const { settings, saveCharStats } = useApp();
+  const { setActiveChar } = useAppUi();
   const [session, setSession] = useState<Session>(() => {
     const s = createSession('', mode, -1);
     s.active = false;            // idle until start() is called
@@ -133,10 +135,16 @@ export function useTypingSession({ mode, noStepBack, onFinish }: UseTypingSessio
     }
 
     setSession({ ...s });
+    rerender();
+
+    if (!correct && maxErrors != null && s.errors > maxErrors) {
+      finish();
+      return;
+    }
+
     if (s.pos < s.text.length) {
       setActiveChar(s.text[s.pos]);
     }
-    rerender();
 
     if (s.pos >= s.text.length) {
       if (settings.endWithSpace) {
@@ -146,7 +154,7 @@ export function useTypingSession({ mode, noStepBack, onFinish }: UseTypingSessio
         finish();
       }
     }
-  }, [noStepBack, settings.endWithSpace, setActiveChar, finish, rerender]);
+  }, [maxErrors, noStepBack, settings.endWithSpace, setActiveChar, finish, rerender]);
 
   // live stats
   const elapsed = session.active

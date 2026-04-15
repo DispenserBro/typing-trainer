@@ -4,10 +4,16 @@ import type {
   LayoutsData,
   PracticeAdaptationFocus,
   PracticeAdaptationStrength,
+  PracticeContentMode,
+  PracticeContentPack,
+  PracticeContentScenarioId,
   PracticeTrainingMode,
 } from '../shared/types';
+import { getPracticeContentScenario } from '../core/engine';
 import {
+  buildPracticeDiagnosticsBundle,
   formatPracticeDiagnosticsReport,
+  formatPracticeDiagnosticsBundle,
   runPracticeDiagnostics,
   type PracticeDiagnosticsScenario,
 } from './practiceDiagnostics';
@@ -17,6 +23,9 @@ type CliOptions = {
   runs: number;
   unlockCount?: number;
   trainingMode?: PracticeTrainingMode;
+  contentMode?: PracticeContentMode;
+  contentScenarioId?: PracticeContentScenarioId;
+  contentPackId?: string;
   smartAdaptationEnabled: boolean;
   smartAdaptationStrength: PracticeAdaptationStrength;
   smartAdaptationFocus: PracticeAdaptationFocus;
@@ -52,6 +61,15 @@ function parseCliArgs(argv: string[]): CliOptions {
     } else if (arg === '--mode' && next && (next === 'normal' || next === 'rhythm')) {
       options.trainingMode = next;
       index += 1;
+    } else if (arg === '--content-mode' && next && ['adaptive-words', 'syllables', 'pseudo-words', 'sentences', 'custom'].includes(next)) {
+      options.contentMode = next as PracticeContentMode;
+      index += 1;
+    } else if (arg === '--scenario' && next && ['practice-normal', 'practice-rhythm', 'sprint', 'survival', 'flawless'].includes(next)) {
+      options.contentScenarioId = next as PracticeContentScenarioId;
+      index += 1;
+    } else if (arg === '--pack' && next) {
+      options.contentPackId = next;
+      index += 1;
     } else if (arg === '--adaptation' && next && (next === 'on' || next === 'off')) {
       options.smartAdaptationEnabled = next === 'on';
       index += 1;
@@ -67,10 +85,18 @@ function parseCliArgs(argv: string[]): CliOptions {
     }
   }
 
+  if (options.contentScenarioId && !options.trainingMode) {
+    options.trainingMode = getPracticeContentScenario(options.contentScenarioId).trainingMode;
+  }
+
   return options;
 }
 
-function buildScenarios(layouts: LayoutsData, options: CliOptions): PracticeDiagnosticsScenario[] {
+function buildScenarios(
+  layouts: LayoutsData,
+  practiceContentPacks: PracticeContentPack[],
+  options: CliOptions,
+): PracticeDiagnosticsScenario[] {
   const layoutIds = options.layout
     ? [options.layout]
     : ['qwerty', 'йцукен'].filter((layoutId) => Boolean(layouts.layouts[layoutId]));
@@ -78,17 +104,50 @@ function buildScenarios(layouts: LayoutsData, options: CliOptions): PracticeDiag
 
   const scenarios: PracticeDiagnosticsScenario[] = [];
   for (const layoutId of layoutIds) {
+    const languageId = layouts.layouts[layoutId]?.lang;
+    const defaultPack = practiceContentPacks.find((pack) => pack.language === 'any' || pack.language === languageId) ?? null;
+    const contentModes = options.contentMode
+      ? [options.contentMode]
+      : ([
+        'adaptive-words',
+        'syllables',
+        'pseudo-words',
+        'sentences',
+        ...(defaultPack ? ['custom'] : []),
+      ] as PracticeContentMode[]);
+
     for (const trainingMode of trainingModes) {
-      scenarios.push({
-        label: `${layoutId} / ${trainingMode}`,
-        layoutId,
-        runs: options.runs,
-        unlockCount: options.unlockCount,
-        trainingMode,
-        smartAdaptationEnabled: options.smartAdaptationEnabled,
-        smartAdaptationStrength: options.smartAdaptationStrength,
-        smartAdaptationFocus: options.smartAdaptationFocus,
-      });
+      for (const contentMode of contentModes) {
+        const scenarioIds: PracticeContentScenarioId[] = options.contentScenarioId
+          ? [options.contentScenarioId]
+          : trainingMode === 'rhythm'
+            ? ['practice-rhythm']
+            : ['practice-normal', 'sprint', 'survival', 'flawless'];
+
+        for (const contentScenarioId of scenarioIds) {
+          const contentPackId = contentMode === 'custom'
+            ? (options.contentPackId ?? defaultPack?.id ?? '')
+            : '';
+          const packSuffix = contentMode === 'custom' && contentPackId
+            ? ` / ${contentPackId}`
+            : '';
+          const scenario = getPracticeContentScenario(contentScenarioId);
+
+          scenarios.push({
+            label: `${layoutId} / ${contentScenarioId} / ${contentMode}${packSuffix}`,
+            layoutId,
+            runs: options.runs,
+            unlockCount: options.unlockCount,
+            trainingMode: scenario.trainingMode,
+            contentMode,
+            contentScenarioId,
+            contentPackId,
+            smartAdaptationEnabled: options.smartAdaptationEnabled,
+            smartAdaptationStrength: options.smartAdaptationStrength,
+            smartAdaptationFocus: options.smartAdaptationFocus,
+          });
+        }
+      }
     }
   }
   return scenarios;
@@ -107,17 +166,20 @@ function main() {
     en: readJson<string[]>('data/words_en.json'),
     ru: readJson<string[]>('data/words_ru.json'),
   };
+  const practiceContentPacks = readJson<PracticeContentPack[]>('data/practice-content-packs.json');
 
-  const reports = buildScenarios(layouts, options).map((scenario) =>
-    runPracticeDiagnostics(layouts, wordsByLanguage, scenario),
+  const reports = buildScenarios(layouts, practiceContentPacks, options).map((scenario) =>
+    runPracticeDiagnostics(layouts, wordsByLanguage, practiceContentPacks, scenario),
   );
+  const bundle = buildPracticeDiagnosticsBundle(reports);
 
   reports.forEach((report) => {
     process.stdout.write(`${formatPracticeDiagnosticsReport(report)}\n`);
   });
+  process.stdout.write(`${formatPracticeDiagnosticsBundle(bundle)}\n`);
 
   if (options.jsonPath) {
-    writeJsonReport(options.jsonPath, { generatedAt: new Date().toISOString(), reports });
+    writeJsonReport(options.jsonPath, { generatedAt: new Date().toISOString(), ...bundle });
     process.stdout.write(`JSON report saved to ${options.jsonPath}\n`);
   }
 }

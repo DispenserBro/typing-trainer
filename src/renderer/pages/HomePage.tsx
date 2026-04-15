@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
+  AlertTriangle,
   ArrowRight,
   BarChart3,
   BookOpen,
@@ -9,14 +10,39 @@ import {
   Gamepad2,
   Play,
   Settings,
+  Shield,
   Sparkles,
   Target,
   Trophy,
 } from 'lucide-react';
 import { EXERCISE_COUNT, filterYoKeys } from '../../core/engine';
 import { DAILY_RUN_LEVELS } from '../../core/game/dailyRun';
+import {
+  countUnlockedAchievements,
+  getReplayModeFromHistory,
+  getReplayTitleFromHistory,
+  summarizeDailyRunState,
+  summarizeHomeHistory,
+  summarizeLessonCompletion,
+} from '../../core/home/summary';
+import {
+  getActiveMotivationGoalSnapshots,
+  getMotivationStreakSnapshots,
+  getMotivationWindowRemainingDays,
+  getSeasonMotivationSnapshot,
+  getWeeklyMotivationRecommendation,
+  getWeeklyMotivationSnapshot,
+} from '../../core/motivation/progress';
+import {
+  buildModeFocusSnapshots,
+  buildHomePersonalRecordCards,
+  buildLayoutMasterySnapshot,
+  buildHistoryFollowupRecommendation,
+  describeHomeRecord,
+} from '../../core/motivation/records';
 import { useApp } from '../contexts/AppContext';
 import { AchievementsModal } from '../components/AchievementsModal';
+import { LayoutMasteryPanel } from '../components/LayoutMasteryPanel';
 
 type HomeAction = {
   id: string;
@@ -24,6 +50,7 @@ type HomeAction = {
   description: string;
   icon: ReactNode;
   meta: string;
+  actionMode: string;
 };
 
 function formatShortDate(value: string | undefined) {
@@ -34,6 +61,12 @@ function formatShortDate(value: string | undefined) {
     day: '2-digit',
     month: 'short',
   });
+}
+
+function formatChallengeProgress(current: number, target: number) {
+  const displayCurrent = Number.isInteger(current) ? current.toString() : Math.round(current).toString();
+  const displayTarget = Number.isInteger(target) ? target.toString() : Math.round(target).toString();
+  return `${displayCurrent} / ${displayTarget}`;
 }
 
 export function HomePage() {
@@ -51,14 +84,16 @@ export function HomePage() {
     getPracticeState,
     gameAchievementCatalog,
     unlockedAchievementIds,
+    motivationProgress,
   } = useApp();
 
   const [showAchievements, setShowAchievements] = useState(false);
 
   const totalAchievementsCount = gameAchievementCatalog.length;
-  const totalUnlockedAchievements = unlockedAchievementIds.filter(
-    id => gameAchievementCatalog.some(a => a.id === id),
-  ).length;
+  const totalUnlockedAchievements = useMemo(
+    () => countUnlockedAchievements(gameAchievementCatalog, unlockedAchievementIds),
+    [gameAchievementCatalog, unlockedAchievementIds],
+  );
 
   const layout = layouts.layouts[currentLayout];
   const layoutLabel = layout?.label ?? currentLayout.toUpperCase();
@@ -81,68 +116,36 @@ export function HomePage() {
   const dailyProgressPercent = Math.min(100, Math.round((dailyProgressValue / goalValue) * 100));
 
   const currentHistory = progress.history?.[currentLayout] ?? [];
-  const lastSession = currentHistory[currentHistory.length - 1] ?? null;
-  let bestSession = lastSession;
-  for (const entry of currentHistory) {
-    if (!bestSession || entry.wpm > bestSession.wpm) {
-      bestSession = entry;
-    }
-  }
+  const {
+    lastSession,
+    bestSession,
+    bestSprintSession,
+    bestSurvivalSession,
+    bestFlawlessSession,
+  } = useMemo(() => summarizeHomeHistory(currentHistory), [currentHistory]);
 
   const lessons = layout?.lessonOrder ?? [];
   const lessonProgress = progress.lessons?.[currentLayout] ?? {};
-  const completedLessons = lessons.reduce((count, _lesson, index) => {
-    const done = lessonProgress[index];
-    const doneCount = typeof done === 'number' ? done : (done ? EXERCISE_COUNT : 0);
-    return count + (doneCount >= EXERCISE_COUNT ? 1 : 0);
-  }, 0);
-  const nextLessonNumber = completedLessons < lessons.length ? completedLessons + 1 : null;
+  const {
+    completedLessons,
+    nextLessonNumber,
+  } = useMemo(
+    () => summarizeLessonCompletion(lessons, lessonProgress, EXERCISE_COUNT),
+    [lessons, lessonProgress],
+  );
 
   const currentRun = gameState.currentRun ?? null;
   const activeRunLabel = currentRun
     ? `Уровень ${currentRun.level} · ${currentRun.lives} HP`
     : 'Нет активного забега';
-  const dailyRunEntries = Object.values(gameState.dailyRun?.history ?? {});
-  const todayDailyRun = dailyRunEntries
-    .find(entry => entry.date === new Date().toISOString().slice(0, 10)) ?? null;
-  const dailyRunCompleted = Boolean(todayDailyRun && todayDailyRun.maxLevel >= DAILY_RUN_LEVELS);
-
-  let recommendation = {
-    title: 'Открыть практику',
-    description: 'Лучший следующий шаг — короткая практика, чтобы сохранить темп и продвинуть прогресс раскладки.',
-    actionLabel: 'Перейти в практику',
-    action: () => switchMode('practice'),
-  };
-
-  if (currentRun) {
-    recommendation = {
-      title: 'Продолжить забег',
-      description: 'Активный игровой забег уже сохранён. Самый ценный следующий шаг — вернуться в него и не терять инерцию.',
-      actionLabel: 'Продолжить игру',
-      action: () => switchMode('game'),
-    };
-  } else if (nextLessonNumber !== null && completedLessons < Math.max(3, Math.floor(lessons.length * 0.35))) {
-    recommendation = {
-      title: 'Продолжить уроки',
-      description: `Следующий полезный шаг — добрать базу раскладки. Ближайшая цель: урок ${nextLessonNumber}.`,
-      actionLabel: 'Открыть уроки',
-      action: () => switchMode('lessons'),
-    };
-  } else if (nextLetter) {
-    recommendation = {
-      title: 'Открыть новую букву',
-      description: `До следующей буквы осталось немного. Практика быстрее всего продвинет раскладку к символу ${nextLetter.toUpperCase()}.`,
-      actionLabel: 'Пойти в практику',
-      action: () => switchMode('practice'),
-    };
-  } else if (!todayDailyRun) {
-    recommendation = {
-      title: 'Зайти в игровой режим',
-      description: 'Базовая тренировка уже собрана. Игровой режим поможет закрепить навык в более длинной и вариативной сессии.',
-      actionLabel: 'Открыть игру',
-      action: () => switchMode('game'),
-    };
-  }
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const {
+    todayDailyRun,
+    dailyRunCompleted,
+  } = useMemo(
+    () => summarizeDailyRunState(gameState.dailyRun?.history, todayKey, DAILY_RUN_LEVELS),
+    [gameState.dailyRun?.history, todayKey],
+  );
 
   const actions: HomeAction[] = [
     currentRun
@@ -152,6 +155,7 @@ export function HomePage() {
           description: 'Вернуться в сохранённый игровой прогресс с тем же уровнем, HP и маршрутом.',
           icon: <Play size={18} />,
           meta: activeRunLabel,
+          actionMode: 'game',
         }
       : {
           id: 'start-practice',
@@ -159,6 +163,7 @@ export function HomePage() {
           description: 'Открыть тренировку слабых мест и сразу начать текущую конфигурацию практики.',
           icon: <Target size={18} />,
           meta: nextLetter ? `Следующая буква: ${nextLetter.toUpperCase()}` : 'Все буквы текущей раскладки открыты',
+          actionMode: 'practice',
         },
     {
       id: 'lessons',
@@ -166,6 +171,7 @@ export function HomePage() {
       description: 'Продолжить обучение по структуре раскладки и упражнениям на переходы.',
       icon: <BookOpen size={18} />,
       meta: nextLessonNumber ? `Следующий урок: ${nextLessonNumber}` : 'Все уроки текущей раскладки завершены',
+      actionMode: 'lessons',
     },
     {
       id: 'stats',
@@ -173,6 +179,7 @@ export function HomePage() {
       description: 'Посмотреть динамику скорости, точности, ритма и проблемных сочетаний.',
       icon: <BarChart3 size={18} />,
       meta: lastSession ? `Последняя сессия: ${formatShortDate(lastSession.date)}` : 'Статистика появится после первых попыток',
+      actionMode: 'stats',
     },
   ];
 
@@ -186,10 +193,24 @@ export function HomePage() {
     },
     {
       id: 'test',
-      title: 'Тест',
-      description: 'Проверка чистой скорости и точности на фиксированном времени.',
+      title: 'Спринт',
+      description: 'Короткий таймерный забег на темп и аккуратность поверх общего content-pipeline.',
       icon: <Clock3 size={20} />,
-      meta: bestSession ? `Лучший результат: ${fmtSpeed(bestSession.wpm)} ${spdLabel}` : 'Ещё нет результатов',
+      meta: bestSprintSession ? `Лучший спринт: ${fmtSpeed(bestSprintSession.wpm)} ${spdLabel}` : 'Ещё нет спринтов',
+    },
+    {
+      id: 'survival',
+      title: 'Выживание',
+      description: 'Длинный проход с ограничением по ошибкам, где важна устойчивая серия до конца текста.',
+      icon: <Shield size={20} />,
+      meta: bestSurvivalSession ? `Лучший проход: ${fmtSpeed(bestSurvivalSession.wpm)} ${spdLabel}` : 'Ещё нет проходов',
+    },
+    {
+      id: 'flawless',
+      title: 'Без ошибок',
+      description: 'Чистый проход без права на промах, чтобы закреплять стабильность и аккуратность.',
+      icon: <AlertTriangle size={20} />,
+      meta: bestFlawlessSession ? `Лучший чистый проход: ${fmtSpeed(bestFlawlessSession.wpm)} ${spdLabel}` : 'Ещё нет чистых проходов',
     },
     {
       id: 'lessons',
@@ -220,6 +241,131 @@ export function HomePage() {
       meta: `${layoutLabel} · ${settings.theme}`,
     },
   ];
+  const {
+    homeGoals,
+    homeStreaks,
+    weeklySnapshot,
+    seasonSnapshot,
+    weeklyRecommendation,
+    weeklyRemainingDays,
+    seasonRemainingDays,
+  } = useMemo(() => {
+    const nextWeeklySnapshot = getWeeklyMotivationSnapshot(motivationProgress);
+    const nextSeasonSnapshot = getSeasonMotivationSnapshot(motivationProgress);
+
+    return {
+      homeGoals: getActiveMotivationGoalSnapshots(motivationProgress, 4),
+      homeStreaks: getMotivationStreakSnapshots(motivationProgress),
+      weeklySnapshot: nextWeeklySnapshot,
+      seasonSnapshot: nextSeasonSnapshot,
+      weeklyRecommendation: getWeeklyMotivationRecommendation(motivationProgress, {
+        todayDailyRunCompleted: dailyRunCompleted,
+      }),
+      weeklyRemainingDays: getMotivationWindowRemainingDays(nextWeeklySnapshot.endsAt),
+      seasonRemainingDays: getMotivationWindowRemainingDays(nextSeasonSnapshot.endsAt),
+    };
+  }, [dailyRunCompleted, motivationProgress]);
+  const {
+    personalRecordCards,
+    layoutMastery,
+    modeFocusSnapshots,
+    recommendedModeFocus,
+    lastModeFollowup,
+  } = useMemo(() => {
+    const nextModeFocusSnapshots = buildModeFocusSnapshots(currentHistory);
+
+    return {
+      personalRecordCards: buildHomePersonalRecordCards(progress, layouts, currentLayout),
+      layoutMastery: buildLayoutMasterySnapshot(progress, layouts, currentLayout),
+      modeFocusSnapshots: nextModeFocusSnapshots,
+      recommendedModeFocus: nextModeFocusSnapshots.find(snapshot => snapshot.id !== 'practice' && snapshot.attempts === 0)
+        ?? nextModeFocusSnapshots.find(snapshot => snapshot.id !== 'practice' && snapshot.emphasis === 'warn')
+        ?? null,
+      lastModeFollowup: buildHistoryFollowupRecommendation(lastSession),
+    };
+  }, [currentHistory, currentLayout, lastSession, layouts, progress]);
+
+  const recommendation = useMemo(() => {
+    if (currentRun) {
+      return {
+        title: 'Продолжить забег',
+        description: 'Активный игровой забег уже сохранён. Самый ценный следующий шаг — вернуться в него и не терять инерцию.',
+        actionLabel: 'Продолжить игру',
+        actionMode: 'game',
+      };
+    }
+
+    if (weeklyRecommendation) {
+      return {
+        title: weeklyRecommendation.title,
+        description: weeklyRecommendation.description,
+        actionLabel: weeklyRecommendation.actionLabel,
+        actionMode: weeklyRecommendation.actionMode,
+      };
+    }
+
+    if (lastModeFollowup) {
+      return {
+        title: lastModeFollowup.title,
+        description: lastModeFollowup.description,
+        actionLabel: lastModeFollowup.actionLabel,
+        actionMode: lastModeFollowup.actionMode,
+      };
+    }
+
+    if (recommendedModeFocus) {
+      return {
+        title: `Проверить режим: ${recommendedModeFocus.title}`,
+        description: recommendedModeFocus.recommendation,
+        actionLabel: `Открыть ${recommendedModeFocus.title.toLowerCase()}`,
+        actionMode: recommendedModeFocus.actionMode,
+      };
+    }
+
+    if (nextLessonNumber !== null && completedLessons < Math.max(3, Math.floor(lessons.length * 0.35))) {
+      return {
+        title: 'Продолжить уроки',
+        description: `Следующий полезный шаг — добрать базу раскладки. Ближайшая цель: урок ${nextLessonNumber}.`,
+        actionLabel: 'Открыть уроки',
+        actionMode: 'lessons',
+      };
+    }
+
+    if (nextLetter) {
+      return {
+        title: 'Открыть новую букву',
+        description: `До следующей буквы осталось немного. Практика быстрее всего продвинет раскладку к символу ${nextLetter.toUpperCase()}.`,
+        actionLabel: 'Пойти в практику',
+        actionMode: 'practice',
+      };
+    }
+
+    if (!todayDailyRun) {
+      return {
+        title: 'Зайти в игровой режим',
+        description: 'Базовая тренировка уже собрана. Игровой режим поможет закрепить навык в более длинной и вариативной сессии.',
+        actionLabel: 'Открыть игру',
+        actionMode: 'game',
+      };
+    }
+
+    return {
+      title: 'Открыть практику',
+      description: 'Лучший следующий шаг — короткая практика, чтобы сохранить темп и продвинуть прогресс раскладки.',
+      actionLabel: 'Перейти в практику',
+      actionMode: 'practice',
+    };
+  }, [
+    completedLessons,
+    currentRun,
+    lastModeFollowup,
+    lessons.length,
+    nextLessonNumber,
+    nextLetter,
+    recommendedModeFocus,
+    todayDailyRun,
+    weeklyRecommendation,
+  ]);
 
   return (
     <section className="mode-panel active home-panel">
@@ -248,7 +394,7 @@ export function HomePage() {
             под текущую цель без лишних переходов.
           </p>
           <div className="home-hero-actions">
-            <button className="btn-accent" onClick={recommendation.action}>
+            <button className="btn-accent" onClick={() => switchMode(recommendation.actionMode)}>
               {recommendation.actionLabel}
             </button>
             <button className="btn-secondary" onClick={() => switchMode(currentRun ? 'game' : 'practice')}>
@@ -258,6 +404,7 @@ export function HomePage() {
           <div className="home-hero-tags">
             <span>{layoutLabel}</span>
             <span>Дневная цель: {dailyProgressLabel}</span>
+            <span>Weekly: {weeklySnapshot.completedCount}/{weeklySnapshot.totalCount}</span>
             <span>{currentRun ? 'Активный забег сохранён' : 'Можно стартовать новую сессию'}</span>
           </div>
         </div>
@@ -269,7 +416,7 @@ export function HomePage() {
           </div>
           <h3>{recommendation.title}</h3>
           <p>{recommendation.description}</p>
-          <button className="home-inline-link" onClick={recommendation.action}>
+          <button className="home-inline-link" onClick={() => switchMode(recommendation.actionMode)}>
             {recommendation.actionLabel}
             <ArrowRight size={16} />
           </button>
@@ -303,6 +450,83 @@ export function HomePage() {
 
       <div className="home-section">
         <div className="home-section-head">
+          <h3>Быстрый возврат</h3>
+          <p className="card-desc">Повтор последнего сценария и самый уместный следующий переход после него.</p>
+        </div>
+        <div className="home-action-grid">
+          <button
+            type="button"
+            className="card home-action-card"
+            onClick={() => switchMode(getReplayModeFromHistory(lastSession))}
+          >
+            <div className="home-card-head">
+              <span className="home-card-meta">Последняя попытка</span>
+            </div>
+            <h4>{getReplayTitleFromHistory(lastSession)}</h4>
+            <p>{lastSession ? `Последний результат был ${formatShortDate(lastSession.date)}.` : 'История пока пустая, начните с базовой практики.'}</p>
+          </button>
+          {lastModeFollowup && (
+            <button
+              type="button"
+              className="card home-action-card"
+              onClick={() => switchMode(lastModeFollowup.actionMode)}
+            >
+              <div className="home-card-head">
+                <span className="home-card-meta">Следующий шаг</span>
+              </div>
+              <h4>{lastModeFollowup.title}</h4>
+              <p>{lastModeFollowup.description}</p>
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="home-section">
+        <div className="home-section-head">
+          <h3>Недельные задачи</h3>
+          <p className="card-desc">
+            {weeklySnapshot.template.title} · до сброса осталось {weeklyRemainingDays} дн.
+          </p>
+        </div>
+        <div className="home-summary-grid">
+          {weeklySnapshot.goals.map((goal) => (
+            <div key={goal.definition.id} className="card home-summary-card">
+              <span className="home-summary-label">{goal.definition.title}</span>
+              <strong>{formatChallengeProgress(goal.current, goal.target)}</strong>
+              <div className="home-progress-bar">
+                <span style={{ width: `${goal.progressPercent}%` }} />
+              </div>
+              <p>{goal.completed ? 'Задача недели закрыта' : goal.definition.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="home-section">
+        <div className="home-section-head">
+          <h3>Сезонный фокус</h3>
+          <p className="card-desc">
+            {seasonSnapshot.definition.title} · локальный цикл ещё на {seasonRemainingDays} дн.
+          </p>
+        </div>
+        <div className="card home-summary-card">
+          <span className="home-summary-label">{seasonSnapshot.definition.title}</span>
+          <strong>{seasonSnapshot.completedCount}/{seasonSnapshot.totalCount} целей закрыто</strong>
+          <p>{seasonSnapshot.definition.description}</p>
+          <div className="home-insight-grid">
+            {seasonSnapshot.goals.map((goal) => (
+              <div key={goal.definition.id} className="card home-insight-card">
+                <span className="home-summary-label">{goal.definition.title}</span>
+                <strong>{formatChallengeProgress(goal.current, goal.target)}</strong>
+                <p>{goal.completed ? 'Выполнено в текущем сезоне' : goal.definition.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="home-section">
+        <div className="home-section-head">
           <h3>Достижения</h3>
           <p className="card-desc">Ваши награды за игровые, учебные и тренировочные успехи.</p>
         </div>
@@ -331,6 +555,97 @@ export function HomePage() {
 
       <div className="home-section">
         <div className="home-section-head">
+          <h3>Режимный фокус</h3>
+          <p className="card-desc">Какие режимы уже встроены в цикл занятий, а какие ещё стоит подтянуть для более цельной прогрессии.</p>
+        </div>
+        <div className="home-summary-grid">
+          {modeFocusSnapshots.map((snapshot) => (
+            <button
+              key={snapshot.id}
+              type="button"
+              className="card home-summary-card"
+              onClick={() => switchMode(snapshot.actionMode)}
+            >
+              <span className="home-summary-label">{snapshot.title}</span>
+              <strong>
+                {snapshot.bestEntry ? `${fmtSpeed(snapshot.bestEntry.wpm)} ${spdLabel}` : 'Нет попыток'}
+              </strong>
+              <p>
+                {snapshot.attempts > 0
+                  ? `${snapshot.attempts} попыток · последняя ${formatShortDate(snapshot.lastEntry?.date)}`
+                  : snapshot.description}
+              </p>
+              <p>{snapshot.recommendation}</p>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="home-section">
+        <div className="home-section-head">
+          <h3>Личные рекорды</h3>
+          <p className="card-desc">Короткая сводка лучших результатов по режимам, текущему языку и активной раскладке.</p>
+        </div>
+        <div className="home-summary-grid">
+          {personalRecordCards.map((card) => (
+            <div key={card.id} className="card home-summary-card">
+              <span className="home-summary-label">{card.title}</span>
+              <strong>{card.record ? `${fmtSpeed(card.record.entry.wpm)} ${spdLabel}` : 'Нет данных'}</strong>
+              <p>{card.record ? `${Math.round(card.record.entry.acc)}% · ${describeHomeRecord(card.record)}` : card.subtitle}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="home-section">
+        <div className="home-section-head">
+          <h3>Цепочка мастерства</h3>
+          <p className="card-desc">Текущая ступень раскладки, активный unlock-эффект и ближайшая награда в mastery-цепочке.</p>
+        </div>
+        <LayoutMasteryPanel
+          snapshot={layoutMastery}
+          formatSpeed={fmtSpeed}
+          speedLabel={spdLabel}
+        />
+      </div>
+
+      <div className="home-section">
+        <div className="home-section-head">
+          <h3>Долгие цели</h3>
+          <p className="card-desc">Прогресс по крупным вехам, которые держат инерцию между отдельными сессиями.</p>
+        </div>
+        <div className="home-summary-grid">
+          {homeGoals.map((goal) => (
+            <div key={goal.definition.id} className="card home-summary-card">
+              <span className="home-summary-label">{goal.definition.title}</span>
+              <strong>
+                {Math.round(goal.current)}
+                {goal.nextTarget != null ? ` / ${goal.nextTarget}` : ''}
+              </strong>
+              <p>{goal.definition.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="home-section">
+        <div className="home-section-head">
+          <h3>Серии</h3>
+          <p className="card-desc">Текущие и лучшие цепочки, которые помогают видеть стабильность, а не только разовый пик.</p>
+        </div>
+        <div className="home-insight-grid">
+          {homeStreaks.map((streak) => (
+            <div key={streak.definition.id} className="card home-insight-card">
+              <span className="home-summary-label">{streak.definition.title}</span>
+              <strong>{streak.current}</strong>
+              <p>Лучший результат: {streak.best}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="home-section">
+        <div className="home-section-head">
           <h3>Быстрые действия</h3>
           <p className="card-desc">Самые частые входы для продолжения текущего прогресса.</p>
         </div>
@@ -340,12 +655,7 @@ export function HomePage() {
               key={action.id}
               type="button"
               className="card home-action-card"
-              onClick={() => {
-                if (action.id === 'continue-run') switchMode('game');
-                else if (action.id === 'start-practice') switchMode('practice');
-                else if (action.id === 'lessons') switchMode('lessons');
-                else switchMode('stats');
-              }}
+              onClick={() => switchMode(action.actionMode)}
             >
               <div className="home-card-head">
                 <span className="home-card-icon">{action.icon}</span>

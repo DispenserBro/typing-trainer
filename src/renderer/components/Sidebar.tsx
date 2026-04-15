@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useApp } from '../contexts/AppContext';
-import { Target, Clock, BookOpen, BarChart3, Settings, Keyboard, Gamepad2, Puzzle, Box } from 'lucide-react';
+import { Target, Clock, BookOpen, BarChart3, Settings, Keyboard, Gamepad2, Puzzle, Box, Shield, AlertTriangle } from 'lucide-react';
 import type { ReactElement } from 'react';
 
 interface SidebarMode {
@@ -16,8 +16,16 @@ const MODES: SidebarMode[] = [
     icon: <Target size={20} />,
   },
   {
-    id: 'test', label: 'Тест', group: 'top',
+    id: 'test', label: 'Спринт', group: 'top',
     icon: <Clock size={20} />,
+  },
+  {
+    id: 'survival', label: 'Выживание', group: 'top',
+    icon: <Shield size={20} />,
+  },
+  {
+    id: 'flawless', label: 'Без ошибок', group: 'top',
+    icon: <AlertTriangle size={20} />,
   },
   {
     id: 'lessons', label: 'Уроки', group: 'top',

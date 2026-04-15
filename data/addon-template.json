@@ -23,6 +23,24 @@
         ]
       }
     ],
+    "practicePacks": {
+      "packs": [
+        {
+          "id": "tech-en-snippets",
+          "name": "Технические сниппеты",
+          "description": "Короткие тематические фразы для практики программирования.",
+          "language": "en",
+          "kind": "mixed",
+          "items": [
+            "clean architecture",
+            "typed event flow",
+            "stable render loop",
+            "Component state must stay predictable.",
+            "Refactor the handler before adding another branch."
+          ]
+        }
+      ]
+    },
     "lessons": [
       {
         "layoutId": "qwerty",

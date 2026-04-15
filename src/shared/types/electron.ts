@@ -1,7 +1,22 @@
 import type { LayoutsData } from './layout';
 import type { Progress } from './progress';
+import type { PracticeContentPack } from './practice';
 import type { CustomThemes } from './settings';
 import type { InstalledAddon, InstalledMod } from './addon';
+
+export interface ImportedFile {
+  name: string;
+  path: string;
+  content: string;
+}
+
+export interface ImportFileOptions {
+  title?: string;
+  filters?: Array<{
+    name: string;
+    extensions: string[];
+  }>;
+}
 
 export interface ExportPayload {
   version: 1;
@@ -9,7 +24,9 @@ export interface ExportPayload {
   theme?: { name: string; colors: CustomThemes[string] };
   settings?: Progress['settings'];
   practiceSettings?: Progress['practiceSettings'];
+  modePracticeSettings?: Progress['modePracticeSettings'];
   customPresets?: Progress['customPresets'];
+  customPracticePacks?: Progress['customPracticePacks'];
 }
 
 export interface AddonInstallResult {
@@ -27,13 +44,14 @@ export interface ModInstallResult {
 export interface ElectronAPI {
   getLayouts(): Promise<LayoutsData>;
   getWords(lang: string): Promise<string[]>;
+  getPracticeContentPacks(): Promise<PracticeContentPack[]>;
   getLessonBigrams(lang: string): Promise<Record<string, string[]>>;
   getProgress(): Promise<Progress>;
   saveProgress(data: Progress): Promise<boolean>;
   getCustomThemes(): Promise<CustomThemes>;
   saveCustomThemes(data: CustomThemes): Promise<boolean>;
   exportFile(defaultName: string, content: string): Promise<boolean>;
-  importFile(): Promise<string | null>;
+  importFile(options?: ImportFileOptions): Promise<ImportedFile | null>;
 
   /* Addons — content JSON files */
   scanAddons(): Promise<InstalledAddon[]>;
