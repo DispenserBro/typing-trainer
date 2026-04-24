@@ -1,0 +1,5485 @@
+msgid ""
+msgstr ""
+"Language: en\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Language-Label: English\n"
+"X-Language-Native-Label: English\n"
+
+msgid "app.loading"
+msgstr "Loading…"
+
+msgid "app.sidebar.home"
+msgstr "Main menu"
+
+msgid "app.sidebar.section"
+msgstr "mode"
+
+msgid "app.sidebar.modes.practice"
+msgstr "Practice"
+
+msgid "app.sidebar.modes.sprint"
+msgstr "Sprint"
+
+msgid "app.sidebar.modes.survival"
+msgstr "Survival"
+
+msgid "app.sidebar.modes.lessons"
+msgstr "Lessons"
+
+msgid "app.sidebar.modes.game"
+msgstr "Game"
+
+msgid "app.sidebar.modes.stats"
+msgstr "Stats"
+
+msgid "app.sidebar.modes.extensions"
+msgstr "Extensions"
+
+msgid "app.sidebar.modes.settings"
+msgstr "Settings"
+
+msgid "common.close"
+msgstr "Close"
+
+msgid "common.accuracy"
+msgstr "Accuracy"
+
+msgid "common.time"
+msgstr "Time"
+
+msgid "common.secondsShort"
+msgstr "s"
+
+msgid "common.characters"
+msgstr "Characters"
+
+msgid "common.errors"
+msgstr "Errors"
+
+msgid "common.retry"
+msgstr "Retry"
+
+msgid "common.toPractice"
+msgstr "Back to practice"
+
+msgid "achievements.title"
+msgstr "Achievements"
+
+msgid "achievements.opened"
+msgstr "Opened"
+
+msgid "achievements.of"
+msgstr "of"
+
+msgid "achievements.all"
+msgstr "All achievements"
+
+msgid "achievements.empty"
+msgstr "There are no achievements in this category yet."
+
+msgid "achievements.categories.game"
+msgstr "Game"
+
+msgid "achievements.categories.practice"
+msgstr "Practice"
+
+msgid "achievements.categories.lessons"
+msgstr "Lessons"
+
+msgid "achievements.categories.test"
+msgstr "Sprint"
+
+msgid "achievements.state.open"
+msgstr "Unlocked"
+
+msgid "achievements.state.closed"
+msgstr "Locked"
+
+msgid "achievements.catalog.first-level.name"
+msgstr "First step"
+
+msgid "achievements.catalog.first-level.description"
+msgstr "Clear the first level of the game mode."
+
+msgid "achievements.catalog.first-boss.name"
+msgstr "Broken crown"
+
+msgid "achievements.catalog.first-boss.description"
+msgstr "Defeat the first boss on level 5."
+
+msgid "achievements.catalog.unlock-letter.name"
+msgstr "Symbol awakened"
+
+msgid "achievements.catalog.unlock-letter.description"
+msgstr "Unlock a new letter during a run."
+
+msgid "achievements.catalog.collect-item.name"
+msgstr "First find"
+
+msgid "achievements.catalog.collect-item.description"
+msgstr "Receive any item after defeating a boss."
+
+msgid "achievements.catalog.collect-durable-item.name"
+msgstr "Fragile strength"
+
+msgid "achievements.catalog.collect-durable-item.description"
+msgstr "Obtain an item with durability."
+
+msgid "achievements.catalog.collect-top-rarity-item.name"
+msgstr "Relic glow"
+
+msgid "achievements.catalog.collect-top-rarity-item.description"
+msgstr "Obtain an item of the highest rarity."
+
+msgid "achievements.catalog.equip-item.name"
+msgstr "Fully armed"
+
+msgid "achievements.catalog.equip-item.description"
+msgstr "Equip any item."
+
+msgid "achievements.catalog.full-top-rarity-loadout.name"
+msgstr "Collector throne"
+
+msgid "achievements.catalog.full-top-rarity-loadout.description"
+msgstr "Fill all 3 slots with items of the highest rarity."
+
+msgid "achievements.catalog.boss-25.name"
+msgstr "Guardian of the quarter path"
+
+msgid "achievements.catalog.boss-25.description"
+msgstr "Defeat the level 25 boss."
+
+msgid "achievements.catalog.boss-50.name"
+msgstr "Heart of the storm"
+
+msgid "achievements.catalog.boss-50.description"
+msgstr "Defeat the level 50 boss."
+
+msgid "achievements.catalog.boss-75.name"
+msgstr "Edge of endurance"
+
+msgid "achievements.catalog.boss-75.description"
+msgstr "Defeat the level 75 boss."
+
+msgid "achievements.catalog.game-complete.name"
+msgstr "Lord of rhythm"
+
+msgid "achievements.catalog.game-complete.description"
+msgstr "Clear all 100 levels of the game mode."
+
+msgid "achievements.catalog.practice-first-session.name"
+msgstr "Warm-up"
+
+msgid "achievements.catalog.practice-first-session.description"
+msgstr "Finish your first practice session."
+
+msgid "achievements.catalog.practice-unlock-letter.name"
+msgstr "New horizon"
+
+msgid "achievements.catalog.practice-unlock-letter.description"
+msgstr "Unlock a new letter in practice."
+
+msgid "achievements.catalog.practice-10-sessions.name"
+msgstr "Consistency"
+
+msgid "achievements.catalog.practice-10-sessions.description"
+msgstr "Finish 10 practice sessions."
+
+msgid "achievements.catalog.lessons-first-complete.name"
+msgstr "Apprentice"
+
+msgid "achievements.catalog.lessons-first-complete.description"
+msgstr "Finish your first lesson."
+
+msgid "achievements.catalog.lessons-section-complete.name"
+msgstr "Chapter closed"
+
+msgid "achievements.catalog.lessons-section-complete.description"
+msgstr "Finish all lessons in one section."
+
+msgid "achievements.catalog.lessons-all-complete.name"
+msgstr "Graduate"
+
+msgid "achievements.catalog.lessons-all-complete.description"
+msgstr "Finish all lessons for the current layout."
+
+msgid "achievements.catalog.test-first-complete.name"
+msgstr "Connection check"
+
+msgid "achievements.catalog.test-first-complete.description"
+msgstr "Finish your first sprint."
+
+msgid "achievements.catalog.test-high-accuracy.name"
+msgstr "Sniper"
+
+msgid "achievements.catalog.test-high-accuracy.description"
+msgstr "Finish a sprint with 98% accuracy or higher."
+
+msgid "achievements.catalog.test-speed-60.name"
+msgstr "Speed mode"
+
+msgid "achievements.catalog.test-speed-60.description"
+msgstr "Reach 60 WPM or higher in sprint."
+
+msgid "mastery.currentScore"
+msgstr "Current mastery points"
+
+msgid "mastery.remainingPoints"
+msgstr "{{count}} pts left to “{{title}}”"
+
+msgid "mastery.maxReached"
+msgstr "The top tier has already been reached"
+
+msgid "mastery.activeReward"
+msgstr "Active promotion effect"
+
+msgid "mastery.nextReward"
+msgstr "Next reward"
+
+msgid "mastery.milestones"
+msgstr "Mastery tiers"
+
+msgid "mastery.symbolsUnlocked"
+msgstr "Symbols unlocked"
+
+msgid "mastery.practiceSessions"
+msgstr "Practice sessions"
+
+msgid "mastery.bestPace"
+msgstr "Best pace"
+
+msgid "mastery.scoreDelta"
+msgstr "Mastery gain"
+
+msgid "mastery.beforeAttempt"
+msgstr "Before the attempt"
+
+msgid "mastery.newMilestone"
+msgstr "New tier"
+
+msgid "mastery.currentMilestone"
+msgstr "Current tier"
+
+msgid "mastery.signalSummary"
+msgstr "{{unlocked}}/{{total}} symbols unlocked · {{sessions}} practice sessions · best pace {{speed}} WPM"
+
+msgid "mastery.ranks.private.title"
+msgstr "Private"
+
+msgid "mastery.ranks.private.description"
+msgstr "The layout has only just entered service: the base is there, but the hands still check themselves on almost every hard transition."
+
+msgid "mastery.ranks.private.rewardTitle"
+msgstr "Formation entry"
+
+msgid "mastery.ranks.private.rewardDescription"
+msgstr "The layout gets its own profile status and starts building an explicit mastery chain from the very first stable attempts."
+
+msgid "mastery.ranks.corporal.title"
+msgstr "Corporal"
+
+msgid "mastery.ranks.corporal.description"
+msgstr "The first movements are becoming reliable: the layout is recognized without extra pauses, and heavy misses happen much less often."
+
+msgid "mastery.ranks.corporal.rewardTitle"
+msgstr "First sign of stability"
+
+msgid "mastery.ranks.corporal.rewardDescription"
+msgstr "The profile begins to see that this layout has moved beyond random tries and is actually taking root in regular practice."
+
+msgid "mastery.ranks.sergeant.title"
+msgstr "Sergeant"
+
+msgid "mastery.ranks.sergeant.description"
+msgstr "The base is anchored: the user starts controlling weak spots better, and pace no longer collapses on every difficult combination."
+
+msgid "mastery.ranks.sergeant.rewardTitle"
+msgstr "Weak-spot control"
+
+msgid "mastery.ranks.sergeant.rewardDescription"
+msgstr "Mastery starts highlighting more precisely which letters, bigrams, and rhythm drops still separate the layout from the next rank."
+
+msgid "mastery.ranks.lieutenant.title"
+msgstr "Lieutenant"
+
+msgid "mastery.ranks.lieutenant.description"
+msgstr "Pace can already be called manageable: the layout holds in regular practice and does not fall apart at the first rise in difficulty."
+
+msgid "mastery.ranks.lieutenant.rewardTitle"
+msgstr "Controllable pace"
+
+msgid "mastery.ranks.lieutenant.rewardDescription"
+msgstr "Results on this layout become stable enough to show not just the fact of progress, but its quality from session to session."
+
+msgid "mastery.ranks.captain.title"
+msgstr "Captain"
+
+msgid "mastery.ranks.captain.description"
+msgstr "The user confidently carries long stretches, returns to working rhythm faster after mistakes, and reads weak zones more clearly."
+
+msgid "mastery.ranks.captain.rewardTitle"
+msgstr "Post-attempt analysis"
+
+msgid "mastery.ranks.captain.rewardDescription"
+msgstr "Progress becomes much easier to read after attempts: expanded progress analysis turns into part of steady growth rather than a rare spike."
+
+msgid "mastery.ranks.major.title"
+msgstr "Major"
+
+msgid "mastery.ranks.major.description"
+msgstr "The skill works steadily over distance: results depend less on luck and repeat more often across different modes and materials."
+
+msgid "mastery.ranks.major.rewardTitle"
+msgstr "Distance stability"
+
+msgid "mastery.ranks.major.rewardDescription"
+msgstr "The layout gains the status of a reliable field unit: long runs and regular practice start feeding the same meta-progression."
+
+msgid "mastery.ranks.colonel.title"
+msgstr "Colonel"
+
+msgid "mastery.ranks.colonel.description"
+msgstr "The layout becomes one of the core ones: high pace is paired with discipline, and input quality stays intact even under pressure."
+
+msgid "mastery.ranks.colonel.rewardTitle"
+msgstr "Core layout"
+
+msgid "mastery.ranks.colonel.rewardDescription"
+msgstr "The profile starts treating this layout as one of the leading ones and highlights it as a mature, nearly fully fielded skill."
+
+msgid "mastery.ranks.colonel-general.title"
+msgstr "Colonel General"
+
+msgid "mastery.ranks.colonel-general.description"
+msgstr "Maximum rank: the layout is fully mastered and holds pace, accuracy, and stability as a standard instrument ready for any further meta progression."
+
+msgid "mastery.ranks.colonel-general.rewardTitle"
+msgstr "Full field deployment"
+
+msgid "mastery.ranks.colonel-general.rewardDescription"
+msgstr "The layout is considered fully brought into service and can be marked as one of the most mastered in the profile’s future development."
+
+msgid "addons.title"
+msgstr "Add-ons and modifications"
+
+msgid "addons.tabs.addons"
+msgstr "Add-ons"
+
+msgid "addons.tabs.sources"
+msgstr "Sources"
+
+msgid "addons.tabs.mods"
+msgstr "Modifications"
+
+msgid "addons.views.catalog"
+msgstr "Catalog"
+
+msgid "addons.views.installed"
+msgstr "Installed"
+
+msgid "addons.searchPlaceholder"
+msgstr "Search…"
+
+msgid "addons.addonsHint"
+msgstr "Add-ons are JSON files that add content: word lists, lessons, layouts, items, achievements, and themes."
+
+msgid "addons.modsHintBefore"
+msgstr "Each mod is stored in its own folder with"
+
+msgid "addons.modsHintAfter"
+msgstr "and a JS entry point. Install them only from trusted sources."
+
+msgid "addons.missingDependencies"
+msgstr "Missing mods: {{ids}}"
+
+msgid "addons.modExecWarning"
+msgstr "Runs a JS script · entry point:"
+
+msgid "addons.actions.enable"
+msgstr "Enable"
+
+msgid "addons.actions.disable"
+msgstr "Disable"
+
+msgid "addons.actions.remove"
+msgstr "Remove"
+
+msgid "addons.actions.installDependencies"
+msgstr "Install required mods"
+
+msgid "addons.actions.installAddon"
+msgstr "Install add-on…"
+
+msgid "addons.actions.installMod"
+msgstr "Install mod…"
+
+msgid "addons.actions.applyTheme"
+msgstr "Apply theme"
+
+msgid "addons.installError.addon"
+msgstr "Add-on installation error: {{error}}"
+
+msgid "addons.installError.mod"
+msgstr "Mod installation error: {{error}}"
+
+msgid "addons.installError.theme"
+msgstr "Theme installation error: {{error}}"
+
+msgid "addons.confirmRemoveAddon"
+msgstr "Remove the add-on “{{name}}”?"
+
+msgid "addons.confirmRemoveMod"
+msgstr "Remove the mod “{{name}}”?"
+
+msgid "addons.confirmRemoveTheme"
+msgstr "Remove the theme “{{name}}”?"
+
+msgid "addons.empty.search"
+msgstr "Nothing found"
+
+msgid "addons.empty.addonsTitle"
+msgstr "No add-ons installed."
+
+msgid "addons.empty.addonsSubtitle"
+msgstr "Choose an add-on JSON file to install it."
+
+msgid "addons.empty.sourcesTitle"
+msgstr "No extension sources added yet."
+
+msgid "addons.empty.sourcesSubtitle"
+msgstr "Add a local manifest, a direct URL, or a GitHub source to start building your extension catalog."
+
+msgid "addons.empty.modsTitle"
+msgstr "No modifications installed."
+
+msgid "addons.empty.modsSubtitle"
+msgstr "Select the manifest.json from the mod folder to install it."
+
+msgid "addons.empty.installedTitle"
+msgstr "Nothing is installed yet."
+
+msgid "addons.empty.installedSubtitle"
+msgstr "Install an add-on, mod, or theme to see it here."
+
+msgid "addons.empty.themesTitle"
+msgstr "No themes installed."
+
+msgid "addons.empty.themesSubtitle"
+msgstr "Install a theme pack to see it here."
+
+msgid "addons.tags.words"
+msgstr "Words"
+
+msgid "addons.tags.lessons"
+msgstr "Lessons"
+
+msgid "addons.tags.layouts"
+msgstr "Layouts"
+
+msgid "addons.tags.languages"
+msgstr "Languages"
+
+msgid "addons.tags.items"
+msgstr "Items"
+
+msgid "addons.tags.achievements"
+msgstr "Achievements"
+
+msgid "addons.tags.themes"
+msgstr "Themes"
+
+msgid "addons.tags.practicePacks"
+msgstr "Content packs"
+
+msgid "addons.tags.interfaceLocales"
+msgstr "Interface locales"
+
+msgid "addons.permissions.sections"
+msgstr "Section control"
+
+msgid "addons.permissions.settings"
+msgstr "Settings overrides"
+
+msgid "addons.permissions.items"
+msgstr "Item management"
+
+msgid "addons.permissions.achievements"
+msgstr "Achievement management"
+
+msgid "addons.permissions.rules"
+msgstr "Rule changes"
+
+msgid "addons.permissions.ui"
+msgstr "Custom UI"
+
+msgid "addons.permissions.events"
+msgstr "Event subscriptions"
+
+msgid "addons.permissions.words"
+msgstr "Word management"
+
+msgid "addons.permissions.lessons"
+msgstr "Lesson management"
+
+msgid "addons.permissions.i18n"
+msgstr "Interface translations"
+
+msgid "addons.permissions.modes"
+msgstr "New modes"
+
+msgid "addons.sources.hint"
+msgstr "Sources are external catalogs with manifests, add-on/mod/theme lists, and source cards. Start by managing them here, then use them as the backbone of the extension center."
+
+msgid "addons.sources.noDescription"
+msgstr "This source did not provide a description."
+
+msgid "addons.sources.syncErrorFallback"
+msgstr "Failed to sync the source."
+
+msgid "addons.sources.confirmRemove"
+msgstr "Remove the source “{{name}}”?"
+
+msgid "addons.sources.lastSync"
+msgstr "Last sync:"
+
+msgid "addons.sources.status.ready"
+msgstr "Synced"
+
+msgid "addons.sources.status.error"
+msgstr "Sync error"
+
+msgid "addons.sources.status.never"
+msgstr "Not synced yet"
+
+msgid "addons.sources.status.disabled"
+msgstr "Disabled"
+
+msgid "addons.sources.types.local"
+msgstr "Local file"
+
+msgid "addons.sources.types.url"
+msgstr "Direct URL"
+
+msgid "addons.sources.types.github"
+msgstr "GitHub repository"
+
+msgid "addons.sources.actions.add"
+msgstr "Add source"
+
+msgid "addons.sources.actions.edit"
+msgstr "Edit"
+
+msgid "addons.sources.actions.save"
+msgstr "Save source"
+
+msgid "addons.sources.actions.sync"
+msgstr "Sync"
+
+msgid "addons.actions.openCard"
+msgstr "Open card"
+
+msgid "addons.sources.form.createTitle"
+msgstr "Add extension source"
+
+msgid "addons.sources.form.editTitle"
+msgstr "Edit extension source"
+
+msgid "addons.sources.form.type"
+msgstr "Source type"
+
+msgid "addons.sources.form.manifestPath"
+msgstr "Manifest path"
+
+msgid "addons.sources.form.manifestPathPlaceholder"
+msgstr "D:\\Catalogs\\typing-trainer\\manifest.json"
+
+msgid "addons.sources.form.chooseFile"
+msgstr "Choose file"
+
+msgid "addons.sources.form.manifestUrl"
+msgstr "Manifest URL"
+
+msgid "addons.sources.form.manifestUrlPlaceholder"
+msgstr "https://catalog.example.dev/typing-trainer/manifest.json"
+
+msgid "addons.sources.form.githubUrl"
+msgstr "GitHub source URL"
+
+msgid "addons.sources.form.githubUrlPlaceholder"
+msgstr "https://github.com/owner/repo/blob/main/catalog/manifest.json"
+
+msgid "addons.sources.form.owner"
+msgstr "GitHub owner"
+
+msgid "addons.sources.form.repo"
+msgstr "Repository"
+
+msgid "addons.sources.form.branch"
+msgstr "Branch"
+
+msgid "addons.sources.form.basePath"
+msgstr "Base path"
+
+msgid "addons.sources.form.githubManifestPath"
+msgstr "Manifest path inside the repo"
+
+msgid "addons.sources.form.pickManifestTitle"
+msgstr "Select the extension source manifest"
+
+msgid "addons.sources.form.invalid"
+msgstr "Fill in the required source fields first."
+
+msgid "addons.sources.counts.addons"
+msgstr "Add-ons: {{count}}"
+
+msgid "addons.sources.counts.mods"
+msgstr "Mods: {{count}}"
+
+msgid "addons.sources.counts.themes"
+msgstr "Themes: {{count}}"
+
+msgid "addons.catalog.title"
+msgstr "Catalog"
+
+msgid "addons.catalog.subtitle"
+msgstr "Browse cached entries from connected sources, inspect their cards, and install supported content packs."
+
+msgid "addons.catalog.emptyTitle"
+msgstr "No catalog entries available yet."
+
+msgid "addons.catalog.emptySubtitle"
+msgstr "Sync a source with cached lists to populate this catalog."
+
+msgid "addons.catalog.noDescription"
+msgstr "This catalog entry did not provide a description."
+
+msgid "addons.catalog.filters.all"
+msgstr "All"
+
+msgid "addons.installed.filters.all"
+msgstr "All"
+
+msgid "addons.installed.filters.addons"
+msgstr "Add-ons"
+
+msgid "addons.installed.filters.mods"
+msgstr "Mods"
+
+msgid "addons.installed.filters.themes"
+msgstr "Themes"
+
+msgid "addons.installed.contentFilters.all"
+msgstr "All types"
+
+msgid "addons.catalog.kinds.addons"
+msgstr "Add-ons"
+
+msgid "addons.catalog.kinds.mods"
+msgstr "Mods"
+
+msgid "addons.catalog.kinds.themes"
+msgstr "Themes"
+
+msgid "addons.catalog.status.available"
+msgstr "Available"
+
+msgid "addons.catalog.status.installed"
+msgstr "Installed"
+
+msgid "addons.catalog.status.updateAvailable"
+msgstr "Update available"
+
+msgid "addons.catalog.status.sourceDisabled"
+msgstr "Source disabled"
+
+msgid "addons.catalog.status.sourceError"
+msgstr "Source unavailable"
+
+msgid "addons.catalog.status.invalid"
+msgstr "Broken manifest"
+
+msgid "addons.catalog.actions.installAddon"
+msgstr "Install add-on"
+
+msgid "addons.catalog.actions.installTheme"
+msgstr "Install theme"
+
+msgid "addons.catalog.actions.installMod"
+msgstr "Install mod"
+
+msgid "addons.catalog.actions.update"
+msgstr "Update"
+
+msgid "addons.catalog.actions.installed"
+msgstr "Installed"
+
+msgid "addons.catalog.actions.manualOnly"
+msgstr "Manual install only"
+
+msgid "addons.catalog.installedVersion"
+msgstr "Installed: v{{version}}"
+
+msgid "addons.catalog.dependencies"
+msgstr "Dependencies: {{ids}}"
+
+msgid "addons.catalog.permissions"
+msgstr "Permissions: {{permissions}}"
+
+msgid "addons.catalog.duplicateSources"
+msgstr "This package is also provided by other sources: {{sources}}"
+
+msgid "addons.markdown.author"
+msgstr "Author: {{author}}"
+
+msgid "addons.markdown.version"
+msgstr "Version: v{{version}}"
+
+msgid "addons.markdown.minAppVersion"
+msgstr "Min app version: {{version}}"
+
+msgid "addons.themes.current"
+msgstr "Current"
+
+msgid "addons.themes.installedAt"
+msgstr "Installed: {{date}}"
+
+msgid "home.hero.kicker"
+msgstr "Typing Trainer"
+
+msgid "home.hero.title"
+msgstr "Fast entry and a clear next step."
+
+msgid "home.hero.description"
+msgstr "Resume the current scenario or jump straight into the mode you need without extra screens."
+
+msgid "home.hero.dynamic.currentRun.title"
+msgstr "Your run is already waiting."
+
+msgid "home.hero.dynamic.currentRun.description"
+msgstr "Return to the saved route and keep your pace, progress, and branch choice intact."
+
+msgid "home.hero.dynamic.firstSteps.title"
+msgstr "Start with a clear foundation."
+
+msgid "home.hero.dynamic.firstSteps.description"
+msgstr "The calmest entry is through lesson {{lesson}}, with the other modes coming after the basics settle in."
+
+msgid "home.hero.dynamic.lessons.title"
+msgstr "The next step is lesson {{lesson}}."
+
+msgid "home.hero.dynamic.lessons.description"
+msgstr "Right now it is more useful to strengthen the layout by structure than to split attention across modes."
+
+msgid "home.hero.dynamic.practice.title"
+msgstr "Practice will give the fastest payoff now."
+
+msgid "home.hero.dynamic.practice.description"
+msgstr "It is the most direct way to tighten weak spots, stabilize accuracy, and bring back a confident rhythm."
+
+msgid "home.hero.dynamic.test.title"
+msgstr "Time to check the pace."
+
+msgid "home.hero.dynamic.test.description"
+msgstr "A short sprint will show how well the speed already holds without a long warm-up."
+
+msgid "home.hero.dynamic.survival.title"
+msgstr "The skill looks ready for a longer distance."
+
+msgid "home.hero.dynamic.survival.description"
+msgstr "Now it is more useful to test tempo stability and control on a longer run than to chase peak speed alone."
+
+msgid "home.hero.dynamic.game.title"
+msgstr "Game progress is relevant again."
+
+msgid "home.hero.dynamic.game.description"
+msgstr "You can return to the run or use the game as a more lively way to reinforce the current pace."
+
+msgid "home.hero.openGame"
+msgstr "Open game"
+
+msgid "home.hero.openPractice"
+msgstr "Open practice"
+
+msgid "home.recommendation.label"
+msgstr "What to do next"
+
+msgid "home.sections.profile"
+msgstr "Current profile"
+
+msgid "home.sections.weekly"
+msgstr "Weekly tasks"
+
+msgid "home.sections.achievements"
+msgstr "Achievements"
+
+msgid "home.sections.progressCenter"
+msgstr "Progress center"
+
+msgid "home.sections.modes"
+msgstr "Modes"
+
+msgid "home.sections.quickActions"
+msgstr "Quick access"
+
+msgid "home.quickInsights.title"
+msgstr "Quick summary"
+
+msgid "home.weekly.remainingDays"
+msgid_plural "home.weekly.remainingDays"
+msgstr[0] "{{title}} · {{count}} day until reset."
+msgstr[1] "{{title}} · {{count}} days until reset."
+
+msgid "home.achievements.description"
+msgstr "Your rewards for game, lesson, and training progress."
+
+msgid "home.achievements.collectionTitle"
+msgstr "Trophy collection"
+
+msgid "home.achievements.collectionDescription"
+msgstr "View all unlocked achievements across every mode"
+
+msgid "home.progressCenter.season.title"
+msgstr "Season focus"
+
+msgid "home.progressCenter.season.summary"
+msgstr "{{completed}}/{{total}} goals"
+
+msgid "home.progressCenter.season.next"
+msgstr "Next focus: {{title}}."
+
+msgid "home.progressCenter.season.completed"
+msgstr "The current seasonal pack is already fully complete."
+
+msgid "home.progressCenter.modeFocus.title"
+msgstr "Mode focus"
+
+msgid "home.progressCenter.modeFocus.summaryMissing"
+msgid_plural "home.progressCenter.modeFocus.summaryMissing"
+msgstr[0] "{{count}} mode without attempts"
+msgstr[1] "{{count}} modes without attempts"
+
+msgid "home.progressCenter.modeFocus.summaryReady"
+msgstr "Cycle already covered"
+
+msgid "home.progressCenter.modeFocus.descriptionMissing"
+msgstr "Shows which modes are still not part of your training routine."
+
+msgid "home.progressCenter.modeFocus.descriptionReady"
+msgstr "You can fine-tune mode balance instead of filling empty gaps."
+
+msgid "home.progressCenter.records.title"
+msgstr "Personal records"
+
+msgid "home.progressCenter.records.summary"
+msgstr "{{count}}/{{total}} modes"
+
+msgid "home.progressCenter.records.description"
+msgstr "Best results for the current layout and language in one place."
+
+msgid "home.progressCenter.mastery.title"
+msgstr "Mastery chain"
+
+msgid "home.progressCenter.mastery.description"
+msgstr "Current mastery points: {{score}}/100."
+
+msgid "home.progressCenter.goals.title"
+msgstr "Long-term goals"
+
+msgid "home.progressCenter.goals.summary"
+msgstr "{{count}} active milestones"
+
+msgid "home.progressCenter.goals.description"
+msgstr "Large goals that preserve momentum between individual sessions."
+
+msgid "home.progressCenter.streaks.title"
+msgstr "Streaks"
+
+msgid "home.progressCenter.streaks.summaryActive"
+msgstr "{{count}} now"
+
+msgid "home.progressCenter.streaks.summaryEmpty"
+msgstr "No streaks yet"
+
+msgid "home.progressCenter.streaks.descriptionActive"
+msgstr "Most active streak right now: {{title}}."
+
+msgid "home.progressCenter.streaks.descriptionEmpty"
+msgstr "A streak will appear after several stable attempts in a row."
+
+msgid "home.detail.season.title"
+msgstr "Season focus"
+
+msgid "home.detail.season.description"
+msgid_plural "home.detail.season.description"
+msgstr[0] "{{title}} · {{count}} day left in the current cycle."
+msgstr[1] "{{title}} · {{count}} days left in the current cycle."
+
+msgid "home.detail.season.progress"
+msgstr "{{completed}}/{{total}} goals completed"
+
+msgid "home.detail.season.goalDone"
+msgstr "Completed in the current season"
+
+msgid "home.detail.modeFocus.title"
+msgstr "Mode focus"
+
+msgid "home.detail.modeFocus.description"
+msgstr "A mode summary that shows where the cycle is already stable and where more attempts are still needed."
+
+msgid "home.detail.modeFocus.attempts"
+msgid_plural "home.detail.modeFocus.attempts"
+msgstr[0] "{{count}} attempt · {{date}}"
+msgstr[1] "{{count}} attempts · {{date}}"
+
+msgid "home.detail.records.title"
+msgstr "Personal records"
+
+msgid "home.detail.records.description"
+msgstr "Best results for key modes within the current layout and language."
+
+msgid "home.detail.mastery.title"
+msgstr "Mastery chain"
+
+msgid "home.detail.mastery.description"
+msgstr "Current layout tier, active promotion effect, and the nearest reward."
+
+msgid "home.detail.goals.title"
+msgstr "Long-term goals"
+
+msgid "home.detail.goals.description"
+msgstr "Big motivation milestones that accumulate between training and game sessions."
+
+msgid "home.detail.streaks.title"
+msgstr "Streaks"
+
+msgid "home.detail.streaks.description"
+msgstr "Current and best chains that show consistency, not just isolated spikes."
+
+msgid "home.detail.streaks.best"
+msgid_plural "home.detail.streaks.best"
+msgstr[0] "Best result: {{count}} time"
+msgstr[1] "Best result: {{count}} times"
+
+msgid "home.common.openWindow"
+msgstr "Open window"
+
+msgid "home.common.expandSection"
+msgstr "Expand"
+
+msgid "home.common.collapseSection"
+msgstr "Collapse"
+
+msgid "home.common.noAttempts"
+msgstr "No attempts"
+
+msgid "home.common.noDate"
+msgstr "no date"
+
+msgid "home.common.noData"
+msgstr "No data"
+
+msgid "home.viewModel.activeRun.label"
+msgstr "Level {{level}} · {{lives}} HP"
+
+msgid "home.viewModel.activeRun.empty"
+msgstr "No active run"
+
+msgid "home.viewModel.dailyGoal.sessionsProgress"
+msgstr "{{current}} / {{target}} sessions"
+
+msgid "home.viewModel.dailyGoal.minutesProgress"
+msgstr "{{current}} / {{target}} min"
+
+msgid "home.viewModel.weakness.char"
+msgstr "The {{label}} key slows the rhythm and causes more misses than the others."
+
+msgid "home.viewModel.weakness.bigram"
+msgstr "The {{label}} pair drops more than the other transitions."
+
+msgid "home.viewModel.weakness.rhythmLabel"
+msgstr "Rhythm"
+
+msgid "home.viewModel.weakness.rhythm"
+msgstr "Average rhythm deviation is around {{deviation}} ms, and the streak is still uneven."
+
+msgid "home.viewModel.recommendation.continueRun.title"
+msgstr "Continue the run"
+
+msgid "home.viewModel.recommendation.continueRun.description"
+msgstr "The active game run is already saved. The most valuable next step is to return to it and keep the momentum."
+
+msgid "home.viewModel.recommendation.continueRun.action"
+msgstr "Continue game"
+
+msgid "home.viewModel.recommendation.startLessons.title"
+msgstr "Start with lessons"
+
+msgid "home.viewModel.recommendation.startLessons.description"
+msgstr "The history is still empty, and lesson {{lesson}} is the fastest way to build layout fundamentals and reduce early-session chaos."
+
+msgid "home.viewModel.recommendation.startLessons.action"
+msgstr "Open lessons"
+
+msgid "home.viewModel.recommendation.startPractice.title"
+msgstr "Build a practice base"
+
+msgid "home.viewModel.recommendation.startPractice.description"
+msgstr "There are no completed sessions yet, so the best start is a short practice run to collect your first speed and accuracy stats."
+
+msgid "home.viewModel.recommendation.startPractice.action"
+msgstr "Open practice"
+
+msgid "home.viewModel.recommendation.fixWeakness.bigramTitle"
+msgstr "Fix the weak pair {{label}}"
+
+msgid "home.viewModel.recommendation.fixWeakness.charTitle"
+msgstr "Fix the weak key {{label}}"
+
+msgid "home.viewModel.recommendation.fixWeakness.rhythmTitle"
+msgstr "Stabilize typing rhythm"
+
+msgid "home.viewModel.recommendation.fixWeakness.description"
+msgstr "{{detail}} Recent base practice is still around {{accuracy}}% accuracy, so the most useful next step is to return to practice deliberately instead of scattering into a new mode."
+
+msgid "home.viewModel.recommendation.fixWeakness.action"
+msgstr "Open practice"
+
+msgid "home.viewModel.recommendation.stabilizeAccuracy.title"
+msgstr "Stabilize accuracy"
+
+msgid "home.viewModel.recommendation.stabilizeAccuracy.description"
+msgstr "Across the last {{count}} sessions average accuracy is about {{accuracy}}%. It is more useful to return to practice and remove extra misses than to chase a new mode right now."
+
+msgid "home.viewModel.recommendation.stabilizeAccuracy.action"
+msgstr "Open practice"
+
+msgid "home.viewModel.recommendation.catchDecline.title"
+msgstr "Catch the early decline"
+
+msgid "home.viewModel.recommendation.catchDecline.description"
+msgstr "Recent practice has started to slip: speed changed by about {{speed}} {{speedLabel}}, and accuracy by {{accuracy}} pp compared with the previous window. A calm stabilization pass is needed before the decline settles in."
+
+msgid "home.viewModel.recommendation.catchDecline.action"
+msgstr "Open practice"
+
+msgid "home.viewModel.recommendation.checkSprint.title"
+msgstr "Test your pace in sprint"
+
+msgid "home.viewModel.recommendation.checkSprint.description"
+msgstr "The base already looks mature: {{count}} recent practice sessions are holding around {{accuracy}}% accuracy. The most useful next measurement is a short timed sprint."
+
+msgid "home.viewModel.recommendation.checkSprint.action"
+msgstr "Open sprint"
+
+msgid "home.viewModel.recommendation.keepSprint.title"
+msgstr "Do not lose the speed mode"
+
+msgid "home.viewModel.recommendation.keepSprint.description"
+msgstr "Practice has already built up {{count}} confident sessions over the last 14 days at around {{accuracy}}% accuracy, but there were no sprints in that window. The most useful next step is a timed speed check."
+
+msgid "home.viewModel.recommendation.keepSprint.action"
+msgstr "Open sprint"
+
+msgid "home.viewModel.recommendation.recoverAfterSprint.title"
+msgstr "Recover after sprint chaos"
+
+msgid "home.viewModel.recommendation.recoverAfterSprint.description"
+msgstr "Recent sprints are only holding around {{accuracy}}% accuracy. It is better to restore control in regular practice first, then push for speed again."
+
+msgid "home.viewModel.recommendation.recoverAfterSprint.action"
+msgstr "Back to practice"
+
+msgid "home.viewModel.recommendation.sprintToSurvival.title"
+msgstr "Carry sprint into a long run"
+
+msgid "home.viewModel.recommendation.sprintToSurvival.description"
+msgstr "Sprint is no longer just a flash: in recent attempts pace improved by about {{speed}} {{speedLabel}}, and accuracy also moved up. The fairest next step is to test stability in survival."
+
+msgid "home.viewModel.recommendation.sprintToSurvival.action"
+msgstr "Open survival"
+
+msgid "home.viewModel.recommendation.checkLongRun.title"
+msgstr "Check the long distance"
+
+msgid "home.viewModel.recommendation.checkLongRun.description"
+msgstr "The short-form base is already there: recent history holds around {{accuracy}}% accuracy, but there are no long runs yet. Survival will show whether the technique holds outside short bursts."
+
+msgid "home.viewModel.recommendation.checkLongRun.action"
+msgstr "Open survival"
+
+msgid "home.viewModel.recommendation.returnLongRuns.title"
+msgstr "Bring long runs back into the cycle"
+
+msgid "home.viewModel.recommendation.returnLongRuns.description"
+msgstr "The practice base does not look empty, but there were no long runs in the last 14 days. It is useful to test whether technique survives beyond the first minutes, not only in short bursts."
+
+msgid "home.viewModel.recommendation.returnLongRuns.action"
+msgstr "Open survival"
+
+msgid "home.viewModel.recommendation.stabilizeSurvival.title"
+msgstr "Stabilize the long run"
+
+msgid "home.viewModel.recommendation.stabilizeSurvival.description"
+msgstr "Recent survival attempts are around {{accuracy}}% accuracy. The problem is no longer the start, but stability across long text, so it is more useful to return to base practice."
+
+msgid "home.viewModel.recommendation.stabilizeSurvival.action"
+msgstr "Open practice"
+
+msgid "home.viewModel.recommendation.raiseSurvival.title"
+msgstr "Raise the bar in survival"
+
+msgid "home.viewModel.recommendation.raiseSurvival.description"
+msgstr "Survival already looks mature: {{passed}} successful runs out of {{total}}, with recent accuracy around {{accuracy}}%. The fairest escalation is to enable the flawless variant."
+
+msgid "home.viewModel.recommendation.raiseSurvival.action"
+msgstr "Open survival"
+
+msgid "home.viewModel.recommendation.enableFlawless.title"
+msgstr "Enable strict control mode"
+
+msgid "home.viewModel.recommendation.enableFlawless.description"
+msgstr "Regular survival is already stable: {{passed}} successful long runs out of {{total}}, with recent accuracy around {{accuracy}}%. The logical next step is to enable flawless mode and test discipline without room for mistakes."
+
+msgid "home.viewModel.recommendation.enableFlawless.action"
+msgstr "Open survival"
+
+msgid "home.viewModel.recommendation.foundationLessons.title"
+msgstr "Reinforce the foundation with lessons"
+
+msgid "home.viewModel.recommendation.foundationLessons.description"
+msgstr "Only {{completed}}/{{total}} lessons are completed, and the dense practice base is still small. The next useful step is lesson {{lesson}} to reduce systematic layout mistakes."
+
+msgid "home.viewModel.recommendation.foundationLessons.action"
+msgstr "Open lessons"
+
+msgid "home.viewModel.recommendation.unlockNextLetter.title"
+msgstr "Finish unlocking the next letter"
+
+msgid "home.viewModel.recommendation.unlockNextLetter.description"
+msgstr "Only one step is left before unlocking {{letter}}. Practice will give a more valuable gain right now than switching to another mode."
+
+msgid "home.viewModel.recommendation.unlockNextLetter.action"
+msgstr "Open practice"
+
+msgid "home.viewModel.recommendation.dailyGoal.title"
+msgstr "Finish the daily target"
+
+msgid "home.viewModel.recommendation.dailyGoal.sessionsDescription"
+msgstr "Only {{current}} of {{target}} sessions are complete today. It is more useful not to scatter and instead do one more calm practice to restore the daily rhythm."
+
+msgid "home.viewModel.recommendation.dailyGoal.minutesDescription"
+msgstr "Only {{current}} of {{target}} minutes are collected today. Before a heavier mode, it is better to finish the base volume and gather the day’s stats."
+
+msgid "home.viewModel.recommendation.dailyGoal.action"
+msgstr "Open practice"
+
+msgid "home.viewModel.recommendation.dailyRun.title"
+msgstr "Enter the daily run"
+
+msgid "home.viewModel.recommendation.dailyRun.description"
+msgstr "The daily base is already at {{progress}}%, and recent accuracy looks stable. The daily run will give a useful long-form check without random overload."
+
+msgid "home.viewModel.recommendation.dailyRun.action"
+msgstr "Open game"
+
+msgid "home.viewModel.recommendation.weeklyProgress"
+msgstr "{{description}} The weekly cycle is now {{progress}}% complete."
+
+msgid "home.viewModel.recommendation.modeFocus.title"
+msgstr "Check mode: {{title}}"
+
+msgid "home.viewModel.recommendation.modeFocus.action"
+msgstr "Open {{title}}"
+
+msgid "home.viewModel.recommendation.default.title"
+msgstr "Open practice"
+
+msgid "home.viewModel.recommendation.default.description"
+msgstr "The best next step is a short practice run to keep the pace, stabilize accuracy, and push layout progress forward."
+
+msgid "home.viewModel.recommendation.default.action"
+msgstr "Open practice"
+
+msgid "home.viewModel.actions.continueRun.title"
+msgstr "Continue the run"
+
+msgid "home.viewModel.actions.continueRun.description"
+msgstr "Return to the saved game progress with the same level, HP, and route."
+
+msgid "home.viewModel.actions.startPractice.title"
+msgstr "Quick practice"
+
+msgid "home.viewModel.actions.startPractice.description"
+msgstr "Open weakness-focused training and immediately start the current practice configuration."
+
+msgid "home.viewModel.actions.startPractice.nextLetter"
+msgstr "Next letter: {{letter}}"
+
+msgid "home.viewModel.actions.startPractice.complete"
+msgstr "All letters for the current layout are already unlocked"
+
+msgid "home.viewModel.actions.replayLast.description"
+msgstr "Repeat the latest scenario with a reference of {{speed}} {{speedLabel}} and {{accuracy}}% accuracy."
+
+msgid "home.viewModel.actions.replayLast.meta"
+msgstr "Last attempt: {{date}}"
+
+msgid "home.viewModel.actions.lessons.title"
+msgstr "Back to lessons"
+
+msgid "home.viewModel.actions.lessons.description"
+msgstr "Continue learning the layout structure and transition exercises."
+
+msgid "home.viewModel.actions.lessons.nextLesson"
+msgstr "Next lesson: {{lesson}}"
+
+msgid "home.viewModel.actions.lessons.complete"
+msgstr "All lessons for the current layout are complete"
+
+msgid "home.viewModel.actions.stats.title"
+msgstr "Open stats"
+
+msgid "home.viewModel.actions.stats.description"
+msgstr "See the dynamics of speed, accuracy, rhythm, and problematic combinations."
+
+msgid "home.viewModel.actions.stats.lastSession"
+msgstr "Last session: {{date}}"
+
+msgid "home.viewModel.actions.stats.empty"
+msgstr "Stats will appear after the first attempts"
+
+msgid "home.viewModel.modeCards.practice.title"
+msgstr "Practice"
+
+msgid "home.viewModel.modeCards.practice.description"
+msgstr "Short adaptive sessions for weak keys, bigrams, and rhythm."
+
+msgid "home.viewModel.modeCards.practice.nextLetter"
+msgstr "Until the next letter: {{count}}/3"
+
+msgid "home.viewModel.modeCards.practice.complete"
+msgstr "The layout is fully unlocked"
+
+msgid "home.viewModel.modeCards.test.title"
+msgstr "Sprint"
+
+msgid "home.viewModel.modeCards.test.description"
+msgstr "A short timed run for pace and precision on top of the shared content pipeline."
+
+msgid "home.viewModel.modeCards.test.best"
+msgstr "Best sprint: {{speed}} {{speedLabel}}"
+
+msgid "home.viewModel.modeCards.test.empty"
+msgstr "No sprints yet"
+
+msgid "home.viewModel.modeCards.survival.title"
+msgstr "Survival"
+
+msgid "home.viewModel.modeCards.survival.description"
+msgstr "A long run with an error limit and a built-in flawless switch for the stricter version of the mode."
+
+msgid "home.viewModel.modeCards.survival.best"
+msgstr "Best run: {{speed}} {{speedLabel}}"
+
+msgid "home.viewModel.modeCards.survival.bestFlawless"
+msgstr "Best flawless: {{speed}} {{speedLabel}}"
+
+msgid "home.viewModel.modeCards.survival.empty"
+msgstr "No runs yet"
+
+msgid "home.viewModel.modeCards.lessons.title"
+msgstr "Lessons"
+
+msgid "home.viewModel.modeCards.lessons.description"
+msgstr "Step-by-step layout learning from basic rows to transitions and rhythm."
+
+msgid "home.viewModel.modeCards.lessons.meta"
+msgstr "{{completed}}/{{total}} lessons completed"
+
+msgid "home.viewModel.modeCards.game.title"
+msgstr "Game"
+
+msgid "home.viewModel.modeCards.game.description"
+msgstr "Long runs with bosses, items, routes, events, and rewards."
+
+msgid "home.viewModel.modeCards.game.bestLevel"
+msgstr "Best level: {{level}}"
+
+msgid "home.viewModel.modeCards.stats.title"
+msgstr "Stats"
+
+msgid "home.viewModel.modeCards.stats.description"
+msgstr "Progress charts, keyboard heatmap, rhythm analysis, and session drilldown."
+
+msgid "home.viewModel.modeCards.stats.lastEntry"
+msgstr "Last entry: {{date}}"
+
+msgid "home.viewModel.modeCards.stats.empty"
+msgstr "Will appear after the first sessions"
+
+msgid "home.viewModel.modeCards.settings.title"
+msgstr "Settings"
+
+msgid "home.viewModel.modeCards.settings.description"
+msgstr "Theme, keyboard, text, visuals, and input parameters tailored to you."
+
+msgid "home.viewModel.modeCards.badges.active"
+msgstr "Active"
+
+msgid "home.viewModel.modeCards.badges.next"
+msgstr "Next"
+
+msgid "home.viewModel.modeCards.badges.last"
+msgstr "Last"
+
+msgid "home.viewModel.summary.layout.label"
+msgstr "Current layout"
+
+msgid "home.viewModel.summary.layout.description"
+msgstr "{{progress}} letters unlocked"
+
+msgid "home.viewModel.summary.dailyGoal.label"
+msgstr "Daily goal"
+
+msgid "home.viewModel.summary.dailyGoal.sessions"
+msgstr "Daily sessions"
+
+msgid "home.viewModel.summary.dailyGoal.minutes"
+msgstr "Daily practice"
+
+msgid "home.viewModel.summary.lessons.label"
+msgstr "Lessons"
+
+msgid "home.viewModel.summary.lessons.next"
+msgstr "Next lesson: {{lesson}}"
+
+msgid "home.viewModel.summary.lessons.complete"
+msgstr "All lessons complete"
+
+msgid "home.viewModel.summary.game.label"
+msgstr "Game progress"
+
+msgid "home.viewModel.summary.game.currentLevel"
+msgstr "Level {{level}}"
+
+msgid "home.viewModel.summary.game.bestLevel"
+msgstr "Level {{level}}"
+
+msgid "home.viewModel.summary.game.currentRun"
+msgstr "{{lives}} HP in the active run"
+
+msgid "home.viewModel.summary.game.empty"
+msgstr "No active run"
+
+msgid "home.viewModel.quickInsights.lastSession.label"
+msgstr "Last session"
+
+msgid "home.viewModel.quickInsights.lastSession.empty"
+msgstr "There are no completed sessions yet"
+
+msgid "home.viewModel.quickInsights.bestSpeed.label"
+msgstr "Best pace"
+
+msgid "home.viewModel.quickInsights.bestSpeed.description"
+msgstr "{{accuracy}}% accuracy"
+
+msgid "home.viewModel.quickInsights.bestSpeed.empty"
+msgstr "Will appear after the first results"
+
+msgid "home.viewModel.quickInsights.dailySeries.label"
+msgstr "Current daily streak"
+
+msgid "home.viewModel.quickInsights.dailySeries.minutesValue"
+msgid_plural "home.viewModel.quickInsights.dailySeries.minutesValue"
+msgstr[0] "{{count}} min"
+msgstr[1] "{{count}} min"
+
+msgid "home.viewModel.quickInsights.dailySeries.sessions"
+msgstr "Sessions today"
+
+msgid "home.viewModel.quickInsights.dailySeries.minutes"
+msgstr "Practice today"
+
+msgid "home.viewModel.quickInsights.dailyRun.label"
+msgstr "Daily run"
+
+msgid "home.viewModel.quickInsights.dailyRun.complete"
+msgstr "Completed"
+
+msgid "home.viewModel.quickInsights.dailyRun.incomplete"
+msgstr "Not completed"
+
+msgid "home.viewModel.quickInsights.dailyRun.attempts"
+msgid_plural "home.viewModel.quickInsights.dailyRun.attempts"
+msgstr[0] "{{count}} attempt"
+msgstr[1] "{{count}} attempts"
+
+msgid "home.viewModel.quickInsights.dailyRun.empty"
+msgstr "There were no attempts today yet"
+
+msgid "home.viewModel.heroTags.dailyGoal"
+msgstr "Daily goal: {{value}}"
+
+msgid "home.viewModel.heroTags.weekly"
+msgstr "Weekly: {{completed}}/{{total}}"
+
+msgid "home.viewModel.heroTags.nextLesson"
+msgstr "Lesson {{lesson}}"
+
+msgid "home.viewModel.heroTags.runSaved"
+msgstr "Active run saved"
+
+msgid "home.viewModel.heroTags.newSession"
+msgstr "You can start a new session"
+
+msgid "home.viewModel.replayTitle"
+msgstr "Open practice"
+
+msgid "home.summary.replay.openPractice"
+msgstr "Open practice"
+
+msgid "home.summary.replay.retrySprint"
+msgstr "Retry sprint"
+
+msgid "home.summary.replay.retrySurvival"
+msgstr "Retry survival"
+
+msgid "home.summary.replay.retryFlawless"
+msgstr "Retry flawless survival"
+
+msgid "home.summary.replay.backToPractice"
+msgstr "Back to practice"
+
+msgid "home.viewModel.weeklyGoalDone"
+msgstr "Weekly task completed"
+
+msgid "home.modes.description"
+msgstr "Each mode is responsible for its own type of progress and training scenario."
+
+msgid "resultComparison.previousAttempt"
+msgstr "Previous attempt"
+
+msgid "resultComparison.deltaToPrevious"
+msgstr "Δ vs previous"
+
+msgid "resultComparison.recentBest"
+msgstr "Recent best"
+
+msgid "resultComparison.deltaToBest"
+msgstr "Δ vs best"
+
+msgid "resultComparison.accuracyDelta"
+msgstr "Accuracy {{value}}%"
+
+msgid "records.practiceTrainingModes.normal"
+msgstr "Normal pace"
+
+msgid "records.practiceTrainingModes.rhythm"
+msgstr "Steady rhythm"
+
+msgid "records.practiceContentModes.adaptive-words"
+msgstr "Words"
+
+msgid "records.practiceContentModes.syllables"
+msgstr "Syllables"
+
+msgid "records.practiceContentModes.pseudo-words"
+msgstr "Pseudo-words"
+
+msgid "records.practiceContentModes.sentences"
+msgstr "Sentences"
+
+msgid "records.practiceContentModes.custom"
+msgstr "Custom packs"
+
+msgid "records.practiceScenarios.practice-normal"
+msgstr "Normal practice"
+
+msgid "records.practiceScenarios.practice-rhythm"
+msgstr "Rhythm practice"
+
+msgid "records.practiceScenarios.sprint"
+msgstr "Sprint"
+
+msgid "records.practiceScenarios.survival"
+msgstr "Survival"
+
+msgid "records.practiceScenarios.flawless"
+msgstr "Flawless survival"
+
+msgid "records.context.practice"
+msgstr "Practice"
+
+msgid "records.context.sprint"
+msgstr "Sprint"
+
+msgid "records.context.lesson"
+msgstr "Lesson"
+
+msgid "records.context.contentUnknown"
+msgstr "Content not specified"
+
+msgid "records.context.gameStageBoss"
+msgstr "Boss"
+
+msgid "records.context.gameStageNormal"
+msgstr "Normal battle"
+
+msgid "records.context.gameLevel"
+msgstr "lvl {{level}}"
+
+msgid "records.context.gameLevelUnknown"
+msgstr "level not specified"
+
+msgid "records.context.durationSeconds"
+msgid_plural "records.context.durationSeconds"
+msgstr[0] "{{count}} sec"
+msgstr[1] "{{count}} sec"
+
+msgid "records.context.durationUnknown"
+msgstr "time not specified"
+
+msgid "records.cards.practice.title"
+msgstr "Practice record"
+
+msgid "records.cards.practice.subtitle"
+msgstr "Best result for the mode"
+
+msgid "records.cards.game.title"
+msgstr "Game record"
+
+msgid "records.cards.game.subtitle"
+msgstr "Best result for the mode"
+
+msgid "records.cards.sprint.title"
+msgstr "Sprint record"
+
+msgid "records.cards.sprint.subtitle"
+msgstr "Best short run"
+
+msgid "records.cards.currentLayout.title"
+msgstr "Current layout"
+
+msgid "records.cards.currentLanguage.title"
+msgstr "Current language"
+
+msgid "records.cards.currentLanguage.none"
+msgstr "No language selected"
+
+msgid "records.modeFocus.practice.title"
+msgstr "Practice"
+
+msgid "records.modeFocus.practice.description"
+msgstr "The core mode for everyday work on speed, accuracy, and weak spots."
+
+msgid "records.modeFocus.practice.recommendation.empty"
+msgstr "You need at least one base practice session so the other modes have something solid to stand on."
+
+msgid "records.modeFocus.practice.recommendation.lowAccuracy"
+msgstr "Practice is currently slipping in accuracy. It is better to stabilize the base before challenge modes."
+
+msgid "records.modeFocus.practice.recommendation.ready"
+msgstr "The base looks solid. Practice can already serve as a warm-up before sprint or flawless survival."
+
+msgid "records.modeFocus.practice.recommendation.building"
+msgstr "A few more base sessions and endurance and clean modes will start feeling noticeably steadier."
+
+msgid "records.modeFocus.test.title"
+msgstr "Sprint"
+
+msgid "records.modeFocus.test.description"
+msgstr "A short timed mode for acceleration, typing density, and error control under time pressure."
+
+msgid "records.modeFocus.test.recommendation.empty"
+msgstr "Sprint is not part of the real training cycle yet. One short run is enough to calibrate your pace."
+
+msgid "records.modeFocus.test.recommendation.lowAccuracy"
+msgstr "Sprint is losing results to errors. It is useful to keep the pace, but reduce chaotic misses at the start."
+
+msgid "records.modeFocus.test.recommendation.ready"
+msgstr "Sprint is already giving a strong speed peak. It can be used as a short control session between practice runs."
+
+msgid "records.modeFocus.test.recommendation.building"
+msgstr "The mode is already in play, but it still needs repetition so the pace becomes stable instead of a one-off spike."
+
+msgid "records.modeFocus.survival.title"
+msgstr "Survival"
+
+msgid "records.modeFocus.survival.description"
+msgstr "A long run with an error limit and a built-in flawless switch for the stricter version of the mode."
+
+msgid "records.modeFocus.survival.recommendation.empty"
+msgstr "Survival is not part of the rhythm yet. One long run will quickly show whether the skill holds outside short bursts, and the flawless switch can come after the warm-up."
+
+msgid "records.modeFocus.survival.recommendation.flawlessReady"
+msgstr "The internal flawless variant is already giving strong results. The mode can now be used both as a long check and as a precision check via the switch."
+
+msgid "records.modeFocus.survival.recommendation.lowAccuracy"
+msgstr "The mode is limited not by peak speed, but by stability. It is worth improving more even accuracy over long distance, and using the flawless switch only selectively for now."
+
+msgid "records.modeFocus.survival.recommendation.ready"
+msgstr "Survival already looks mature for you. It is a great way to test whether technique breaks down on long text, and the flawless switch can be used as a stricter sub-mode."
+
+msgid "records.modeFocus.survival.recommendation.building"
+msgstr "There is a working base, but the mode still benefits from a few more long runs to smooth out the middle and the end of the text."
+
+msgid "records.modeFocus.survival.recommendation.buildingWithFlawless"
+msgstr "There is a working base, but the mode still benefits from a few more long runs to smooth out the middle and the end of the text and make the flawless switch more reliable."
+
+msgid "records.homeRecord.noAttempts"
+msgstr "No completed attempts yet"
+
+msgid "stats.title"
+msgstr "Stats"
+
+msgid "stats.common.msValue"
+msgstr "{{value}} ms"
+
+msgid "stats.empty.chart"
+msgstr "Not enough data for the chart."
+
+msgid "stats.empty.noDataYet"
+msgstr "No data yet"
+
+msgid "stats.filters.period"
+msgstr "Period"
+
+msgid "stats.filters.mode"
+msgstr "Mode"
+
+msgid "stats.filters.scope"
+msgstr "Scope"
+
+msgid "stats.filters.periodOptions.all"
+msgstr "All"
+
+msgid "stats.filters.periodOptions.day"
+msgstr "Day"
+
+msgid "stats.filters.periodOptions.week"
+msgstr "Week"
+
+msgid "stats.filters.periodOptions.month"
+msgstr "Month"
+
+msgid "stats.filters.modeOptions.all"
+msgstr "All"
+
+msgid "stats.filters.modeOptions.practice"
+msgstr "Practice"
+
+msgid "stats.filters.modeOptions.game"
+msgstr "Game"
+
+msgid "stats.filters.modeOptions.lesson"
+msgstr "Lessons"
+
+msgid "stats.filters.modeOptions.test"
+msgstr "Sprint"
+
+msgid "stats.filters.layoutOptions.current"
+msgstr "Current layout"
+
+msgid "stats.filters.layoutOptions.all"
+msgstr "All layouts"
+
+msgid "stats.fingers.index_left"
+msgstr "Left index"
+
+msgid "stats.fingers.index_right"
+msgstr "Right index"
+
+msgid "stats.fingers.middle_left"
+msgstr "Left middle"
+
+msgid "stats.fingers.middle_right"
+msgstr "Right middle"
+
+msgid "stats.fingers.ring_left"
+msgstr "Left ring"
+
+msgid "stats.fingers.ring_right"
+msgstr "Right ring"
+
+msgid "stats.fingers.pinky_left"
+msgstr "Left pinky"
+
+msgid "stats.fingers.pinky_right"
+msgstr "Right pinky"
+
+msgid "stats.rows.top"
+msgstr "Top row"
+
+msgid "stats.rows.middle"
+msgstr "Home row"
+
+msgid "stats.rows.bottom"
+msgstr "Bottom row"
+
+msgid "stats.modes.practice"
+msgstr "Practice"
+
+msgid "stats.modes.game"
+msgstr "Game"
+
+msgid "stats.modes.lesson"
+msgstr "Lesson"
+
+msgid "stats.modes.test"
+msgstr "Sprint"
+
+msgid "stats.scenarios.practice-normal"
+msgstr "Normal practice"
+
+msgid "stats.scenarios.practice-rhythm"
+msgstr "Rhythm practice"
+
+msgid "stats.scenarios.sprint"
+msgstr "Sprint"
+
+msgid "stats.scenarios.survival"
+msgstr "Survival"
+
+msgid "stats.scenarios.flawless"
+msgstr "Flawless survival"
+
+msgid "stats.trainingModes.normal"
+msgstr "Normal"
+
+msgid "stats.trainingModes.rhythm"
+msgstr "Rhythm"
+
+msgid "stats.trend.notEnoughData"
+msgstr "Not enough data"
+
+msgid "stats.trend.stable"
+msgstr "Stable"
+
+msgid "stats.trend.growing"
+msgstr "Growing"
+
+msgid "stats.trend.falling"
+msgstr "Falling"
+
+msgid "stats.summary.bestSpeed"
+msgstr "Best pace"
+
+msgid "stats.summary.bestAccuracy"
+msgstr "Best accuracy"
+
+msgid "stats.summary.bestRhythm"
+msgstr "Steadiest session"
+
+msgid "stats.summary.weakestFinger"
+msgstr "Weakest finger"
+
+msgid "stats.summary.weakestRow"
+msgstr "Weakest row"
+
+msgid "stats.summary.trend"
+msgstr "Trend"
+
+msgid "stats.summary.speed"
+msgstr "Pace"
+
+msgid "stats.summary.accuracy"
+msgstr "Accuracy"
+
+msgid "stats.summary.noRhythmData"
+msgstr "No practices with rhythm data"
+
+msgid "stats.summary.weakestFingerNote"
+msgstr "{{errorRate}}% errors · {{avgMs}} ms · current layout"
+
+msgid "stats.summary.weakestRowNote"
+msgstr "{{errorRate}}% errors · {{avgMs}} ms · current layout"
+
+msgid "stats.summary.notEnoughAnalytics"
+msgstr "Not enough collected analytics"
+
+msgid "stats.summary.rowsBalanced"
+msgstr "Rows are balanced for now"
+
+msgid "stats.summary.accuracyTrendNote"
+msgstr "{{value}} p.p."
+
+msgid "stats.overallProgress.title"
+msgstr "Overall progress"
+
+msgid "stats.overallProgress.description"
+msgstr "Pace and accuracy across attempt history. Hover a point to see the exact date and time."
+
+msgid "stats.overallProgress.speedTitle"
+msgstr "Pace progress"
+
+msgid "stats.overallProgress.accuracyTitle"
+msgstr "Accuracy progress"
+
+msgid "stats.overallProgress.accuracyValueLabel"
+msgstr "Accuracy %"
+
+msgid "stats.keys.title"
+msgstr "Key statistics"
+
+msgid "stats.keys.description"
+msgstr "Problem keys, local key speed, and heatmap for the current layout with the selected period and mode applied."
+
+msgid "stats.keys.worstKeys"
+msgstr "Top 5 problem keys"
+
+msgid "stats.keys.speedByKey"
+msgstr "Pace by key"
+
+msgid "stats.keys.errorRateShort"
+msgstr "err: {{value}}%"
+
+msgid "stats.keys.keyTimeTitle"
+msgstr "{{key}}: {{value}} ms"
+
+msgid "stats.heatmap.title"
+msgstr "Keyboard heatmap"
+
+msgid "stats.heatmap.description"
+msgstr "Colors show where you make more mistakes or lose pace."
+
+msgid "stats.heatmap.controlsAria"
+msgstr "Keyboard heatmap mode"
+
+msgid "stats.heatmap.errors"
+msgstr "Errors"
+
+msgid "stats.heatmap.slow"
+msgstr "Slow"
+
+msgid "stats.heatmap.less"
+msgstr "Less"
+
+msgid "stats.heatmap.more"
+msgstr "More"
+
+msgid "stats.heatmap.errorTitle"
+msgstr "{{key}}: {{value}}% errors"
+
+msgid "stats.heatmap.slowTitle"
+msgstr "{{key}}: {{value}} ms"
+
+msgid "stats.heatmap.empty"
+msgstr "There is not enough data yet. Finish a few practice sessions to see the layout by problem keys."
+
+msgid "stats.insights.title"
+msgstr "Smart practice insights"
+
+msgid "stats.insights.description"
+msgstr "This shows why the system considers specific letters, bigrams, and keyboard zones weak."
+
+msgid "stats.insights.notEnoughData"
+msgstr "Not enough data yet. Finish a few practices to see analytics."
+
+msgid "stats.insights.metricLine"
+msgstr "{{errorRate}}% errors · {{avgMs}} ms"
+
+msgid "stats.insights.bigramMetricLine"
+msgstr "{{errorRate}}% transition errors · {{avgMs}} ms"
+
+msgid "stats.insights.weakChars.title"
+msgstr "Weak letters"
+
+msgid "stats.insights.weakChars.subtitle"
+msgstr "Errors + slow press time"
+
+msgid "stats.insights.weakChars.empty"
+msgstr "Everything looks even for now."
+
+msgid "stats.insights.weakBigrams.title"
+msgstr "Weak bigrams"
+
+msgid "stats.insights.weakBigrams.subtitle"
+msgstr "Transition errors and tempo loss"
+
+msgid "stats.insights.weakBigrams.empty"
+msgstr "Not enough bigram data yet."
+
+msgid "stats.insights.zones.title"
+msgstr "Fingers and rows"
+
+msgid "stats.insights.zones.subtitle"
+msgstr "Where the load is building up"
+
+msgid "stats.insights.zones.fingers"
+msgstr "Fingers"
+
+msgid "stats.insights.zones.fingersEmpty"
+msgstr "No clear imbalance yet."
+
+msgid "stats.insights.zones.rows"
+msgstr "Rows"
+
+msgid "stats.insights.zones.rowsEmpty"
+msgstr "Rows are balanced for now."
+
+msgid "stats.insights.rhythm.title"
+msgstr "Typing rhythm"
+
+msgid "stats.insights.rhythm.subtitle"
+msgstr "How evenly the pace is holding"
+
+msgid "stats.insights.rhythm.empty"
+msgstr "Not enough intervals yet to evaluate rhythm."
+
+msgid "stats.insights.rhythm.score"
+msgstr "rhythm score"
+
+msgid "stats.insights.rhythm.avgInterval"
+msgstr "Average interval: {{value}} ms"
+
+msgid "stats.insights.rhythm.avgDeviation"
+msgstr "Average deviation: {{value}} ms"
+
+msgid "stats.insights.rhythm.samples"
+msgstr "Samples: {{value}}"
+
+msgid "stats.sessions.title"
+msgstr "Sessions"
+
+msgid "stats.sessions.description"
+msgstr "The latest session rhythm and attempt history with local drilldown."
+
+msgid "stats.sessions.historyTitle"
+msgstr "Session history"
+
+msgid "stats.sessions.historyDescription"
+msgstr "Pick a specific attempt to inspect its local problem spots and a quick breakdown."
+
+msgid "stats.sessions.empty"
+msgstr "There are no sessions matching the current filters yet."
+
+msgid "stats.sessions.selectPrompt"
+msgstr "Select a session on the left."
+
+msgid "stats.sessions.rhythm.title"
+msgstr "Session rhythm"
+
+msgid "stats.sessions.rhythm.description"
+msgstr "The chart updates from the selected item in session history."
+
+msgid "stats.sessions.rhythm.empty"
+msgstr "There is no detailed rhythm data for the selected session. Choose a practice run with saved analytics."
+
+msgid "stats.sessions.rhythm.score"
+msgstr "Rhythm score"
+
+msgid "stats.sessions.rhythm.avgInterval"
+msgstr "Average interval"
+
+msgid "stats.sessions.rhythm.avgDeviation"
+msgstr "Average deviation"
+
+msgid "stats.sessions.rhythm.worstDrop"
+msgstr "Worst drop"
+
+msgid "stats.sessions.rhythm.bestStableRun"
+msgstr "Best stable streak"
+
+msgid "stats.sessions.rhythm.symbolsValue"
+msgstr "{{value}} symbols"
+
+msgid "stats.sessions.rhythm.session"
+msgstr "Session"
+
+msgid "stats.sessions.rhythm.sessionValue"
+msgstr "{{characters}} chars · {{accuracy}}%"
+
+msgid "stats.sessions.detail.mode"
+msgstr "Mode"
+
+msgid "stats.sessions.detail.scenario"
+msgstr "Scenario"
+
+msgid "stats.sessions.detail.layout"
+msgstr "Layout"
+
+msgid "stats.sessions.detail.speed"
+msgstr "Speed"
+
+msgid "stats.sessions.detail.accuracy"
+msgstr "Accuracy"
+
+msgid "stats.sessions.detail.rhythm"
+msgstr "Rhythm"
+
+msgid "stats.sessions.detail.worstDrop"
+msgstr "Worst drop"
+
+msgid "stats.sessions.detail.heatmapTitle"
+msgstr "Session heatmap"
+
+msgid "stats.sessions.detail.heatmapDescription"
+msgstr "The local picture for this exact attempt."
+
+msgid "stats.sessions.detail.worstKeys"
+msgstr "Problem keys in session"
+
+msgid "stats.sessions.detail.noKeyData"
+msgstr "There is no detailed key data for this attempt yet."
+
+msgid "stats.sessions.detail.noCharStats"
+msgstr "This session has no detailed `charStats`, so only the general breakdown is available."
+
+msgid "stats.charts.interval"
+msgstr "Interval"
+
+msgid "stats.charts.averageInterval"
+msgstr "Average interval"
+
+msgid "stats.charts.rhythmUnavailable"
+msgstr "The rhythm chart is temporarily unavailable. The rest of the statistics is still preserved."
+
+msgid "practice.title"
+msgstr "Practice"
+
+msgid "practice.achievements"
+msgstr "Achievements"
+
+msgid "practice.dailyMinutes"
+msgstr "{{current}} / {{target}} min"
+
+msgid "practice.packLine"
+msgstr "Pack: {{name}} · {{kind}} · ~{{words}} words"
+
+msgid "practice.packRiskLine"
+msgstr "Repeats: {{risk}} · Best: {{mode}}"
+
+msgid "practice.weakTooltip"
+msgstr "Problem key · {{speed}} {{speedLabel}}"
+
+msgid "practice.importDialogTitle"
+msgstr "Import custom pack"
+
+msgid "practice.importSuccess"
+msgstr "Imported pack “{{name}}”. About {{words}} words per attempt, best fit: {{mode}}. Starter preset: {{preset}}."
+
+msgid "practice.importDeleted"
+msgstr "Pack deleted."
+
+msgid "practice.importFailed"
+msgstr "Failed to import the pack."
+
+msgid "practice.importErrors.noExercises"
+msgstr "There are no exercises or texts to import in this file."
+
+msgid "practice.importErrors.emptyText"
+msgstr "The text file is empty."
+
+msgid "practice.importErrors.noTexts"
+msgstr "Failed to extract texts from the file."
+
+msgid "practice.importedPackTitle"
+msgstr "Imported pack"
+
+msgid "practice.untilUnlock"
+msgstr "Until unlock: {{current}}/{{target}}"
+
+msgid "practice.overlay"
+msgstr "Click here or start typing"
+
+msgid "practice.resultTitle"
+msgstr "Practice result"
+
+msgid "practice.feedback.title"
+msgstr "Practice review"
+
+msgid "practice.feedback.description"
+msgstr "The system highlighted the current weak spots from the accumulated analytics."
+
+msgid "practice.feedback.prompt"
+msgstr "Press any key for a new attempt"
+
+msgid "practice.feedback.weakestChar.label"
+msgstr "Weakest character"
+
+msgid "practice.feedback.weakestChar.note"
+msgstr "It is worth reinforcing this key more often in regular runs."
+
+msgid "practice.feedback.weakestBigram.label"
+msgstr "Weakest bigram"
+
+msgid "practice.feedback.weakestBigram.note"
+msgstr "This is where pace is most often lost during transitions between letters."
+
+msgid "practice.feedback.weakestFinger.label"
+msgstr "Problem finger"
+
+msgid "practice.feedback.weakestFinger.empty"
+msgstr "Not identified yet"
+
+msgid "practice.feedback.weakestFinger.note"
+msgstr "It helps to watch for relaxation and accurate hand placement."
+
+msgid "practice.feedback.rhythm.label"
+msgstr "Rhythm score"
+
+msgid "practice.feedback.rhythmLabels.even"
+msgstr "Even rhythm"
+
+msgid "practice.feedback.rhythmLabels.good"
+msgstr "Good rhythm"
+
+msgid "practice.feedback.rhythmLabels.unstable"
+msgstr "Unstable tempo"
+
+msgid "practice.feedback.rhythmLabels.dropping"
+msgstr "Rhythm is dropping"
+
+msgid "practice.rhythm"
+msgstr "Rhythm"
+
+msgid "practice.msShort"
+msgstr "ms"
+
+msgid "practice.rhythmDeviation"
+msgstr "Δ deviation"
+
+msgid "practice.problemChar"
+msgstr "Problem key"
+
+msgid "practice.letters"
+msgstr "Letters"
+
+msgid "practice.newLetter"
+msgstr "New!"
+
+msgid "practice.untilNew"
+msgstr "Until new"
+
+msgid "practice.pressAnyKey"
+msgstr "Press any key or the button below"
+
+msgid "practice.continue"
+msgstr "Continue"
+
+msgid "practice.letterUnlockedTitle"
+msgstr "New letter unlocked"
+
+msgid "practice.letterUnlockedDescription"
+msgstr "This letter is now available in practice mode."
+
+msgid "practice.letterUnlockedHint"
+msgstr "Press `Enter`, `Space`, or the button below."
+
+msgid "practice.focusMode"
+msgstr "Focus mode"
+
+msgid "practice.contentModes.adaptive-words"
+msgstr "Words"
+
+msgid "practice.contentModes.syllables"
+msgstr "Syllables"
+
+msgid "practice.contentModes.pseudo-words"
+msgstr "Pseudo-words"
+
+msgid "practice.contentModes.sentences"
+msgstr "Sentences"
+
+msgid "practice.contentModes.custom"
+msgstr "My pack"
+
+msgid "practice.contentModes.customPackShort"
+msgstr "Pack"
+
+msgid "practice.scenarios.practice-normal.description"
+msgstr "A medium distance for regular training in speed, accuracy, and calm stability."
+
+msgid "practice.scenarios.practice-rhythm.description"
+msgstr "Shorter runs for steady tempo and cleaner rhythm control."
+
+msgid "practice.scenarios.sprint.description"
+msgstr "The shortest and densest texts for quick timed runs."
+
+msgid "practice.scenarios.survival.description"
+msgstr "A longer distance with extended series to hold stability under load."
+
+msgid "practice.scenarios.flawless.description"
+msgstr "More compact and cleaner series where accuracy matters more than distance."
+
+msgid "practice.quickSettings.material"
+msgstr "Material"
+
+msgid "practice.quickSettings.pack"
+msgstr "Pack"
+
+msgid "practice.quickSettings.itemsShort"
+msgstr "items"
+
+msgid "practice.quickSettings.wordsShort"
+msgstr "words"
+
+msgid "practice.quickSettings.repetition"
+msgstr "Repeats"
+
+msgid "practice.quickSettings.bestFor"
+msgstr "Best for"
+
+msgid "practice.packSummary.risks.low"
+msgstr "Low"
+
+msgid "practice.packSummary.risks.medium"
+msgstr "Medium"
+
+msgid "practice.packSummary.risks.high"
+msgstr "High"
+
+msgid "practice.packSummary.recommended.practiceNormal"
+msgstr "Normal practice"
+
+msgid "practice.packSummary.recommended.practiceRhythm"
+msgstr "Rhythm practice"
+
+msgid "practice.packSummary.recommended.sprint"
+msgstr "Sprint"
+
+msgid "practice.packSummary.recommended.survival"
+msgstr "Survival"
+
+msgid "practice.packSummary.recommended.flawless"
+msgstr "Flawless survival"
+
+msgid "practice.packSummary.fit.tight"
+msgstr "This pack already feels tight and will hit repetition limits quickly."
+
+msgid "practice.packSummary.fit.comfortable"
+msgstr "This pack looks comfortable in both size and repetition risk."
+
+msgid "practice.packSummary.fit.workable"
+msgstr "This pack is workable, but repeats will be more noticeable in longer runs."
+
+msgid "practice.packSummary.reasons.sentencesShortRhythm"
+msgstr "A short sentence pack is safer in a shorter calm session than stretching it into a long scenario."
+
+msgid "practice.packSummary.reasons.sentencesLongSurvival"
+msgstr "Long phrases and larger text chunks open up better in a long, steady run."
+
+msgid "practice.packSummary.reasons.sentencesNormalPractice"
+msgstr "Connected text without extreme length fits best in regular mid-distance practice."
+
+msgid "practice.packSummary.reasons.wordsSprint"
+msgstr "A dense word pool works especially well in a short timed mode where the clean pace snapshot matters most."
+
+msgid "practice.packSummary.reasons.wordsFlawless"
+msgstr "A small word pool shows itself best in a compact accuracy-focused mode without a long distance."
+
+msgid "practice.packSummary.reasons.wordsNormalPractice"
+msgstr "A medium word pool works best as a universal regular practice."
+
+msgid "practice.packSummary.reasons.mixedTightPractice"
+msgstr "A short mixed pool should not be stretched into harsh or long scenarios; it needs a calmer mid-distance run."
+
+msgid "practice.packSummary.reasons.mixedLongSurvival"
+msgstr "Mixed content with longer fragments opens up better in a long steady run."
+
+msgid "practice.packSummary.reasons.mixedNormalPractice"
+msgstr "A mixed pack without a strong bias fits best in normal practice."
+
+msgid "practice.packSummary.notes.shortPool"
+msgid_plural "practice.packSummary.notes.shortPool"
+msgstr[0] "Short pool: only {{count}} item, so longer scenarios will hit repeats more quickly."
+msgstr[1] "Short pool: only {{count}} items, so longer scenarios will hit repeats more quickly."
+
+msgid "practice.packSummary.notes.longSentences"
+msgstr "The phrases are already long on their own, so even a short scenario will feel larger than usual."
+
+msgid "practice.packSummary.notes.shortItems"
+msgstr "The items are very short, so this pack works especially well for warm-up and accuracy control."
+
+msgid "practice.packPreflight.actions.openMode"
+msgstr "Open {{mode}}"
+
+msgid "practice.packPreflight.survival.title"
+msgstr "This pack is too short for survival"
+
+msgid "practice.packPreflight.survival.detail"
+msgstr "A long distance will quickly run into repeats or heavy phrases. It is better to shorten the scenario or return to base material for a cleaner survival run."
+
+msgid "practice.packPreflight.survival.actions.practice.label"
+msgstr "Switch to practice"
+
+msgid "practice.packPreflight.survival.actions.practice.description"
+msgstr "Keep the current pack but move back to a calmer mid-distance scenario."
+
+msgid "practice.packPreflight.survival.actions.base.label"
+msgstr "Return to base material"
+
+msgid "practice.packPreflight.survival.actions.base.description"
+msgstr "Stay in survival, but remove the short pack and return to the standard adaptive material."
+
+msgid "practice.packPreflight.practice.title"
+msgstr "This pack is tight for normal practice"
+
+msgid "practice.packPreflight.practice.detail"
+msgstr "A mid-distance run will start repeating items too quickly. It is more useful to shorten the session or move the pack into a better-fitting mode in one click."
+
+msgid "practice.packPreflight.practice.actions.shorten.label"
+msgstr "Shorten the distance"
+
+msgid "practice.packPreflight.practice.actions.shorten.description"
+msgstr "Switch practice into rhythm mode and keep the current pack."
+
+msgid "practice.packPreflight.practice.actions.base.label"
+msgstr "Return to base material"
+
+msgid "practice.packPreflight.practice.actions.base.description"
+msgstr "Remove the custom pack and return to standard adaptive practice."
+
+msgid "practice.packPreflight.sprint.title"
+msgstr "Sprint becomes too heavy for sentences"
+
+msgid "practice.packPreflight.sprint.detail"
+msgstr "Long sentences under a timer add extra load and distort the clean pace signal. Either shorten the run or move to a better-fitting scenario."
+
+msgid "practice.packPreflight.sprint.actions.shorten.label"
+msgstr "Make the sprint shorter"
+
+msgid "practice.packPreflight.sprint.actions.shorten.description"
+msgstr "Keep the pack but quickly reduce the timer to the shortest distance."
+
+msgid "practice.packPreflight.sprint.actions.rhythm.label"
+msgstr "Switch to rhythm practice"
+
+msgid "practice.packPreflight.sprint.actions.rhythm.description"
+msgstr "For sentences, this pack works better in a short calm practice without a harsh timer."
+
+msgid "practice.packPreflight.sprint.actions.base.label"
+msgstr "Keep sprint, use base material"
+
+msgid "practice.packPreflight.sprint.actions.base.description"
+msgstr "Keep the timed mode and restore standard material instead of a heavy sentence pack."
+
+msgid "practice.packPreflight.flawless.title"
+msgstr "This mixed pack is too noisy for flawless survival"
+
+msgid "practice.packPreflight.flawless.detail"
+msgstr "A short mixed pack makes the flawless survival variant harsher than it needs to be. It is better to smooth out the material first or move back to normal practice."
+
+msgid "practice.packPreflight.flawless.actions.practice.label"
+msgstr "Switch to normal practice"
+
+msgid "practice.packPreflight.flawless.actions.practice.description"
+msgstr "Keep the current pack but move it into a softer scenario without instant failure."
+
+msgid "practice.packPreflight.flawless.actions.base.label"
+msgstr "Keep flawless survival, use base material"
+
+msgid "practice.packPreflight.flawless.actions.base.description"
+msgstr "Keep the flawless survival variant and return to standard material without the short mixed pool."
+
+msgid "practice.packPreflight.info.title"
+msgstr "This pack has a more natural scenario: {{mode}}"
+
+msgid "practice.packPreflight.info.actions.switch.label"
+msgstr "Switch to {{mode}}"
+
+msgid "practice.packPreflight.info.actions.switch.description"
+msgstr "Apply the recommended scenario and keep the current pack active."
+
+msgid "practice.importPreset.reasons.rhythmShort"
+msgstr "The pack is placed into a shorter practice mode right away so the first start stays useful even with a small pool."
+
+msgid "practice.importPreset.reasons.normalForSurvival"
+msgstr "The import stays at a medium distance first, so the pack can be checked in a base mode before moving into a long survival run."
+
+msgid "practice.importPreset.reasons.rhythmAfterStrict"
+msgstr "For the first start, the pack is shortened into a calm short practice so the user is not overloaded with a harsh scenario right after import."
+
+msgid "practice.importPreset.reasons.normalStable"
+msgstr "The pack already looks stable enough for standard practice, so an extra short preset is not needed."
+
+msgid "practice.settings.title"
+msgstr "Practice settings"
+
+msgid "practice.settings.description"
+msgstr "Length, pace, and training character."
+
+msgid "practice.settings.dailyGoal"
+msgstr "Daily goal"
+
+msgid "practice.settings.minutes"
+msgstr "Minutes"
+
+msgid "practice.settings.sessionsCount"
+msgstr "Practice count"
+
+msgid "practice.settings.goalSpeed"
+msgstr "Target speed"
+
+msgid "practice.settings.goalSpeedAria"
+msgstr "Practice target speed"
+
+msgid "practice.settings.trainingMode"
+msgstr "Practice mode"
+
+msgid "practice.settings.normal"
+msgstr "Normal"
+
+msgid "practice.settings.rhythm"
+msgstr "Rhythm"
+
+msgid "practice.settings.normalHint"
+msgstr "Base mode focused on speed and accuracy."
+
+msgid "practice.settings.rhythmHint"
+msgstr "Short text with steady pace."
+
+msgid "practice.settings.contentMode"
+msgstr "Training material"
+
+msgid "practice.settings.contentModeHints.adaptive-words"
+msgstr "Adaptive dictionaries that account for weak spots."
+
+msgid "practice.settings.contentModeHints.syllables"
+msgstr "Short syllables and phonetic transitions."
+
+msgid "practice.settings.contentModeHints.pseudo-words"
+msgstr "Synthetic words built from available letters."
+
+msgid "practice.settings.contentModeHints.sentences"
+msgstr "Short sentences and connected text."
+
+msgid "practice.settings.contentModeHints.custom"
+msgstr "Built-in, addon, and imported content packs."
+
+msgid "practice.settings.contentPacks"
+msgstr "Content packs"
+
+msgid "practice.settings.selectPack"
+msgstr "Choose a pack…"
+
+msgid "practice.settings.importPack"
+msgstr "Import TXT/JSON"
+
+msgid "practice.settings.deletePack"
+msgstr "Delete"
+
+msgid "practice.settings.packsAvailable"
+msgstr "Built-in, addon, and imported packs are available in one list."
+
+msgid "practice.settings.noPacks"
+msgstr "There are no content packs yet."
+
+msgid "practice.settings.packPool"
+msgstr "Pool: {{count}} items · Type: {{kind}} · For {{scenario}} the current estimate is about {{words}} words."
+
+msgid "practice.settings.packRisk"
+msgstr "Repeat risk: {{risk}}. Best fit: {{mode}}."
+
+msgid "practice.settings.smartAdaptation"
+msgstr "Smart adaptation"
+
+msgid "practice.settings.smartAdaptationHint"
+msgstr "Adjusts text to weak spots."
+
+msgid "practice.settings.adaptationStrength"
+msgstr "Adaptation strength"
+
+msgid "practice.settings.adaptationStrengthLabels.low"
+msgstr "Gentle"
+
+msgid "practice.settings.adaptationStrengthLabels.medium"
+msgstr "Balanced"
+
+msgid "practice.settings.adaptationStrengthLabels.high"
+msgstr "Strict"
+
+msgid "practice.settings.adaptationStrengthHint"
+msgstr "Higher strength means more focus on weak spots."
+
+msgid "practice.settings.adaptationStrengthDisabled"
+msgstr "Enable adaptation to change its strength."
+
+msgid "practice.settings.adaptationFocus"
+msgstr "Primary focus"
+
+msgid "practice.settings.adaptationFocusLabels.balanced"
+msgstr "Balance"
+
+msgid "practice.settings.adaptationFocusLabels.chars"
+msgstr "Letters"
+
+msgid "practice.settings.adaptationFocusLabels.bigrams"
+msgstr "Bigrams"
+
+msgid "practice.settings.adaptationFocusLabels.rhythm"
+msgstr "Rhythm"
+
+msgid "practice.settings.adaptationFocusHints.balanced"
+msgstr "Balance letters, bigrams, and pace."
+
+msgid "practice.settings.adaptationFocusHints.chars"
+msgstr "Focus more on individual letters."
+
+msgid "practice.settings.adaptationFocusHints.bigrams"
+msgstr "Focus more on transitions between letters."
+
+msgid "practice.settings.adaptationFocusHints.rhythm"
+msgstr "Focus more on keeping a steady pace."
+
+msgid "practice.settings.noStepBack"
+msgstr "No step back"
+
+msgid "practice.settings.noStepBackHint"
+msgstr "Backspace is disabled."
+
+msgid "sprint.title"
+msgstr "Sprint"
+
+msgid "sprint.description"
+msgstr "A short timed run for pace and accuracy on top of the shared content pipeline."
+
+msgid "sprint.achievements"
+msgstr "Achievements"
+
+msgid "sprint.start"
+msgstr "Start sprint"
+
+msgid "sprint.duration"
+msgstr "Duration"
+
+msgid "sprint.durationValue"
+msgstr "{{value}} sec"
+
+msgid "sprint.material"
+msgstr "Material"
+
+msgid "sprint.best"
+msgstr "Best sprint"
+
+msgid "sprint.noResults"
+msgstr "no results yet"
+
+msgid "sprint.overlay"
+msgstr "Click here or “{{start}}” to begin"
+
+msgid "sprint.resultTitle"
+msgstr "Sprint result"
+
+msgid "sprint.callouts.improved.title"
+msgstr "Sprint is getting stronger"
+
+msgid "sprint.callouts.improved.detail"
+msgstr "The new result beats the recent best without an accuracy drop. The mode is starting to work as a real pace checkpoint."
+
+msgid "sprint.callouts.clean.title"
+msgstr "Clean sprint"
+
+msgid "sprint.callouts.clean.detail"
+msgstr "The pace landed without noise or extra mistakes. This is a strong benchmark for a short warm-up run."
+
+msgid "sprint.callouts.errors.title"
+msgstr "Errors ate the pace"
+
+msgid "sprint.callouts.errors.detail"
+msgstr "The sprint still does not hold quality under the timer. It is more useful to keep the rhythm calmer than to accelerate at the cost of a mistake streak."
+
+msgid "sprint.callouts.belowPrevious.title"
+msgstr "Below the previous attempt"
+
+msgid "sprint.callouts.belowPrevious.detail"
+msgstr "The drop is small but noticeable. Usually this means the start was too sharp or the middle of the sprint broke down in accuracy."
+
+msgid "sprint.callouts.steady.title"
+msgstr "A solid pace run"
+
+msgid "sprint.callouts.steady.detail"
+msgstr "Sprint already gives a useful snapshot of speed and typing density. A few more repeats will help make the peak result steadier."
+
+msgid "survival.title"
+msgstr "Survival"
+
+msgid "survival.description"
+msgstr "A long run with a mistake limit. Make it to the end of the text without losing all your lives."
+
+msgid "survival.toggleDescription"
+msgstr "A standard run with room for a couple of mistakes and a focus on long-distance stability."
+
+msgid "survival.flawlessDescription"
+msgstr "One mistake ends the attempt. This is the stricter survival variant for testing cleanliness and discipline."
+
+msgid "survival.flawlessToggleDescription"
+msgstr "Any error ends the attempt. This variant is useful when you want to test full control, not just pace."
+
+msgid "survival.achievements"
+msgstr "Achievements"
+
+msgid "survival.flawlessToggle"
+msgstr "Flawless"
+
+msgid "survival.start"
+msgstr "Start survival"
+
+msgid "survival.successTitle"
+msgstr "Completed"
+
+msgid "survival.failureTitle"
+msgstr "Out of lives"
+
+msgid "survival.flawlessSuccessTitle"
+msgstr "Clean run"
+
+msgid "survival.flawlessFailureTitle"
+msgstr "An error ended the run"
+
+msgid "survival.flawlessStatus"
+msgstr "Flawless · current reserve: {{lives}}"
+
+msgid "survival.survivalStatus"
+msgstr "Allowed errors: {{errors}} · current lives: {{lives}}"
+
+msgid "survival.material"
+msgstr "Material"
+
+msgid "survival.best"
+msgstr "Best result"
+
+msgid "survival.noResults"
+msgstr "no results yet"
+
+msgid "survival.overlay"
+msgstr "Click here or “{{start}}”"
+
+msgid "survival.attemptReserve"
+msgstr "Attempt reserve"
+
+msgid "survival.livesLeft"
+msgstr "Lives left"
+
+msgid "survival.callouts.flawlessPerfect.title"
+msgstr "Perfectly clean run"
+
+msgid "survival.callouts.flawlessPerfect.detail"
+msgstr "The mode was cleared without a single slip. This is no longer just a successful attempt but a strong sign of stable control."
+
+msgid "survival.callouts.survivalNoLoss.title"
+msgstr "The run held without losses"
+
+msgid "survival.callouts.survivalNoLoss.detail"
+msgstr "Survival was cleared without spending any lives. That means pace and discipline held all the way to the end of the text."
+
+msgid "survival.callouts.edgeFinish.title"
+msgstr "Finished on the edge"
+
+msgid "survival.callouts.edgeFinish.detail"
+msgstr "The attempt succeeded, but the safety margin nearly ran out. The next step is to make the same run calmer and cleaner."
+
+msgid "survival.callouts.flawlessLate.title"
+msgstr "Break in the final stretch"
+
+msgid "survival.callouts.flawlessLate.detail"
+msgstr "A clean run almost came together, but a late error ended it. That is a good sign: the base is already close to a reliable flawless pass."
+
+msgid "survival.callouts.flawlessStart.title"
+msgstr "Break at the start"
+
+msgid "survival.callouts.flawlessStart.detail"
+msgstr "Errors arrive too early, so the mode does not even get a chance to unfold. It is better to lower the pace a bit and smooth out the opening."
+
+msgid "survival.callouts.flawlessMid.title"
+msgstr "One mistake breaks the run"
+
+msgid "survival.callouts.flawlessMid.detail"
+msgstr "The mode shows that cleanliness is still unstable in the middle of the text. It is worth adding a few calmer attempts without chasing speed."
+
+msgid "survival.callouts.survivalLate.title"
+msgstr "The ending was missing"
+
+msgid "survival.callouts.survivalLate.detail"
+msgstr "You already hold the main distance, but the final part of the text consumes the remaining lives. It is worth working on long-run stability."
+
+msgid "survival.callouts.survivalStability.title"
+msgstr "Survival ran into stability"
+
+msgid "survival.callouts.survivalStability.detail"
+msgstr "The problem is not one collapse but the accumulation of errors. A steady run matters more here than a sharp speed peak at the start."
+
+msgid "survival.callouts.improving.title"
+msgstr "The mode is progressing"
+
+msgid "survival.callouts.improving.detail"
+msgstr "Even if the run is not perfect, the result is already better than the recent reference. That means the current training strategy is moving in the right direction."
+
+msgid "survival.callouts.neutral.title"
+msgstr "The mode gives an honest read"
+
+msgid "survival.callouts.neutral.flawlessDetail"
+msgstr "This result is a good read on the current reserve of typing cleanliness. A retry after a few calm practice runs will give a steadier signal."
+
+msgid "survival.callouts.neutral.survivalDetail"
+msgstr "This attempt is already useful as a long-distance check. A few more runs will show where lives are consistently being lost."
+
+msgid "lessons.title"
+msgstr "Lessons"
+
+msgid "lessons.achievements"
+msgstr "Achievements"
+
+msgid "lessons.and"
+msgstr "and"
+
+msgid "lessons.lockedNote"
+msgstr "Finish the previous lesson in this section first"
+
+msgid "lessons.lessonOf"
+msgstr "Lesson {{current}} of {{total}}"
+
+msgid "lessons.exerciseFallback"
+msgstr "Exercise {{index}}"
+
+msgid "lessons.previousLesson"
+msgstr "Previous lesson"
+
+msgid "lessons.nextLesson"
+msgstr "Next lesson"
+
+msgid "lessons.nextSection"
+msgstr "Next section"
+
+msgid "lessons.back"
+msgstr "Back"
+
+msgid "lessons.overlay"
+msgstr "Click here or start typing"
+
+msgid "lessons.exerciseCompleted"
+msgstr "Exercise completed!"
+
+msgid "lessons.passed"
+msgstr "Passed!"
+
+msgid "lessons.needAccuracy"
+msgstr "Accuracy ≥ 80% required"
+
+msgid "lessons.retry"
+msgstr "Retry"
+
+msgid "lessons.next"
+msgstr "Next"
+
+msgid "lessons.done"
+msgstr "Done"
+
+msgid "lessons.rows.top"
+msgstr "top row"
+
+msgid "lessons.rows.middle"
+msgstr "home row"
+
+msgid "lessons.rows.bottom"
+msgstr "bottom row"
+
+msgid "lessons.fingers.index_left"
+msgstr "left index"
+
+msgid "lessons.fingers.index_right"
+msgstr "right index"
+
+msgid "lessons.fingers.middle_left"
+msgstr "left middle"
+
+msgid "lessons.fingers.middle_right"
+msgstr "right middle"
+
+msgid "lessons.fingers.ring_left"
+msgstr "left ring"
+
+msgid "lessons.fingers.ring_right"
+msgstr "right ring"
+
+msgid "lessons.fingers.pinky_left"
+msgstr "left pinky"
+
+msgid "lessons.fingers.pinky_right"
+msgstr "right pinky"
+
+msgid "lessons.exerciseNames.generic.repeats"
+msgstr "Letter repeats"
+
+msgid "lessons.exerciseNames.generic.singleLetters"
+msgstr "Single letters"
+
+msgid "lessons.exerciseNames.generic.pairs2"
+msgstr "Pairs of 2"
+
+msgid "lessons.exerciseNames.generic.pairs23"
+msgstr "Pairs of 2–3"
+
+msgid "lessons.exerciseNames.generic.pairs24"
+msgstr "Pairs of 2–4"
+
+msgid "lessons.exerciseNames.row.warmup"
+msgstr "Row warm-up"
+
+msgid "lessons.exerciseNames.row.singleKeys"
+msgstr "Single keys"
+
+msgid "lessons.exerciseNames.row.rowPairs"
+msgstr "Row pairs"
+
+msgid "lessons.exerciseNames.row.rowChains"
+msgstr "Row chains"
+
+msgid "lessons.exerciseNames.row.rowLockIn"
+msgstr "Row lock-in"
+
+msgid "lessons.exerciseNames.bigrams.warmup"
+msgstr "Bigram warm-up"
+
+msgid "lessons.exerciseNames.bigrams.cleanPairs"
+msgstr "Clean pairs"
+
+msgid "lessons.exerciseNames.bigrams.shortChains"
+msgstr "Short chains"
+
+msgid "lessons.exerciseNames.bigrams.syllables"
+msgstr "Syllables and fragments"
+
+msgid "lessons.exerciseNames.bigrams.lockIn"
+msgstr "Bigram lock-in"
+
+msgid "lessons.exerciseNames.transitions.warmup"
+msgstr "Transition warm-up"
+
+msgid "lessons.exerciseNames.transitions.alternation"
+msgstr "1–1 alternation"
+
+msgid "lessons.exerciseNames.transitions.shortChains"
+msgstr "Short chains"
+
+msgid "lessons.exerciseNames.transitions.longTransitions"
+msgstr "Long transitions"
+
+msgid "lessons.exerciseNames.transitions.lockIn"
+msgstr "Transition lock-in"
+
+msgid "game.core.routes.kind.battle"
+msgstr "Battle"
+
+msgid "game.core.routes.kind.rest"
+msgstr "Rest"
+
+msgid "game.core.routes.kind.treasure"
+msgstr "Cache"
+
+msgid "game.core.routes.kind.shop"
+msgstr "Shop"
+
+msgid "game.core.routes.kind.elite"
+msgstr "Elite enemy"
+
+msgid "game.core.routes.kind.miniboss"
+msgstr "Mini-boss"
+
+msgid "game.core.routes.kind.risk"
+msgstr "Risk"
+
+msgid "game.core.routes.kind.boss"
+msgstr "Boss"
+
+msgid "game.core.routes.routeNode.battle.title"
+msgstr "Direct path"
+
+msgid "game.core.routes.routeNode.battle.flavor"
+msgstr "Advance to the next level without stopping"
+
+msgid "game.core.routes.routeNode.battle.description"
+msgstr "A pure combat route: no prep rooms, but no delay before the next wave either."
+
+msgid "game.core.routes.routeNode.rest.title"
+msgstr "Campfire respite"
+
+msgid "game.core.routes.routeNode.rest.flavor"
+msgstr "Recover and catch your breath"
+
+msgid "game.core.routes.routeNode.rest.description"
+msgstr "A recovery room with repairs, healing, and soft pace buffs."
+
+msgid "game.core.routes.routeNode.treasure.title"
+msgstr "Roadside cache"
+
+msgid "game.core.routes.routeNode.treasure.flavor"
+msgstr "Take supplies and relics"
+
+msgid "game.core.routes.routeNode.treasure.description"
+msgstr "A trophy room with a chance to grab a free item or stock up for the next wave."
+
+msgid "game.core.routes.routeNode.shop.title"
+msgstr "Tinkerer shop"
+
+msgid "game.core.routes.routeNode.shop.flavor"
+msgstr "Prepare in a safe room"
+
+msgid "game.core.routes.routeNode.shop.description"
+msgstr "A trade room with repairs, a new relic, or a short boost before the next fight."
+
+msgid "game.core.routes.routeNode.elite.title"
+msgstr "Elite enemy"
+
+msgid "game.core.routes.routeNode.elite.flavor"
+msgstr "A stronger foe with better loot"
+
+msgid "game.core.routes.routeNode.elite.description"
+msgstr "A tougher fight: longer text and stricter requirements, but an extra reward on victory."
+
+msgid "game.core.routes.routeNode.miniboss.title"
+msgstr "Mini-boss"
+
+msgid "game.core.routes.routeNode.miniboss.flavor"
+msgstr "A serious trial between regular fights"
+
+msgid "game.core.routes.routeNode.miniboss.description"
+msgstr "A timed mini-boss with higher accuracy demands. Weaker than a true boss, but stronger than a normal enemy. Victory grants a powerful temporary boost."
+
+msgid "game.core.routes.routeNode.risk.title"
+msgstr "Edge bargain"
+
+msgid "game.core.routes.routeNode.risk.flavor"
+msgstr "Take a risk for a strong boost"
+
+msgid "game.core.routes.routeNode.risk.description"
+msgstr "A risky room with powerful bonuses, but every offer asks for payment upfront."
+
+msgid "game.core.routes.mapNode.boss.title"
+msgstr "Branch warden"
+
+msgid "game.core.routes.mapNode.boss.flavor"
+msgstr "The main test of this route"
+
+msgid "game.core.routes.mapNode.boss.description"
+msgstr "Every {{interval}}th level is a timed fight with a higher accuracy requirement."
+
+msgid "game.core.routes.mapNode.battleEncounter.title"
+msgstr "Battle"
+
+msgid "game.core.routes.mapNode.battleEncounter.flavor"
+msgstr "A regular speed-and-accuracy fight"
+
+msgid "game.core.routes.mapNode.battleEncounter.description"
+msgstr "A standard text wave. Keep the pace and move further down the map."
+
+msgid "game.core.routes.mapNode.battle.title"
+msgstr "Direct path"
+
+msgid "game.core.routes.mapNode.battle.flavor"
+msgstr "Go straight into the next fight"
+
+msgid "game.core.routes.mapNode.battle.description"
+msgstr "A short route with no stopovers or prep rooms."
+
+msgid "game.core.routes.mapNode.rest.title"
+msgstr "Campfire respite"
+
+msgid "game.core.routes.mapNode.rest.flavor"
+msgstr "Recover and catch your breath"
+
+msgid "game.core.routes.mapNode.rest.description"
+msgstr "A recovery room with repairs, healing, and a calmer pace before the next fight."
+
+msgid "game.core.routes.mapNode.treasure.title"
+msgstr "Roadside cache"
+
+msgid "game.core.routes.mapNode.treasure.flavor"
+msgstr "Collect relics and supplies"
+
+msgid "game.core.routes.mapNode.treasure.description"
+msgstr "A loot room: a free item or a useful reserve for the next fight."
+
+msgid "game.core.routes.mapNode.shop.title"
+msgstr "Tinkerer shop"
+
+msgid "game.core.routes.mapNode.shop.flavor"
+msgstr "Repairs and preparation"
+
+msgid "game.core.routes.mapNode.shop.description"
+msgstr "A trade room: repairs, a new relic, or a short combat boost."
+
+msgid "game.core.routes.mapNode.elite.title"
+msgstr "Elite enemy"
+
+msgid "game.core.routes.mapNode.elite.flavor"
+msgstr "A reinforced fight for a generous reward"
+
+msgid "game.core.routes.mapNode.elite.description"
+msgstr "An elite opponent: longer text and higher accuracy, but victory brings a strong modifier."
+
+msgid "game.core.routes.mapNode.miniboss.title"
+msgstr "Mini-boss"
+
+msgid "game.core.routes.mapNode.miniboss.flavor"
+msgstr "A serious challenge in the middle of the route"
+
+msgid "game.core.routes.mapNode.miniboss.description"
+msgstr "A timed mini-boss. Weaker than a real boss, but stronger than a regular enemy. Grants a temporary boost."
+
+msgid "game.core.routes.mapNode.risk.title"
+msgstr "Edge bargain"
+
+msgid "game.core.routes.mapNode.risk.flavor"
+msgstr "Risk for a powerful boost"
+
+msgid "game.core.routes.mapNode.risk.description"
+msgstr "A dangerous room: powerful bonuses, but you must pay for them in advance."
+
+msgid "game.core.events.rest.eventTitle"
+msgstr "Campfire respite"
+
+msgid "game.core.events.rest.eventDescription"
+msgstr "A short pause between waves. Choose how to spend your time at the campfire — every option affects the journey ahead."
+
+msgid "game.core.events.rest.common.fullHealth"
+msgstr "Health is already full"
+
+msgid "game.core.events.rest.common.noEffect"
+msgstr "This would have no effect right now."
+
+msgid "game.core.events.rest.heal.title"
+msgstr "Breath of air"
+
+msgid "game.core.events.rest.heal.flavorReady"
+msgstr "Restore some health"
+
+msgid "game.core.events.rest.heal.description"
+msgstr "Restores 20 HP."
+
+msgid "game.core.events.rest.fullHeal.title"
+msgstr "Healing rest"
+
+msgid "game.core.events.rest.fullHeal.flavorReady"
+msgstr "Restore health to full"
+
+msgid "game.core.events.rest.fullHeal.description"
+msgstr "Restores health to its maximum."
+
+msgid "game.core.events.rest.maxHp.title"
+msgstr "Spirit tempering"
+
+msgid "game.core.events.rest.maxHp.flavor"
+msgstr "Increase max health by 10"
+
+msgid "game.core.events.rest.maxHp.description"
+msgstr "Permanently adds +10 to maximum HP."
+
+msgid "game.core.events.rest.regen.title"
+msgstr "Recovery mantra"
+
+msgid "game.core.events.rest.regen.flavor"
+msgstr "Regeneration after each battle"
+
+msgid "game.core.events.rest.regen.description"
+msgstr "For the next 3 battles: restores {{hp}} HP after each level."
+
+msgid "game.core.events.rest.repair.title"
+msgstr "Field repair"
+
+msgid "game.core.events.rest.repair.flavorReady"
+msgstr "Tune up the equipment before the next battle"
+
+msgid "game.core.events.rest.repair.flavorEmpty"
+msgstr "There is nothing to repair yet"
+
+msgid "game.core.events.rest.repair.descriptionReady"
+msgstr "Restores 2 durability to every equipped item."
+
+msgid "game.core.events.rest.repair.descriptionEmpty"
+msgstr "No equipped item currently needs repairs."
+
+msgid "game.core.events.rest.focus.title"
+msgstr "Steady breath"
+
+msgid "game.core.events.rest.focus.flavor"
+msgstr "Catch a calm rhythm before the next levels"
+
+msgid "game.core.events.rest.focus.description"
+msgstr "For 2 levels lowers required speed by 4% and required accuracy by 2%."
+
+msgid "game.core.events.rest.focus.modifierTitle"
+msgstr "Steady breath"
+
+msgid "game.core.events.rest.focus.modifierDescription"
+msgstr "-4% speed and -2% accuracy for 2 levels"
+
+msgid "game.core.events.cache.eventTitle"
+msgstr "Roadside cache"
+
+msgid "game.core.events.cache.eventDescription"
+msgstr "You find a stash of supplies and artifacts. You can grab a ready relic or prepare for the next boss."
+
+msgid "game.core.events.cache.common.noRelics"
+msgstr "No relics left"
+
+msgid "game.core.events.cache.common.noArtifacts"
+msgstr "No artifacts left"
+
+msgid "game.core.events.cache.common.unavailable"
+msgstr "This choice is unavailable right now."
+
+msgid "game.core.events.cache.common.watchDurability"
+msgstr "You will need to watch its durability."
+
+msgid "game.core.events.cache.simple.title"
+msgstr "Take relic"
+
+msgid "game.core.events.cache.durable.title"
+msgstr "Pick artifact"
+
+msgid "game.core.events.cache.simple2.title"
+msgstr "Another relic"
+
+msgid "game.core.events.cache.durable2.title"
+msgstr "Rare artifact"
+
+msgid "game.core.events.cache.clock.title"
+msgstr "Pocket of time"
+
+msgid "game.core.events.cache.clock.flavor"
+msgstr "Hide a reserve of seconds until the next boss"
+
+msgid "game.core.events.cache.clock.description"
+msgstr "Adds +4 seconds to the boss timer for the next 4 levels."
+
+msgid "game.core.events.cache.clock.modifierTitle"
+msgstr "Pocket of time"
+
+msgid "game.core.events.cache.clock.modifierDescription"
+msgstr "+4 sec. to boss timer for 4 levels"
+
+msgid "game.core.events.cache.speedGem.title"
+msgstr "Speed gem"
+
+msgid "game.core.events.cache.speedGem.flavor"
+msgstr "Temporarily lower speed requirements"
+
+msgid "game.core.events.cache.speedGem.description"
+msgstr "For 3 levels required speed is reduced by 8%."
+
+msgid "game.core.events.cache.speedGem.modifierTitle"
+msgstr "Speed gem"
+
+msgid "game.core.events.cache.speedGem.modifierDescription"
+msgstr "-8% required speed for 3 levels"
+
+msgid "game.core.events.cache.accuracyGem.title"
+msgstr "Accuracy gem"
+
+msgid "game.core.events.cache.accuracyGem.flavor"
+msgstr "Temporarily lower accuracy requirements"
+
+msgid "game.core.events.cache.accuracyGem.description"
+msgstr "For 3 levels required accuracy is reduced by 4%."
+
+msgid "game.core.events.cache.accuracyGem.modifierTitle"
+msgstr "Accuracy gem"
+
+msgid "game.core.events.cache.accuracyGem.modifierDescription"
+msgstr "-4% required accuracy for 3 levels"
+
+msgid "game.core.events.shop.eventTitle"
+msgstr "Tinkerer shop"
+
+msgid "game.core.events.shop.eventDescription"
+msgstr "In the cramped shop you can quickly repair your gear, grab a relic, or buy a short boost before the next wave."
+
+msgid "game.core.events.shop.common.shelfEmpty"
+msgstr "The shelves are empty"
+
+msgid "game.core.events.shop.common.showcaseEmpty"
+msgstr "This display is already empty right now."
+
+msgid "game.core.events.shop.common.notAvailable"
+msgstr "Not available"
+
+msgid "game.core.events.shop.common.notAvailableNow"
+msgstr "Not available right now."
+
+msgid "game.core.events.shop.common.needsService"
+msgstr "Requires regular maintenance."
+
+msgid "game.core.events.shop.repair.title"
+msgstr "Tighten the fittings"
+
+msgid "game.core.events.shop.repair.flavorReady"
+msgstr "Repair the equipment before battle"
+
+msgid "game.core.events.shop.repair.flavorEmpty"
+msgstr "There is barely anything to repair"
+
+msgid "game.core.events.shop.repair.descriptionReady"
+msgstr "Restores 3 durability to all equipped items."
+
+msgid "game.core.events.shop.repair.descriptionEmpty"
+msgstr "Equipped items hardly need repairs right now."
+
+msgid "game.core.events.shop.item.title"
+msgstr "Take from the shelf"
+
+msgid "game.core.events.shop.item2.title"
+msgstr "Special find"
+
+msgid "game.core.events.shop.durable.title"
+msgstr "Signature item"
+
+msgid "game.core.events.shop.buff.title"
+msgstr "Drink battle syrup"
+
+msgid "game.core.events.shop.buff.flavor"
+msgstr "Take a short boost before the next stretch of levels"
+
+msgid "game.core.events.shop.buff.description"
+msgstr "For 3 levels lowers required speed by 6% and adds 2 seconds to the boss timer."
+
+msgid "game.core.events.shop.buff.modifierTitle"
+msgstr "Battle syrup"
+
+msgid "game.core.events.shop.buff.modifierDescription"
+msgstr "-6% speed and +2 sec. to boss timer for 3 levels"
+
+msgid "game.core.events.shop.accuracyTonic.title"
+msgstr "Accuracy tonic"
+
+msgid "game.core.events.shop.accuracyTonic.flavor"
+msgstr "A short-term accuracy boost"
+
+msgid "game.core.events.shop.accuracyTonic.description"
+msgstr "For 3 levels lowers required accuracy by 5%."
+
+msgid "game.core.events.shop.accuracyTonic.modifierTitle"
+msgstr "Accuracy tonic"
+
+msgid "game.core.events.shop.accuracyTonic.modifierDescription"
+msgstr "-5% required accuracy for 3 levels"
+
+msgid "game.core.events.shop.timerKit.title"
+msgstr "Chronometer kit"
+
+msgid "game.core.events.shop.timerKit.flavor"
+msgstr "Stretch the timers of upcoming bosses"
+
+msgid "game.core.events.shop.timerKit.description"
+msgstr "For 5 levels adds 3 seconds to the boss timer."
+
+msgid "game.core.events.shop.timerKit.modifierTitle"
+msgstr "Chronometer kit"
+
+msgid "game.core.events.shop.timerKit.modifierDescription"
+msgstr "+3 sec. to boss timer for 5 levels"
+
+msgid "game.core.events.risk.eventTitle"
+msgstr "Edge bargain"
+
+msgid "game.core.events.risk.eventDescription"
+msgstr "In this strange room every offer is stronger than usual, but each one asks for payment upfront. It is easy to slip here, but the reward is immediate."
+
+msgid "game.core.events.risk.common.flavorLowHealth"
+msgstr "Too dangerous with low health"
+
+msgid "game.core.events.risk.common.descriptionLowHealth"
+msgstr "This choice is unavailable while your health is too low."
+
+msgid "game.core.events.risk.overclock.title"
+msgstr "Overclock the pace"
+
+msgid "game.core.events.risk.overclock.flavorReady"
+msgstr "Trade health for a powerful burst"
+
+msgid "game.core.events.risk.overclock.descriptionReady"
+msgstr "Lose 20 HP, but gain -12% required speed for 2 levels."
+
+msgid "game.core.events.risk.overclock.modifierTitle"
+msgstr "Overclock"
+
+msgid "game.core.events.risk.overclock.modifierDescription"
+msgstr "-12% required speed for 2 levels"
+
+msgid "game.core.events.risk.focus.title"
+msgstr "Narrow the focus"
+
+msgid "game.core.events.risk.focus.flavorReady"
+msgstr "Lower accuracy requirements at the cost of health"
+
+msgid "game.core.events.risk.focus.descriptionReady"
+msgstr "Lose 20 HP, but gain -6% required accuracy for 2 levels."
+
+msgid "game.core.events.risk.focus.modifierTitle"
+msgstr "Narrowed focus"
+
+msgid "game.core.events.risk.focus.modifierDescription"
+msgstr "-6% required accuracy for 2 levels"
+
+msgid "game.core.events.risk.boss.title"
+msgstr "Rush toward the boss"
+
+msgid "game.core.events.risk.boss.flavorReady"
+msgstr "Sacrifice health for a strong boss bonus"
+
+msgid "game.core.events.risk.boss.descriptionReady"
+msgstr "Lose 20 HP, but gain -6% required speed and +6 sec. to the boss timer for 4 levels."
+
+msgid "game.core.events.risk.boss.modifierTitle"
+msgstr "Boss chase"
+
+msgid "game.core.events.risk.boss.modifierDescription"
+msgstr "-6% speed and +6 sec. to boss timer for 4 levels"
+
+msgid "game.core.events.risk.blitz.title"
+msgstr "Blitz assault"
+
+msgid "game.core.events.risk.blitz.flavorReady"
+msgstr "Spend health for a longer speed reduction"
+
+msgid "game.core.events.risk.blitz.descriptionReady"
+msgstr "Lose 20 HP, but gain -8% required speed for 5 levels."
+
+msgid "game.core.events.risk.blitz.modifierTitle"
+msgstr "Blitz assault"
+
+msgid "game.core.events.risk.blitz.modifierDescription"
+msgstr "-8% required speed for 5 levels"
+
+msgid "game.core.events.risk.aegis.title"
+msgstr "Shield paid in blood"
+
+msgid "game.core.events.risk.aegis.flavorReady"
+msgstr "Buy protection from misses with your health"
+
+msgid "game.core.events.risk.aegis.descriptionReady"
+msgstr "Lose 20 HP, but gain -8% required accuracy and +3 sec. to the timer for 3 levels."
+
+msgid "game.core.events.risk.aegis.modifierTitle"
+msgstr "Blood shield"
+
+msgid "game.core.events.risk.aegis.modifierDescription"
+msgstr "-8% accuracy and +3 sec. to the timer for 3 levels"
+
+msgid "game.core.events.curse.eventTitle"
+msgstr "Shadow curse"
+
+msgid "game.core.events.curse.eventDescription"
+msgstr "Dark energy thickens around you. Choose which seal to accept — there is no escaping the curse."
+
+msgid "game.core.events.curse.speed.title"
+msgstr "Seal of speed"
+
+msgid "game.core.events.curse.speed.flavor"
+msgstr "You will be driven even faster"
+
+msgid "game.core.events.curse.speed.description"
+msgstr "For 3 levels required speed increases by 5%."
+
+msgid "game.core.events.curse.speed.modifierTitle"
+msgstr "Seal of speed"
+
+msgid "game.core.events.curse.speed.modifierDescription"
+msgstr "+5% required speed for 3 levels"
+
+msgid "game.core.events.curse.accuracy.title"
+msgstr "Seal of accuracy"
+
+msgid "game.core.events.curse.accuracy.flavor"
+msgstr "Every mistake will cost more"
+
+msgid "game.core.events.curse.accuracy.description"
+msgstr "For 3 levels required accuracy increases by 3%."
+
+msgid "game.core.events.curse.accuracy.modifierTitle"
+msgstr "Seal of accuracy"
+
+msgid "game.core.events.curse.accuracy.modifierDescription"
+msgstr "+3% required accuracy for 3 levels"
+
+msgid "game.core.events.curse.timer.title"
+msgstr "Seal of time"
+
+msgid "game.core.events.curse.timer.flavor"
+msgstr "The boss clock will run faster"
+
+msgid "game.core.events.curse.timer.description"
+msgstr "For 4 levels the boss timer is reduced by 4 seconds."
+
+msgid "game.core.events.curse.timer.modifierTitle"
+msgstr "Seal of time"
+
+msgid "game.core.events.curse.timer.modifierDescription"
+msgstr "-4 sec. to boss timer for 4 levels"
+
+msgid "game.core.events.curse.silence.title"
+msgstr "Seal of silence"
+
+msgid "game.core.events.curse.silence.flavor"
+msgstr "Throw your hands off their familiar rhythm"
+
+msgid "game.core.events.curse.silence.description"
+msgstr "For 4 levels required speed increases by 3%, and required accuracy by 2%."
+
+msgid "game.core.events.curse.silence.modifierTitle"
+msgstr "Seal of silence"
+
+msgid "game.core.events.curse.silence.modifierDescription"
+msgstr "+3% speed and +2% accuracy for 4 levels"
+
+msgid "game.core.events.curse.fog.title"
+msgstr "Seal of fog"
+
+msgid "game.core.events.curse.fog.flavor"
+msgstr "Bosses become harder to pin down"
+
+msgid "game.core.events.curse.fog.description"
+msgstr "For 5 levels the boss timer is reduced by 3 seconds."
+
+msgid "game.core.events.curse.fog.modifierTitle"
+msgstr "Seal of fog"
+
+msgid "game.core.events.curse.fog.modifierDescription"
+msgstr "-3 sec. to boss timer for 5 levels"
+
+msgid "game.core.events.curse.wrath.title"
+msgstr "Seal of wrath"
+
+msgid "game.core.events.curse.wrath.flavor"
+msgstr "Enemies become fiercer"
+
+msgid "game.core.events.curse.wrath.description"
+msgstr "For 4 levels all enemies gain +6 attack."
+
+msgid "game.core.events.curse.wrath.modifierTitle"
+msgstr "Seal of wrath"
+
+msgid "game.core.events.curse.wrath.modifierDescription"
+msgstr "+6 enemy attack for 4 levels"
+
+msgid "game.core.events.curse.iron.title"
+msgstr "Seal of iron"
+
+msgid "game.core.events.curse.iron.flavor"
+msgstr "Enemies gain impenetrable defense"
+
+msgid "game.core.events.curse.iron.description"
+msgstr "For 4 levels all enemies gain +6 defense."
+
+msgid "game.core.events.curse.iron.modifierTitle"
+msgstr "Seal of iron"
+
+msgid "game.core.events.curse.iron.modifierDescription"
+msgstr "+6 enemy defense for 4 levels"
+
+msgid "game.core.events.curse.blind.title"
+msgstr "Seal of blindness"
+
+msgid "game.core.events.curse.blind.flavor"
+msgstr "Attacks become less precise"
+
+msgid "game.core.events.curse.blind.description"
+msgstr "For 3 levels player attack bonus is reduced by 8%."
+
+msgid "game.core.events.curse.blind.modifierTitle"
+msgstr "Seal of blindness"
+
+msgid "game.core.events.curse.blind.modifierDescription"
+msgstr "-8% hit chance while attacking for 3 levels"
+
+msgid "game.core.events.curse.weakness.title"
+msgstr "Seal of weakness"
+
+msgid "game.core.events.curse.weakness.flavor"
+msgstr "Strikes lose their force"
+
+msgid "game.core.events.curse.weakness.description"
+msgstr "For 3 levels damage coefficient is reduced by 20%."
+
+msgid "game.core.events.curse.weakness.modifierTitle"
+msgstr "Seal of weakness"
+
+msgid "game.core.events.curse.weakness.modifierDescription"
+msgstr "-20% damage coefficient for 3 levels"
+
+msgid "game.core.events.curse.fragile.title"
+msgstr "Seal of fragility"
+
+msgid "game.core.events.curse.fragile.flavor"
+msgstr "Armor melts like ice"
+
+msgid "game.core.events.curse.fragile.description"
+msgstr "For 3 levels defense coefficient is reduced by 20%."
+
+msgid "game.core.events.curse.fragile.modifierTitle"
+msgstr "Seal of fragility"
+
+msgid "game.core.events.curse.fragile.modifierDescription"
+msgstr "-20% defense coefficient for 3 levels"
+
+msgid "game.core.events.curse.unlucky.title"
+msgstr "Seal of bad luck"
+
+msgid "game.core.events.curse.unlucky.flavor"
+msgstr "Critical hits become rarer"
+
+msgid "game.core.events.curse.unlucky.description"
+msgstr "For 4 levels crit chance is reduced by 5%."
+
+msgid "game.core.events.curse.unlucky.modifierTitle"
+msgstr "Seal of bad luck"
+
+msgid "game.core.events.curse.unlucky.modifierDescription"
+msgstr "-5% crit chance for 4 levels"
+
+msgid "game.core.events.battle.enemyNames.normal.scripter"
+msgstr "Scripter"
+
+msgid "game.core.events.battle.enemyNames.normal.watcher"
+msgstr "Watcher"
+
+msgid "game.core.events.battle.enemyNames.normal.pathGuard"
+msgstr "Path guard"
+
+msgid "game.core.events.battle.enemyNames.normal.sentinel"
+msgstr "Sentinel"
+
+msgid "game.core.events.battle.enemyNames.normal.codeShadow"
+msgstr "Code shadow"
+
+msgid "game.core.events.battle.enemyNames.elite.tempoExecutioner"
+msgstr "Tempo executioner"
+
+msgid "game.core.events.battle.enemyNames.elite.keyMaster"
+msgstr "Key master"
+
+msgid "game.core.events.battle.enemyNames.elite.rhythmGuard"
+msgstr "Rhythm guard"
+
+msgid "game.core.events.battle.enemyNames.elite.accuracyAdept"
+msgstr "Accuracy adept"
+
+msgid "game.core.events.battle.enemyNames.miniboss.thresholdKeeper"
+msgstr "Threshold keeper"
+
+msgid "game.core.events.battle.enemyNames.miniboss.overseer"
+msgstr "Overseer"
+
+msgid "game.core.events.battle.enemyNames.miniboss.lineTitan"
+msgstr "Line titan"
+
+msgid "game.core.events.battle.enemyNames.boss.branchWarden"
+msgstr "Branch warden"
+
+msgid "game.core.events.battle.enemyNames.boss.waveLord"
+msgstr "Wave lord"
+
+msgid "game.core.events.battle.enemyNames.boss.speedArchon"
+msgstr "Speed archon"
+
+msgid "game.core.events.battle.enemyNames.boss.absolute"
+msgstr "Absolute"
+
+msgid "game.core.events.bosses.precision.name"
+msgstr "Sniper"
+
+msgid "game.core.events.bosses.precision.subtitle"
+msgstr "Accuracy is everything"
+
+msgid "game.core.events.bosses.precision.description"
+msgstr "Accuracy requirements are sharply increased. Every miss hurts."
+
+msgid "game.core.events.bosses.steadiness.name"
+msgstr "Metronome"
+
+msgid "game.core.events.bosses.steadiness.subtitle"
+msgstr "Steady tempo decides"
+
+msgid "game.core.events.bosses.steadiness.description"
+msgstr "What matters is not raw speed but stable rhythm. Sharp drops and spikes are punished."
+
+msgid "game.core.events.bosses.endurance.name"
+msgstr "Marathon"
+
+msgid "game.core.events.bosses.endurance.subtitle"
+msgstr "Long distance"
+
+msgid "game.core.events.bosses.endurance.description"
+msgstr "The text is much longer than usual. You need endurance and a stable pace."
+
+msgid "game.core.events.bosses.flawless.name"
+msgstr "Absolute"
+
+msgid "game.core.events.bosses.flawless.subtitle"
+msgstr "Zero mistakes"
+
+msgid "game.core.events.bosses.flawless.description"
+msgstr "No more than 2 mistakes are allowed for the whole battle. One extra keypress means failure."
+
+msgid "game.core.events.rewards.simple.title"
+msgstr "Quiet relic"
+
+msgid "game.core.events.rewards.durable.title"
+msgstr "Unstable artifact"
+
+msgid "game.core.events.rewards.durable.watchDurability"
+msgstr "You will have to watch its durability."
+
+msgid "game.core.events.rewards.letter.title"
+msgstr "Master seal"
+
+msgid "game.core.events.rewards.letter.flavor"
+msgstr "Awakens the “{{letter}}” letter"
+
+msgid "game.core.events.rewards.letter.description"
+msgstr "Permanently unlocks the next letter for practice and game."
+
+msgid "game.core.events.rewards.buffSpeed.title"
+msgstr "Tempo booster"
+
+msgid "game.core.events.rewards.buffSpeed.flavor"
+msgstr "A speed bonus for a few levels"
+
+msgid "game.core.events.rewards.buffSpeed.description"
+msgstr "Reduces required speed by 6% for 3 levels."
+
+msgid "game.core.events.rewards.buffSpeed.modifierTitle"
+msgstr "Tempo booster"
+
+msgid "game.core.events.rewards.buffSpeed.modifierDescription"
+msgstr "-6% required speed for 3 levels"
+
+msgid "game.core.events.rewards.buffDefense.title"
+msgstr "Dawn shield"
+
+msgid "game.core.events.rewards.buffDefense.flavor"
+msgstr "Reduces enemy attack"
+
+msgid "game.core.events.rewards.buffDefense.description"
+msgstr "Reduces enemy attack by 3 for 4 levels."
+
+msgid "game.core.events.rewards.buffDefense.modifierTitle"
+msgstr "Dawn shield"
+
+msgid "game.core.events.rewards.buffDefense.modifierDescription"
+msgstr "-3 enemy attack for 4 levels"
+
+msgid "game.core.events.rewards.extraLife.title"
+msgstr "Spare heart"
+
+msgid "game.core.events.rewards.extraLife.flavor"
+msgstr "+10 max health"
+
+msgid "game.core.events.rewards.extraLife.description"
+msgstr "Increases maximum HP by 10 and fully restores it."
+
+msgid "game.core.events.rewards.curseSpeed.title"
+msgstr "Seal of speed"
+
+msgid "game.core.events.rewards.curseSpeed.flavor"
+msgstr "Curse: speed requirements rise"
+
+msgid "game.core.events.rewards.curseSpeed.description"
+msgstr "Raises required speed by 5% for 3 levels, but instantly restores 20 HP."
+
+msgid "game.core.events.rewards.curseSpeed.modifierTitle"
+msgstr "Seal of speed"
+
+msgid "game.core.events.rewards.curseSpeed.modifierDescription"
+msgstr "+5% required speed for 3 levels"
+
+msgid "game.core.events.rewards.curseDefense.title"
+msgstr "Seal of vulnerability"
+
+msgid "game.core.events.rewards.curseDefense.flavor"
+msgstr "Curse: enemies strike harder"
+
+msgid "game.core.events.rewards.curseDefense.description"
+msgstr "Enemy attack increases by 4 for 4 levels, but you gain regeneration for 4 battles."
+
+msgid "game.core.events.rewards.curseDefense.modifierTitle"
+msgstr "Seal of vulnerability"
+
+msgid "game.core.events.rewards.curseDefense.modifierDescription"
+msgstr "+4 enemy attack for 4 levels"
+
+msgid "game.core.events.itemSets.tempo.name"
+msgstr "Tempo harmony"
+
+msgid "game.core.events.itemSets.tempo.description"
+msgstr "Items that speed up typing."
+
+msgid "game.core.events.itemSets.tempo.bonus2"
+msgstr "Additional -3% required speed"
+
+msgid "game.core.events.itemSets.tempo.bonus3"
+msgstr "Additional -5% required speed"
+
+msgid "game.core.events.itemSets.fortress.name"
+msgstr "Shield of accuracy"
+
+msgid "game.core.events.itemSets.fortress.description"
+msgstr "Items that help you avoid mistakes."
+
+msgid "game.core.events.itemSets.fortress.bonus2"
+msgstr "Additional -2% required accuracy"
+
+msgid "game.core.events.itemSets.fortress.bonus3"
+msgstr "Additional -4% required accuracy and +2 sec. to boss timer"
+
+msgid "game.core.events.itemSets.chrono.name"
+msgstr "Master of time"
+
+msgid "game.core.events.itemSets.chrono.description"
+msgstr "Items that grant extra time on bosses."
+
+msgid "game.core.events.itemSets.chrono.bonus2"
+msgstr "Additional +3 sec. to boss timer"
+
+msgid "game.core.events.itemSets.chrono.bonus3"
+msgstr "Additional +5 sec. to boss timer and -2% speed"
+
+msgid "game.core.events.itemSets.gambler.name"
+msgstr "Fortune of the daring"
+
+msgid "game.core.events.itemSets.gambler.description"
+msgstr "Powerful but fragile artifacts. Together they become even stronger."
+
+msgid "game.core.events.itemSets.gambler.bonus2"
+msgstr "Additional -4% speed and -2% accuracy"
+
+msgid "game.core.events.itemSets.gambler.bonus3"
+msgstr "Additional -6% speed and -3% accuracy"
+
+msgid "game.header.title"
+msgstr "Game mode"
+
+msgid "game.header.restart"
+msgstr "Restart"
+
+msgid "game.start.title"
+msgstr "New run"
+
+msgid "game.start.subtitle"
+msgstr "Set your speed target and start the journey through 100 levels. Every 5th level is a boss."
+
+msgid "game.start.targetSpeed"
+msgstr "Target speed"
+
+msgid "game.start.targetSpeedAria"
+msgstr "Game target speed"
+
+msgid "game.start.activeSetItems"
+msgstr "{{count}} items"
+
+msgid "game.start.ghostBest"
+msgstr "Best-run ghost: level {{level}}"
+
+msgid "game.start.actions.startRun"
+msgstr "Start run"
+
+msgid "game.start.actions.dailyRun"
+msgstr "Daily run"
+
+msgid "game.hud.boss"
+msgstr "Boss"
+
+msgid "game.hud.level"
+msgstr "Level"
+
+msgid "game.hud.letters"
+msgstr "letters"
+
+msgid "game.hud.record"
+msgstr "record"
+
+msgid "game.hud.levelsRemaining"
+msgstr "{{count}} lvls"
+
+msgid "game.hud.dailyRun"
+msgstr "Daily run"
+
+msgid "game.hud.bossTimer"
+msgstr "Boss timer"
+
+msgid "game.hud.regenTitle"
+msgid_plural "game.hud.regenTitle"
+msgstr[0] "Regeneration: +{{hp}} HP after battle ({{count}} battle left)"
+msgstr[1] "Regeneration: +{{hp}} HP after battle ({{count}} battles left)"
+
+msgid "game.hud.hpShort"
+msgstr "HP"
+
+msgid "game.inventory.title"
+msgstr "Inventory"
+
+msgid "game.inventory.itemsCount"
+msgid_plural "game.inventory.itemsCount"
+msgstr[0] "{{count}} item"
+msgstr[1] "{{count}} items"
+
+msgid "game.inventory.description"
+msgstr "Relics only drop after boss victories. Drag an item into a slot to equip it, and back into the inventory to unequip it."
+
+msgid "game.inventory.durability"
+msgstr "Durability"
+
+msgid "game.inventory.dragHint"
+msgstr "Drag into an equipment slot"
+
+msgid "game.inventory.dropHere"
+msgstr "Drop item here"
+
+msgid "game.inventory.emptySlot"
+msgstr "Empty"
+
+msgid "game.inventory.empty.allEquipped"
+msgstr "All found items are currently equipped. Drag a relic from a slot here to unequip it."
+
+msgid "game.inventory.empty.afterBoss"
+msgstr "Relics and artifacts for the current run will appear here after bosses."
+
+msgid "game.inventory.slots.slotA"
+msgstr "Slot 1"
+
+msgid "game.inventory.slots.slotB"
+msgstr "Slot 2"
+
+msgid "game.inventory.slots.slotC"
+msgstr "Slot 3"
+
+msgid "game.inventory.meta.bossOnly"
+msgstr "boss only"
+
+msgid "game.inventory.meta.alwaysActive"
+msgstr "always active"
+
+msgid "game.inventory.meta.equipped"
+msgstr "equipped"
+
+msgid "game.inventory.meta.noDurability"
+msgstr "no wear"
+
+msgid "game.map.title"
+msgstr "Run map"
+
+msgid "game.map.subtitle"
+msgstr "Choose the next point on the graph. Battles and rooms open above the map while the route stays visible."
+
+msgid "game.map.kind.battle"
+msgstr "Battle"
+
+msgid "game.map.kind.boss"
+msgstr "Boss"
+
+msgid "game.map.kind.rest"
+msgstr "Rest"
+
+msgid "game.map.kind.treasure"
+msgstr "Cache"
+
+msgid "game.map.kind.shop"
+msgstr "Shop"
+
+msgid "game.map.kind.risk"
+msgstr "Risk"
+
+msgid "game.map.kind.elite"
+msgstr "Elite"
+
+msgid "game.map.kind.miniboss"
+msgstr "Mini-boss"
+
+msgid "game.map.legend.battle"
+msgstr "Battle"
+
+msgid "game.map.legend.boss"
+msgstr "Boss"
+
+msgid "game.map.legend.rest"
+msgstr "Rest"
+
+msgid "game.map.legend.treasure"
+msgstr "Cache"
+
+msgid "game.map.legend.shop"
+msgstr "Shop"
+
+msgid "game.map.legend.risk"
+msgstr "Risk"
+
+msgid "game.map.legend.elite"
+msgstr "Elite"
+
+msgid "game.map.legend.miniboss"
+msgstr "Mini-boss"
+
+msgid "game.event.kind.rest"
+msgstr "Rest"
+
+msgid "game.event.kind.cache"
+msgstr "Cache"
+
+msgid "game.event.kind.shop"
+msgstr "Shop"
+
+msgid "game.event.kind.curse"
+msgstr "Curse"
+
+msgid "game.event.kind.risk"
+msgstr "Risk"
+
+msgid "game.event.selectChoice"
+msgstr "Choose"
+
+msgid "game.event.skip"
+msgstr "Skip"
+
+msgid "game.event.continuePath"
+msgstr "Continue path"
+
+msgid "game.event.repairBonus"
+msgstr "Repair +{{count}}"
+
+msgid "game.reward.kind.simple"
+msgstr "Silent relic"
+
+msgid "game.reward.kind.durable"
+msgstr "Unstable artifact"
+
+msgid "game.reward.kind.event"
+msgstr "Event"
+
+msgid "game.reward.kind.letter"
+msgstr "Master seal"
+
+msgid "game.overlay.savedRun"
+msgstr "Run saved\nLevel {{level}} · {{hp}} HP\nClick to continue"
+
+msgid "game.overlay.battleHeader"
+msgstr "{{enemy}} · Round {{round}} · {{phase}}"
+
+msgid "game.overlay.debuffTitle"
+msgstr "Debuff: {{debuff}}"
+
+msgid "game.overlay.debuffs.accuracy"
+msgstr "accuracy"
+
+msgid "game.overlay.debuffs.cpm"
+msgstr "pace"
+
+msgid "game.overlay.debuffs.rhythm"
+msgstr "rhythm"
+
+msgid "game.overlay.phase.attack"
+msgstr "Attack"
+
+msgid "game.overlay.phase.defense"
+msgstr "Defense"
+
+msgid "game.result.title.victory"
+msgstr "Game completed"
+
+msgid "game.result.title.bossPassed"
+msgstr "Boss defeated"
+
+msgid "game.result.title.levelPassed"
+msgstr "Level cleared"
+
+msgid "game.result.title.timeOut"
+msgstr "Time is up"
+
+msgid "game.result.title.gameOver"
+msgstr "Game over"
+
+msgid "game.result.title.hpLost"
+msgstr "HP lost"
+
+msgid "game.result.rhythm"
+msgstr "Rhythm"
+
+msgid "game.result.msShort"
+msgstr "ms"
+
+msgid "game.result.maxRhythm"
+msgstr "max. {{count}} ms"
+
+msgid "game.result.rhythmStable"
+msgstr "stable"
+
+msgid "game.result.rhythmUnstable"
+msgstr "unstable"
+
+msgid "game.result.flawlessLimit"
+msgstr "Flawless mode"
+
+msgid "game.result.errorsAllowed"
+msgstr "errors"
+
+msgid "game.result.brokenItems"
+msgstr "Items broken"
+
+msgid "game.result.bossRewardTitle"
+msgstr "Boss trophy"
+
+msgid "game.result.summary.victory"
+msgstr "You cleared all {{totalLevels}} levels. All relics from this run have faded away."
+
+msgid "game.result.summary.bossReward"
+msgstr "The boss trophy is waiting to be chosen. Next stage: level {{level}}."
+
+msgid "game.result.summary.mapSelection"
+msgstr "The level is cleared. Now choose the next point directly on the run map."
+
+msgid "game.result.summary.nextLevel"
+msgstr "Level {{level}} is complete. Next comes {{nextLevel}}{{bossSuffix}}."
+
+msgid "game.result.summary.bossSuffix"
+msgstr " — boss"
+
+msgid "game.result.summary.timeout"
+msgstr "You did not finish within the time limit. HP left: {{livesLeft}}."
+
+msgid "game.result.summary.failure"
+msgstr "You need to keep speed at or above the target and accuracy at {{minAccuracy}}% or higher. HP left: {{livesLeft}}."
+
+msgid "game.result.reward.specialReward"
+msgstr "✦ Special reward"
+
+msgid "game.result.reward.letterName"
+msgstr "Symbol “{{letter}}”"
+
+msgid "game.result.reward.actions.wakeLetter"
+msgstr "Awaken symbol"
+
+msgid "game.result.reward.actions.accept"
+msgstr "Accept"
+
+msgid "game.result.reward.actions.takeRelic"
+msgstr "Take relic"
+
+msgid "game.result.reward.actions.riskTake"
+msgstr "Take the risk"
+
+msgid "game.result.actions.toMap"
+msgstr "To map"
+
+msgid "game.result.actions.nextLevel"
+msgstr "Next level"
+
+msgid "game.result.actions.retryLevel"
+msgstr "Retry level"
+
+msgid "game.result.actions.playAgain"
+msgstr "Play again"
+
+msgid "game.result.actions.toMainGame"
+msgstr "Back to game mode"
+
+msgid "game.system.reward.unlockLetter"
+msgstr "The master seal awakened the “{{letter}}” letter."
+
+msgid "game.system.reward.alphabetComplete"
+msgstr "The alphabet is already fully unlocked."
+
+msgid "game.system.reward.maxHealth"
+msgstr "Maximum health: {{hp}}."
+
+msgid "game.system.reward.fullHeal"
+msgstr "Health fully restored."
+
+msgid "game.system.reward.regenAfterBattle"
+msgid_plural "game.system.reward.regenAfterBattle"
+msgstr[0] "Regeneration: +{{hp}} HP after battle for {{count}} battle."
+msgstr[1] "Regeneration: +{{hp}} HP after battle for {{count}} battles."
+
+msgid "game.system.reward.healedTo"
+msgstr "Health restored: {{hp}} HP."
+
+msgid "game.system.reward.lostHp"
+msgstr "{{hp}} HP lost."
+
+msgid "game.system.reward.effect"
+msgstr "Effect: {{description}}."
+
+msgid "game.system.reward.gotDurableArtifact"
+msgstr "You picked up the unstable artifact “{{item}}”. Watch its durability."
+
+msgid "game.system.reward.gotRelic"
+msgstr "You received the relic “{{item}}”. It is already waiting in the inventory."
+
+msgid "game.system.event.maxHealthIncreased"
+msgstr "Maximum health increased to {{hp}}."
+
+msgid "game.system.event.fullHealTo"
+msgstr "Health fully restored: {{hp}} out of {{hp}}."
+
+msgid "game.system.event.regenEachBattle"
+msgid_plural "game.system.event.regenEachBattle"
+msgstr[0] "Regeneration: +{{hp}} HP after each battle for {{count}} battle."
+msgstr[1] "Regeneration: +{{hp}} HP after each battle for {{count}} battles."
+
+msgid "game.system.event.healedTo"
+msgstr "Health restored: {{hp}} out of {{maxHp}}."
+
+msgid "game.system.event.dealLostHp"
+msgstr "The deal took {{hp}} HP."
+
+msgid "game.system.event.repairedItems"
+msgstr "Repaired items: {{items}}."
+
+msgid "game.system.event.repairNoTargets"
+msgstr "Repair is complete, but there was almost nothing to repair."
+
+msgid "game.system.event.gotItem"
+msgstr "You received “{{item}}”."
+
+msgid "game.system.event.effectActivated"
+msgstr "Effect activated: {{description}}."
+
+msgid "game.system.event.choiceOutcomeFallback"
+msgstr "{{title}} pays off."
+
+msgid "game.summary.title"
+msgstr "Run summary"
+
+msgid "game.summary.victory"
+msgstr "All {{totalLevels}} levels are completed. The run inventory has been cleared."
+
+msgid "game.summary.defeat"
+msgstr "Levels completed: {{completedLevels}}. Best: level {{bestLevel}}."
+
+msgid "game.achievementToast.title"
+msgstr "Achievement unlocked"
+
+msgid "modeFollowup.test.speedToSurvival.title"
+msgstr "Carry the pace into a longer run"
+
+msgid "modeFollowup.test.speedToSurvival.description"
+msgstr "A strong sprint is worth checking in survival right away while the speed and rhythm still feel fresh."
+
+msgid "modeFollowup.test.speedToSurvival.action"
+msgstr "Check survival"
+
+msgid "modeFollowup.test.stabilizeBase.title"
+msgstr "Stabilize the base"
+
+msgid "modeFollowup.test.stabilizeBase.description"
+msgstr "After a sprint it is useful to return to normal practice and turn the speed peak into a steadier untimed series."
+
+msgid "modeFollowup.test.stabilizeBase.action"
+msgstr "Back to practice"
+
+msgid "modeFollowup.survival.raiseBar.title"
+msgstr "Raise the bar"
+
+msgid "modeFollowup.survival.raiseBar.description"
+msgstr "The long distance is already holding. The next honest check is to enter survival again and turn on the “Flawless” toggle."
+
+msgid "modeFollowup.survival.raiseBar.action"
+msgstr "Turn on flawless"
+
+msgid "modeFollowup.survival.returnToPractice.title"
+msgstr "Go back to smoothing out the base"
+
+msgid "modeFollowup.survival.returnToPractice.description"
+msgstr "Right now it is more useful to release the tension through base practice and then return to the long run."
+
+msgid "modeFollowup.survival.returnToPractice.action"
+msgstr "Back to practice"
+
+msgid "modeFollowup.flawless.cleanControl.title"
+msgstr "Lock in clean control"
+
+msgid "modeFollowup.flawless.cleanControl.description"
+msgstr "A flawless run already happened, and now that control is worth checking on a longer text in normal survival."
+
+msgid "modeFollowup.flawless.cleanControl.action"
+msgstr "Open survival"
+
+msgid "modeFollowup.flawless.softLongRun.title"
+msgstr "Switch to a softer long run"
+
+msgid "modeFollowup.flawless.softLongRun.description"
+msgstr "The error in the flawless variant did not come from a total collapse. Normal survival will help keep control without ending the attempt on one slip."
+
+msgid "modeFollowup.flawless.softLongRun.action"
+msgstr "Switch to survival"
+
+msgid "modeFollowup.flawless.releasePressure.title"
+msgstr "Release the pressure"
+
+msgid "modeFollowup.flawless.releasePressure.description"
+msgstr "After a failed flawless run it is better to return to base practice and rebuild a clean, calm pass."
+
+msgid "modeFollowup.flawless.releasePressure.action"
+msgstr "Back to practice"
+
+msgid "motivation.goals.practice-sessions.title"
+msgstr "Practice sessions"
+
+msgid "motivation.goals.practice-sessions.description"
+msgstr "Grow your total practice volume and reinforce the habit."
+
+msgid "motivation.goals.practice-minutes.title"
+msgstr "Practice minutes"
+
+msgid "motivation.goals.practice-minutes.description"
+msgstr "Accumulate calm, regular training time."
+
+msgid "motivation.goals.target-speed-sessions.title"
+msgstr "Speed sessions"
+
+msgid "motivation.goals.target-speed-sessions.description"
+msgstr "Complete practice runs at a confident working pace."
+
+msgid "motivation.goals.high-accuracy-sessions.title"
+msgstr "High-accuracy sessions"
+
+msgid "motivation.goals.high-accuracy-sessions.description"
+msgstr "Collect clean practice runs without accuracy breakdowns."
+
+msgid "motivation.goals.game-victories.title"
+msgstr "Run victories"
+
+msgid "motivation.goals.game-victories.description"
+msgstr "Finish game runs and stack victories over time."
+
+msgid "motivation.streaks.flawless-practice.title"
+msgstr "Flawless practice runs"
+
+msgid "motivation.streaks.flawless-practice.description"
+msgstr "Practice sessions in a row without mistakes."
+
+msgid "motivation.streaks.successful-practice.title"
+msgstr "Successful practice streak"
+
+msgid "motivation.streaks.successful-practice.description"
+msgstr "Sessions in a row that meet the working speed and accuracy requirements."
+
+msgid "motivation.streaks.clean-game-victories.title"
+msgstr "Clean victories"
+
+msgid "motivation.streaks.clean-game-victories.description"
+msgstr "Game wins without losing HP during the run."
+
+msgid "motivation.challenges.practice-sessions.title"
+msgstr "Weekly volume"
+
+msgid "motivation.challenges.practice-sessions.description"
+msgstr "Build a chain of short practice runs and keep the week moving."
+
+msgid "motivation.challenges.practice-minutes.title"
+msgstr "Practice minutes"
+
+msgid "motivation.challenges.practice-minutes.description"
+msgstr "Accumulate calm volume and keep your hands in contact with the keyboard."
+
+msgid "motivation.challenges.rhythm-sessions.title"
+msgstr "Rhythm sessions"
+
+msgid "motivation.challenges.rhythm-sessions.description"
+msgstr "Run several practice sessions in steady-rhythm mode."
+
+msgid "motivation.challenges.target-speed-sessions.title"
+msgstr "Speed sessions"
+
+msgid "motivation.challenges.target-speed-sessions.description"
+msgstr "Close out attempts at a confident working pace."
+
+msgid "motivation.challenges.high-accuracy-sessions.title"
+msgstr "Clean accuracy"
+
+msgid "motivation.challenges.high-accuracy-sessions.description"
+msgstr "Accumulate clean high-accuracy attempts without control breakdowns."
+
+msgid "motivation.challenges.flawless-practice.title"
+msgstr "Flawless practice"
+
+msgid "motivation.challenges.flawless-practice.description"
+msgstr "Reinforce control through error-free practice sessions."
+
+msgid "motivation.challenges.game-levels.title"
+msgstr "Cleared levels"
+
+msgid "motivation.challenges.game-levels.description"
+msgstr "Clear several levels to reinforce the skill over a longer distance."
+
+msgid "motivation.challenges.game-victories.title"
+msgstr "Run victories"
+
+msgid "motivation.challenges.game-victories.description"
+msgstr "Bring at least one run to a full victory."
+
+msgid "motivation.challenges.clean-game-victories.title"
+msgstr "Clean victories"
+
+msgid "motivation.challenges.clean-game-victories.description"
+msgstr "Win a run without losing HP along the way."
+
+msgid "motivation.weeklyTemplates.steady-practice.title"
+msgstr "Steady practice week"
+
+msgid "motivation.weeklyTemplates.steady-practice.description"
+msgstr "Calm volume, accuracy, and rhythm without spikes."
+
+msgid "motivation.weeklyTemplates.tempo-push.title"
+msgstr "Tempo week"
+
+msgid "motivation.weeklyTemplates.tempo-push.description"
+msgstr "A focus on rhythm, pace, and clean working attempts."
+
+msgid "motivation.weeklyTemplates.hybrid-loop.title"
+msgstr "Hybrid loop"
+
+msgid "motivation.weeklyTemplates.hybrid-loop.description"
+msgstr "A mix of longer practice and game runs."
+
+msgid "motivation.weeklyTemplates.adventure-week.title"
+msgstr "Adventure week"
+
+msgid "motivation.weeklyTemplates.adventure-week.description"
+msgstr "A weekly focus on long attempts and clean runs."
+
+msgid "motivation.seasons.consistency.title"
+msgstr "Consistency season"
+
+msgid "motivation.seasons.consistency.description"
+msgstr "Stable progress without collapses: volume, regularity, and clean accuracy."
+
+msgid "motivation.seasons.precision.title"
+msgstr "Precision season"
+
+msgid "motivation.seasons.precision.description"
+msgstr "A focus on clean typing, rhythm control, and confident speed work."
+
+msgid "motivation.seasons.adventure.title"
+msgstr "Run season"
+
+msgid "motivation.seasons.adventure.description"
+msgstr "A game-driven cycle: long levels, victories, and clean clears."
+
+msgid "motivation.seasons.balanced.title"
+msgstr "Balance season"
+
+msgid "motivation.seasons.balanced.description"
+msgstr "A mixed tempo where practice, speed, and game support each other."
+
+msgid "motivation.recommendation.practice-sessions.title"
+msgstr "Finish the weekly practice volume"
+
+msgid "motivation.recommendation.practice-sessions.description"
+msgid_plural "motivation.recommendation.practice-sessions.description"
+msgstr[0] "{{count}} practice run is left for the weekly goal. This is the fastest way to preserve the week’s momentum."
+msgstr[1] "{{count}} practice runs are left for the weekly goal. This is the fastest way to preserve the week’s momentum."
+
+msgid "motivation.recommendation.practice-sessions.action"
+msgstr "Open practice"
+
+msgid "motivation.recommendation.practice-minutes.title"
+msgstr "Finish the practice minutes"
+
+msgid "motivation.recommendation.practice-minutes.description"
+msgid_plural "motivation.recommendation.practice-minutes.description"
+msgstr[0] "About {{count}} minute is left until the weekly target. A short session right now will move the progress forward well."
+msgstr[1] "About {{count}} minutes are left until the weekly target. A short session right now will move the progress forward well."
+
+msgid "motivation.recommendation.practice-minutes.action"
+msgstr "Open practice"
+
+msgid "motivation.recommendation.rhythm-sessions.title"
+msgstr "Collect rhythm sessions"
+
+msgid "motivation.recommendation.rhythm-sessions.description"
+msgid_plural "motivation.recommendation.rhythm-sessions.description"
+msgstr[0] "{{count}} rhythm attempt is still needed. Rhythm mode will give the most useful progress right now."
+msgstr[1] "{{count}} rhythm attempts are still needed. Rhythm mode will give the most useful progress right now."
+
+msgid "motivation.recommendation.rhythm-sessions.action"
+msgstr "Open practice"
+
+msgid "motivation.recommendation.target-speed-sessions.title"
+msgstr "Close out the speed sessions"
+
+msgid "motivation.recommendation.target-speed-sessions.description"
+msgid_plural "motivation.recommendation.target-speed-sessions.description"
+msgstr[0] "{{count}} speed attempt is left. This is the right moment to grab a confident run at working pace."
+msgstr[1] "{{count}} speed attempts are left. This is the right moment to grab a couple of confident runs at working pace."
+
+msgid "motivation.recommendation.target-speed-sessions.action"
+msgstr "Open practice"
+
+msgid "motivation.recommendation.high-accuracy-sessions.title"
+msgstr "Collect clean attempts"
+
+msgid "motivation.recommendation.high-accuracy-sessions.description"
+msgid_plural "motivation.recommendation.high-accuracy-sessions.description"
+msgstr[0] "{{count}} clean high-accuracy session is still missing. This is a good moment to slow down and type cleanly."
+msgstr[1] "{{count}} clean high-accuracy sessions are still missing. This is a good moment to slow down and type cleanly."
+
+msgid "motivation.recommendation.high-accuracy-sessions.action"
+msgstr "Open practice"
+
+msgid "motivation.recommendation.flawless-practice.title"
+msgstr "Finish the flawless week"
+
+msgid "motivation.recommendation.flawless-practice.description"
+msgid_plural "motivation.recommendation.flawless-practice.description"
+msgstr[0] "{{count}} flawless practice run is left. A short careful session right now will strengthen the streak nicely."
+msgstr[1] "{{count}} flawless practice runs are left. A short careful session right now will strengthen the streak nicely."
+
+msgid "motivation.recommendation.flawless-practice.action"
+msgstr "Open practice"
+
+msgid "motivation.recommendation.game-levels.titleBeforeDaily"
+msgstr "Play weekly levels through the daily run"
+
+msgid "motivation.recommendation.game-levels.titleAfterDaily"
+msgstr "Push the weekly game levels forward"
+
+msgid "motivation.recommendation.game-levels.descriptionBeforeDaily"
+msgid_plural "motivation.recommendation.game-levels.descriptionBeforeDaily"
+msgstr[0] "{{count}} level is left in the weekly task. The daily run fits this goal well and adds variety."
+msgstr[1] "{{count}} levels are left in the weekly task. The daily run fits this goal well and adds variety."
+
+msgid "motivation.recommendation.game-levels.descriptionAfterDaily"
+msgid_plural "motivation.recommendation.game-levels.descriptionAfterDaily"
+msgstr[0] "{{count}} cleared level is left for the weekly goal. The game mode now gives the most direct progress."
+msgstr[1] "{{count}} cleared levels are left for the weekly goal. The game mode now gives the most direct progress."
+
+msgid "motivation.recommendation.game-levels.action"
+msgstr "Open game"
+
+msgid "motivation.recommendation.clean-game-victories.title"
+msgstr "Get the week’s clean victory"
+
+msgid "motivation.recommendation.clean-game-victories.description"
+msgstr "The weekly task asks for a run without losing HP. This is a great excuse for a careful, measured run."
+
+msgid "motivation.recommendation.clean-game-victories.action"
+msgstr "Open game"
+
+msgid "motivation.recommendation.game-victories.title"
+msgstr "Close the run victory"
+
+msgid "motivation.recommendation.game-victories.descriptionBeforeDaily"
+msgstr "The weekly goal asks you to bring a run to victory. The daily run or the main game mode is the most valuable next step right now."
+
+msgid "motivation.recommendation.game-victories.descriptionAfterDaily"
+msgid_plural "motivation.recommendation.game-victories.descriptionAfterDaily"
+msgstr[0] "{{count}} run victory is left for the weekly goal. The game mode pushes this target the fastest right now."
+msgstr[1] "{{count}} run victories are left for the weekly goal. The game mode pushes this target the fastest right now."
+
+msgid "motivation.recommendation.game-victories.action"
+msgstr "Open game"
+
+msgid "settings.title"
+msgstr "Settings"
+
+msgid "settings.sectionsTitle"
+msgstr "Sections"
+
+msgid "settings.sectionsHint"
+msgstr "Use the sidebar to switch sections, with the selected settings shown on the right."
+
+msgid "settings.categories.general.label"
+msgstr "General"
+
+msgid "settings.categories.general.description"
+msgstr "Interface language, training language, layout, and base typing behavior."
+
+msgid "settings.categories.appearance.label"
+msgstr "Appearance"
+
+msgid "settings.categories.appearance.description"
+msgstr "Theme, cursor, text presentation, interface density, presets, and per-mode profiles."
+
+msgid "settings.categories.keyboard.label"
+msgstr "Keyboard"
+
+msgid "settings.categories.keyboard.description"
+msgstr "Keyboard panel, hands, zoom, offset, and preview behavior."
+
+msgid "settings.categories.accessibility.label"
+msgstr "Accessibility"
+
+msgid "settings.categories.accessibility.description"
+msgstr "Large text, reduced motion, contrast, and color-vision modes."
+
+msgid "settings.categories.profiles.label"
+msgstr "Profiles & presets"
+
+msgid "settings.categories.profiles.description"
+msgstr "Saved interface setups and automatic per-mode profiles."
+
+msgid "settings.categories.data.label"
+msgstr "Data"
+
+msgid "settings.categories.data.description"
+msgstr "Reset game progress or the whole application progress."
+
+msgid "settings.categories.about.label"
+msgstr "About"
+
+msgid "settings.categories.about.description"
+msgstr "Core application info, version details, and local data overview."
+
+msgid "settings.cards.language.title"
+msgstr "Language & layout"
+
+msgid "settings.cards.language.interfaceLanguage"
+msgstr "Interface language"
+
+msgid "settings.cards.language.trainingLanguage"
+msgstr "Training language"
+
+msgid "settings.cards.language.keyboardLayout"
+msgstr "Keyboard layout"
+
+msgid "settings.cards.language.useYo"
+msgstr "Enable the Yo letter"
+
+msgid "settings.cards.language.importPo"
+msgstr "Import .po"
+
+msgid "settings.cards.language.poImported"
+msgstr "Interface translation imported"
+
+msgid "settings.cards.language.removeImportedLocale"
+msgstr "Remove imported translation"
+
+msgid "settings.cards.language.activeSource"
+msgstr "Active translation source"
+
+msgid "settings.cards.language.sourceName"
+msgstr "Source"
+
+msgid "settings.cards.language.importedAt"
+msgstr "Imported"
+
+msgid "settings.cards.language.sourceBuiltIn"
+msgstr "Built-in language"
+
+msgid "settings.cards.language.sourceAddon"
+msgstr "Addon language"
+
+msgid "settings.cards.language.sourceMod"
+msgstr "Mod language"
+
+msgid "settings.cards.language.sourceImported"
+msgstr "Imported translation"
+
+msgid "settings.cards.language.coverage"
+msgstr "Coverage"
+
+msgid "settings.cards.language.coverageDetail"
+msgstr "{{translated}} / {{total}} interface strings"
+
+msgid "settings.cards.language.coverageCompact"
+msgstr "Coverage {{coverage}}% · fallback: {{count}}"
+
+msgid "settings.cards.language.fallbackRisk"
+msgstr "Fallback risk"
+
+msgid "settings.cards.language.fallbackRiskDetail"
+msgid_plural "settings.cards.language.fallbackRiskDetail"
+msgstr[0] "{{count}} string will still come from the fallback chain"
+msgstr[1] "{{count}} strings will still come from the fallback chain"
+
+msgid "settings.cards.language.fallbackRiskNone"
+msgstr "The interface is fully covered without fallback."
+
+msgid "settings.cards.language.partialLocaleWarning"
+msgid_plural "settings.cards.language.partialLocaleWarning"
+msgstr[0] "This language covers {{coverage}}% of the interface. {{count}} string will still come from the fallback chain."
+msgstr[1] "This language covers {{coverage}}% of the interface. {{count}} strings will still come from the fallback chain."
+
+msgid "settings.cards.language.overrideInfo"
+msgstr "This language is assembled from multiple layers. External translations override the built-in text from top to bottom."
+
+msgid "settings.cards.language.layerPrefix"
+msgstr "Layer {{index}}"
+
+msgid "settings.cards.language.resetToBuiltIn"
+msgstr "Restore built-in translation"
+
+msgid "settings.cards.language.poImportErrors.invalidFormat"
+msgstr "The .po file is damaged or uses an unsupported format"
+
+msgid "settings.cards.language.poImportErrors.missingLanguage"
+msgstr "The .po file does not define the Language header"
+
+msgid "settings.cards.language.poImportErrors.emptyDictionary"
+msgstr "The .po file does not contain usable interface strings"
+
+msgid "settings.cards.language.poImportErrors.conflictingKeys"
+msgstr "The .po file contains conflicting translation keys or incompatible plural values"
+
+msgid "settings.cards.language.poImportErrors.invalidPluralForms"
+msgstr "The .po file contains invalid plural forms or incomplete plural slots"
+
+msgid "settings.cards.language.poImportErrors.duplicateEntry"
+msgstr "The .po file contains duplicate translation entries or repeated plural indexes"
+
+msgid "settings.cards.language.poImportErrors.unknown"
+msgstr "Failed to import interface translation"
+
+msgid "settings.cards.speedUnit.title"
+msgstr "Speed unit"
+
+msgid "settings.cards.cursor.title"
+msgstr "Cursor"
+
+msgid "settings.cards.cursor.underline"
+msgstr "Underline"
+
+msgid "settings.cards.cursor.block"
+msgstr "Block"
+
+msgid "settings.cards.cursor.line"
+msgstr "Line"
+
+msgid "settings.cards.cursor.smooth"
+msgstr "Smooth"
+
+msgid "settings.cards.cursor.highlight"
+msgstr "Highlight current character"
+
+msgid "settings.cards.theme.title"
+msgstr "Theme"
+
+msgid "settings.cards.theme.editor"
+msgstr "Editor"
+
+msgid "settings.cards.theme.install"
+msgstr "Install theme…"
+
+msgid "settings.cards.input.title"
+msgstr "Input"
+
+msgid "settings.cards.input.endWithSpace"
+msgstr "Finish with space"
+
+msgid "settings.cards.text.title"
+msgstr "Text"
+
+msgid "settings.cards.text.displayMode"
+msgstr "Text mode"
+
+msgid "settings.cards.text.displayModeBlock"
+msgstr "Block"
+
+msgid "settings.cards.text.displayModeRunning"
+msgstr "Running"
+
+msgid "settings.cards.text.inputFontSize"
+msgstr "Typing text size"
+
+msgid "settings.cards.display.title"
+msgstr "Interface"
+
+msgid "settings.cards.display.focusMode"
+msgstr "Focus mode"
+
+msgid "settings.cards.display.focusModeHint"
+msgstr "Hides side panels while typing is active"
+
+msgid "settings.cards.display.density"
+msgstr "Interface density"
+
+msgid "settings.cards.display.densityCompact"
+msgstr "Compact"
+
+msgid "settings.cards.display.densityDefault"
+msgstr "Default"
+
+msgid "settings.cards.display.densityComfortable"
+msgstr "Comfortable"
+
+msgid "settings.cards.display.showStats"
+msgstr "Show statistics"
+
+msgid "settings.cards.display.showTextPanel"
+msgstr "Show text panel"
+
+msgid "settings.cards.display.keyboardPosition"
+msgstr "Keyboard position"
+
+msgid "settings.cards.display.keyboardPositionBottom"
+msgstr "Bottom"
+
+msgid "settings.cards.display.keyboardPositionBelowText"
+msgstr "Below text"
+
+msgid "settings.cards.accessibility.title"
+msgstr "Accessibility"
+
+msgid "settings.cards.accessibility.largeText"
+msgstr "Large text"
+
+msgid "settings.cards.accessibility.largeTextHint"
+msgstr "Increases font sizes across the interface"
+
+msgid "settings.cards.accessibility.reducedMotion"
+msgstr "Reduce motion"
+
+msgid "settings.cards.accessibility.reducedMotionHint"
+msgstr "Disables animations and transitions"
+
+msgid "settings.cards.accessibility.highContrast"
+msgstr "High contrast"
+
+msgid "settings.cards.accessibility.highContrastHint"
+msgstr "Increases text and border contrast"
+
+msgid "settings.cards.accessibility.colorVisionMode"
+msgstr "Color vision mode"
+
+msgid "settings.cards.accessibility.colorVisionNormal"
+msgstr "Normal"
+
+msgid "settings.cards.accessibility.colorVisionProtanopia"
+msgstr "Protanopia (red)"
+
+msgid "settings.cards.accessibility.colorVisionDeuteranopia"
+msgstr "Deuteranopia (green)"
+
+msgid "settings.cards.accessibility.colorVisionTritanopia"
+msgstr "Tritanopia (blue)"
+
+msgid "settings.cards.keyboard.title"
+msgstr "Keyboard"
+
+msgid "settings.cards.keyboard.showKeyboard"
+msgstr "Show keyboard"
+
+msgid "settings.cards.keyboard.showHands"
+msgstr "Show hands"
+
+msgid "settings.cards.keyboard.beta"
+msgstr "Beta"
+
+msgid "settings.cards.keyboard.handsOpacity"
+msgstr "Hands opacity"
+
+msgid "settings.cards.keyboard.keyStrokeWidth"
+msgstr "Key outline width"
+
+msgid "settings.cards.keyboard.verticalOffset"
+msgstr "Vertical offset"
+
+msgid "settings.cards.keyboard.verticalOffsetHint"
+msgstr "0 centers the panel, negative moves it down, positive moves it up."
+
+msgid "settings.cards.keyboard.panelZoom"
+msgstr "Panel zoom"
+
+msgid "settings.cards.keyboard.panelZoomHint"
+msgstr "100% is the default size, from 10% to 300%."
+
+msgid "settings.cards.keyboard.previewOpen"
+msgstr "Keyboard preview"
+
+msgid "settings.cards.keyboard.previewClose"
+msgstr "Hide preview"
+
+msgid "settings.cards.presets.title"
+msgstr "Interface presets"
+
+msgid "settings.cards.presets.description"
+msgstr "Quickly switch a whole set of settings"
+
+msgid "settings.cards.presets.savePlaceholder"
+msgstr "New preset name…"
+
+msgid "settings.cards.presets.save"
+msgstr "Save"
+
+msgid "settings.cards.presets.imported"
+msgstr "Imported ✓"
+
+msgid "settings.cards.presets.exportConfig"
+msgstr "Export configuration"
+
+msgid "settings.cards.presets.import"
+msgstr "Import"
+
+msgid "settings.cards.presets.applyPresetTitle"
+msgstr "Apply preset “{name}”"
+
+msgid "settings.cards.presets.delete"
+msgstr "Delete"
+
+msgid "settings.cards.modeProfiles.title"
+msgstr "Mode profiles"
+
+msgid "settings.cards.modeProfiles.description"
+msgstr "Save the current settings as a profile for a specific mode. The profile will be applied automatically when you switch to that mode."
+
+msgid "settings.cards.modeProfiles.configured"
+msgstr "configured"
+
+msgid "settings.cards.modeProfiles.saveCurrent"
+msgstr "Save current"
+
+msgid "settings.cards.modeProfiles.write"
+msgstr "Assign"
+
+msgid "settings.cards.modeProfiles.clear"
+msgstr "Clear profile"
+
+msgid "settings.cards.modeProfiles.saveForModeTitle"
+msgstr "Save current settings for the “{mode}” mode"
+
+msgid "settings.cards.progress.title"
+msgstr "Progress"
+
+msgid "settings.cards.progress.description"
+msgstr "Choose which part of progress to clear. Every reset action asks for confirmation first."
+
+msgid "settings.cards.progress.resetGame"
+msgstr "Reset game progress"
+
+msgid "settings.cards.progress.resetAll"
+msgstr "Reset progress"
+
+msgid "settings.cards.progress.actions.game"
+msgstr "Game progress"
+
+msgid "settings.cards.progress.actions.lessons"
+msgstr "Lesson progress"
+
+msgid "settings.cards.progress.actions.mastery"
+msgstr "Mastery and goals"
+
+msgid "settings.cards.progress.actions.all"
+msgstr "All progress"
+
+msgid "settings.cards.about.title"
+msgstr "Application info"
+
+msgid "settings.cards.about.description"
+msgstr "A short overview of the app, its current version, and how local user data is stored."
+
+msgid "settings.cards.about.appName"
+msgstr "Application"
+
+msgid "settings.cards.about.appNameValue"
+msgstr "Typing Trainer"
+
+msgid "settings.cards.about.version"
+msgstr "Version"
+
+msgid "settings.cards.about.author"
+msgstr "Author"
+
+msgid "settings.cards.about.stack"
+msgstr "Stack"
+
+msgid "settings.cards.about.stackValue"
+msgstr "Electron, React, TypeScript, and i18next"
+
+msgid "settings.cards.about.storage"
+msgstr "Local data"
+
+msgid "settings.cards.about.storageValue"
+msgstr "Settings, progress, imported translations, and presets are stored locally on this device."
+
+msgid "settings.cards.resetModal.gameTitle"
+msgstr "Reset game progress"
+
+msgid "settings.cards.resetModal.gameDescription"
+msgstr "This action cannot be undone. After confirmation, the app will clear only the game mode progress."
+
+msgid "settings.cards.resetModal.gameWillReset"
+msgstr "The following will be reset:"
+
+msgid "settings.cards.resetModal.gameItem1"
+msgstr "current run and highest reached level"
+
+msgid "settings.cards.resetModal.gameItem2"
+msgstr "all game mode achievements"
+
+msgid "settings.cards.resetModal.gameItem3"
+msgstr "all collected items and equipment"
+
+msgid "settings.cards.resetModal.game.title"
+msgstr "Reset game progress"
+
+msgid "settings.cards.resetModal.game.description"
+msgstr "This action cannot be undone. After confirmation, the app will clear game mode progress."
+
+msgid "settings.cards.resetModal.game.willReset"
+msgstr "The following will be reset:"
+
+msgid "settings.cards.resetModal.game.gameItem1"
+msgstr "current run and highest reached level"
+
+msgid "settings.cards.resetModal.game.gameItem2"
+msgstr "game mode achievements"
+
+msgid "settings.cards.resetModal.game.gameItem3"
+msgstr "items, equipment, and discovered game drops"
+
+msgid "settings.cards.resetModal.lessons.title"
+msgstr "Reset lesson progress"
+
+msgid "settings.cards.resetModal.lessons.description"
+msgstr "This action clears lesson completion for layouts without touching settings or game state."
+
+msgid "settings.cards.resetModal.lessons.willReset"
+msgstr "The following will be reset:"
+
+msgid "settings.cards.resetModal.lessons.lessonsItem1"
+msgstr "completed lesson marks"
+
+msgid "settings.cards.resetModal.lessons.lessonsItem2"
+msgstr "exercise progress inside lessons"
+
+msgid "settings.cards.resetModal.lessons.lessonsItem3"
+msgstr "next lesson unlocks will be recalculated"
+
+msgid "settings.cards.resetModal.mastery.title"
+msgstr "Reset mastery and goals"
+
+msgid "settings.cards.resetModal.mastery.description"
+msgstr "This action clears layout progression, long-term goals, and streaks without changing interface settings."
+
+msgid "settings.cards.resetModal.mastery.willReset"
+msgstr "The following will be reset:"
+
+msgid "settings.cards.resetModal.mastery.masteryItem1"
+msgstr "mastery points and layout progress"
+
+msgid "settings.cards.resetModal.mastery.masteryItem2"
+msgstr "long-term goals, streaks, and weekly tasks"
+
+msgid "settings.cards.resetModal.mastery.masteryItem3"
+msgstr "practice progression state by layout"
+
+msgid "settings.cards.resetModal.all.title"
+msgstr "Reset all progress"
+
+msgid "settings.cards.resetModal.all.description"
+msgstr "This action cannot be undone. After confirmation, the app will clear all accumulated progress but keep settings, presets, and user content."
+
+msgid "settings.cards.resetModal.all.willReset"
+msgstr "The following will be reset:"
+
+msgid "settings.cards.resetModal.all.fullItem1"
+msgstr "key statistics and result history"
+
+msgid "settings.cards.resetModal.all.fullItem2"
+msgstr "lesson, practice, goal, and mastery progress"
+
+msgid "settings.cards.resetModal.all.fullItem3"
+msgstr "unlocked letters and unlock progress"
+
+msgid "settings.cards.resetModal.all.fullItem4"
+msgstr "all game progress, items, and the current run"
+
+msgid "settings.cards.resetModal.fullTitle"
+msgstr "Reset progress"
+
+msgid "settings.cards.resetModal.fullDescription"
+msgstr "This action cannot be undone. After confirmation, the app will clear all accumulated progress but keep your current settings."
+
+msgid "settings.cards.resetModal.fullWillReset"
+msgstr "The following will be reset:"
+
+msgid "settings.cards.resetModal.fullItem1"
+msgstr "key statistics and result history"
+
+msgid "settings.cards.resetModal.fullItem2"
+msgstr "lesson and practice progress"
+
+msgid "settings.cards.resetModal.fullItem3"
+msgstr "unlocked letters and unlock progress"
+
+msgid "settings.cards.resetModal.fullItem4"
+msgstr "all game progress, items, and the current run"
+
+msgid "settings.cards.resetModal.confirm"
+msgstr "Reset"
+
+msgid "settings.cards.resetModal.cancel"
+msgstr "Cancel"
+
+msgid "settings.modes.practice"
+msgstr "Practice"
+
+msgid "settings.modes.test"
+msgstr "Sprint"
+
+msgid "settings.modes.survival"
+msgstr "Survival"
+
+msgid "settings.modes.lessons"
+msgstr "Lessons"
+
+msgid "settings.modes.game"
+msgstr "Game"
+
+msgid "game.core.items.catalog.steady-gloves.name"
+msgstr "Steady Gloves"
+
+msgid "game.core.items.catalog.steady-gloves.shortName"
+msgstr "Gloves"
+
+msgid "game.core.items.catalog.steady-gloves.description"
+msgstr "Built-in item. Reduces required pace by 4% and boosts defense coefficient by 8%."
+
+msgid "game.core.items.catalog.focus-lens.name"
+msgstr "Focus Lens"
+
+msgid "game.core.items.catalog.focus-lens.shortName"
+msgstr "Lens"
+
+msgid "game.core.items.catalog.focus-lens.description"
+msgstr "Built-in item. Reduces required accuracy by 2% and boosts hit chance by 3%."
+
+msgid "game.core.items.catalog.path-compass.name"
+msgstr "Path Compass"
+
+msgid "game.core.items.catalog.path-compass.shortName"
+msgstr "Compass"
+
+msgid "game.core.items.catalog.path-compass.description"
+msgstr "Built-in item for boss fights. Adds 2 seconds to the boss timer and reduces enemy defense by 3."
+
+msgid "game.core.items.catalog.whisper-feather.name"
+msgstr "Whisper Feather"
+
+msgid "game.core.items.catalog.whisper-feather.shortName"
+msgstr "Feather"
+
+msgid "game.core.items.catalog.whisper-feather.description"
+msgstr "Built-in item. Reduces required pace by 3% and boosts crit chance by 2%."
+
+msgid "game.core.items.catalog.line-sigil.name"
+msgstr "Line Sigil"
+
+msgid "game.core.items.catalog.line-sigil.shortName"
+msgstr "Sigil"
+
+msgid "game.core.items.catalog.line-sigil.description"
+msgstr "Built-in item. Reduces required pace by 3%, reduces required accuracy by 2%, and boosts damage coefficient by 8%."
+
+msgid "game.core.items.catalog.rabbit-step.name"
+msgstr "Rabbit Step"
+
+msgid "game.core.items.catalog.rabbit-step.shortName"
+msgstr "Step"
+
+msgid "game.core.items.catalog.rabbit-step.description"
+msgstr "Built-in item. Reduces required pace by 6% and boosts dodge by 4%."
+
+msgid "game.core.items.catalog.radar-thread.name"
+msgstr "Radar Thread"
+
+msgid "game.core.items.catalog.radar-thread.shortName"
+msgstr "Thread"
+
+msgid "game.core.items.catalog.radar-thread.description"
+msgstr "Built-in item for boss fights. Reduces required accuracy on boss fights by 2%, adds 1 seconds to the boss timer, and reduces enemy defense by 4."
+
+msgid "game.core.items.catalog.crown-oath.name"
+msgstr "Crown Oath"
+
+msgid "game.core.items.catalog.crown-oath.shortName"
+msgstr "Oath"
+
+msgid "game.core.items.catalog.crown-oath.description"
+msgstr "Built-in item for boss fights. Reduces required pace on boss fights by 5%, reduces required accuracy on boss fights by 3%, and boosts damage coefficient by 12%."
+
+msgid "game.core.items.catalog.mirror-glasses.name"
+msgstr "Mirror Glasses"
+
+msgid "game.core.items.catalog.mirror-glasses.shortName"
+msgstr "Glasses"
+
+msgid "game.core.items.catalog.mirror-glasses.description"
+msgstr "Built-in item. Reduces required accuracy by 3% and reduces enemy hit chance by 3."
+
+msgid "game.core.items.catalog.medal-of-stability.name"
+msgstr "Medal Of Stability"
+
+msgid "game.core.items.catalog.medal-of-stability.shortName"
+msgstr "Stability"
+
+msgid "game.core.items.catalog.medal-of-stability.description"
+msgstr "Built-in item. Reduces required pace by 3%, reduces required accuracy by 2%, and boosts defense coefficient by 10%."
+
+msgid "game.core.items.catalog.wind-sigil.name"
+msgstr "Wind Sigil"
+
+msgid "game.core.items.catalog.wind-sigil.shortName"
+msgstr "Sigil"
+
+msgid "game.core.items.catalog.wind-sigil.description"
+msgstr "Built-in item. Reduces required pace by 6% and boosts damage coefficient by 10%."
+
+msgid "game.core.items.catalog.blessed-bulwark.name"
+msgstr "Blessed Bulwark"
+
+msgid "game.core.items.catalog.blessed-bulwark.shortName"
+msgstr "Bulwark"
+
+msgid "game.core.items.catalog.blessed-bulwark.description"
+msgstr "Built-in item for boss fights. Reduces required accuracy on boss fights by 3%, adds 2 seconds to the boss timer, and boosts defense coefficient by 12%."
+
+msgid "game.core.items.catalog.viper-fang.name"
+msgstr "Viper Fang"
+
+msgid "game.core.items.catalog.viper-fang.shortName"
+msgstr "Fang"
+
+msgid "game.core.items.catalog.viper-fang.description"
+msgstr "Built-in item. Reduces enemy defense by 4 and boosts damage coefficient by 8%."
+
+msgid "game.core.items.catalog.iron-carapace.name"
+msgstr "Iron Carapace"
+
+msgid "game.core.items.catalog.iron-carapace.shortName"
+msgstr "Carapace"
+
+msgid "game.core.items.catalog.iron-carapace.description"
+msgstr "Built-in item. Reduces enemy hit chance by 4 and boosts defense coefficient by 10%."
+
+msgid "game.core.items.catalog.phantom-cloak.name"
+msgstr "Phantom Cloak"
+
+msgid "game.core.items.catalog.phantom-cloak.shortName"
+msgstr "Cloak"
+
+msgid "game.core.items.catalog.phantom-cloak.description"
+msgstr "Built-in item. Boosts dodge by 5% and boosts crit chance by 2%."
+
+msgid "game.core.items.catalog.sharp-rune.name"
+msgstr "Sharp Rune"
+
+msgid "game.core.items.catalog.sharp-rune.shortName"
+msgstr "Rune"
+
+msgid "game.core.items.catalog.sharp-rune.description"
+msgstr "Built-in item. Boosts hit chance by 5% and boosts damage coefficient by 6%."
+
+msgid "game.core.items.catalog.fury-sigil.name"
+msgstr "Fury Sigil"
+
+msgid "game.core.items.catalog.fury-sigil.shortName"
+msgstr "Sigil"
+
+msgid "game.core.items.catalog.fury-sigil.description"
+msgstr "Built-in item. Boosts hit chance by 4%, reduces enemy defense by 3, and boosts damage coefficient by 6%."
+
+msgid "game.core.items.catalog.serrated-band.name"
+msgstr "Serrated Band"
+
+msgid "game.core.items.catalog.serrated-band.shortName"
+msgstr "Band"
+
+msgid "game.core.items.catalog.serrated-band.description"
+msgstr "Built-in item. Boosts hit chance by 7% and adds 1 flat damage."
+
+msgid "game.core.items.catalog.fury-crystal.name"
+msgstr "Fury Crystal"
+
+msgid "game.core.items.catalog.fury-crystal.shortName"
+msgstr "Crystal"
+
+msgid "game.core.items.catalog.fury-crystal.description"
+msgstr "Built-in item. Boosts damage coefficient by 15%."
+
+msgid "game.core.items.catalog.rage-pendant.name"
+msgstr "Rage Pendant"
+
+msgid "game.core.items.catalog.rage-pendant.shortName"
+msgstr "Pendant"
+
+msgid "game.core.items.catalog.rage-pendant.description"
+msgstr "Built-in item. Boosts damage coefficient by 10% and reduces enemy defense by 4."
+
+msgid "game.core.items.catalog.stoneskin-charm.name"
+msgstr "Stoneskin Charm"
+
+msgid "game.core.items.catalog.stoneskin-charm.shortName"
+msgstr "Charm"
+
+msgid "game.core.items.catalog.stoneskin-charm.description"
+msgstr "Built-in item. Boosts defense coefficient by 15%."
+
+msgid "game.core.items.catalog.guardian-ring.name"
+msgstr "Guardian Ring"
+
+msgid "game.core.items.catalog.guardian-ring.shortName"
+msgstr "Ring"
+
+msgid "game.core.items.catalog.guardian-ring.description"
+msgstr "Built-in item. Boosts defense coefficient by 10% and boosts dodge by 4%."
+
+msgid "game.core.items.catalog.rhythm-charm.name"
+msgstr "Rhythm Charm"
+
+msgid "game.core.items.catalog.rhythm-charm.shortName"
+msgstr "Charm"
+
+msgid "game.core.items.catalog.rhythm-charm.description"
+msgstr "Built-in item. Boosts crit chance by 5%."
+
+msgid "game.core.items.catalog.precision-lens.name"
+msgstr "Precision Lens"
+
+msgid "game.core.items.catalog.precision-lens.shortName"
+msgstr "Lens"
+
+msgid "game.core.items.catalog.precision-lens.description"
+msgstr "Built-in item. Boosts crit chance by 3% and boosts hit chance by 5%."
+
+msgid "game.core.items.catalog.crusher-seal.name"
+msgstr "Crusher Seal"
+
+msgid "game.core.items.catalog.crusher-seal.shortName"
+msgstr "Seal"
+
+msgid "game.core.items.catalog.crusher-seal.description"
+msgstr "Built-in item. Adds 2 flat damage and reduces enemy defense by 5."
+
+msgid "game.core.items.catalog.heavy-strike.name"
+msgstr "Heavy Strike"
+
+msgid "game.core.items.catalog.heavy-strike.shortName"
+msgstr "Strike"
+
+msgid "game.core.items.catalog.heavy-strike.description"
+msgstr "Built-in item. Adds 1 flat damage and boosts damage coefficient by 8%."
+
+msgid "game.core.items.catalog.rift-hourglass.name"
+msgstr "Rift Hourglass"
+
+msgid "game.core.items.catalog.rift-hourglass.shortName"
+msgstr "Hourglass"
+
+msgid "game.core.items.catalog.rift-hourglass.description"
+msgstr "Durable item for boss fights. Adds 10 seconds to the boss timer and boosts damage coefficient by 15%."
+
+msgid "game.core.items.catalog.storm-anchor.name"
+msgstr "Storm Anchor"
+
+msgid "game.core.items.catalog.storm-anchor.shortName"
+msgstr "Anchor"
+
+msgid "game.core.items.catalog.storm-anchor.description"
+msgstr "Durable item for boss fights. Adds 6 seconds to the boss timer and boosts defense coefficient by 12%."
+
+msgid "game.core.items.catalog.overclock-core.name"
+msgstr "Overclock Core"
+
+msgid "game.core.items.catalog.overclock-core.shortName"
+msgstr "Core"
+
+msgid "game.core.items.catalog.overclock-core.description"
+msgstr "Durable item. Reduces required pace by 16% and boosts damage coefficient by 20%."
+
+msgid "game.core.items.catalog.brain-lattice.name"
+msgstr "Brain Lattice"
+
+msgid "game.core.items.catalog.brain-lattice.shortName"
+msgstr "Lattice"
+
+msgid "game.core.items.catalog.brain-lattice.description"
+msgstr "Durable item. Reduces required accuracy by 8%, boosts hit chance by 6%, and boosts crit chance by 4%."
+
+msgid "game.core.items.catalog.aegis-prism.name"
+msgstr "Aegis Prism"
+
+msgid "game.core.items.catalog.aegis-prism.shortName"
+msgstr "Prism"
+
+msgid "game.core.items.catalog.aegis-prism.description"
+msgstr "Durable item. Reduces required accuracy by 6%, adds 3 seconds to the boss timer, and boosts defense coefficient by 18%."
+
+msgid "game.core.items.catalog.spark-capsule.name"
+msgstr "Spark Capsule"
+
+msgid "game.core.items.catalog.spark-capsule.shortName"
+msgstr "Capsule"
+
+msgid "game.core.items.catalog.spark-capsule.description"
+msgstr "Durable item for boss fights. Reduces required pace on boss fights by 8%, adds 4 seconds to the boss timer, and boosts crit chance by 6%."
+
+msgid "game.core.items.catalog.warden-lock.name"
+msgstr "Warden Lock"
+
+msgid "game.core.items.catalog.warden-lock.shortName"
+msgstr "Lock"
+
+msgid "game.core.items.catalog.warden-lock.description"
+msgstr "Durable item. Reduces required accuracy by 5%, boosts defense coefficient by 15%, and reduces enemy hit chance by 3."
+
+msgid "game.core.items.catalog.ember-seal.name"
+msgstr "Ember Seal"
+
+msgid "game.core.items.catalog.ember-seal.shortName"
+msgstr "Seal"
+
+msgid "game.core.items.catalog.ember-seal.description"
+msgstr "Durable item. Reduces required pace by 9%, reduces required accuracy by 4%, and boosts damage coefficient by 15%."
+
+msgid "game.core.items.catalog.loaded-die.name"
+msgstr "Loaded Die"
+
+msgid "game.core.items.catalog.loaded-die.shortName"
+msgstr "Die"
+
+msgid "game.core.items.catalog.loaded-die.description"
+msgstr "Durable item. Reduces required pace by 10%, reduces required accuracy by 3%, and boosts crit chance by 6%."
+
+msgid "game.core.items.catalog.wand-of-blinks.name"
+msgstr "Wand Of Blinks"
+
+msgid "game.core.items.catalog.wand-of-blinks.shortName"
+msgstr "Blinks"
+
+msgid "game.core.items.catalog.wand-of-blinks.description"
+msgstr "Durable item for boss fights. Reduces required pace on boss fights by 6%, reduces required accuracy on boss fights by 5%, and boosts damage coefficient by 20%."
+
+msgid "game.core.items.catalog.razorblade-edge.name"
+msgstr "Razorblade Edge"
+
+msgid "game.core.items.catalog.razorblade-edge.shortName"
+msgstr "Edge"
+
+msgid "game.core.items.catalog.razorblade-edge.description"
+msgstr "Durable item. Reduces enemy defense by 8 and boosts damage coefficient by 12%."
+
+msgid "game.core.items.catalog.guardian-ward.name"
+msgstr "Guardian Ward"
+
+msgid "game.core.items.catalog.guardian-ward.shortName"
+msgstr "Ward"
+
+msgid "game.core.items.catalog.guardian-ward.description"
+msgstr "Durable item. Reduces enemy hit chance by 8 and boosts defense coefficient by 15%."
+
+msgid "game.core.items.catalog.shadow-mantle.name"
+msgstr "Shadow Mantle"
+
+msgid "game.core.items.catalog.shadow-mantle.shortName"
+msgstr "Mantle"
+
+msgid "game.core.items.catalog.shadow-mantle.description"
+msgstr "Durable item. Boosts dodge by 10% and boosts crit chance by 5%."
+
+msgid "game.core.items.catalog.war-talisman.name"
+msgstr "War Talisman"
+
+msgid "game.core.items.catalog.war-talisman.shortName"
+msgstr "Talisman"
+
+msgid "game.core.items.catalog.war-talisman.description"
+msgstr "Durable item. Reduces enemy hit chance by 4, reduces enemy defense by 4, and boosts damage coefficient by 10%."
+
+msgid "game.core.items.catalog.bloodletter.name"
+msgstr "Bloodletter"
+
+msgid "game.core.items.catalog.bloodletter.shortName"
+msgstr "Bloodletter"
+
+msgid "game.core.items.catalog.bloodletter.description"
+msgstr "Durable item. Boosts hit chance by 10%, boosts damage coefficient by 15%, and boosts crit chance by 3%."
+
+msgid "game.core.items.catalog.war-drum.name"
+msgstr "War Drum"
+
+msgid "game.core.items.catalog.war-drum.shortName"
+msgstr "Drum"
+
+msgid "game.core.items.catalog.war-drum.description"
+msgstr "Durable item for boss fights. Boosts hit chance against bosses by 12% and boosts damage coefficient by 20%."
+
+msgid "game.core.items.catalog.titan-gauntlet.name"
+msgstr "Titan Gauntlet"
+
+msgid "game.core.items.catalog.titan-gauntlet.shortName"
+msgstr "Gauntlet"
+
+msgid "game.core.items.catalog.titan-gauntlet.description"
+msgstr "Durable item. Adds 3 flat damage and boosts damage coefficient by 15%."
+
+msgid "game.core.items.catalog.boss-slayer.name"
+msgstr "Boss Slayer"
+
+msgid "game.core.items.catalog.boss-slayer.shortName"
+msgstr "Slayer"
+
+msgid "game.core.items.catalog.boss-slayer.description"
+msgstr "Durable item for boss fights. Adds 3 flat damage against bosses, boosts damage coefficient by 18%, and boosts crit chance by 4%."
+
+msgid "game.core.items.catalog.berserk-core.name"
+msgstr "Berserk Core"
+
+msgid "game.core.items.catalog.berserk-core.shortName"
+msgstr "Core"
+
+msgid "game.core.items.catalog.berserk-core.description"
+msgstr "Durable item. Boosts damage coefficient by 35% and boosts hit chance by 6%."
+
+msgid "game.core.items.catalog.fortress-plate.name"
+msgstr "Fortress Plate"
+
+msgid "game.core.items.catalog.fortress-plate.shortName"
+msgstr "Plate"
+
+msgid "game.core.items.catalog.fortress-plate.description"
+msgstr "Durable item. Boosts defense coefficient by 35% and reduces enemy hit chance by 5."
+
+msgid "game.core.items.catalog.lucky-die.name"
+msgstr "Lucky Die"
+
+msgid "game.core.items.catalog.lucky-die.shortName"
+msgstr "Die"
+
+msgid "game.core.items.catalog.lucky-die.description"
+msgstr "Durable item. Boosts crit chance by 12% and boosts damage coefficient by 10%."
+
+msgid "game.core.items.effects.speed.default"
+msgstr "-{value}% required pace"
+
+msgid "game.core.items.effects.speed.bossOnly"
+msgstr "-{value}% required pace on boss fights"
+
+msgid "game.core.items.effects.accuracy.default"
+msgstr "-{value}% required accuracy"
+
+msgid "game.core.items.effects.accuracy.bossOnly"
+msgstr "-{value}% required accuracy on boss fights"
+
+msgid "game.core.items.effects.timer.default"
+msgstr "+{value}s boss timer"
+
+msgid "game.core.items.effects.enemyAttack.default"
+msgstr "-{value} enemy hit chance"
+
+msgid "game.core.items.effects.enemyDefense.default"
+msgstr "-{value} enemy defense"
+
+msgid "game.core.items.effects.dodge.default"
+msgstr "+{value}% dodge"
+
+msgid "game.core.items.effects.playerAttack.default"
+msgstr "+{value}% hit chance"
+
+msgid "game.core.items.effects.playerAttack.bossOnly"
+msgstr "+{value}% hit chance against bosses"
+
+msgid "game.core.items.effects.playerDamage.default"
+msgstr "+{value} flat damage"
+
+msgid "game.core.items.effects.playerDamage.bossOnly"
+msgstr "+{value} flat damage against bosses"
+
+msgid "game.core.items.effects.dmgCoeff.default"
+msgstr "+{value}% damage coefficient"
+
+msgid "game.core.items.effects.defCoeff.default"
+msgstr "+{value}% defense coefficient"
+
+msgid "game.core.items.effects.critBonus.default"
+msgstr "+{value}% crit chance"

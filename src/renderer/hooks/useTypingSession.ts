@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import type { Session, CharStat } from '../../shared/types';
 import { createSession } from '../../core/engine';
-import { useApp, useAppUi } from '../contexts/AppContext';
+import { useAppPractice, useAppSettings, useAppUi } from '../contexts/AppContext';
 
 interface UseTypingSessionOptions {
   mode: Session['mode'];
@@ -11,7 +11,8 @@ interface UseTypingSessionOptions {
 }
 
 export function useTypingSession({ mode, noStepBack, maxErrors, onFinish }: UseTypingSessionOptions) {
-  const { settings, saveCharStats } = useApp();
+  const { saveCharStats } = useAppPractice();
+  const { settings } = useAppSettings();
   const { setActiveChar } = useAppUi();
   const [session, setSession] = useState<Session>(() => {
     const s = createSession('', mode, -1);

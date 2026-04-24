@@ -1,28 +1,28 @@
 import { useState } from 'react';
 
-export function useSettingsPageState(onResetAllProgress: () => void, onResetGameProgress: () => void) {
+export type SettingsResetTarget =
+  | 'game'
+  | 'lessons'
+  | 'mastery'
+  | 'all';
+
+type SettingsResetHandlers = Record<SettingsResetTarget, () => void>;
+
+export function useSettingsPageState(resetHandlers: SettingsResetHandlers) {
   const [showThemeModal, setShowThemeModal] = useState(false);
-  const [showResetModal, setShowResetModal] = useState(false);
-  const [showResetGameModal, setShowResetGameModal] = useState(false);
+  const [resetTarget, setResetTarget] = useState<SettingsResetTarget | null>(null);
 
-  const handleResetAll = () => {
-    onResetAllProgress();
-    setShowResetModal(false);
-  };
-
-  const handleResetGame = () => {
-    onResetGameProgress();
-    setShowResetGameModal(false);
+  const handleResetConfirm = () => {
+    if (!resetTarget) return;
+    resetHandlers[resetTarget]();
+    setResetTarget(null);
   };
 
   return {
     showThemeModal,
     setShowThemeModal,
-    showResetModal,
-    setShowResetModal,
-    showResetGameModal,
-    setShowResetGameModal,
-    handleResetAll,
-    handleResetGame,
+    resetTarget,
+    setResetTarget,
+    handleResetConfirm,
   };
 }

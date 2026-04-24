@@ -10,6 +10,21 @@ export {
 } from './addonLoader';
 export type { AddonValidationResult } from './addonLoader';
 
+/* ── Extension sources ──────────────────────────────────── */
+export {
+  validateExtensionSourceManifest,
+  scanExtensionSources,
+  scanExtensionCatalog,
+  installExtensionSource,
+  installExtensionCatalogEntry,
+  updateExtensionSource,
+  removeExtensionSource,
+  toggleExtensionSource,
+  syncExtensionSource,
+  syncAllExtensionSources,
+} from './extensionSourceLoader';
+export type { ExtensionSourceValidationResult } from './extensionSourceLoader';
+
 /* ── Mod loader (script folders) ────────────────────────── */
 export {
   validateModManifest,
@@ -17,11 +32,25 @@ export {
   saveModRegistry,
   scanMods,
   installModFromFolder,
+  installModFromPackage,
   removeMod,
   toggleMod,
   readModScript,
+  readModLocaleResources,
 } from './modLoader';
 export type { ModValidationResult } from './modLoader';
+
+/* ── Theme loader (theme JSON files) ────────────────────── */
+export {
+  validateThemeManifest,
+  loadThemeRegistry,
+  saveThemeRegistry,
+  scanThemes,
+  installThemeFromJSON,
+  installThemeFromFile,
+  removeTheme,
+} from './themeLoader';
+export type { ThemeValidationResult } from './themeLoader';
 
 /* ── Addon merger (content only) ────────────────────────── */
 export {

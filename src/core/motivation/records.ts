@@ -4,6 +4,7 @@ import type {
   PracticeContentMode,
   PracticeTrainingMode,
   Progress,
+  TranslationParams,
 } from '../../shared/types';
 import { formatDelta } from '../stats/utils';
 
@@ -50,7 +51,7 @@ export interface HomePersonalRecordCard {
 }
 
 export interface ModeFocusSnapshot {
-  id: 'practice' | 'test' | 'survival' | 'flawless';
+  id: 'practice' | 'test' | 'survival';
   title: string;
   description: string;
   actionMode: string;
@@ -67,6 +68,8 @@ export interface ModeFollowupRecommendation {
   actionMode: string;
   actionLabel: string;
 }
+
+type TranslateFn = (key: string, options?: TranslationParams) => string;
 
 export interface LayoutMasteryMilestone {
   id: string;
@@ -105,74 +108,66 @@ export interface LayoutMasteryResultSummary {
   unlockedMilestone: LayoutMasteryMilestone | null;
 }
 
-const PRACTICE_TRAINING_MODE_LABELS: Record<PracticeTrainingMode, string> = {
-  normal: 'Обычный темп',
-  rhythm: 'Ровный ритм',
-};
-
-const PRACTICE_CONTENT_MODE_LABELS: Record<PracticeContentMode, string> = {
-  'adaptive-words': 'Слова',
-  syllables: 'Слоги',
-  'pseudo-words': 'Псевдослова',
-  sentences: 'Предложения',
-  custom: 'Свои наборы',
-};
-
-const PRACTICE_SCENARIO_LABELS = {
-  'practice-normal': 'Обычная практика',
-  'practice-rhythm': 'Ритм-практика',
-  sprint: 'Спринт',
-  survival: 'Выживание',
-  flawless: 'Безошибочный режим',
-} as const;
-
-const LAYOUT_MASTERY_MILESTONES: LayoutMasteryMilestone[] = [
-  {
-    id: 'first-steps',
-    title: 'Первые шаги',
-    threshold: 0,
-    description: 'База раскладки и первые уверенные попытки уже на месте.',
-    rewardTitle: 'Стартовый mastery-бейдж',
-    rewardDescription: 'Раскладка получает собственный статус и начинает копить явную цепочку мастерства.',
-  },
-  {
-    id: 'steady-hands',
-    title: 'Ровные руки',
-    threshold: 25,
-    description: 'Раскладка перестаёт быть чужой, а темп становится стабильнее.',
-    rewardTitle: 'Фокус на слабых местах',
-    rewardDescription: 'Мастерство начинает подсвечивать, что именно ещё отделяет раскладку от следующей ступени.',
-  },
-  {
-    id: 'confident-flow',
-    title: 'Уверенный поток',
-    threshold: 50,
-    description: 'Появляется хороший темп, меньше случайных срывов и провалов.',
-    rewardTitle: 'Продвинутый result-callout',
-    rewardDescription: 'После попыток можно явно показывать progression-callout по этой раскладке как часть mastery-цепочки.',
-  },
-  {
-    id: 'layout-expert',
-    title: 'Эксперт раскладки',
-    threshold: 75,
-    description: 'Навык уже держится на длинной дистанции, а не только в пиковых сессиях.',
-    rewardTitle: 'Экспертный титул',
-    rewardDescription: 'Раскладка получает устойчивый экспертный статус и отдельный reward-preview на главном экране.',
-  },
-  {
-    id: 'layout-master',
-    title: 'Мастер раскладки',
-    threshold: 100,
-    description: 'Максимальная веха: раскладка прокачана и готова к долгой прогрессии.',
-    rewardTitle: 'Статус Mastered',
-    rewardDescription: 'Раскладка считается полностью освоенной и может быть отмечена как mastered в дальнейшей мета-прогрессии.',
-  },
-];
-
 type LayoutMasterySnapshotOptions = {
   historyEntriesOverride?: HistoryEntry[];
   unlockedLettersOverride?: number;
 };
+
+function getPracticeTrainingModeLabel(mode: PracticeTrainingMode, t: TranslateFn) {
+  return t(`records.practiceTrainingModes.${mode}`);
+}
+
+function getPracticeContentModeLabel(mode: PracticeContentMode, t: TranslateFn) {
+  return t(`records.practiceContentModes.${mode}`);
+}
+
+function getPracticeScenarioLabel(
+  scenarioId: keyof typeof PRACTICE_SCENARIO_KEYS,
+  t: TranslateFn,
+) {
+  return t(PRACTICE_SCENARIO_KEYS[scenarioId]);
+}
+
+const PRACTICE_SCENARIO_KEYS = {
+  'practice-normal': 'records.practiceScenarios.practice-normal',
+  'practice-rhythm': 'records.practiceScenarios.practice-rhythm',
+  sprint: 'records.practiceScenarios.sprint',
+  survival: 'records.practiceScenarios.survival',
+  flawless: 'records.practiceScenarios.flawless',
+} as const;
+
+function getLayoutMasteryMilestones(t: TranslateFn): LayoutMasteryMilestone[] {
+  const milestoneIds = [
+    'private',
+    'corporal',
+    'sergeant',
+    'lieutenant',
+    'captain',
+    'major',
+    'colonel',
+    'colonel-general',
+  ] as const;
+
+  const thresholds: Record<(typeof milestoneIds)[number], number> = {
+    private: 0,
+    corporal: 15,
+    sergeant: 30,
+    lieutenant: 45,
+    captain: 60,
+    major: 75,
+    colonel: 90,
+    'colonel-general': 100,
+  };
+
+  return milestoneIds.map((id) => ({
+    id,
+    threshold: thresholds[id],
+    title: t(`mastery.ranks.${id}.title`),
+    description: t(`mastery.ranks.${id}.description`),
+    rewardTitle: t(`mastery.ranks.${id}.rewardTitle`),
+    rewardDescription: t(`mastery.ranks.${id}.rewardDescription`),
+  }));
+}
 
 function getLanguageLabel(layouts: LayoutsData, languageId: string) {
   return layouts.languages.find(language => language.id === languageId)?.label ?? languageId.toUpperCase();
@@ -209,7 +204,7 @@ function pickBestEntry(entries: ScopedHistoryEntry[]) {
   return entries.reduce((best, entry) => (compareEntries(entry, best) > 0 ? entry : best));
 }
 
-function pickBestHistoryEntry(entries: HistoryEntry[]) {
+export function pickBestHistoryEntry(entries: HistoryEntry[]) {
   if (!entries.length) return null;
   return entries.reduce<HistoryEntry | null>((best, entry) => {
     if (!best) return entry;
@@ -255,6 +250,7 @@ function buildBenchmark(label: string, entry: HistoryEntry, contextLabel: string
 function buildComparisonSummary(
   entries: HistoryEntry[],
   current: ResultComparisonInput,
+  t: TranslateFn,
   contextLabel: (entry: HistoryEntry) => string,
 ): ResultComparisonSummary {
   const latestEntry = entries.length > 0 ? entries[entries.length - 1]! : null;
@@ -274,13 +270,13 @@ function buildComparisonSummary(
 
   return {
     previousAttempt: previousAttempt
-      ? buildBenchmark('Предыдущая попытка', previousAttempt, contextLabel(previousAttempt))
+      ? buildBenchmark(t('resultComparison.previousAttempt'), previousAttempt, contextLabel(previousAttempt))
       : null,
-    previousDelta: previousAttempt ? buildDelta('Δ к прошлой', current, previousAttempt) : null,
+    previousDelta: previousAttempt ? buildDelta(t('resultComparison.deltaToPrevious'), current, previousAttempt) : null,
     recentBest: recentBestEntry
-      ? buildBenchmark('Лучший недавний', recentBestEntry, contextLabel(recentBestEntry))
+      ? buildBenchmark(t('resultComparison.recentBest'), recentBestEntry, contextLabel(recentBestEntry))
       : null,
-    recentBestDelta: recentBestEntry ? buildDelta('Δ к лучшему', current, recentBestEntry) : null,
+    recentBestDelta: recentBestEntry ? buildDelta(t('resultComparison.deltaToBest'), current, recentBestEntry) : null,
   };
 }
 
@@ -296,42 +292,47 @@ function pickComparisonGroup(groups: HistoryEntry[][], current: ResultComparison
     ?? [];
 }
 
-function describePracticeContext(entry: HistoryEntry) {
+function describePracticeContext(entry: HistoryEntry, t: TranslateFn) {
   if (entry.contentScenarioId && entry.contentScenarioId !== 'practice-normal' && entry.contentScenarioId !== 'practice-rhythm') {
-    const scenarioLabel = PRACTICE_SCENARIO_LABELS[entry.contentScenarioId];
+    const scenarioLabel = getPracticeScenarioLabel(entry.contentScenarioId, t);
     const contentLabel = entry.contentMode
-      ? PRACTICE_CONTENT_MODE_LABELS[entry.contentMode]
-      : 'Материал не указан';
+      ? getPracticeContentModeLabel(entry.contentMode, t)
+      : t('records.context.contentUnknown');
     return `${scenarioLabel} · ${contentLabel}`;
   }
 
   const trainingLabel = entry.trainingMode
-    ? PRACTICE_TRAINING_MODE_LABELS[entry.trainingMode]
-    : 'Практика';
+    ? getPracticeTrainingModeLabel(entry.trainingMode, t)
+    : t('records.context.practice');
   const contentLabel = entry.contentMode
-    ? PRACTICE_CONTENT_MODE_LABELS[entry.contentMode]
-    : 'Материал не указан';
+    ? getPracticeContentModeLabel(entry.contentMode, t)
+    : t('records.context.contentUnknown');
   return `${trainingLabel} · ${contentLabel}`;
 }
 
-function describeGameContext(entry: HistoryEntry) {
-  const stageLabel = entry.gameStageType === 'boss' ? 'Босс' : 'Обычный бой';
-  const levelLabel = entry.gameLevel ? `ур. ${entry.gameLevel}` : 'уровень не указан';
+function describeGameContext(entry: HistoryEntry, t: TranslateFn) {
+  const stageLabel = entry.gameStageType === 'boss'
+    ? t('records.context.gameStageBoss')
+    : t('records.context.gameStageNormal');
+  const levelLabel = entry.gameLevel
+    ? t('records.context.gameLevel', { level: entry.gameLevel })
+    : t('records.context.gameLevelUnknown');
   return `${stageLabel} · ${levelLabel}`;
 }
 
-function describeSprintContext(entry: HistoryEntry) {
+function describeSprintContext(entry: HistoryEntry, t: TranslateFn) {
   const durationLabel = entry.durationSeconds
-    ? `${Math.max(1, Math.round(entry.durationSeconds))} с`
-    : 'время не указано';
+    ? t('records.context.durationSeconds', { count: Math.max(1, Math.round(entry.durationSeconds)) })
+    : t('records.context.durationUnknown');
   const contentLabel = entry.contentMode
-    ? PRACTICE_CONTENT_MODE_LABELS[entry.contentMode]
-    : 'Материал не указан';
-  return `Спринт · ${durationLabel} · ${contentLabel}`;
+    ? getPracticeContentModeLabel(entry.contentMode, t)
+    : t('records.context.contentUnknown');
+  return `${t('records.context.sprint')} · ${durationLabel} · ${contentLabel}`;
 }
 
 export function buildPracticeResultComparison(
   entries: HistoryEntry[],
+  t: TranslateFn,
   current: ResultComparisonInput & {
     contentScenarioId?: HistoryEntry['contentScenarioId'];
     trainingMode?: PracticeTrainingMode;
@@ -349,11 +350,12 @@ export function buildPracticeResultComparison(
     entries.filter(entry => entry.mode === 'practice'),
   ], current);
 
-  return buildComparisonSummary(candidates, current, describePracticeContext);
+  return buildComparisonSummary(candidates, current, t, entry => describePracticeContext(entry, t));
 }
 
 export function buildGameResultComparison(
   entries: HistoryEntry[],
+  t: TranslateFn,
   current: ResultComparisonInput & {
     gameLevel?: number;
     gameStageType?: 'normal' | 'boss';
@@ -365,11 +367,12 @@ export function buildGameResultComparison(
     entries.filter(entry => entry.mode === 'game'),
   ], current);
 
-  return buildComparisonSummary(candidates, current, describeGameContext);
+  return buildComparisonSummary(candidates, current, t, entry => describeGameContext(entry, t));
 }
 
 export function buildSprintResultComparison(
   entries: HistoryEntry[],
+  t: TranslateFn,
   current: ResultComparisonInput & {
     contentScenarioId?: HistoryEntry['contentScenarioId'];
     durationSeconds?: number;
@@ -389,13 +392,14 @@ export function buildSprintResultComparison(
     entries.filter(entry => entry.mode === 'test'),
   ], current);
 
-  return buildComparisonSummary(candidates, current, describeSprintContext);
+  return buildComparisonSummary(candidates, current, t, entry => describeSprintContext(entry, t));
 }
 
 export function buildHomePersonalRecordCards(
   progress: Progress,
   layouts: LayoutsData,
   currentLayout: string,
+  t: TranslateFn,
 ): HomePersonalRecordCard[] {
   const scopedEntries = flattenHistory(progress, layouts);
   const currentLayoutInfo = layouts.layouts[currentLayout];
@@ -404,32 +408,32 @@ export function buildHomePersonalRecordCards(
   return [
     {
       id: 'practice-overall',
-      title: 'Рекорд практики',
-      subtitle: 'Лучший результат по режиму',
+      title: t('records.cards.practice.title'),
+      subtitle: t('records.cards.practice.subtitle'),
       record: pickBestEntry(scopedEntries.filter(entry => entry.entry.mode === 'practice')),
     },
     {
       id: 'game-overall',
-      title: 'Рекорд игры',
-      subtitle: 'Лучший результат по режиму',
+      title: t('records.cards.game.title'),
+      subtitle: t('records.cards.game.subtitle'),
       record: pickBestEntry(scopedEntries.filter(entry => entry.entry.mode === 'game')),
     },
     {
       id: 'sprint-overall',
-      title: 'Рекорд спринта',
-      subtitle: 'Лучший короткий забег',
+      title: t('records.cards.sprint.title'),
+      subtitle: t('records.cards.sprint.subtitle'),
       record: pickBestEntry(scopedEntries.filter(entry => entry.entry.mode === 'test')),
     },
     {
       id: 'current-layout',
-      title: 'Текущая раскладка',
+      title: t('records.cards.currentLayout.title'),
       subtitle: currentLayoutInfo?.label ?? currentLayout.toUpperCase(),
       record: pickBestEntry(scopedEntries.filter(entry => entry.layoutId === currentLayout)),
     },
     {
       id: 'current-language',
-      title: 'Текущий язык',
-      subtitle: currentLanguage ? getLanguageLabel(layouts, currentLanguage) : 'Язык не выбран',
+      title: t('records.cards.currentLanguage.title'),
+      subtitle: currentLanguage ? getLanguageLabel(layouts, currentLanguage) : t('records.cards.currentLanguage.none'),
       record: currentLanguage
         ? pickBestEntry(scopedEntries.filter(entry => entry.languageId === currentLanguage))
         : null,
@@ -437,12 +441,13 @@ export function buildHomePersonalRecordCards(
   ];
 }
 
-export function buildModeFocusSnapshots(entries: HistoryEntry[]): ModeFocusSnapshot[] {
+export function buildModeFocusSnapshots(entries: HistoryEntry[], t: TranslateFn): ModeFocusSnapshot[] {
   const basePracticeEntries = entries.filter(entry => entry.mode === 'practice'
     && entry.contentScenarioId !== 'survival'
     && entry.contentScenarioId !== 'flawless');
   const sprintEntries = entries.filter(entry => entry.mode === 'test');
-  const survivalEntries = entries.filter(entry => entry.mode === 'practice' && entry.contentScenarioId === 'survival');
+  const survivalEntries = entries.filter(entry => entry.mode === 'practice'
+    && (entry.contentScenarioId === 'survival' || entry.contentScenarioId === 'flawless'));
   const flawlessEntries = entries.filter(entry => entry.mode === 'practice' && entry.contentScenarioId === 'flawless');
 
   const buildSnapshot = (
@@ -474,184 +479,163 @@ export function buildModeFocusSnapshots(entries: HistoryEntry[]): ModeFocusSnaps
   return [
     buildSnapshot(
       'practice',
-      'Практика',
-      'Базовый режим для повседневного закрепления скорости, точности и слабых мест.',
+      t('records.modeFocus.practice.title'),
+      t('records.modeFocus.practice.description'),
       'practice',
       basePracticeEntries,
       (attempts, best, last) => {
         if (attempts === 0) {
           return {
             emphasis: 'warn',
-            recommendation: 'Нужна хотя бы одна базовая практика, чтобы на ней держались остальные режимы.',
+            recommendation: t('records.modeFocus.practice.recommendation.empty'),
           };
         }
         if ((last?.acc ?? 0) < 93) {
           return {
             emphasis: 'warn',
-            recommendation: 'Сейчас практика проседает по точности. Лучше стабилизировать базу перед challenge-режимами.',
+            recommendation: t('records.modeFocus.practice.recommendation.lowAccuracy'),
           };
         }
         if ((best?.wpm ?? 0) >= 60 && (best?.acc ?? 0) >= 96) {
           return {
             emphasis: 'good',
-            recommendation: 'База выглядит уверенно. Практика уже может быть точкой разогрева перед спринтом или flawless.',
+            recommendation: t('records.modeFocus.practice.recommendation.ready'),
           };
         }
         return {
           emphasis: 'neutral',
-          recommendation: 'Ещё немного базовых сессий, и режимы на выносливость и чистоту будут ощущаться заметно ровнее.',
+          recommendation: t('records.modeFocus.practice.recommendation.building'),
         };
       },
     ),
     buildSnapshot(
       'test',
-      'Спринт',
-      'Короткий таймерный режим на разгон, плотность набора и контроль ошибок под давлением времени.',
+      t('records.modeFocus.test.title'),
+      t('records.modeFocus.test.description'),
       'test',
       sprintEntries,
       (attempts, best, last) => {
         if (attempts === 0) {
           return {
             emphasis: 'warn',
-            recommendation: 'Спринт ещё не открыт в реальном цикле тренировок. Стоит сделать хотя бы один короткий забег на калибровку темпа.',
+            recommendation: t('records.modeFocus.test.recommendation.empty'),
           };
         }
         if ((last?.acc ?? best?.acc ?? 0) < 93) {
           return {
             emphasis: 'warn',
-            recommendation: 'Спринт теряет результат на ошибках. Полезно сохранить темп, но снизить хаотичные промахи на старте.',
+            recommendation: t('records.modeFocus.test.recommendation.lowAccuracy'),
           };
         }
         if ((best?.wpm ?? 0) >= 70 && (best?.acc ?? 0) >= 95) {
           return {
             emphasis: 'good',
-            recommendation: 'Спринт уже даёт сильный пик скорости. Можно использовать его как короткую контрольную сессию между практиками.',
+            recommendation: t('records.modeFocus.test.recommendation.ready'),
           };
         }
         return {
           emphasis: 'neutral',
-          recommendation: 'Режим уже в работе, но ему ещё нужны повторения, чтобы темп стал устойчивее, а не разовым всплеском.',
+          recommendation: t('records.modeFocus.test.recommendation.building'),
         };
       },
     ),
     buildSnapshot(
       'survival',
-      'Выживание',
-      'Длинный проход с лимитом ошибок, который проверяет устойчивость темпа и концентрации на дистанции.',
+      t('records.modeFocus.survival.title'),
+      t('records.modeFocus.survival.description'),
       'survival',
       survivalEntries,
       (attempts, best, last) => {
         if (attempts === 0) {
           return {
             emphasis: 'warn',
-            recommendation: 'Выживание пока не встроено в ритм занятий. Один длинный проход быстро покажет, держится ли навык вне коротких серий.',
+            recommendation: t('records.modeFocus.survival.recommendation.empty'),
+          };
+        }
+        if (flawlessEntries.length > 0 && (best?.acc ?? 0) >= 98) {
+          return {
+            emphasis: 'good',
+            recommendation: t('records.modeFocus.survival.recommendation.flawlessReady'),
           };
         }
         if ((last?.acc ?? best?.acc ?? 0) < 94) {
           return {
             emphasis: 'warn',
-            recommendation: 'Режим упирается не в пиковую скорость, а в устойчивость. Стоит добрать более ровную точность на длинной дистанции.',
+            recommendation: t('records.modeFocus.survival.recommendation.lowAccuracy'),
           };
         }
         if ((best?.acc ?? 0) >= 96 && (best?.wpm ?? 0) >= 55) {
           return {
             emphasis: 'good',
-            recommendation: 'Выживание уже выглядит зрелым режимом для вас. Им удобно проверять, не рассыпается ли техника на длинном тексте.',
+            recommendation: t('records.modeFocus.survival.recommendation.ready'),
           };
         }
         return {
           emphasis: 'neutral',
-          recommendation: 'Есть рабочая база, но режиму ещё полезны несколько длинных проходов, чтобы сгладить середину и конец текста.',
-        };
-      },
-    ),
-    buildSnapshot(
-      'flawless',
-      'Без ошибок',
-      'Чистый проход без права на промах, где важнее дисциплина и контроль, чем разовый пик скорости.',
-      'flawless',
-      flawlessEntries,
-      (attempts, best, last) => {
-        if (attempts === 0) {
-          return {
-            emphasis: 'warn',
-            recommendation: 'Безошибочный режим ещё не обкатан. Его стоит подключать, когда хочется проверить не скорость, а реальную чистоту набора.',
-          };
-        }
-        if ((best?.acc ?? 0) < 96 || (last?.acc ?? best?.acc ?? 0) < 95) {
-          return {
-            emphasis: 'warn',
-            recommendation: 'Flawless пока срывается на единичных промахах. Полезно добрать более чистые серии в обычной практике или survival.',
-          };
-        }
-        if ((best?.acc ?? 0) >= 98 && (best?.wpm ?? 0) >= 50) {
-          return {
-            emphasis: 'good',
-            recommendation: 'Чистые проходы уже получаются. Режим можно использовать как эталон контроля после разогрева и спринта.',
-          };
-        }
-        return {
-          emphasis: 'neutral',
-          recommendation: 'База уже есть, но безошибочному режиму ещё нужны повторения, чтобы случайные срывы случались реже.',
+          recommendation: flawlessEntries.length > 0
+            ? t('records.modeFocus.survival.recommendation.buildingWithFlawless')
+            : t('records.modeFocus.survival.recommendation.building'),
         };
       },
     ),
   ];
 }
 
-export function buildHistoryFollowupRecommendation(entry: HistoryEntry | null): ModeFollowupRecommendation | null {
+export function buildHistoryFollowupRecommendation(entry: HistoryEntry | null, t: TranslateFn): ModeFollowupRecommendation | null {
   if (!entry) return null;
 
   if (entry.mode === 'test') {
     if (entry.acc >= 95 && entry.wpm >= 70) {
       return {
-        title: 'Проверить длинную дистанцию',
-        description: 'Сильный спринт уже есть. Следующий полезный шаг — перенести этот темп в более длинный и стабильный проход выживания.',
+        title: t('modeFollowup.test.speedToSurvival.title'),
+        description: t('modeFollowup.test.speedToSurvival.description'),
         actionMode: 'survival',
-        actionLabel: 'Открыть выживание',
+        actionLabel: t('modeFollowup.test.speedToSurvival.action'),
       };
     }
     return {
-      title: 'Закрепить темп в практике',
-      description: 'Спринт уже дал полезный пик скорости, но теперь его лучше приземлить в более спокойную базовую практику без таймера.',
+      title: t('modeFollowup.test.stabilizeBase.title'),
+      description: t('modeFollowup.test.stabilizeBase.description'),
       actionMode: 'practice',
-      actionLabel: 'Вернуться в практику',
+      actionLabel: t('modeFollowup.test.stabilizeBase.action'),
     };
   }
 
   if (entry.mode === 'practice' && entry.contentScenarioId === 'survival') {
     if (entry.passed && entry.acc >= 96) {
       return {
-        title: 'Поднять планку до flawless',
-        description: 'Выживание уже держится уверенно. Следующий шаг — проверить, получится ли такой же контроль без права на ошибку.',
-        actionMode: 'flawless',
-        actionLabel: 'Открыть без ошибок',
+        title: t('modeFollowup.survival.raiseBar.title'),
+        description: t('modeFollowup.survival.raiseBar.description'),
+        actionMode: 'survival',
+        actionLabel: t('modeFollowup.survival.raiseBar.action'),
       };
     }
     return {
-      title: 'Вернуться к базовой стабилизации',
-      description: 'Последний проход выживания просит более спокойной базы. Обычная практика поможет выровнять точность и ритм перед новой длинной серией.',
+      title: t('modeFollowup.survival.returnToPractice.title'),
+      description: t('modeFollowup.survival.returnToPractice.description'),
       actionMode: 'practice',
-      actionLabel: 'Пойти в практику',
+      actionLabel: t('modeFollowup.survival.returnToPractice.action'),
     };
   }
 
   if (entry.mode === 'practice' && entry.contentScenarioId === 'flawless') {
     if (entry.passed) {
       return {
-        title: 'Закрепить контроль в выживании',
-        description: 'Чистый проход уже сложился. Теперь полезно проверить, удержится ли та же дисциплина на более длинной дистанции.',
+        title: t('modeFollowup.flawless.cleanControl.title'),
+        description: t('modeFollowup.flawless.cleanControl.description'),
         actionMode: 'survival',
-        actionLabel: 'Открыть выживание',
+        actionLabel: t('modeFollowup.flawless.cleanControl.action'),
       };
     }
     return {
-      title: 'Снять перегрузку через базу',
+      title: entry.acc >= 94
+        ? t('modeFollowup.flawless.softLongRun.title')
+        : t('modeFollowup.flawless.releasePressure.title'),
       description: entry.acc >= 94
-        ? 'До рабочего flawless уже недалеко, но сейчас безопаснее добрать стабильность в выживании.'
-        : 'После срыва в flawless лучше вернуться в обычную практику и снять лишнее давление режима.',
+        ? t('modeFollowup.flawless.softLongRun.description')
+        : t('modeFollowup.flawless.releasePressure.description'),
       actionMode: entry.acc >= 94 ? 'survival' : 'practice',
-      actionLabel: entry.acc >= 94 ? 'Перейти в выживание' : 'Вернуться в практику',
+      actionLabel: entry.acc >= 94 ? t('modeFollowup.flawless.softLongRun.action') : t('modeFollowup.flawless.releasePressure.action'),
     };
   }
 
@@ -664,76 +648,76 @@ export function buildModeResultFollowupRecommendation(args: {
   acc: number;
   passed?: boolean;
   errors?: number;
-}): ModeFollowupRecommendation {
+}, t: TranslateFn): ModeFollowupRecommendation {
   if (args.mode === 'test') {
     if (args.acc >= 95 && args.wpm >= 70) {
       return {
-        title: 'Перенести темп в длинную сессию',
-        description: 'Сильный спринт стоит сразу проверить в выживании, пока скорость и ритм ещё ощущаются свежо.',
+        title: t('modeFollowup.test.speedToSurvival.title'),
+        description: t('modeFollowup.test.speedToSurvival.description'),
         actionMode: 'survival',
-        actionLabel: 'Проверить выживание',
+        actionLabel: t('modeFollowup.test.speedToSurvival.action'),
       };
     }
     return {
-      title: 'Стабилизировать базу',
-      description: 'После спринта полезно вернуться в обычную практику и превратить пик скорости в более ровую серию без таймера.',
+      title: t('modeFollowup.test.stabilizeBase.title'),
+      description: t('modeFollowup.test.stabilizeBase.description'),
       actionMode: 'practice',
-      actionLabel: 'В практику',
+      actionLabel: t('modeFollowup.test.stabilizeBase.action'),
     };
   }
 
   if (args.mode === 'survival') {
     if (args.passed && args.acc >= 96) {
       return {
-        title: 'Поднять планку',
-        description: 'Длинная дистанция уже держится. Следующая честная проверка — безошибочный режим.',
-        actionMode: 'flawless',
-        actionLabel: 'Открыть flawless',
+        title: t('modeFollowup.survival.raiseBar.title'),
+        description: t('modeFollowup.survival.raiseBar.description'),
+        actionMode: 'survival',
+        actionLabel: t('modeFollowup.survival.raiseBar.action'),
       };
     }
     return {
-      title: 'Вернуться к выравниванию',
-      description: 'Сейчас полезнее снять напряжение через базовую практику, а потом снова зайти в длинный проход.',
+      title: t('modeFollowup.survival.returnToPractice.title'),
+      description: t('modeFollowup.survival.returnToPractice.description'),
       actionMode: 'practice',
-      actionLabel: 'Вернуться в практику',
+      actionLabel: t('modeFollowup.survival.returnToPractice.action'),
     };
   }
 
   if (args.passed) {
     return {
-      title: 'Закрепить чистый контроль',
-      description: 'Flawless уже получился, и теперь этот контроль стоит проверить на более длинном тексте в выживании.',
+      title: t('modeFollowup.flawless.cleanControl.title'),
+      description: t('modeFollowup.flawless.cleanControl.description'),
       actionMode: 'survival',
-      actionLabel: 'Открыть выживание',
+      actionLabel: t('modeFollowup.flawless.cleanControl.action'),
     };
   }
 
   if (args.acc >= 94) {
     return {
-      title: 'Переключиться на мягкую длинную серию',
-      description: 'Ошибка в flawless пришла не из-за полной потери формы. Выживание поможет удержать контроль, не ломая попытку одним промахом.',
+      title: t('modeFollowup.flawless.softLongRun.title'),
+      description: t('modeFollowup.flawless.softLongRun.description'),
       actionMode: 'survival',
-      actionLabel: 'Перейти в выживание',
+      actionLabel: t('modeFollowup.flawless.softLongRun.action'),
     };
   }
 
   return {
-    title: 'Снять давление режима',
-    description: 'После провала в flawless лучше вернуться в базовую практику и снова собрать чистый, спокойный проход.',
+    title: t('modeFollowup.flawless.releasePressure.title'),
+    description: t('modeFollowup.flawless.releasePressure.description'),
     actionMode: 'practice',
-    actionLabel: 'Вернуться в практику',
+    actionLabel: t('modeFollowup.flawless.releasePressure.action'),
   };
 }
 
-export function describeHomeRecord(record: ScopedHistoryEntry | null) {
-  if (!record) return 'Ещё нет завершённых попыток';
+export function describeHomeRecord(record: ScopedHistoryEntry | null, t: TranslateFn) {
+  if (!record) return t('records.homeRecord.noAttempts');
   const detail = record.entry.mode === 'practice'
-    ? describePracticeContext(record.entry)
+    ? describePracticeContext(record.entry, t)
     : record.entry.mode === 'game'
-      ? describeGameContext(record.entry)
+      ? describeGameContext(record.entry, t)
       : record.entry.mode === 'test'
-        ? describeSprintContext(record.entry)
-        : 'Урок';
+        ? describeSprintContext(record.entry, t)
+        : t('records.context.lesson');
   return `${record.layoutLabel} · ${record.languageLabel} · ${detail}`;
 }
 
@@ -741,6 +725,7 @@ export function buildLayoutMasterySnapshot(
   progress: Progress,
   layouts: LayoutsData,
   currentLayout: string,
+  t: TranslateFn,
   options?: LayoutMasterySnapshotOptions,
 ): LayoutMasterySnapshot {
   const layout = layouts.layouts[currentLayout];
@@ -767,13 +752,14 @@ export function buildLayoutMasterySnapshot(
   const accuracyPoints = Math.min(15, (bestPracticeAccuracy / 98) * 15);
   const currentScore = Math.max(0, Math.min(100, Math.round(unlockPoints + sessionPoints + speedPoints + accuracyPoints)));
 
-  const currentMilestone = LAYOUT_MASTERY_MILESTONES.reduce((best, milestone) => (
+  const milestones = getLayoutMasteryMilestones(t);
+  const currentMilestone = milestones.reduce((best, milestone) => (
     currentScore >= milestone.threshold ? milestone : best
-  ), LAYOUT_MASTERY_MILESTONES[0]!);
-  const nextMilestone = LAYOUT_MASTERY_MILESTONES.find(milestone => milestone.threshold > currentScore) ?? null;
+  ), milestones[0]!);
+  const nextMilestone = milestones.find(milestone => milestone.threshold > currentScore) ?? null;
   const milestoneFloor = currentMilestone.threshold;
   const milestoneCeiling = nextMilestone?.threshold ?? 100;
-  const unlockedMilestones = LAYOUT_MASTERY_MILESTONES.filter(milestone => currentScore >= milestone.threshold);
+  const unlockedMilestones = milestones.filter(milestone => currentScore >= milestone.threshold);
   const progressPercent = nextMilestone
     ? Math.max(0, Math.min(100, Math.round(((currentScore - milestoneFloor) / Math.max(1, milestoneCeiling - milestoneFloor)) * 100)))
     : 100;
@@ -791,7 +777,7 @@ export function buildLayoutMasterySnapshot(
     practiceSessions,
     bestPracticeWpm,
     bestPracticeAccuracy,
-    milestones: LAYOUT_MASTERY_MILESTONES,
+    milestones,
     unlockedMilestones,
     activeRewardTitle: currentMilestone.rewardTitle,
     activeRewardDescription: currentMilestone.rewardDescription,
@@ -800,14 +786,20 @@ export function buildLayoutMasterySnapshot(
   };
 }
 
-export function describeLayoutMasterySignals(snapshot: LayoutMasterySnapshot) {
-  return `Открыто ${snapshot.unlockedLetters}/${snapshot.totalLetters || 0} символов · ${snapshot.practiceSessions} практик · лучший темп ${snapshot.bestPracticeWpm} WPM`;
+export function describeLayoutMasterySignals(snapshot: LayoutMasterySnapshot, t: TranslateFn) {
+  return t('mastery.signalSummary', {
+    unlocked: snapshot.unlockedLetters,
+    total: snapshot.totalLetters || 0,
+    sessions: snapshot.practiceSessions,
+    speed: snapshot.bestPracticeWpm,
+  });
 }
 
 export function buildLayoutMasteryResultSummary(
   progress: Progress,
   layouts: LayoutsData,
   currentLayout: string,
+  t: TranslateFn,
   options?: {
     previousHistoryEntriesOverride?: HistoryEntry[];
     currentHistoryEntriesOverride?: HistoryEntry[];
@@ -815,11 +807,11 @@ export function buildLayoutMasteryResultSummary(
     currentUnlockedLettersOverride?: number;
   },
 ): LayoutMasteryResultSummary {
-  const previous = buildLayoutMasterySnapshot(progress, layouts, currentLayout, {
+  const previous = buildLayoutMasterySnapshot(progress, layouts, currentLayout, t, {
     historyEntriesOverride: options?.previousHistoryEntriesOverride,
     unlockedLettersOverride: options?.previousUnlockedLettersOverride,
   });
-  const current = buildLayoutMasterySnapshot(progress, layouts, currentLayout, {
+  const current = buildLayoutMasterySnapshot(progress, layouts, currentLayout, t, {
     historyEntriesOverride: options?.currentHistoryEntriesOverride,
     unlockedLettersOverride: options?.currentUnlockedLettersOverride,
   });

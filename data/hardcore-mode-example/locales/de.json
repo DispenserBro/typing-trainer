@@ -1,0 +1,16 @@
+{
+  "locales": [
+    {
+      "id": "de",
+      "label": "German",
+      "nativeLabel": "Deutsch",
+      "dictionary": {
+        "game": {
+          "hud": {
+            "inventory": "Inventar"
+          }
+        }
+      }
+    }
+  ]
+}

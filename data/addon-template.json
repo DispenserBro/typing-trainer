@@ -41,6 +41,29 @@
         }
       ]
     },
+    "interfaceLocales": {
+      "locales": [
+        {
+          "id": "de",
+          "label": "German",
+          "nativeLabel": "Deutsch",
+          "dictionary": {
+            "common": {
+              "actions": {
+                "close": "Schließen"
+              }
+            },
+            "home": {
+              "cards": {
+                "achievements": {
+                  "title": "Erfolge"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
     "lessons": [
       {
         "layoutId": "qwerty",

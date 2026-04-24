@@ -6,20 +6,26 @@ type RowSummary = {
   activeKeys: number;
 };
 
+export type KeyboardHeatmapLegendLabels = {
+  less: string;
+  more: string;
+};
+
 type KeyboardHeatmapLegendProps = {
+  labels: KeyboardHeatmapLegendLabels;
   mode: HeatmapMode;
   rowSummaries: RowSummary[];
 };
 
-export function KeyboardHeatmapLegend({ mode, rowSummaries }: KeyboardHeatmapLegendProps) {
+export function KeyboardHeatmapLegend({ labels, mode, rowSummaries }: KeyboardHeatmapLegendProps) {
   return (
     <>
       <div className="keyboard-heatmap-legend">
-        <span>Меньше</span>
+        <span>{labels.less}</span>
         <div className={`keyboard-heatmap-gradient ${mode}`}>
           <span />
         </div>
-        <span>Больше</span>
+        <span>{labels.more}</span>
       </div>
 
       <div className="keyboard-heatmap-zones">

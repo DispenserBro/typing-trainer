@@ -12,26 +12,33 @@ export function useKeyboardPanel(
   hidden: boolean,
   saveHeight: (height: number) => void,
 ) {
-  const didHydratePanelHeightRef = useRef(false);
   const dragStartYRef = useRef(0);
   const dragStartHeightRef = useRef(savedHeight);
   const panelHeightRef = useRef(savedHeight);
+  const panelZoomRef = useRef(savedZoom);
   const draggingRef = useRef(false);
   const [panelHeight, setPanelHeight] = useState(savedHeight);
+  const [panelZoom, setPanelZoom] = useState(savedZoom);
 
   const showStage = panelHeight > COLLAPSED_STAGE_HEIGHT;
   const autoKeyboardScale = showStage
     ? Math.max(MIN_PANEL_SCALE, Math.min(1, panelHeight / MAX_PANEL_HEIGHT))
     : 1;
-  const userKeyboardScale = Math.max(0.1, Math.min(3, savedZoom / 100));
+  const userKeyboardScale = Math.max(0.1, Math.min(3, panelZoom / 100));
   const keyboardScale = autoKeyboardScale * userKeyboardScale;
 
   useLayoutEffect(() => {
-    if (draggingRef.current || didHydratePanelHeightRef.current) return;
-    didHydratePanelHeightRef.current = true;
+    if (draggingRef.current) return;
+    if (panelHeightRef.current === savedHeight) return;
     setPanelHeight(savedHeight);
     panelHeightRef.current = savedHeight;
   }, [savedHeight]);
+
+  useLayoutEffect(() => {
+    if (panelZoomRef.current === savedZoom) return;
+    setPanelZoom(savedZoom);
+    panelZoomRef.current = savedZoom;
+  }, [savedZoom]);
 
   useEffect(() => {
     if (hidden) return undefined;

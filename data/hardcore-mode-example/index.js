@@ -5,6 +5,7 @@
  *   hardcore-mode/
  *     manifest.json   ← описание мода (id, name, entry, permissions)
  *     index.js        ← точка входа (этот файл)
+ *     locales/de.json ← переводы интерфейса мода (также поддерживаются .po)
  *
  * УСТАНОВКА:
  *   Страница «Аддоны и модификации» → вкладка «Модификации» →
@@ -26,6 +27,7 @@
  *   api.lessons      — добавлять/удалять/заменять уроки            [permission: "lessons"]
  *   api.ui           — инъекция CSS, пользовательские панели       [permission: "ui"]
  *   api.modes        — регистрация новых режимов/страниц           [permission: "modes"]
+ *   api.i18n         — регистрация переводов интерфейса            [permission: "i18n"]
  *   api.log          — логирование (info/warn/error)               [всегда доступен]
  */
 module.exports = function (api) {
@@ -121,5 +123,17 @@ module.exports = function (api) {
   //   icon: 'skull',
   //   group: 'top',
   //   html: '<div style="padding:24px"><h2>Таблица лидеров Хардкора</h2><p>Скоро…</p></div>',
+  // });
+
+  // ── I18N: добавить перевод прямо из скрипта ───────────────────
+  // Обычно удобнее держать локали в locales/*.json или locales/*.po,
+  // но API полезен для динамических модов.
+  // api.i18n.registerLocale({
+  //   id: 'de',
+  //   label: 'German',
+  //   nativeLabel: 'Deutsch',
+  //   dictionary: {
+  //     common: { close: 'Schließen' },
+  //   },
   // });
 };

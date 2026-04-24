@@ -28,6 +28,10 @@
   Логика диагностики баланса игрового режима: выпадение событий, награды, износ предметов, модификаторы.
 - [runGameBalanceDiagnostics.ts](/d:/Danil/Projects/TypingTrainer/src/debug/runGameBalanceDiagnostics.ts)
   CLI entrypoint для запуска диагностики баланса игры.
+- [extensionSourceDiagnostics.ts](/d:/Danil/Projects/TypingTrainer/typing-trainer/src/debug/extensionSourceDiagnostics.ts)
+  Локальная диагностика центра расширений: manifest/list resolution, каталог и установка пакетов из source fixtures.
+- [runExtensionSourceDiagnostics.ts](/d:/Danil/Projects/TypingTrainer/typing-trainer/src/debug/runExtensionSourceDiagnostics.ts)
+  CLI entrypoint для запуска диагностики источников расширений.
 
 Связанные файлы:
 
@@ -50,6 +54,26 @@ npm run diagnostics:practice
 - запускает анализ генерации практики
 - по умолчанию проверяет `qwerty` и `йцукен`
 - по умолчанию проверяет оба режима: `normal` и `rhythm`
+
+### Диагностика источников расширений
+
+```bash
+npm run diagnostics:extensions
+```
+
+Что делает:
+
+- создаёт временный локальный source fixture с каталогом `addons` и `mods`
+- проверяет установку самого source manifest
+- строит каталог записей из списков источника
+- выполняет прямую установку контентного аддона и folder-based мода из каталога
+- повторно сканирует каталог и реестры, чтобы убедиться, что статусы стали `installed`
+
+### Сохранение отчёта источников в JSON
+
+```bash
+npm run diagnostics:extensions -- --json reports/extensions-diagnostics.json
+```
 
 ### Проверка с большим количеством прогонов
 

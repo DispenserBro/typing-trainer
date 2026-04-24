@@ -1,0 +1,60 @@
+{
+  "manifestVersion": 1,
+  "id": "aurora-cascade-theme-pack",
+  "name": "Aurora Cascade",
+  "version": "1.0.1",
+  "icon": "sparkles",
+  "description": "Демо-тема на SCSS с холодной палитрой, вложенными селекторами и небольшими декоративными акцентами.",
+  "author": "Typing Trainer Demo Source",
+  "type": "theme",
+  "preview": {
+    "bg": "#0f172a",
+    "surface": "#162038",
+    "surface2": "#1b2846",
+    "surface3": "#223158",
+    "text": "#e5f0ff",
+    "textDim": "#bdd0ee",
+    "subtext": "#8aa4c8",
+    "accent": "#7c3aed",
+    "accentHover": "#9333ea",
+    "accentDim": "#432067",
+    "green": "#22c55e",
+    "red": "#f43f5e",
+    "yellow": "#f59e0b",
+    "fontSans": "\"Segoe UI\", \"Trebuchet MS\", sans-serif",
+    "fontMono": "\"JetBrains Mono\", \"Consolas\", monospace",
+    "radius": "18px",
+    "radiusSm": "12px",
+    "transitionSpeed": "0.2s"
+  },
+  "style": {
+    "colors": {
+      "bg": "#0f172a",
+      "surface": "#162038",
+      "surface2": "#1b2846",
+      "surface3": "#223158",
+      "text": "#e5f0ff",
+      "textDim": "#bdd0ee",
+      "subtext": "#8aa4c8",
+      "accent": "#7c3aed",
+      "accentHover": "#9333ea",
+      "accentDim": "#432067",
+      "green": "#22c55e",
+      "red": "#f43f5e",
+      "yellow": "#f59e0b",
+      "fontSans": "\"Segoe UI\", \"Trebuchet MS\", sans-serif",
+      "fontMono": "\"JetBrains Mono\", \"Consolas\", monospace",
+      "radius": "18px",
+      "radiusSm": "12px",
+      "transitionSpeed": "0.2s"
+    },
+    "variables": {
+      "--panel-glow": "0 0 0 1px rgba(147, 51, 234, 0.22)"
+    },
+    "scss": "$violet-glow: rgba(147, 51, 234, 0.18);\n$cyan-glow: rgba(59, 130, 246, 0.14);\n$frost-line: rgba(191, 219, 254, 0.14);\n\nbody.theme-aurora-cascade {\n  background-image:\n    radial-gradient(circle at top left, $violet-glow, transparent 32%),\n    radial-gradient(circle at top right, $cyan-glow, transparent 28%),\n    linear-gradient(180deg, rgba(22, 32, 56, 0.95), rgba(15, 23, 42, 1));\n\n  .panel,\n  .mode-panel,\n  .modal {\n    background: linear-gradient(180deg, rgba(27, 40, 70, 0.96), rgba(22, 32, 56, 0.94));\n    border-color: $frost-line;\n  }\n\n  .btn,\n  .chip,\n  .settings-pill,\n  .addons-tab {\n    border-radius: 999px;\n  }\n\n  .btn-accent {\n    background: linear-gradient(135deg, #7c3aed, #3b82f6);\n    color: #f8fbff;\n  }\n\n  .page-title,\n  h1,\n  h2,\n  h3 {\n    letter-spacing: 0.015em;\n  }\n\n  .modal {\n    .modal-header,\n    .modal-footer {\n      border-color: rgba(148, 163, 184, 0.16);\n    }\n  }\n}",
+    "compiledScss": "body.theme-aurora-cascade {\n  background-image: radial-gradient(circle at top left, rgba(147, 51, 234, 0.18), transparent 32%), radial-gradient(circle at top right, rgba(59, 130, 246, 0.14), transparent 28%), linear-gradient(180deg, rgba(22, 32, 56, 0.95), rgb(15, 23, 42));\n}\nbody.theme-aurora-cascade .panel,\nbody.theme-aurora-cascade .mode-panel,\nbody.theme-aurora-cascade .modal {\n  background: linear-gradient(180deg, rgba(27, 40, 70, 0.96), rgba(22, 32, 56, 0.94));\n  border-color: rgba(191, 219, 254, 0.14);\n}\nbody.theme-aurora-cascade .btn,\nbody.theme-aurora-cascade .chip,\nbody.theme-aurora-cascade .settings-pill,\nbody.theme-aurora-cascade .addons-tab {\n  border-radius: 999px;\n}\nbody.theme-aurora-cascade .btn-accent {\n  background: linear-gradient(135deg, #7c3aed, #3b82f6);\n  color: #f8fbff;\n}\nbody.theme-aurora-cascade .page-title,\nbody.theme-aurora-cascade h1,\nbody.theme-aurora-cascade h2,\nbody.theme-aurora-cascade h3 {\n  letter-spacing: 0.015em;\n}\nbody.theme-aurora-cascade .modal .modal-header,\nbody.theme-aurora-cascade .modal .modal-footer {\n  border-color: rgba(148, 163, 184, 0.16);\n}",
+    "bodyClasses": [
+      "theme-aurora-cascade"
+    ]
+  }
+}

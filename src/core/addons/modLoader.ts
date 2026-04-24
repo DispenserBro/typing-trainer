@@ -5,11 +5,154 @@
  */
 import * as fs from 'fs';
 import * as path from 'path';
+import type { ModLocaleResourceFile } from '../../shared/types/electron';
 import type { ModManifest, ModPermission, ModRegistryState, InstalledMod } from '../../shared/types/addon';
 import { ADDON_MANIFEST_VERSION } from '../../shared/types/addon';
 
 const REGISTRY_FILE = 'mod-registry.json';
 const MOD_MANIFEST_FILE = 'manifest.json';
+const MOD_LOCALE_DIRS = ['locales', 'i18n'];
+const MOD_RESERVED_FILES = new Set([REGISTRY_FILE]);
+
+type ModPackageFile = {
+  content: string;
+  relativePath: string;
+};
+
+function normalizePackageRelativePath(value: string) {
+  return value
+    .replace(/\\/g, '/')
+    .trim()
+    .replace(/^\.\/+/, '')
+    .replace(/^\/+/, '');
+}
+
+function isSafePackageRelativePath(value: string) {
+  const normalized = normalizePackageRelativePath(value);
+  if (!normalized) return false;
+  if (path.posix.isAbsolute(normalized)) return false;
+
+  const segments = normalized.split('/');
+  return segments.every(segment => segment.length > 0 && segment !== '.' && segment !== '..');
+}
+
+function normalizeManifestPackageFiles(raw: unknown): string[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const entry of raw) {
+    if (typeof entry !== 'string') continue;
+    const normalized = normalizePackageRelativePath(entry);
+    if (!isSafePackageRelativePath(normalized)) continue;
+    if (seen.has(normalized)) continue;
+    seen.add(normalized);
+    result.push(normalized);
+  }
+  return result.length > 0 ? result : undefined;
+}
+
+function isResolvedPathInside(parentDir: string, targetPath: string) {
+  const relative = path.relative(path.resolve(parentDir), path.resolve(targetPath));
+  return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
+}
+
+function ensureSafeInstallDir(modsDir: string, modId: string) {
+  const destDir = path.resolve(modsDir, modId);
+  if (!isResolvedPathInside(modsDir, destDir)) {
+    throw new Error('Resolved mod install path is outside the mods directory.');
+  }
+  return destDir;
+}
+
+function prepareModDestination(modsDir: string, modId: string) {
+  const destDir = ensureSafeInstallDir(modsDir, modId);
+  if (fs.existsSync(destDir)) {
+    fs.rmSync(destDir, { recursive: true, force: true });
+  }
+  fs.mkdirSync(destDir, { recursive: true });
+  return destDir;
+}
+
+function writeNormalizedModManifest(destDir: string, manifest: ModManifest) {
+  fs.writeFileSync(
+    path.join(destDir, MOD_MANIFEST_FILE),
+    JSON.stringify(manifest, null, 2),
+    'utf-8',
+  );
+}
+
+function persistInstalledMod(modsDir: string, manifest: ModManifest): InstalledMod {
+  const registry = loadModRegistry(modsDir);
+  const existing = registry.mods.findIndex(m => m.id === manifest.id);
+
+  const installedMod: InstalledMod = {
+    id: manifest.id,
+    enabled: true,
+    manifest,
+    dirName: manifest.id,
+    installedAt: new Date().toISOString(),
+  };
+
+  const registryEntry = {
+    id: installedMod.id,
+    enabled: installedMod.enabled,
+    dirName: installedMod.dirName,
+    installedAt: installedMod.installedAt,
+  };
+
+  if (existing >= 0) {
+    registry.mods[existing] = registryEntry;
+  } else {
+    registry.mods.push(registryEntry);
+  }
+
+  saveModRegistry(modsDir, registry);
+  return installedMod;
+}
+
+function validatePackagedModFiles(manifest: ModManifest, files: ModPackageFile[]) {
+  if (!isSafePackageRelativePath(manifest.entry)) {
+    return 'Mods must have a relative "entry" path inside the package.';
+  }
+
+  const normalizedFiles = files.map(file => normalizePackageRelativePath(file.relativePath));
+  const fileSet = new Set(normalizedFiles);
+  if (!fileSet.has(normalizePackageRelativePath(manifest.entry))) {
+    return `Packaged mod is missing the entry file "${manifest.entry}".`;
+  }
+
+  if (manifest.files?.length) {
+    for (const declaredFile of manifest.files) {
+      const normalized = normalizePackageRelativePath(declaredFile);
+      if (!fileSet.has(normalized)) {
+        return `Packaged mod is missing the declared file "${declaredFile}".`;
+      }
+    }
+  }
+
+  return null;
+}
+
+function writePackagedModFiles(destDir: string, files: ModPackageFile[]) {
+  for (const file of files) {
+    const normalized = normalizePackageRelativePath(file.relativePath);
+    if (!isSafePackageRelativePath(normalized)) {
+      throw new Error(`Unsafe package file path "${file.relativePath}".`);
+    }
+    if (MOD_RESERVED_FILES.has(path.posix.basename(normalized))) {
+      continue;
+    }
+
+    const targetPath = path.resolve(destDir, normalized);
+    if (!isResolvedPathInside(destDir, targetPath)) {
+      throw new Error(`Resolved package file path "${normalized}" escapes the mod directory.`);
+    }
+
+    fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+    fs.writeFileSync(targetPath, file.content, 'utf-8');
+  }
+}
 
 /* ── Validation ─────────────────────────────────────────── */
 
@@ -54,10 +197,20 @@ export function validateModManifest(raw: unknown): ModValidationResult {
 
   if (typeof m.entry !== 'string' || m.entry.length === 0) {
     errors.push('Mods must have an "entry" string pointing to a JS file.');
+  } else if (!isSafePackageRelativePath(m.entry)) {
+    errors.push('Mods must have a relative "entry" path inside the mod package.');
   }
 
   if (!Array.isArray(m.permissions)) {
     errors.push('Mods must have a "permissions" array.');
+  }
+
+  if (m.files !== undefined) {
+    if (!Array.isArray(m.files)) {
+      errors.push('Mod "files" must be an array of relative file paths.');
+    } else if (m.files.some((file) => typeof file !== 'string' || !isSafePackageRelativePath(file))) {
+      errors.push('Mod "files" must contain only safe relative file paths.');
+    }
   }
 
   if (errors.length > 0) return { ok: false, errors };
@@ -67,11 +220,13 @@ export function validateModManifest(raw: unknown): ModValidationResult {
     id: m.id as string,
     name: m.name as string,
     version: m.version as string,
+    icon: typeof m.icon === 'string' ? m.icon : undefined,
     description: m.description as string | undefined,
     author: m.author as string | undefined,
     minAppVersion: m.minAppVersion as string | undefined,
     type: 'mod',
     entry: m.entry as string,
+    files: normalizeManifestPackageFiles(m.files),
     permissions: m.permissions as ModPermission[],
     dependencies: Array.isArray(m.dependencies) ? m.dependencies.filter((d: unknown) => typeof d === 'string') : undefined,
   };
@@ -166,57 +321,60 @@ export function installModFromFolder(
 
   const manifest = result.manifest;
   const dirName = manifest.id;
-  const destDir = path.join(modsDir, dirName);
+  const destDir = prepareModDestination(modsDir, dirName);
   const sourceDir = path.dirname(sourceManifestPath);
 
-  // Create destination directory
-  fs.mkdirSync(destDir, { recursive: true });
-
-  // Copy manifest
-  fs.writeFileSync(
-    path.join(destDir, MOD_MANIFEST_FILE),
-    JSON.stringify(manifest, null, 2),
-    'utf-8',
-  );
-
-  // Copy all JS files from source directory
+  // Copy the full mod folder so script-side assets, locales/*.json and locales/*.po survive installation.
   try {
-    const files = fs.readdirSync(sourceDir).filter(
-      (f: string) => f.endsWith('.js'),
-    );
-    for (const file of files) {
-      fs.copyFileSync(path.join(sourceDir, file), path.join(destDir, file));
+    if (path.resolve(sourceDir) !== path.resolve(destDir)) {
+      fs.cpSync(sourceDir, destDir, {
+        recursive: true,
+        force: true,
+        filter: (source) => !MOD_RESERVED_FILES.has(path.basename(source)),
+      });
     }
   } catch { /* ignore copy errors */ }
 
-  const registry = loadModRegistry(modsDir);
-  const existing = registry.mods.findIndex(m => m.id === manifest.id);
+  // Store the normalized manifest after copying to drop unsupported manifest-only resources.
+  writeNormalizedModManifest(destDir, manifest);
+  return { ok: true, mod: persistInstalledMod(modsDir, manifest) };
+}
 
-  const installedMod: InstalledMod = {
-    id: manifest.id,
-    enabled: true,
-    manifest,
-    dirName,
-    installedAt: new Date().toISOString(),
-  };
-
-  // Store only minimal entry in registry
-  const registryEntry = {
-    id: installedMod.id,
-    enabled: installedMod.enabled,
-    dirName: installedMod.dirName,
-    installedAt: installedMod.installedAt,
-  };
-
-  if (existing >= 0) {
-    registry.mods[existing] = registryEntry;
-  } else {
-    registry.mods.push(registryEntry);
+export function installModFromPackage(
+  modsDir: string,
+  manifestContent: string,
+  files: ModPackageFile[],
+): { ok: boolean; error?: string; mod?: InstalledMod } {
+  let raw: unknown;
+  try {
+    raw = JSON.parse(manifestContent);
+  } catch {
+    return { ok: false, error: 'Invalid JSON in manifest.json.' };
   }
 
-  saveModRegistry(modsDir, registry);
+  const result = validateModManifest(raw);
+  if (!result.ok || !result.manifest) {
+    return { ok: false, error: result.errors.join(' ') };
+  }
 
-  return { ok: true, mod: installedMod };
+  const manifest = result.manifest;
+  const validationError = validatePackagedModFiles(manifest, files);
+  if (validationError) {
+    return { ok: false, error: validationError };
+  }
+
+  const destDir = prepareModDestination(modsDir, manifest.id);
+  try {
+    writePackagedModFiles(destDir, files);
+    writeNormalizedModManifest(destDir, manifest);
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : 'Failed to write the mod package files.',
+    };
+  }
+
+  return { ok: true, mod: persistInstalledMod(modsDir, manifest) };
 }
 
 /* ── Remove mod ─────────────────────────────────────────── */
@@ -279,5 +437,53 @@ export function readModScript(
     return fs.readFileSync(scriptPath, 'utf-8');
   } catch {
     return null;
+  }
+}
+
+function getInstalledModDir(modsDir: string, modId: string): string | null {
+  const registry = loadModRegistry(modsDir);
+  const modEntry = registry.mods.find(m => m.id === modId);
+  if (!modEntry) return null;
+  return path.join(modsDir, modEntry.dirName);
+}
+
+function readLocaleFilesFromDir(
+  rootDir: string,
+  dir: string,
+  target: ModLocaleResourceFile[],
+) {
+  if (!fs.existsSync(dir)) return;
+
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (!entry.isFile()) continue;
+    const extension = path.extname(entry.name).toLowerCase();
+    if (extension !== '.json' && extension !== '.po') continue;
+
+    const filePath = path.join(dir, entry.name);
+    target.push({
+      name: entry.name,
+      relativePath: path.relative(rootDir, filePath).replace(/\\/g, '/'),
+      extension: extension === '.po' ? 'po' : 'json',
+      content: fs.readFileSync(filePath, 'utf-8'),
+    });
+  }
+}
+
+export function readModLocaleResources(
+  modsDir: string,
+  modId: string,
+): ModLocaleResourceFile[] {
+  try {
+    const modDir = getInstalledModDir(modsDir, modId);
+    if (!modDir || !fs.existsSync(modDir)) return [];
+
+    const files: ModLocaleResourceFile[] = [];
+    for (const localeDir of MOD_LOCALE_DIRS) {
+      readLocaleFilesFromDir(modDir, path.join(modDir, localeDir), files);
+    }
+
+    return files;
+  } catch {
+    return [];
   }
 }

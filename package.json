@@ -18,6 +18,8 @@
     "dev": "npm run build && electron .",
     "diagnostics:practice": "npm run build:debug-tools && node dist-debug/debug/runPracticeDiagnostics.js",
     "diagnostics:game-balance": "npm run build:debug-tools && node dist-debug/debug/runGameBalanceDiagnostics.js",
+    "diagnostics:i18n": "npm run build:debug-tools && node dist-debug/debug/runI18nDiagnostics.js",
+    "diagnostics:extensions": "npm run build:debug-tools && node dist-debug/debug/runExtensionSourceDiagnostics.js",
     "build:win": "npm run build && electron-builder --win --publish never",
     "build:linux": "npm run build && electron-builder --linux --publish never"
   },
@@ -63,12 +65,16 @@
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "russian-words": "^1.0.1",
-    "sass": "^1.98.0",
     "sass-loader": "^16.0.7",
     "style-loader": "^4.0.0",
     "ts-loader": "^9.5.4",
     "typescript": "^5.9.3",
     "webpack": "^5.105.4",
     "webpack-cli": "^7.0.2"
+  },
+  "dependencies": {
+    "i18next": "^26.0.5",
+    "react-i18next": "^17.0.4",
+    "sass": "^1.98.0"
   }
 }

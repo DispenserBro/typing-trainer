@@ -1,35 +1,20 @@
-import type { CharStat } from '../../../shared/types';
-import { formatSpeed, speedLabel } from '../../../core/engine';
-import {
-  formatEntryModeLabel,
-  formatScenarioLabel,
-  type ScopedRhythmSession,
-  type SessionHistoryItem,
-} from '../../../core/stats/utils';
+import type {
+  StatsSessionDetailViewModel,
+} from '../../../core/stats/viewModel';
 import { KeyboardHeatmap } from './KeyboardHeatmap';
-import type { WorstKey } from './statsSessionTypes';
+import { EmptyStateNotice } from '../ui/EmptyStateNotice';
 
 type StatsSessionDetailProps = {
-  unit: 'wpm' | 'cpm' | 'cps';
-  selectedHistorySession: SessionHistoryItem | null;
-  selectedHistoryRhythm: ScopedRhythmSession | null;
-  displayedRhythmSession: ScopedRhythmSession | null;
-  selectedHistoryWorstKeys: WorstKey[];
-  getLayoutLabel: (layoutId: string) => string;
+  detail: StatsSessionDetailViewModel;
 };
 
 export function StatsSessionDetail({
-  unit,
-  selectedHistorySession,
-  selectedHistoryRhythm,
-  displayedRhythmSession,
-  selectedHistoryWorstKeys,
-  getLayoutLabel,
+  detail,
 }: StatsSessionDetailProps) {
-  if (!selectedHistorySession) {
+  if (!detail.hasSelection) {
     return (
       <div className="stats-session-detail">
-        <p style={{ opacity: 0.5 }}>Выбери сессию слева.</p>
+        <EmptyStateNotice text={detail.selectPromptLabel} />
       </div>
     );
   }
@@ -37,65 +22,36 @@ export function StatsSessionDetail({
   return (
     <div className="stats-session-detail">
       <div className="stats-session-summary">
-        <div className="stats-rhythm-metric">
-          <span>Режим</span>
-          <b>{formatEntryModeLabel(selectedHistorySession.entry)}</b>
-        </div>
-        {selectedHistorySession.entry.contentScenarioId && (
-          <div className="stats-rhythm-metric">
-            <span>Сценарий</span>
-            <b>{formatScenarioLabel(selectedHistorySession.entry.contentScenarioId)}</b>
+        {detail.summaryItems.map(item => (
+          <div className="stats-rhythm-metric" key={item.id}>
+            <span>{item.label}</span>
+            <b>{item.value}</b>
           </div>
-        )}
-        <div className="stats-rhythm-metric">
-          <span>Раскладка</span>
-          <b>{getLayoutLabel(selectedHistorySession.layoutId)}</b>
-        </div>
-        <div className="stats-rhythm-metric">
-          <span>Скорость</span>
-          <b>{formatSpeed(selectedHistorySession.entry.wpm, unit)} {speedLabel(unit)}</b>
-        </div>
-        <div className="stats-rhythm-metric">
-          <span>Точность</span>
-          <b>{Math.round(selectedHistorySession.entry.acc)}%</b>
-        </div>
-        {selectedHistoryRhythm && !displayedRhythmSession && (
-          <>
-            <div className="stats-rhythm-metric">
-              <span>Ритм</span>
-              <b>{Math.round(selectedHistoryRhythm.session.rhythmScore)}%</b>
-            </div>
-            <div className="stats-rhythm-metric">
-              <span>Худший провал</span>
-              <b>{Math.round(selectedHistoryRhythm.session.worstInterval)}мс</b>
-            </div>
-          </>
-        )}
+        ))}
       </div>
 
-      {selectedHistorySession.entry.charStats ? (
+      {detail.keyboardHeatmap ? (
         <>
           <KeyboardHeatmap
-            layoutId={selectedHistorySession.layoutId}
-            keyStats={selectedHistorySession.entry.charStats as Record<string, CharStat>}
-            title="Heatmap сессии"
-            description="Локальная картина по этой попытке."
+            layoutId={detail.keyboardHeatmap.layoutId}
+            keyStats={detail.keyboardHeatmap.keyStats}
+            labels={detail.keyboardHeatmapLabels}
             showControls={false}
             initialMode="errors"
             className="keyboard-heatmap-compact"
           />
 
           <div className="card-like stats-session-worst">
-            <h5>Проблемные клавиши сессии</h5>
-            {selectedHistoryWorstKeys.length === 0 ? (
-              <p className="smart-stats-empty">Для этой попытки пока нет детальных клавишных данных.</p>
+            <h5>{detail.worstKeysTitle}</h5>
+            {detail.selectedWorstKeyCards.length === 0 ? (
+              <EmptyStateNotice className="smart-stats-empty" text={detail.noKeyDataLabel} />
             ) : (
               <div className="worst-keys-grid compact">
-                {selectedHistoryWorstKeys.map(k => (
-                  <div className="worst-key-card compact" key={k.ch}>
-                    <span className="wk-char">{k.ch === ' ' ? '␣' : k.ch}</span>
-                    <span className="wk-err">ош: {Math.round(k.errRate * 100)}%</span>
-                    <span className="wk-time">{k.avgTime}мс</span>
+                {detail.selectedWorstKeyCards.map(key => (
+                  <div className="worst-key-card compact" key={key.id}>
+                    <span className="wk-char">{key.charLabel}</span>
+                    <span className="wk-err">{key.errorLabel}</span>
+                    <span className="wk-time">{key.timeLabel}</span>
                   </div>
                 ))}
               </div>
@@ -103,9 +59,7 @@ export function StatsSessionDetail({
           </div>
         </>
       ) : (
-        <p style={{ opacity: 0.5 }}>
-          Для этой сессии нет детальных `charStats`, поэтому доступен только общий разбор.
-        </p>
+        <EmptyStateNotice text={detail.noCharStatsLabel} />
       )}
     </div>
   );

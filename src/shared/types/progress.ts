@@ -17,6 +17,7 @@ import type {
   PresetSettings,
   UserSettings,
 } from './settings';
+import type { ImportedInterfaceLocaleDefinition } from './i18n';
 
 /** Переопределения настроек для конкретного режима */
 export type ModeProfiles = Partial<Record<string, Partial<PresetSettings>>>;
@@ -35,6 +36,7 @@ export interface Progress {
   layoutProgress?: Record<string, LayoutProgressState>;
   practice?: Record<string, PracticeState>;
   customPracticePacks?: Record<string, CustomPracticePack>;
+  importedInterfaceLocales?: Record<string, ImportedInterfaceLocaleDefinition>;
   motivation?: MotivationProgress;
   game?: GameState;
   /** Глобальные разблокированные достижения (все категории). */

@@ -1,6 +1,26 @@
+import { useState } from 'react';
 import { AlignJustify, Minus, MoveRight, Pencil, Square, Tally1 } from 'lucide-react';
-import type { CustomThemes, InterfaceDensity, KeyboardPosition, LanguageInfo, Layout, SpeedUnit, UserSettings } from '../../../shared/types';
+import type {
+  CustomThemes,
+  ImportedInterfaceLocaleDefinition,
+  InterfaceDensity,
+  KeyboardPosition,
+  LanguageInfo,
+  Layout,
+  ThemeDefinitions,
+  ThemeInstallResult,
+  SpeedUnit,
+  UserSettings,
+} from '../../../shared/types';
 import { NumberInput } from '../NumberInput';
+import { useI18n } from '../../contexts/I18nContext';
+import { Button } from '../ui/Button';
+import { SelectInput } from '../ui/SelectInput';
+import { SegmentedControl } from '../ui/SegmentedControl';
+import { SettingsActionList, SettingsActionRow } from '../ui/SettingsActionList';
+import { SettingsCard } from '../ui/SettingsCard';
+import { SettingsField } from '../ui/SettingsField';
+import { SettingsToggle } from '../ui/SettingsToggle';
 
 type CommonHandlers = {
   saveSetting: <K extends keyof UserSettings>(key: K, val: UserSettings[K]) => void;
@@ -10,51 +30,119 @@ export function SettingsLanguageCard({
   currentLanguage,
   languages,
   setCurrentLanguage,
+  currentLayout,
+  layoutsForLanguage,
+  setCurrentLayout,
   settings,
   saveSetting,
+  importedInterfaceLocales,
+  importInterfaceLocale,
+  removeImportedInterfaceLocale,
 }: {
   currentLanguage: string;
   languages: LanguageInfo[];
   setCurrentLanguage: (language: string) => void;
-  settings: UserSettings;
-} & CommonHandlers) {
-  return (
-    <div className="card settings-card">
-      <h4>Язык</h4>
-      <select className="select-minimal" value={currentLanguage} onChange={e => setCurrentLanguage(e.target.value)}>
-        {languages.map(l => (
-          <option key={l.id} value={l.id}>{l.label}</option>
-        ))}
-      </select>
-      {currentLanguage === 'ru' && (
-        <label className="poption-toggle" style={{ marginTop: 8 }}>
-          <input type="checkbox" checked={settings.useYo} onChange={e => saveSetting('useYo', e.target.checked)} />
-          <span className="toggle-switch" />
-          <span className="poption-toggle-text">Включить букву Ё</span>
-        </label>
-      )}
-    </div>
-  );
-}
-
-export function SettingsLayoutCard({
-  currentLayout,
-  layoutsForLanguage,
-  setCurrentLayout,
-}: {
   currentLayout: string;
   layoutsForLanguage: [string, Layout][];
   setCurrentLayout: (layout: string) => void;
-}) {
+  settings: UserSettings;
+  importedInterfaceLocales: Record<string, ImportedInterfaceLocaleDefinition>;
+  importInterfaceLocale: () => Promise<string | null>;
+  removeImportedInterfaceLocale: (localeId: string) => void;
+} & CommonHandlers) {
+  const { formatDateTime, formatNumber, localeQuality, locales, t } = useI18n();
+  const [importMsg, setImportMsg] = useState('');
+  const importedLocaleEntries = Object.values(importedInterfaceLocales).sort((left, right) => (
+    right.importedAt.localeCompare(left.importedAt)
+  ));
+
+  const handleImportPo = async () => {
+    const errorKey = await importInterfaceLocale();
+    const message = errorKey ? t(errorKey) : t('settings.cards.language.poImported');
+    setImportMsg(message);
+    window.setTimeout(() => setImportMsg(''), 3000);
+  };
+
   return (
-    <div className="card settings-card">
-      <h4>Раскладка</h4>
-      <select className="select-minimal" value={currentLayout} onChange={e => setCurrentLayout(e.target.value)}>
-        {layoutsForLanguage.map(([k, lay]) => (
-          <option key={k} value={k}>{lay.label}</option>
-        ))}
-      </select>
-    </div>
+    <SettingsCard title={t('settings.cards.language.title')}>
+      <SettingsField className="settings-field-full" label={t('settings.cards.language.interfaceLanguage')}>
+        <SelectInput value={settings.interfaceLanguage} onChange={e => saveSetting('interfaceLanguage', e.target.value)}>
+          {locales.map((locale) => (
+            <option key={locale.id} value={locale.id}>
+              {locale.nativeLabel}
+              {localeQuality[locale.id] ? ` · ${formatNumber(localeQuality[locale.id]!.coveragePercent)}%` : ''}
+            </option>
+          ))}
+        </SelectInput>
+        <div className="preset-io-row settings-language-import-row">
+          <Button size="sm" onClick={handleImportPo}>
+            {t('settings.cards.language.importPo')}
+          </Button>
+          {importMsg && <span className="card-desc preset-inline-message">{importMsg}</span>}
+        </div>
+      </SettingsField>
+      <SettingsField className="settings-field-full" label={t('settings.cards.language.trainingLanguage')}>
+        <SelectInput value={currentLanguage} onChange={e => setCurrentLanguage(e.target.value)}>
+          {languages.map(l => (
+            <option key={l.id} value={l.id}>{l.label}</option>
+          ))}
+        </SelectInput>
+      </SettingsField>
+      <SettingsField className="settings-field-full" label={t('settings.cards.language.keyboardLayout')}>
+        <SelectInput value={currentLayout} onChange={e => setCurrentLayout(e.target.value)}>
+          {layoutsForLanguage.map(([k, lay]) => (
+            <option key={k} value={k}>{lay.label}</option>
+          ))}
+        </SelectInput>
+      </SettingsField>
+      {currentLanguage === 'ru' && (
+        <SettingsToggle
+          className="settings-language-yo-toggle"
+          checked={settings.useYo}
+          onChange={checked => saveSetting('useYo', checked)}
+          label={t('settings.cards.language.useYo')}
+        />
+      )}
+
+      {importedLocaleEntries.length > 0 && (
+        <SettingsActionList className="settings-imported-locale-list">
+          {importedLocaleEntries.map((locale) => (
+            <SettingsActionRow
+              key={locale.id}
+              actions={(
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="preset-delete-btn"
+                  onClick={() => removeImportedInterfaceLocale(locale.id)}
+                  title={t('settings.cards.language.removeImportedLocale')}
+                >
+                  ✕
+                </Button>
+              )}
+            >
+              <div className="settings-imported-locale-copy">
+                <div className="settings-imported-locale-title">{locale.nativeLabel}</div>
+                <div className="card-desc">
+                  {locale.id} · {locale.sourceName}
+                </div>
+                {localeQuality[locale.id] && (
+                  <div className="card-desc">
+                    {t('settings.cards.language.coverageCompact', {
+                      coverage: formatNumber(localeQuality[locale.id]!.coveragePercent),
+                      count: formatNumber(localeQuality[locale.id]!.fallbackRiskCount),
+                    })}
+                  </div>
+                )}
+                <div className="card-desc">
+                  {t('settings.cards.language.importedAt')}: {formatDateTime(locale.importedAt)}
+                </div>
+              </div>
+            </SettingsActionRow>
+          ))}
+        </SettingsActionList>
+      )}
+    </SettingsCard>
   );
 }
 
@@ -64,21 +152,20 @@ export function SettingsSpeedUnitCard({
 }: {
   settings: UserSettings;
 } & CommonHandlers) {
+  const { t } = useI18n();
+
   return (
-    <div className="card settings-card">
-      <h4>Единица скорости</h4>
-      <div className="seg-group">
-        {(['wpm', 'cpm', 'cps'] as SpeedUnit[]).map(u => (
-          <button
-            key={u}
-            className={`seg-btn${settings.speedUnit === u ? ' active' : ''}`}
-            onClick={() => saveSetting('speedUnit', u)}
-          >
-            {u.toUpperCase()}
-          </button>
-        ))}
-      </div>
-    </div>
+    <SettingsCard title={t('settings.cards.speedUnit.title')}>
+      <SegmentedControl
+        ariaLabel={t('settings.cards.speedUnit.title')}
+        value={settings.speedUnit}
+        onChange={value => saveSetting('speedUnit', value)}
+        options={(['wpm', 'cpm', 'cps'] as SpeedUnit[]).map(value => ({
+          value,
+          label: value.toUpperCase(),
+        }))}
+      />
+    </SettingsCard>
   );
 }
 
@@ -88,80 +175,84 @@ export function SettingsCursorCard({
 }: {
   settings: UserSettings;
 } & CommonHandlers) {
+  const { t } = useI18n();
+  const cursorOptions = [
+    { value: 'underline', icon: <Minus size={16} />, title: t('settings.cards.cursor.underline') },
+    { value: 'block', icon: <Square size={16} />, title: t('settings.cards.cursor.block') },
+    { value: 'line', icon: <Tally1 size={16} />, title: t('settings.cards.cursor.line') },
+  ] as const;
+
   return (
-    <div className="card settings-card">
-      <h4>Курсор</h4>
+    <SettingsCard title={t('settings.cards.cursor.title')}>
       <div className="poption-row">
-        <div className="seg-group">
-          {([['underline', Minus, 'Подчёркивание'], ['block', Square, 'Блок'], ['line', Tally1, 'Линия']] as const).map(([val, Icon, title]) => (
-            <button
-              key={val}
-              title={title}
-              className={`seg-btn${settings.cursorStyle === val ? ' active' : ''}`}
-              onClick={() => saveSetting('cursorStyle', val)}
-            >
-              <Icon size={16} />
-            </button>
-          ))}
-        </div>
-        <label className="poption-toggle">
-          <input
-            type="checkbox"
-            checked={settings.cursorSmooth === 'smooth'}
-            onChange={e => saveSetting('cursorSmooth', e.target.checked ? 'smooth' : 'instant')}
-          />
-          <span className="toggle-switch" />
-          <span className="poption-toggle-text">Плавный</span>
-        </label>
-      </div>
-      <label className="poption-toggle" style={{ marginTop: 10 }}>
-        <input
-          type="checkbox"
-          checked={settings.highlightCurrentChar}
-          onChange={e => saveSetting('highlightCurrentChar', e.target.checked)}
+        <SegmentedControl
+          ariaLabel={t('settings.cards.cursor.title')}
+          value={settings.cursorStyle}
+          onChange={value => saveSetting('cursorStyle', value)}
+          options={cursorOptions}
         />
-        <span className="toggle-switch" />
-        <span className="poption-toggle-text">Подсветка текущей буквы</span>
-      </label>
-    </div>
+        <SettingsToggle
+          checked={settings.cursorSmooth === 'smooth'}
+          onChange={checked => saveSetting('cursorSmooth', checked ? 'smooth' : 'instant')}
+          label={t('settings.cards.cursor.smooth')}
+        />
+      </div>
+      <SettingsToggle
+        className="settings-toggle-offset-sm"
+        checked={settings.highlightCurrentChar}
+        onChange={checked => saveSetting('highlightCurrentChar', checked)}
+        label={t('settings.cards.cursor.highlight')}
+      />
+    </SettingsCard>
   );
 }
 
 export function SettingsThemeCard({
   settings,
-  customThemes,
+  availableThemes,
   saveSetting,
   applyTheme,
+  installTheme,
   onOpenThemeEditor,
 }: {
   settings: UserSettings;
   customThemes: CustomThemes;
+  availableThemes: ThemeDefinitions;
   applyTheme: (name: string) => void;
+  installTheme: () => Promise<ThemeInstallResult>;
   onOpenThemeEditor: () => void;
 } & CommonHandlers) {
-  const allThemes = ['dark-orange', 'catppuccin', 'nord', 'monokai', 'light', ...Object.keys(customThemes)];
+  const { t } = useI18n();
+  const builtInThemes = ['dark-orange', 'catppuccin', 'nord', 'monokai', 'light'];
+  const allThemes = [
+    ...builtInThemes.map(themeId => ({ id: themeId, label: themeId })),
+    ...Object.values(availableThemes)
+      .filter(theme => !builtInThemes.includes(theme.id))
+      .map(theme => ({ id: theme.id, label: theme.label })),
+  ];
 
   return (
-    <div className="card settings-card">
-      <h4>Тема</h4>
+    <SettingsCard title={t('settings.cards.theme.title')}>
       <div className="poption-row">
-        <select
-          className="select-minimal"
+        <SelectInput
           value={settings.theme}
           onChange={e => {
             saveSetting('theme', e.target.value);
             applyTheme(e.target.value);
           }}
         >
-          {allThemes.map(t => (
-            <option key={t} value={t}>{t}</option>
+          {allThemes.map(theme => (
+            <option key={theme.id} value={theme.id}>{theme.label}</option>
           ))}
-        </select>
-        <button className="btn-secondary btn-sm" onClick={onOpenThemeEditor}>
-          <Pencil size={14} style={{ verticalAlign: 'middle' }} /> Редактор
-        </button>
+        </SelectInput>
+        <Button size="sm" variant="secondary" onClick={() => void installTheme()}>
+          {t('settings.cards.theme.install')}
+        </Button>
+        <Button size="sm" onClick={onOpenThemeEditor}>
+          <Pencil size={14} className="settings-inline-icon" /> {t('settings.cards.theme.editor')}
+        </Button>
       </div>
-    </div>
+    </SettingsCard>
   );
 }
 
@@ -171,22 +262,17 @@ export function SettingsInputCard({
 }: {
   settings: UserSettings;
 } & CommonHandlers) {
+  const { t } = useI18n();
+
   return (
-    <div className="card settings-card">
-      <h4>Ввод</h4>
-      <label
-        className="poption-toggle"
+    <SettingsCard title={t('settings.cards.input.title')}>
+      <SettingsToggle
         title="При включении для завершения ввода в тренировке, тесте и уроках нужно нажать пробел"
-      >
-        <input
-          type="checkbox"
-          checked={settings.endWithSpace}
-          onChange={e => saveSetting('endWithSpace', e.target.checked)}
-        />
-        <span className="toggle-switch" />
-        <span className="poption-toggle-text">Заканчивать пробелом</span>
-      </label>
-    </div>
+        checked={settings.endWithSpace}
+        onChange={checked => saveSetting('endWithSpace', checked)}
+        label={t('settings.cards.input.endWithSpace')}
+      />
+    </SettingsCard>
   );
 }
 
@@ -196,30 +282,31 @@ export function SettingsTextCard({
 }: {
   settings: UserSettings;
 } & CommonHandlers) {
+  const { t } = useI18n();
+  const displayModeOptions = [
+    {
+      value: 'block',
+      icon: <AlignJustify size={16} />,
+      title: t('settings.cards.text.displayModeBlock'),
+    },
+    {
+      value: 'running',
+      icon: <MoveRight size={16} />,
+      title: t('settings.cards.text.displayModeRunning'),
+    },
+  ] as const;
+
   return (
-    <div className="card settings-card">
-      <h4>Текст</h4>
-      <div className="poption">
-        <span className="poption-label">Вид текста</span>
-        <div className="seg-group">
-          <button
-            title="Блок"
-            className={`seg-btn${settings.textDisplay === 'block' ? ' active' : ''}`}
-            onClick={() => saveSetting('textDisplay', 'block')}
-          >
-            <AlignJustify size={16} />
-          </button>
-          <button
-            title="Бегущая строка"
-            className={`seg-btn${settings.textDisplay === 'running' ? ' active' : ''}`}
-            onClick={() => saveSetting('textDisplay', 'running')}
-          >
-            <MoveRight size={16} />
-          </button>
-        </div>
-      </div>
-      <div className="poption">
-        <span className="poption-label">Размер текста для ввода</span>
+    <SettingsCard title={t('settings.cards.text.title')}>
+      <SettingsField label={t('settings.cards.text.displayMode')}>
+        <SegmentedControl
+          ariaLabel={t('settings.cards.text.displayMode')}
+          value={settings.textDisplay}
+          onChange={value => saveSetting('textDisplay', value)}
+          options={displayModeOptions}
+        />
+      </SettingsField>
+      <SettingsField label={t('settings.cards.text.inputFontSize')}>
         <div className="poption-row">
           <NumberInput
             value={settings.textFontSize}
@@ -232,8 +319,8 @@ export function SettingsTextCard({
           />
           <span className="poption-hint">rem</span>
         </div>
-      </div>
-    </div>
+      </SettingsField>
+    </SettingsCard>
   );
 }
 
@@ -243,77 +330,61 @@ export function SettingsDisplayCard({
 }: {
   settings: UserSettings;
 } & CommonHandlers) {
+  const { t } = useI18n();
   const densityOptions: { value: InterfaceDensity; label: string }[] = [
-    { value: 'compact', label: 'Компактный' },
-    { value: 'default', label: 'Стандарт' },
-    { value: 'comfortable', label: 'Просторный' },
+    { value: 'compact', label: t('settings.cards.display.densityCompact') },
+    { value: 'default', label: t('settings.cards.display.densityDefault') },
+    { value: 'comfortable', label: t('settings.cards.display.densityComfortable') },
   ];
 
   const kbPosOptions: { value: KeyboardPosition; label: string }[] = [
-    { value: 'bottom', label: 'Снизу' },
-    { value: 'below-text', label: 'Под текстом' },
+    { value: 'bottom', label: t('settings.cards.display.keyboardPositionBottom') },
+    { value: 'below-text', label: t('settings.cards.display.keyboardPositionBelowText') },
   ];
 
   return (
-    <div className="card settings-card">
-      <h4>Интерфейс</h4>
-      <label className="poption-toggle">
-        <input
-          type="checkbox"
-          checked={settings.focusMode}
-          onChange={e => saveSetting('focusMode', e.target.checked)}
-        />
-        <span className="toggle-switch" />
-        <span className="poption-toggle-text">Фокус-режим</span>
-      </label>
-      <p className="card-desc" style={{ marginTop: 6, marginBottom: 14 }}>
-        Скрывает панели во время активной печати
+    <SettingsCard title={t('settings.cards.display.title')}>
+      <SettingsToggle
+        checked={settings.focusMode}
+        onChange={checked => saveSetting('focusMode', checked)}
+        label={t('settings.cards.display.focusMode')}
+      />
+      <p className="card-desc settings-card-description-spaced">
+        {t('settings.cards.display.focusModeHint')}
       </p>
-      <div className="poption">
-        <span className="poption-label">Плотность интерфейса</span>
-        <div className="seg-group" style={{ marginTop: 6 }}>
-          {densityOptions.map(opt => (
-            <button
-              key={opt.value}
-              className={`seg-btn${settings.interfaceDensity === opt.value ? ' active' : ''}`}
-              onClick={() => saveSetting('interfaceDensity', opt.value)}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
+      <SettingsField label={t('settings.cards.display.density')}>
+        <SegmentedControl
+          ariaLabel={t('settings.cards.display.density')}
+          className="settings-seg-row"
+          value={settings.interfaceDensity}
+          onChange={value => saveSetting('interfaceDensity', value)}
+          options={densityOptions}
+        />
+      </SettingsField>
+
+      <div className="settings-display-toggle-stack">
+        <SettingsToggle
+          checked={settings.showStats}
+          onChange={checked => saveSetting('showStats', checked)}
+          label={t('settings.cards.display.showStats')}
+        />
+        <SettingsToggle
+          checked={settings.showTextPanel}
+          onChange={checked => saveSetting('showTextPanel', checked)}
+          label={t('settings.cards.display.showTextPanel')}
+        />
       </div>
 
-      <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <label className="poption-toggle">
-          <input type="checkbox" checked={settings.showStats}
-            onChange={e => saveSetting('showStats', e.target.checked)} />
-          <span className="toggle-switch" />
-          <span className="poption-toggle-text">Показывать статистику</span>
-        </label>
-        <label className="poption-toggle">
-          <input type="checkbox" checked={settings.showTextPanel}
-            onChange={e => saveSetting('showTextPanel', e.target.checked)} />
-          <span className="toggle-switch" />
-          <span className="poption-toggle-text">Показывать панель текста</span>
-        </label>
-      </div>
-
-      <div className="poption" style={{ marginTop: 14 }}>
-        <span className="poption-label">Позиция клавиатуры</span>
-        <div className="seg-group" style={{ marginTop: 6 }}>
-          {kbPosOptions.map(opt => (
-            <button
-              key={opt.value}
-              className={`seg-btn${settings.keyboardPosition === opt.value ? ' active' : ''}`}
-              onClick={() => saveSetting('keyboardPosition', opt.value)}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
+      <SettingsField className="settings-card-field-spaced" label={t('settings.cards.display.keyboardPosition')}>
+        <SegmentedControl
+          ariaLabel={t('settings.cards.display.keyboardPosition')}
+          className="settings-seg-row"
+          value={settings.keyboardPosition}
+          onChange={value => saveSetting('keyboardPosition', value)}
+          options={kbPosOptions}
+        />
+      </SettingsField>
+    </SettingsCard>
   );
 }
 
@@ -323,58 +394,45 @@ export function SettingsAccessibilityCard({
 }: {
   settings: UserSettings;
 } & CommonHandlers) {
+  const { t } = useI18n();
   return (
-    <div className="card settings-card">
-      <h4>Доступность</h4>
-      <label className="poption-toggle">
-        <input
-          type="checkbox"
-          checked={settings.largeText}
-          onChange={e => saveSetting('largeText', e.target.checked)}
-        />
-        <span className="toggle-switch" />
-        <span className="poption-toggle-text">Крупный текст</span>
-      </label>
-      <p className="card-desc" style={{ marginTop: 4, marginBottom: 12 }}>
-        Увеличивает размер шрифтов по всему интерфейсу
+    <SettingsCard title={t('settings.cards.accessibility.title')}>
+      <SettingsToggle
+        checked={settings.largeText}
+        onChange={checked => saveSetting('largeText', checked)}
+        label={t('settings.cards.accessibility.largeText')}
+      />
+      <p className="card-desc settings-accessibility-description">
+        {t('settings.cards.accessibility.largeTextHint')}
       </p>
-      <label className="poption-toggle">
-        <input
-          type="checkbox"
-          checked={settings.reducedMotion}
-          onChange={e => saveSetting('reducedMotion', e.target.checked)}
-        />
-        <span className="toggle-switch" />
-        <span className="poption-toggle-text">Без анимаций</span>
-      </label>
-      <p className="card-desc" style={{ marginTop: 4, marginBottom: 12 }}>
-        Отключает все анимации и переходы
+      <SettingsToggle
+        checked={settings.reducedMotion}
+        onChange={checked => saveSetting('reducedMotion', checked)}
+        label={t('settings.cards.accessibility.reducedMotion')}
+      />
+      <p className="card-desc settings-accessibility-description">
+        {t('settings.cards.accessibility.reducedMotionHint')}
       </p>
-      <label className="poption-toggle">
-        <input
-          type="checkbox"
-          checked={settings.highContrast}
-          onChange={e => saveSetting('highContrast', e.target.checked)}
-        />
-        <span className="toggle-switch" />
-        <span className="poption-toggle-text">Высокий контраст</span>
-      </label>
-      <p className="card-desc" style={{ marginTop: 4, marginBottom: 12 }}>
-        Повышает контрастность границ и текста
+      <SettingsToggle
+        checked={settings.highContrast}
+        onChange={checked => saveSetting('highContrast', checked)}
+        label={t('settings.cards.accessibility.highContrast')}
+      />
+      <p className="card-desc settings-accessibility-description">
+        {t('settings.cards.accessibility.highContrastHint')}
       </p>
 
-      <div className="poption" style={{ marginTop: 4 }}>
-        <span className="poption-label">Режим цветовосприятия</span>
-        <select className="select-minimal" style={{ marginTop: 6 }}
+      <SettingsField className="settings-accessibility-select-field" label={t('settings.cards.accessibility.colorVisionMode')}>
+        <SelectInput className="settings-accessibility-select"
           value={settings.colorVisionMode}
           onChange={e => saveSetting('colorVisionMode', e.target.value)}>
-          <option value="normal">Обычный</option>
-          <option value="protanopia">Протанопия (красный)</option>
-          <option value="deuteranopia">Дейтеранопия (зелёный)</option>
-          <option value="tritanopia">Тританопия (синий)</option>
-        </select>
-      </div>
-    </div>
+          <option value="normal">{t('settings.cards.accessibility.colorVisionNormal')}</option>
+          <option value="protanopia">{t('settings.cards.accessibility.colorVisionProtanopia')}</option>
+          <option value="deuteranopia">{t('settings.cards.accessibility.colorVisionDeuteranopia')}</option>
+          <option value="tritanopia">{t('settings.cards.accessibility.colorVisionTritanopia')}</option>
+        </SelectInput>
+      </SettingsField>
+    </SettingsCard>
   );
 }
 
@@ -389,43 +447,48 @@ export function SettingsModeProfilesCard({
   saveModeProfile: (mode: string) => void;
   clearModeProfile: (mode: string) => void;
 }) {
+  const { t } = useI18n();
   const modes = [
-    { id: 'practice', label: 'Практика' },
-    { id: 'test', label: 'Спринт' },
-    { id: 'survival', label: 'Выживание' },
-    { id: 'flawless', label: 'Без ошибок' },
-    { id: 'lessons', label: 'Уроки' },
-    { id: 'game', label: 'Игра' },
+    { id: 'practice', label: t('settings.modes.practice') },
+    { id: 'test', label: t('settings.modes.test') },
+    { id: 'survival', label: t('settings.modes.survival') },
+    { id: 'lessons', label: t('settings.modes.lessons') },
+    { id: 'game', label: t('settings.modes.game') },
   ];
 
   return (
-    <div className="card settings-card">
-      <h4>Профили по режимам</h4>
-      <p className="card-desc" style={{ marginBottom: 10 }}>
-        Сохраните текущие настройки как профиль для конкретного режима.
-        При переключении в режим настройки применятся автоматически.
-      </p>
-      <div className="presets-list">
+    <SettingsCard
+      headerClassName="settings-mode-profile-description"
+      title={t('settings.cards.modeProfiles.title')}
+      description={t('settings.cards.modeProfiles.description')}
+    >
+      <SettingsActionList>
         {modes.map(m => {
           const hasProfile = !!modeProfiles[m.id];
           return (
-            <div className="preset-row" key={m.id}>
-              <span style={{ flex: 1, fontSize: '0.88rem' }}>
-                {m.label}
-                {hasProfile && <span style={{ color: 'var(--green)', marginLeft: 6, fontSize: '0.78rem' }}>● настроен</span>}
-              </span>
-              <button className="btn-secondary btn-sm" onClick={() => saveModeProfile(m.id)}
-                title={`Сохранить текущие настройки для режима «${m.label}»`}>
-                {currentMode === m.id ? 'Сохранить текущие' : 'Записать'}
-              </button>
-              {hasProfile && (
-                <button className="btn-ghost btn-sm preset-delete-btn" onClick={() => clearModeProfile(m.id)}
-                  title="Сбросить профиль">✕</button>
+            <SettingsActionRow
+              key={m.id}
+              actions={(
+                <>
+                  <Button size="sm" onClick={() => saveModeProfile(m.id)}
+                    title={t('settings.cards.modeProfiles.saveForModeTitle', { mode: m.label })}>
+                    {currentMode === m.id ? t('settings.cards.modeProfiles.saveCurrent') : t('settings.cards.modeProfiles.write')}
+                  </Button>
+                  {hasProfile && (
+                    <Button variant="ghost" size="sm" className="preset-delete-btn" onClick={() => clearModeProfile(m.id)}
+                      title={t('settings.cards.modeProfiles.clear')}>✕</Button>
+                  )}
+                </>
               )}
-            </div>
+            >
+              <span className="settings-mode-profile-title">
+                {m.label}
+                {hasProfile && <span className="settings-mode-profile-configured">● {t('settings.cards.modeProfiles.configured')}</span>}
+              </span>
+            </SettingsActionRow>
           );
         })}
-      </div>
-    </div>
+      </SettingsActionList>
+    </SettingsCard>
   );
 }

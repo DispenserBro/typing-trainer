@@ -1,27 +1,28 @@
 import type { HeatmapMode } from './keyboardHeatmapUtils';
+import { SegmentedControl } from '../ui/SegmentedControl';
+
+export type KeyboardHeatmapControlsLabels = {
+  ariaLabel: string;
+  errors: string;
+  slow: string;
+};
 
 type KeyboardHeatmapControlsProps = {
+  labels: KeyboardHeatmapControlsLabels;
   mode: HeatmapMode;
   onChange: (mode: HeatmapMode) => void;
 };
 
-export function KeyboardHeatmapControls({ mode, onChange }: KeyboardHeatmapControlsProps) {
+export function KeyboardHeatmapControls({ labels, mode, onChange }: KeyboardHeatmapControlsProps) {
   return (
-    <div className="seg-group" role="tablist" aria-label="Режим heatmap клавиатуры">
-      <button
-        type="button"
-        className={`seg-btn${mode === 'errors' ? ' active' : ''}`}
-        onClick={() => onChange('errors')}
-      >
-        Ошибки
-      </button>
-      <button
-        type="button"
-        className={`seg-btn${mode === 'slow' ? ' active' : ''}`}
-        onClick={() => onChange('slow')}
-      >
-        Медленные
-      </button>
-    </div>
+    <SegmentedControl
+      ariaLabel={labels.ariaLabel}
+      value={mode}
+      onChange={onChange}
+      options={[
+        { value: 'errors', label: labels.errors },
+        { value: 'slow', label: labels.slow },
+      ]}
+    />
   );
 }

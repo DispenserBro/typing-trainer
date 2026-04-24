@@ -1,51 +1,54 @@
 import type { PracticeFeedback } from '../../../core/practice/feedback';
+import { useI18n } from '../../contexts/I18nContext';
+import { SectionHeader } from '../ui/SectionHeader';
 
 type PracticeFeedbackCardProps = {
   feedback: PracticeFeedback;
 };
 
 export function PracticeFeedbackCard({ feedback }: PracticeFeedbackCardProps) {
+  const { t } = useI18n();
+
   return (
     <div className="card practice-feedback-card">
       <div className="practice-feedback-head">
-        <div>
-          <h4>Разбор практики</h4>
-          <p className="card-desc">
-            Система отметила текущие слабые места по накопленной аналитике.
-          </p>
-        </div>
-        <span className="practice-feedback-prompt">Нажмите любую клавишу для новой попытки</span>
+        <SectionHeader
+          titleTag="h4"
+          title={t('practice.feedback.title')}
+          description={t('practice.feedback.description')}
+        />
+        <span className="practice-feedback-prompt">{t('practice.feedback.prompt')}</span>
       </div>
       <div className="practice-feedback-grid">
         <div className="practice-feedback-item">
-          <span className="practice-feedback-label">Худшая буква</span>
+          <span className="practice-feedback-label">{t('practice.feedback.weakestChar.label')}</span>
           <strong className="practice-feedback-value mono">
             {feedback.weakestChar?.toUpperCase() ?? '—'}
           </strong>
           <span className="practice-feedback-note">
-            Ее стоит чаще закреплять в обычных подходах.
+            {t('practice.feedback.weakestChar.note')}
           </span>
         </div>
         <div className="practice-feedback-item">
-          <span className="practice-feedback-label">Худшее сочетание</span>
+          <span className="practice-feedback-label">{t('practice.feedback.weakestBigram.label')}</span>
           <strong className="practice-feedback-value mono">
             {feedback.weakestBigram?.toUpperCase() ?? '—'}
           </strong>
           <span className="practice-feedback-note">
-            Здесь чаще всего теряется темп при переходе между буквами.
+            {t('practice.feedback.weakestBigram.note')}
           </span>
         </div>
         <div className="practice-feedback-item">
-          <span className="practice-feedback-label">Проблемный палец</span>
+          <span className="practice-feedback-label">{t('practice.feedback.weakestFinger.label')}</span>
           <strong className="practice-feedback-value">
-            {feedback.weakestFinger ?? 'Пока не определен'}
+            {feedback.weakestFinger ?? t('practice.feedback.weakestFinger.empty')}
           </strong>
           <span className="practice-feedback-note">
-            Полезно следить за расслаблением и точной посадкой руки.
+            {t('practice.feedback.weakestFinger.note')}
           </span>
         </div>
         <div className="practice-feedback-item">
-          <span className="practice-feedback-label">Оценка ритма</span>
+          <span className="practice-feedback-label">{t('practice.feedback.rhythm.label')}</span>
           <strong className="practice-feedback-value">
             {Math.round(feedback.rhythmScore)}%
           </strong>

@@ -83,17 +83,20 @@ export function getKeyboardActivePose(
 
 export function computeHandsStyle(
   stageRect: DOMRect,
-  keyboardRect: DOMRect,
+  keyRects: DOMRect[],
   middleRowRects: DOMRect[],
 ): CSSProperties | undefined {
-  if (!middleRowRects.length) return undefined;
+  if (!middleRowRects.length || !keyRects.length) return undefined;
 
   const averageKeyWidth = middleRowRects.reduce((sum, rect) => sum + rect.width, 0) / middleRowRects.length;
   const middleRowCenterY = middleRowRects.reduce((sum, rect) => sum + rect.top + rect.height / 2, 0) / middleRowRects.length
     - stageRect.top;
+  const keyboardLeft = Math.min(...keyRects.map(rect => rect.left)) - stageRect.left;
+  const keyboardRight = Math.max(...keyRects.map(rect => rect.right)) - stageRect.left;
+  const keyboardWidth = keyboardRight - keyboardLeft;
 
-  const keyboardCenterX = keyboardRect.left - stageRect.left + keyboardRect.width / 2;
-  const handsWidth = keyboardRect.width * HANDS_WIDTH_RATIO;
+  const keyboardCenterX = keyboardLeft + keyboardWidth / 2;
+  const handsWidth = keyboardWidth * HANDS_WIDTH_RATIO;
   const handsHeight = handsWidth * (HANDS_VIEWBOX_HEIGHT / HANDS_VIEWBOX_WIDTH);
   const top = middleRowCenterY - handsHeight * HANDS_HOME_ROW_RATIO;
   const left = keyboardCenterX + averageKeyWidth * HANDS_CENTER_SHIFT_IN_KEYS;

@@ -1,10 +1,122 @@
 import type {
   GameEquipmentSlot,
+  GameItemEffect,
   GameItemDefinition,
   GameItemRewardKind,
 } from '../../../shared/types';
+import { i18n, sanitizeTranslationParams } from '../../i18n';
 
-export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
+const GAME_ITEM_EFFECT_TEMPLATE_KEYS: Partial<Record<GameItemEffect['kind'], {
+  default: string;
+  bossOnly?: string;
+}>> = {
+  speed: {
+    default: 'game.core.items.effects.speed.default',
+    bossOnly: 'game.core.items.effects.speed.bossOnly',
+  },
+  accuracy: {
+    default: 'game.core.items.effects.accuracy.default',
+    bossOnly: 'game.core.items.effects.accuracy.bossOnly',
+  },
+  timer: {
+    default: 'game.core.items.effects.timer.default',
+  },
+  enemyAttack: {
+    default: 'game.core.items.effects.enemyAttack.default',
+  },
+  enemyDefense: {
+    default: 'game.core.items.effects.enemyDefense.default',
+  },
+  dodge: {
+    default: 'game.core.items.effects.dodge.default',
+  },
+  playerAttack: {
+    default: 'game.core.items.effects.playerAttack.default',
+    bossOnly: 'game.core.items.effects.playerAttack.bossOnly',
+  },
+  playerDamage: {
+    default: 'game.core.items.effects.playerDamage.default',
+    bossOnly: 'game.core.items.effects.playerDamage.bossOnly',
+  },
+  dmgCoeff: {
+    default: 'game.core.items.effects.dmgCoeff.default',
+  },
+  defCoeff: {
+    default: 'game.core.items.effects.defCoeff.default',
+  },
+  critBonus: {
+    default: 'game.core.items.effects.critBonus.default',
+  },
+};
+
+function getLanguagePriority() {
+  const fromI18n = [i18n.resolvedLanguage, i18n.language]
+    .filter(Boolean)
+    .flatMap((value) => {
+      const lang = String(value);
+      const base = lang.split('-')[0];
+      return base && base !== lang ? [lang, base] : [lang];
+    });
+
+  return [...new Set([...fromI18n, 'en', 'ru'])];
+}
+
+function translateGameItemText(key: string, params?: Record<string, string | number>) {
+  for (const lang of getLanguagePriority()) {
+    if (i18n.exists(key, { lng: lang })) {
+      return i18n.t(key, sanitizeTranslationParams({ lng: lang, ...(params ?? {}) }));
+    }
+  }
+
+  return key;
+}
+
+function getItemBuiltinText(itemId: string, field: 'name' | 'shortName' | 'description') {
+  return translateGameItemText(`game.core.items.catalog.${itemId}.${field}`);
+}
+
+function getItemEffectDescription(effect: GameItemEffect, bossOnly: boolean) {
+  const variant = bossOnly && GAME_ITEM_EFFECT_TEMPLATE_KEYS[effect.kind]?.bossOnly ? 'bossOnly' : 'default';
+  const key = `game.core.items.effects.${effect.kind}.${variant}`;
+
+  for (const lang of getLanguagePriority()) {
+    if (i18n.exists(key, { lng: lang })) {
+      return i18n.t(key, sanitizeTranslationParams({ lng: lang, value: effect.value }));
+    }
+  }
+
+  const templateKey = GAME_ITEM_EFFECT_TEMPLATE_KEYS[effect.kind]?.[variant];
+  if (templateKey) return translateGameItemText(templateKey, { value: effect.value });
+
+  return effect.description;
+}
+
+function createLocalizedItemDefinition(base: GameItemDefinition): GameItemDefinition {
+  const localizedEffects = base.effects.map(effect => ({
+    kind: effect.kind,
+    value: effect.value,
+    unit: effect.unit,
+    get description() {
+      return getItemEffectDescription(effect, Boolean(base.bossOnly));
+    },
+  })) as GameItemEffect[];
+
+  return {
+    ...base,
+    get name() {
+      return getItemBuiltinText(base.id, 'name');
+    },
+    get shortName() {
+      return getItemBuiltinText(base.id, 'shortName');
+    },
+    get description() {
+      return getItemBuiltinText(base.id, 'description');
+    },
+    effects: localizedEffects,
+  };
+}
+
+const GAME_ITEM_CATALOG_BASE: GameItemDefinition[] = [
   // ═══════════════════════════════════════════════
   //  Простые (simple) артефакты — без прочности
   // ═══════════════════════════════════════════════
@@ -12,9 +124,9 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
   // ── Утилити: скорость / точность / таймер ──
   {
     id: 'steady-gloves',
-    name: 'Перчатки ровного темпа',
-    shortName: 'Темп',
-    description: 'Чуть снижает требование к скорости и повышает коэффициент защиты.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 1,
     slotType: 'trinket',
     icon: 'gauge',
@@ -22,15 +134,15 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     speedRequirementReductionPercent: 4,
     defCoeff: 0.08,
     effects: [
-      { kind: 'speed', value: 4, unit: 'percent', description: '-4% к требуемой скорости' },
-      { kind: 'defCoeff', value: 8, unit: 'percent', description: '+8% к коэфф. защиты' },
+      { kind: 'speed', value: 4, unit: 'percent', description: '' },
+      { kind: 'defCoeff', value: 8, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'focus-lens',
-    name: 'Линза безошибочности',
-    shortName: 'Фокус',
-    description: 'Помогает удерживать точность и увеличивает шанс попадания.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 1,
     slotType: 'trinket',
     icon: 'eye',
@@ -38,15 +150,15 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     accuracyRequirementReduction: 2,
     playerAttackBonus: 3,
     effects: [
-      { kind: 'accuracy', value: 2, unit: 'percent', description: '-2% к требуемой точности' },
-      { kind: 'playerAttack', value: 3, unit: 'percent', description: '+3% к шансу попасть' },
+      { kind: 'accuracy', value: 2, unit: 'percent', description: '' },
+      { kind: 'playerAttack', value: 3, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'path-compass',
-    name: 'Компас босса',
-    shortName: 'Компас',
-    description: 'Добавляет время на боссах и немного снижает их защиту.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 1,
     slotType: 'trinket',
     icon: 'compass',
@@ -55,15 +167,15 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     bossTimerBonusSeconds: 2,
     enemyDefenseReduction: 3,
     effects: [
-      { kind: 'timer', value: 2, unit: 'seconds', description: '+2 сек. к таймеру босса' },
-      { kind: 'enemyDefense', value: 3, unit: 'flat', description: '-3 к защите врагов' },
+      { kind: 'timer', value: 2, unit: 'seconds', description: '' },
+      { kind: 'enemyDefense', value: 3, unit: 'flat', description: '' },
     ],
   },
   {
     id: 'whisper-feather',
-    name: 'Перо легкого ритма',
-    shortName: 'Перо',
-    description: 'Лёгкая реликвия. Сглаживает темп и даёт небольшой бонус к криту.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 1,
     slotType: 'trinket',
     icon: 'feather',
@@ -71,15 +183,15 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     speedRequirementReductionPercent: 3,
     critBonus: 0.02,
     effects: [
-      { kind: 'speed', value: 3, unit: 'percent', description: '-3% к требуемой скорости' },
-      { kind: 'critBonus', value: 2, unit: 'percent', description: '+2% к шансу крита' },
+      { kind: 'speed', value: 3, unit: 'percent', description: '' },
+      { kind: 'critBonus', value: 2, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'line-sigil',
-    name: 'Печать чистой линии',
-    shortName: 'Линия',
-    description: 'Два бонуса к прохождению и лёгкое усиление урона.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 2,
     slotType: 'trinket',
     icon: 'crosshair',
@@ -88,16 +200,16 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     accuracyRequirementReduction: 2,
     dmgCoeff: 0.08,
     effects: [
-      { kind: 'speed', value: 3, unit: 'percent', description: '-3% к требуемой скорости' },
-      { kind: 'accuracy', value: 2, unit: 'percent', description: '-2% к требуемой точности' },
-      { kind: 'dmgCoeff', value: 8, unit: 'percent', description: '+8% к коэфф. урона' },
+      { kind: 'speed', value: 3, unit: 'percent', description: '' },
+      { kind: 'accuracy', value: 2, unit: 'percent', description: '' },
+      { kind: 'dmgCoeff', value: 8, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'rabbit-step',
-    name: 'След кролика',
-    shortName: 'След',
-    description: 'Чистая скорость и уклонение. Хорошо чувствуется в середине забега.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 2,
     slotType: 'trinket',
     icon: 'rabbit',
@@ -105,15 +217,15 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     speedRequirementReductionPercent: 6,
     dodgeBonus: 4,
     effects: [
-      { kind: 'speed', value: 6, unit: 'percent', description: '-6% к требуемой скорости' },
-      { kind: 'dodge', value: 4, unit: 'percent', description: '+4% к уклонению' },
+      { kind: 'speed', value: 6, unit: 'percent', description: '' },
+      { kind: 'dodge', value: 4, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'radar-thread',
-    name: 'Нить радара',
-    shortName: 'Радар',
-    description: 'Боссовый артефакт: точность, таймер и снижение защиты врагов.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 2,
     slotType: 'trinket',
     icon: 'radar',
@@ -123,16 +235,16 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     bossTimerBonusSeconds: 1,
     enemyDefenseReduction: 4,
     effects: [
-      { kind: 'accuracy', value: 2, unit: 'percent', description: '-2% к требуемой точности' },
-      { kind: 'timer', value: 1, unit: 'seconds', description: '+1 сек. к таймеру босса' },
-      { kind: 'enemyDefense', value: 4, unit: 'flat', description: '-4 к защите врагов' },
+      { kind: 'accuracy', value: 2, unit: 'percent', description: '' },
+      { kind: 'timer', value: 1, unit: 'seconds', description: '' },
+      { kind: 'enemyDefense', value: 4, unit: 'flat', description: '' },
     ],
   },
   {
     id: 'crown-oath',
-    name: 'Коронный обет',
-    shortName: 'Обет',
-    description: 'Редкая награда: сильный боссовый бонус к прохождению и урону.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 3,
     slotType: 'trinket',
     icon: 'crown',
@@ -142,16 +254,16 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     accuracyRequirementReduction: 3,
     dmgCoeff: 0.12,
     effects: [
-      { kind: 'speed', value: 5, unit: 'percent', description: '-5% к скорости на боссе' },
-      { kind: 'accuracy', value: 3, unit: 'percent', description: '-3% к точности на боссе' },
-      { kind: 'dmgCoeff', value: 12, unit: 'percent', description: '+12% к коэфф. урона' },
+      { kind: 'speed', value: 5, unit: 'percent', description: '' },
+      { kind: 'accuracy', value: 3, unit: 'percent', description: '' },
+      { kind: 'dmgCoeff', value: 12, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'mirror-glasses',
-    name: 'Зеркальные очки',
-    shortName: 'Очки',
-    description: 'Реликвия на точность и защиту от вражеских атак.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 2,
     slotType: 'trinket',
     icon: 'glasses',
@@ -159,15 +271,15 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     accuracyRequirementReduction: 3,
     enemyAttackReduction: 3,
     effects: [
-      { kind: 'accuracy', value: 3, unit: 'percent', description: '-3% к требуемой точности' },
-      { kind: 'enemyAttack', value: 3, unit: 'flat', description: '-3 к шансу попадания врагов' },
+      { kind: 'accuracy', value: 3, unit: 'percent', description: '' },
+      { kind: 'enemyAttack', value: 3, unit: 'flat', description: '' },
     ],
   },
   {
     id: 'medal-of-stability',
-    name: 'Медаль устойчивости',
-    shortName: 'Медаль',
-    description: 'Сбалансированная реликвия: скорость, точность и защита.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 2,
     slotType: 'trinket',
     icon: 'medal',
@@ -176,16 +288,16 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     accuracyRequirementReduction: 2,
     defCoeff: 0.1,
     effects: [
-      { kind: 'speed', value: 3, unit: 'percent', description: '-3% к требуемой скорости' },
-      { kind: 'accuracy', value: 2, unit: 'percent', description: '-2% к требуемой точности' },
-      { kind: 'defCoeff', value: 10, unit: 'percent', description: '+10% к коэфф. защиты' },
+      { kind: 'speed', value: 3, unit: 'percent', description: '' },
+      { kind: 'accuracy', value: 2, unit: 'percent', description: '' },
+      { kind: 'defCoeff', value: 10, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'wind-sigil',
-    name: 'Печать попутного ветра',
-    shortName: 'Ветер',
-    description: 'Скорость и усиление урона для спокойных уровней.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 2,
     slotType: 'trinket',
     icon: 'wind',
@@ -193,15 +305,15 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     speedRequirementReductionPercent: 6,
     dmgCoeff: 0.1,
     effects: [
-      { kind: 'speed', value: 6, unit: 'percent', description: '-6% к требуемой скорости' },
-      { kind: 'dmgCoeff', value: 10, unit: 'percent', description: '+10% к коэфф. урона' },
+      { kind: 'speed', value: 6, unit: 'percent', description: '' },
+      { kind: 'dmgCoeff', value: 10, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'blessed-bulwark',
-    name: 'Благословенный бастион',
-    shortName: 'Бастион',
-    description: 'Боссовая реликвия: точность, таймер и защитный коэффициент.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 2,
     slotType: 'trinket',
     icon: 'shieldplus',
@@ -211,18 +323,18 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     bossTimerBonusSeconds: 2,
     defCoeff: 0.12,
     effects: [
-      { kind: 'accuracy', value: 3, unit: 'percent', description: '-3% к точности на боссе' },
-      { kind: 'timer', value: 2, unit: 'seconds', description: '+2 сек. к таймеру босса' },
-      { kind: 'defCoeff', value: 12, unit: 'percent', description: '+12% к коэфф. защиты' },
+      { kind: 'accuracy', value: 3, unit: 'percent', description: '' },
+      { kind: 'timer', value: 2, unit: 'seconds', description: '' },
+      { kind: 'defCoeff', value: 12, unit: 'percent', description: '' },
     ],
   },
 
   // ── Боевые: атака / урон / защита / крит ──
   {
     id: 'viper-fang',
-    name: 'Клык гадюки',
-    shortName: 'Клык',
-    description: 'Снижает защиту врагов и повышает коэффициент урона.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 2,
     slotType: 'trinket',
     icon: 'swords',
@@ -230,15 +342,15 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     enemyDefenseReduction: 4,
     dmgCoeff: 0.08,
     effects: [
-      { kind: 'enemyDefense', value: 4, unit: 'flat', description: '-4 к защите врагов' },
-      { kind: 'dmgCoeff', value: 8, unit: 'percent', description: '+8% к коэфф. урона' },
+      { kind: 'enemyDefense', value: 4, unit: 'flat', description: '' },
+      { kind: 'dmgCoeff', value: 8, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'iron-carapace',
-    name: 'Железный панцирь',
-    shortName: 'Панцирь',
-    description: 'Ослабляет атаку врагов и усиливает коэффициент защиты.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 2,
     slotType: 'trinket',
     icon: 'shell',
@@ -246,15 +358,15 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     enemyAttackReduction: 4,
     defCoeff: 0.1,
     effects: [
-      { kind: 'enemyAttack', value: 4, unit: 'flat', description: '-4 к шансу попадания врагов' },
-      { kind: 'defCoeff', value: 10, unit: 'percent', description: '+10% к коэфф. защиты' },
+      { kind: 'enemyAttack', value: 4, unit: 'flat', description: '' },
+      { kind: 'defCoeff', value: 10, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'phantom-cloak',
-    name: 'Плащ фантома',
-    shortName: 'Плащ',
-    description: 'Повышает уклонение и немного усиливает крит.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 2,
     slotType: 'trinket',
     icon: 'ghost',
@@ -262,15 +374,15 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     dodgeBonus: 5,
     critBonus: 0.02,
     effects: [
-      { kind: 'dodge', value: 5, unit: 'percent', description: '+5% к уклонению' },
-      { kind: 'critBonus', value: 2, unit: 'percent', description: '+2% к шансу крита' },
+      { kind: 'dodge', value: 5, unit: 'percent', description: '' },
+      { kind: 'critBonus', value: 2, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'sharp-rune',
-    name: 'Острая руна',
-    shortName: 'Руна',
-    description: 'Усиливает шанс попасть при атаке и коэффициент урона.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 1,
     slotType: 'trinket',
     icon: 'zap',
@@ -278,15 +390,15 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     playerAttackBonus: 5,
     dmgCoeff: 0.06,
     effects: [
-      { kind: 'playerAttack', value: 5, unit: 'percent', description: '+5% к шансу попасть' },
-      { kind: 'dmgCoeff', value: 6, unit: 'percent', description: '+6% к коэфф. урона' },
+      { kind: 'playerAttack', value: 5, unit: 'percent', description: '' },
+      { kind: 'dmgCoeff', value: 6, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'fury-sigil',
-    name: 'Печать ярости',
-    shortName: 'Ярость',
-    description: 'Усиление атаки и снижение защиты врагов.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 2,
     slotType: 'trinket',
     icon: 'swords',
@@ -295,16 +407,16 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     enemyDefenseReduction: 3,
     dmgCoeff: 0.06,
     effects: [
-      { kind: 'playerAttack', value: 4, unit: 'percent', description: '+4% к шансу попасть' },
-      { kind: 'enemyDefense', value: 3, unit: 'flat', description: '-3 к защите врагов' },
-      { kind: 'dmgCoeff', value: 6, unit: 'percent', description: '+6% к коэфф. урона' },
+      { kind: 'playerAttack', value: 4, unit: 'percent', description: '' },
+      { kind: 'enemyDefense', value: 3, unit: 'flat', description: '' },
+      { kind: 'dmgCoeff', value: 6, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'serrated-band',
-    name: 'Зазубренный браслет',
-    shortName: 'Браслет',
-    description: 'Устойчивый бонус к меткости и плоскому урону.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 2,
     slotType: 'trinket',
     icon: 'activity',
@@ -312,29 +424,29 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     playerAttackBonus: 7,
     playerDamageBonus: 1,
     effects: [
-      { kind: 'playerAttack', value: 7, unit: 'percent', description: '+7% к шансу попасть' },
-      { kind: 'playerDamage', value: 1, unit: 'flat', description: '+1 к плоскому урону' },
+      { kind: 'playerAttack', value: 7, unit: 'percent', description: '' },
+      { kind: 'playerDamage', value: 1, unit: 'flat', description: '' },
     ],
   },
   {
     id: 'fury-crystal',
-    name: 'Кристалл ярости',
-    shortName: 'Кристалл',
-    description: 'Повышает коэффициент урона. Универсален и надёжен.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 1,
     slotType: 'trinket',
     icon: 'flame',
     rewardKind: 'simple',
     dmgCoeff: 0.15,
     effects: [
-      { kind: 'dmgCoeff', value: 15, unit: 'percent', description: '+15% к коэфф. урона' },
+      { kind: 'dmgCoeff', value: 15, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'rage-pendant',
-    name: 'Подвеска бешенства',
-    shortName: 'Бешенство',
-    description: 'Урон и снижение защиты врагов в одном предмете.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 2,
     slotType: 'trinket',
     icon: 'swords',
@@ -342,29 +454,29 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     dmgCoeff: 0.1,
     enemyDefenseReduction: 4,
     effects: [
-      { kind: 'dmgCoeff', value: 10, unit: 'percent', description: '+10% к коэфф. урона' },
-      { kind: 'enemyDefense', value: 4, unit: 'flat', description: '-4 к защите врагов' },
+      { kind: 'dmgCoeff', value: 10, unit: 'percent', description: '' },
+      { kind: 'enemyDefense', value: 4, unit: 'flat', description: '' },
     ],
   },
   {
     id: 'stoneskin-charm',
-    name: 'Амулет каменной кожи',
-    shortName: 'Камень',
-    description: 'Повышает коэффициент защиты. Снижает входящий урон.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 1,
     slotType: 'trinket',
     icon: 'shield',
     rewardKind: 'simple',
     defCoeff: 0.15,
     effects: [
-      { kind: 'defCoeff', value: 15, unit: 'percent', description: '+15% к коэфф. защиты' },
+      { kind: 'defCoeff', value: 15, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'guardian-ring',
-    name: 'Кольцо стража',
-    shortName: 'Страж',
-    description: 'Защита и уклонение в одном кольце.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 2,
     slotType: 'trinket',
     icon: 'circle',
@@ -372,29 +484,29 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     defCoeff: 0.1,
     dodgeBonus: 4,
     effects: [
-      { kind: 'defCoeff', value: 10, unit: 'percent', description: '+10% к коэфф. защиты' },
-      { kind: 'dodge', value: 4, unit: 'percent', description: '+4% к уклонению' },
+      { kind: 'defCoeff', value: 10, unit: 'percent', description: '' },
+      { kind: 'dodge', value: 4, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'rhythm-charm',
-    name: 'Амулет ритма',
-    shortName: 'Ритм',
-    description: 'Повышает шанс крита. Ровный темп — ключ к мощи.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 2,
     slotType: 'trinket',
     icon: 'activity',
     rewardKind: 'simple',
     critBonus: 0.05,
     effects: [
-      { kind: 'critBonus', value: 5, unit: 'percent', description: '+5% к шансу крита' },
+      { kind: 'critBonus', value: 5, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'precision-lens',
-    name: 'Линза точного удара',
-    shortName: 'Точность',
-    description: 'Бонус крита и атаки игрока.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 2,
     slotType: 'trinket',
     icon: 'crosshair',
@@ -402,15 +514,15 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     critBonus: 0.03,
     playerAttackBonus: 5,
     effects: [
-      { kind: 'critBonus', value: 3, unit: 'percent', description: '+3% к шансу крита' },
-      { kind: 'playerAttack', value: 5, unit: 'percent', description: '+5% к шансу попасть' },
+      { kind: 'critBonus', value: 3, unit: 'percent', description: '' },
+      { kind: 'playerAttack', value: 5, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'crusher-seal',
-    name: 'Печать сокрушителя',
-    shortName: 'Сокрушитель',
-    description: 'Плоский урон и снижение защиты врагов.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 3,
     slotType: 'trinket',
     icon: 'shield-off',
@@ -418,15 +530,15 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     playerDamageBonus: 2,
     enemyDefenseReduction: 5,
     effects: [
-      { kind: 'playerDamage', value: 2, unit: 'flat', description: '+2 к плоскому урону' },
-      { kind: 'enemyDefense', value: 5, unit: 'flat', description: '-5 к защите врагов' },
+      { kind: 'playerDamage', value: 2, unit: 'flat', description: '' },
+      { kind: 'enemyDefense', value: 5, unit: 'flat', description: '' },
     ],
   },
   {
     id: 'heavy-strike',
-    name: 'Тяжёлый удар',
-    shortName: 'Удар',
-    description: 'Добавляет плоский урон и немного усиливает коэффициент.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 2,
     slotType: 'trinket',
     icon: 'hammer',
@@ -434,8 +546,8 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     playerDamageBonus: 1,
     dmgCoeff: 0.08,
     effects: [
-      { kind: 'playerDamage', value: 1, unit: 'flat', description: '+1 к плоскому урону' },
-      { kind: 'dmgCoeff', value: 8, unit: 'percent', description: '+8% к коэфф. урона' },
+      { kind: 'playerDamage', value: 1, unit: 'flat', description: '' },
+      { kind: 'dmgCoeff', value: 8, unit: 'percent', description: '' },
     ],
   },
 
@@ -446,9 +558,9 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
   // ── Утилити: скорость / точность / таймер ──
   {
     id: 'rift-hourglass',
-    name: 'Разломные песочные часы',
-    shortName: 'Разлом',
-    description: 'Резко упрощает боссов: таймер и урон по ним, но быстро трескается.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 3,
     slotType: 'trinket',
     icon: 'timer',
@@ -459,15 +571,15 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     maxDurability: 4,
     durabilityRules: { normalPass: 0, normalFail: 0, bossPass: 1, bossFail: 2 },
     effects: [
-      { kind: 'timer', value: 10, unit: 'seconds', description: '+10 сек. к таймеру босса' },
-      { kind: 'dmgCoeff', value: 15, unit: 'percent', description: '+15% к коэфф. урона' },
+      { kind: 'timer', value: 10, unit: 'seconds', description: '' },
+      { kind: 'dmgCoeff', value: 15, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'storm-anchor',
-    name: 'Штормовой якорь',
-    shortName: 'Якорь',
-    description: 'Боссовый артефакт: таймер и коэффициент защиты.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 2,
     slotType: 'trinket',
     icon: 'anchor',
@@ -478,15 +590,15 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     maxDurability: 5,
     durabilityRules: { normalPass: 0, normalFail: 0, bossPass: 1, bossFail: 1 },
     effects: [
-      { kind: 'timer', value: 6, unit: 'seconds', description: '+6 сек. к таймеру босса' },
-      { kind: 'defCoeff', value: 12, unit: 'percent', description: '+12% к коэфф. защиты' },
+      { kind: 'timer', value: 6, unit: 'seconds', description: '' },
+      { kind: 'defCoeff', value: 12, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'overclock-core',
-    name: 'Ядро разгона',
-    shortName: 'Разгон',
-    description: 'Мощная скорость и коэффициент урона. Изнашивается почти каждый уровень.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 3,
     slotType: 'trinket',
     icon: 'zap',
@@ -496,15 +608,15 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     maxDurability: 6,
     durabilityRules: { normalPass: 1, normalFail: 2, bossPass: 1, bossFail: 2 },
     effects: [
-      { kind: 'speed', value: 16, unit: 'percent', description: '-16% к требуемой скорости' },
-      { kind: 'dmgCoeff', value: 20, unit: 'percent', description: '+20% к коэфф. урона' },
+      { kind: 'speed', value: 16, unit: 'percent', description: '' },
+      { kind: 'dmgCoeff', value: 20, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'brain-lattice',
-    name: 'Мозговая решетка',
-    shortName: 'Решетка',
-    description: 'Точность, атака игрока и крит. Ломается после провалов.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 3,
     slotType: 'trinket',
     icon: 'brain',
@@ -515,16 +627,16 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     maxDurability: 5,
     durabilityRules: { normalPass: 1, normalFail: 2, bossPass: 1, bossFail: 2 },
     effects: [
-      { kind: 'accuracy', value: 8, unit: 'percent', description: '-8% к требуемой точности' },
-      { kind: 'playerAttack', value: 6, unit: 'percent', description: '+6% к шансу попасть' },
-      { kind: 'critBonus', value: 4, unit: 'percent', description: '+4% к шансу крита' },
+      { kind: 'accuracy', value: 8, unit: 'percent', description: '' },
+      { kind: 'playerAttack', value: 6, unit: 'percent', description: '' },
+      { kind: 'critBonus', value: 4, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'aegis-prism',
-    name: 'Призма эгиды',
-    shortName: 'Эгида',
-    description: 'Точность, таймер и сильный коэффициент защиты.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 2,
     slotType: 'trinket',
     icon: 'shield',
@@ -535,16 +647,16 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     maxDurability: 5,
     durabilityRules: { normalPass: 0, normalFail: 1, bossPass: 1, bossFail: 2 },
     effects: [
-      { kind: 'accuracy', value: 6, unit: 'percent', description: '-6% к требуемой точности' },
-      { kind: 'timer', value: 3, unit: 'seconds', description: '+3 сек. к таймеру босса' },
-      { kind: 'defCoeff', value: 18, unit: 'percent', description: '+18% к коэфф. защиты' },
+      { kind: 'accuracy', value: 6, unit: 'percent', description: '' },
+      { kind: 'timer', value: 3, unit: 'seconds', description: '' },
+      { kind: 'defCoeff', value: 18, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'spark-capsule',
-    name: 'Искровая капсула',
-    shortName: 'Искра',
-    description: 'Мощный боссовый буст: скорость, таймер и крит.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 3,
     slotType: 'trinket',
     icon: 'sparkles',
@@ -556,16 +668,16 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     maxDurability: 3,
     durabilityRules: { normalPass: 0, normalFail: 0, bossPass: 1, bossFail: 2 },
     effects: [
-      { kind: 'speed', value: 8, unit: 'percent', description: '-8% к скорости на боссе' },
-      { kind: 'timer', value: 4, unit: 'seconds', description: '+4 сек. к таймеру босса' },
-      { kind: 'critBonus', value: 6, unit: 'percent', description: '+6% к шансу крита' },
+      { kind: 'speed', value: 8, unit: 'percent', description: '' },
+      { kind: 'timer', value: 4, unit: 'seconds', description: '' },
+      { kind: 'critBonus', value: 6, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'warden-lock',
-    name: 'Замок хранителя',
-    shortName: 'Замок',
-    description: 'Точность и мощная защита, но жёсткое наказание за провалы.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 2,
     slotType: 'trinket',
     icon: 'lock',
@@ -576,16 +688,16 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     maxDurability: 4,
     durabilityRules: { normalPass: 0, normalFail: 2, bossPass: 1, bossFail: 2 },
     effects: [
-      { kind: 'accuracy', value: 5, unit: 'percent', description: '-5% к требуемой точности' },
-      { kind: 'defCoeff', value: 15, unit: 'percent', description: '+15% к коэфф. защиты' },
-      { kind: 'enemyAttack', value: 3, unit: 'flat', description: '-3 к шансу попадания врагов' },
+      { kind: 'accuracy', value: 5, unit: 'percent', description: '' },
+      { kind: 'defCoeff', value: 15, unit: 'percent', description: '' },
+      { kind: 'enemyAttack', value: 3, unit: 'flat', description: '' },
     ],
   },
   {
     id: 'ember-seal',
-    name: 'Печать перегрева',
-    shortName: 'Перегрев',
-    description: 'Мощный буст скорости, точности и урона. Выгорает мгновенно.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 3,
     slotType: 'trinket',
     icon: 'flame',
@@ -596,16 +708,16 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     maxDurability: 3,
     durabilityRules: { normalPass: 1, normalFail: 2, bossPass: 1, bossFail: 2 },
     effects: [
-      { kind: 'speed', value: 9, unit: 'percent', description: '-9% к требуемой скорости' },
-      { kind: 'accuracy', value: 4, unit: 'percent', description: '-4% к требуемой точности' },
-      { kind: 'dmgCoeff', value: 15, unit: 'percent', description: '+15% к коэфф. урона' },
+      { kind: 'speed', value: 9, unit: 'percent', description: '' },
+      { kind: 'accuracy', value: 4, unit: 'percent', description: '' },
+      { kind: 'dmgCoeff', value: 15, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'loaded-die',
-    name: 'Загруженная кость',
-    shortName: 'Кость',
-    description: 'Скорость, точность и шанс крита. Азартный рывок.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 3,
     slotType: 'trinket',
     icon: 'dice',
@@ -616,16 +728,16 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     maxDurability: 4,
     durabilityRules: { normalPass: 1, normalFail: 2, bossPass: 1, bossFail: 2 },
     effects: [
-      { kind: 'speed', value: 10, unit: 'percent', description: '-10% к требуемой скорости' },
-      { kind: 'accuracy', value: 3, unit: 'percent', description: '-3% к требуемой точности' },
-      { kind: 'critBonus', value: 6, unit: 'percent', description: '+6% к шансу крита' },
+      { kind: 'speed', value: 10, unit: 'percent', description: '' },
+      { kind: 'accuracy', value: 3, unit: 'percent', description: '' },
+      { kind: 'critBonus', value: 6, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'wand-of-blinks',
-    name: 'Жезл вспышек',
-    shortName: 'Жезл',
-    description: 'Сильнейший боссовый артефакт: скорость, точность и урон.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 3,
     slotType: 'trinket',
     icon: 'wand',
@@ -637,18 +749,18 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     maxDurability: 3,
     durabilityRules: { normalPass: 0, normalFail: 0, bossPass: 1, bossFail: 2 },
     effects: [
-      { kind: 'speed', value: 6, unit: 'percent', description: '-6% к скорости на боссе' },
-      { kind: 'accuracy', value: 5, unit: 'percent', description: '-5% к точности на боссе' },
-      { kind: 'dmgCoeff', value: 20, unit: 'percent', description: '+20% к коэфф. урона' },
+      { kind: 'speed', value: 6, unit: 'percent', description: '' },
+      { kind: 'accuracy', value: 5, unit: 'percent', description: '' },
+      { kind: 'dmgCoeff', value: 20, unit: 'percent', description: '' },
     ],
   },
 
   // ── Боевые прочные ──
   {
     id: 'razorblade-edge',
-    name: 'Бритвенное лезвие',
-    shortName: 'Лезвие',
-    description: 'Снижает защиту врагов и повышает коэффициент урона. Крошится при неудачах.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 3,
     slotType: 'trinket',
     icon: 'axe',
@@ -658,15 +770,15 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     maxDurability: 4,
     durabilityRules: { normalPass: 0, normalFail: 1, bossPass: 1, bossFail: 2 },
     effects: [
-      { kind: 'enemyDefense', value: 8, unit: 'flat', description: '-8 к защите врагов' },
-      { kind: 'dmgCoeff', value: 12, unit: 'percent', description: '+12% к коэфф. урона' },
+      { kind: 'enemyDefense', value: 8, unit: 'flat', description: '' },
+      { kind: 'dmgCoeff', value: 12, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'guardian-ward',
-    name: 'Тотем стража',
-    shortName: 'Тотем',
-    description: 'Снижает атаку врагов и усиливает коэффициент защиты.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 3,
     slotType: 'trinket',
     icon: 'pillar',
@@ -676,15 +788,15 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     maxDurability: 4,
     durabilityRules: { normalPass: 0, normalFail: 1, bossPass: 1, bossFail: 2 },
     effects: [
-      { kind: 'enemyAttack', value: 8, unit: 'flat', description: '-8 к шансу попадания врагов' },
-      { kind: 'defCoeff', value: 15, unit: 'percent', description: '+15% к коэфф. защиты' },
+      { kind: 'enemyAttack', value: 8, unit: 'flat', description: '' },
+      { kind: 'defCoeff', value: 15, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'shadow-mantle',
-    name: 'Мантия теней',
-    shortName: 'Мантия',
-    description: 'Мощное уклонение и крит, но быстро истощается.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 3,
     slotType: 'trinket',
     icon: 'eclipse',
@@ -694,15 +806,15 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     maxDurability: 4,
     durabilityRules: { normalPass: 1, normalFail: 2, bossPass: 1, bossFail: 2 },
     effects: [
-      { kind: 'dodge', value: 10, unit: 'percent', description: '+10% к уклонению' },
-      { kind: 'critBonus', value: 5, unit: 'percent', description: '+5% к шансу крита' },
+      { kind: 'dodge', value: 10, unit: 'percent', description: '' },
+      { kind: 'critBonus', value: 5, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'war-talisman',
-    name: 'Боевой талисман',
-    shortName: 'Талисман',
-    description: 'Универсальный боевой артефакт: атака и защита врагов, плюс урон.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 3,
     slotType: 'trinket',
     icon: 'shield-alert',
@@ -713,16 +825,16 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     maxDurability: 5,
     durabilityRules: { normalPass: 0, normalFail: 1, bossPass: 1, bossFail: 2 },
     effects: [
-      { kind: 'enemyAttack', value: 4, unit: 'flat', description: '-4 к шансу попадания врагов' },
-      { kind: 'enemyDefense', value: 4, unit: 'flat', description: '-4 к защите врагов' },
-      { kind: 'dmgCoeff', value: 10, unit: 'percent', description: '+10% к коэфф. урона' },
+      { kind: 'enemyAttack', value: 4, unit: 'flat', description: '' },
+      { kind: 'enemyDefense', value: 4, unit: 'flat', description: '' },
+      { kind: 'dmgCoeff', value: 10, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'bloodletter',
-    name: 'Кровопускатель',
-    shortName: 'Кровник',
-    description: 'Атака, урон и крит. Изнашивается от провалов.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 3,
     slotType: 'trinket',
     icon: 'flame',
@@ -733,16 +845,16 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     maxDurability: 4,
     durabilityRules: { normalPass: 0, normalFail: 1, bossPass: 1, bossFail: 2 },
     effects: [
-      { kind: 'playerAttack', value: 10, unit: 'percent', description: '+10% к шансу попасть' },
-      { kind: 'dmgCoeff', value: 15, unit: 'percent', description: '+15% к коэфф. урона' },
-      { kind: 'critBonus', value: 3, unit: 'percent', description: '+3% к шансу крита' },
+      { kind: 'playerAttack', value: 10, unit: 'percent', description: '' },
+      { kind: 'dmgCoeff', value: 15, unit: 'percent', description: '' },
+      { kind: 'critBonus', value: 3, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'war-drum',
-    name: 'Боевой барабан',
-    shortName: 'Барабан',
-    description: 'Мощный боссовый артефакт: атака и коэффициент урона.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 3,
     slotType: 'trinket',
     icon: 'radio',
@@ -753,15 +865,15 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     maxDurability: 3,
     durabilityRules: { normalPass: 0, normalFail: 0, bossPass: 1, bossFail: 2 },
     effects: [
-      { kind: 'playerAttack', value: 12, unit: 'percent', description: '+12% к шансу попасть по боссу' },
-      { kind: 'dmgCoeff', value: 20, unit: 'percent', description: '+20% к коэфф. урона' },
+      { kind: 'playerAttack', value: 12, unit: 'percent', description: '' },
+      { kind: 'dmgCoeff', value: 20, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'titan-gauntlet',
-    name: 'Перчатка титана',
-    shortName: 'Перчатка',
-    description: 'Огромный плоский урон и коэффициент урона. Хрупкая.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 3,
     slotType: 'trinket',
     icon: 'hand',
@@ -771,15 +883,15 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     maxDurability: 4,
     durabilityRules: { normalPass: 0, normalFail: 1, bossPass: 1, bossFail: 2 },
     effects: [
-      { kind: 'playerDamage', value: 3, unit: 'flat', description: '+3 к плоскому урону' },
-      { kind: 'dmgCoeff', value: 15, unit: 'percent', description: '+15% к коэфф. урона' },
+      { kind: 'playerDamage', value: 3, unit: 'flat', description: '' },
+      { kind: 'dmgCoeff', value: 15, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'boss-slayer',
-    name: 'Убийца боссов',
-    shortName: 'Слэйер',
-    description: 'Только против боссов: плоский урон, коэффициент и крит.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 3,
     slotType: 'trinket',
     icon: 'skull',
@@ -791,16 +903,16 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     maxDurability: 3,
     durabilityRules: { normalPass: 0, normalFail: 0, bossPass: 1, bossFail: 2 },
     effects: [
-      { kind: 'playerDamage', value: 3, unit: 'flat', description: '+3 к плоскому урону по боссам' },
-      { kind: 'dmgCoeff', value: 18, unit: 'percent', description: '+18% к коэфф. урона' },
-      { kind: 'critBonus', value: 4, unit: 'percent', description: '+4% к шансу крита' },
+      { kind: 'playerDamage', value: 3, unit: 'flat', description: '' },
+      { kind: 'dmgCoeff', value: 18, unit: 'percent', description: '' },
+      { kind: 'critBonus', value: 4, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'berserk-core',
-    name: 'Ядро берсерка',
-    shortName: 'Берсерк',
-    description: 'Огромный коэффициент урона и атака. Быстро изнашивается.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 3,
     slotType: 'trinket',
     icon: 'zap',
@@ -810,15 +922,15 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     maxDurability: 4,
     durabilityRules: { normalPass: 1, normalFail: 2, bossPass: 1, bossFail: 2 },
     effects: [
-      { kind: 'dmgCoeff', value: 35, unit: 'percent', description: '+35% к коэфф. урона' },
-      { kind: 'playerAttack', value: 6, unit: 'percent', description: '+6% к шансу попасть' },
+      { kind: 'dmgCoeff', value: 35, unit: 'percent', description: '' },
+      { kind: 'playerAttack', value: 6, unit: 'percent', description: '' },
     ],
   },
   {
     id: 'fortress-plate',
-    name: 'Пластина крепости',
-    shortName: 'Крепость',
-    description: 'Массивная защита и снижение атаки врагов. Не выдержит долгого похода.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 3,
     slotType: 'trinket',
     icon: 'castle',
@@ -828,15 +940,15 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     maxDurability: 4,
     durabilityRules: { normalPass: 1, normalFail: 2, bossPass: 1, bossFail: 2 },
     effects: [
-      { kind: 'defCoeff', value: 35, unit: 'percent', description: '+35% к коэфф. защиты' },
-      { kind: 'enemyAttack', value: 5, unit: 'flat', description: '-5 к шансу попадания врагов' },
+      { kind: 'defCoeff', value: 35, unit: 'percent', description: '' },
+      { kind: 'enemyAttack', value: 5, unit: 'flat', description: '' },
     ],
   },
   {
     id: 'lucky-die',
-    name: 'Счастливая кость',
-    shortName: 'Удача',
-    description: 'Мощный крит и бонус урона. Удача непостоянна.',
+    name: '',
+    shortName: '',
+    description: '',
     rarity: 3,
     slotType: 'trinket',
     icon: 'dice',
@@ -846,11 +958,13 @@ export const GAME_ITEM_CATALOG: GameItemDefinition[] = [
     maxDurability: 4,
     durabilityRules: { normalPass: 0, normalFail: 1, bossPass: 1, bossFail: 2 },
     effects: [
-      { kind: 'critBonus', value: 12, unit: 'percent', description: '+12% к шансу крита' },
-      { kind: 'dmgCoeff', value: 10, unit: 'percent', description: '+10% к коэфф. урона' },
+      { kind: 'critBonus', value: 12, unit: 'percent', description: '' },
+      { kind: 'dmgCoeff', value: 10, unit: 'percent', description: '' },
     ],
   },
 ];
+
+export const GAME_ITEM_CATALOG: GameItemDefinition[] = GAME_ITEM_CATALOG_BASE.map(createLocalizedItemDefinition);
 
 export const GAME_ITEM_MAP = Object.fromEntries(
   GAME_ITEM_CATALOG.map(item => [item.id, item]),
@@ -866,7 +980,26 @@ export const GAME_EQUIPMENT_SLOTS: Array<{
   label: string;
   slotType: GameItemDefinition['slotType'];
 }> = [
-  { key: 'slotA', label: 'Слот 1', slotType: 'trinket' },
-  { key: 'slotB', label: 'Слот 2', slotType: 'trinket' },
-  { key: 'slotC', label: 'Слот 3', slotType: 'trinket' },
+  {
+    key: 'slotA',
+    get label() {
+      return translateGameItemText('game.inventory.slots.slotA');
+    },
+    slotType: 'trinket',
+  },
+  {
+    key: 'slotB',
+    get label() {
+      return translateGameItemText('game.inventory.slots.slotB');
+    },
+    slotType: 'trinket',
+  },
+  {
+    key: 'slotC',
+    get label() {
+      return translateGameItemText('game.inventory.slots.slotC');
+    },
+    slotType: 'trinket',
+  },
 ];
+

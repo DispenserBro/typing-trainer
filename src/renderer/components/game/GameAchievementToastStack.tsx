@@ -1,5 +1,6 @@
 import { memo, useEffect, useState } from 'react';
 import type { GameAchievementDefinition } from '../../../shared/types';
+import { useI18n } from '../../contexts/I18nContext';
 
 type GameAchievementToastStackProps = {
   achievements: GameAchievementDefinition[];
@@ -16,6 +17,7 @@ export const GameAchievementToastStack = memo(function GameAchievementToastStack
   onRemove,
   autoHideDelay = 4000,
 }: GameAchievementToastStackProps) {
+  const { t } = useI18n();
   const [toastStates, setToastStates] = useState<Map<number, ToastState>>(new Map());
 
   // Когда добавляются новые достижения, инициализируем их состояние
@@ -75,7 +77,7 @@ export const GameAchievementToastStack = memo(function GameAchievementToastStack
           key={`${achievement.id}-${displayIndex}`} 
           className={`game-achievement-toast ${isHiding ? 'hiding' : ''}`}
         >
-          <div className="game-achievement-toast-title">Достижение получено</div>
+          <div className="game-achievement-toast-title">{t('game.achievementToast.title')}</div>
           <div className="game-achievement-toast-name">{achievement.name}</div>
           <div className="game-achievement-toast-description">{achievement.description}</div>
         </div>

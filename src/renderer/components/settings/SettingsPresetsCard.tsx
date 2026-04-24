@@ -1,5 +1,10 @@
 import { useState } from 'react';
 import type { CustomPresets, UserSettings } from '../../../shared/types';
+import { useI18n } from '../../contexts/I18nContext';
+import { Button } from '../ui/Button';
+import { SettingsActionList, SettingsActionRow } from '../ui/SettingsActionList';
+import { SettingsCard } from '../ui/SettingsCard';
+import { TextInput } from '../ui/TextInput';
 
 type SettingsPresetsCardProps = {
   customPresets: CustomPresets;
@@ -19,6 +24,7 @@ export function SettingsPresetsCard({
   exportConfig,
   importConfig,
 }: SettingsPresetsCardProps) {
+  const { t } = useI18n();
   const [newName, setNewName] = useState('');
   const [justSaved, setJustSaved] = useState(false);
   const [importMsg, setImportMsg] = useState('');
@@ -37,57 +43,60 @@ export function SettingsPresetsCard({
   const handleImport = async () => {
     const err = await importConfig();
     if (err) { setImportMsg(err); setTimeout(() => setImportMsg(''), 3000); }
-    else { setImportMsg('Импортировано ✓'); setTimeout(() => setImportMsg(''), 2000); }
+    else { setImportMsg(t('settings.cards.presets.imported')); setTimeout(() => setImportMsg(''), 2000); }
   };
 
   return (
-    <div className="card settings-card">
-      <h4>Пресеты интерфейса</h4>
-      <p className="card-desc">Быстро переключайте набор настроек</p>
-
-      <div className="presets-list">
+    <SettingsCard
+      title={t('settings.cards.presets.title')}
+      description={t('settings.cards.presets.description')}
+    >
+      <SettingsActionList>
         {entries.map(([id, preset]) => (
-          <div className="preset-row" key={id}>
-            <button
-              className="btn-secondary btn-sm preset-apply-btn"
-              onClick={() => applyPreset(id)}
-              title={`Применить пресет «${preset.name}»`}
-            >
-              {preset.name}
-            </button>
-            {!preset.builtIn && (
-              <button
-                className="btn-ghost btn-sm preset-delete-btn"
+          <SettingsActionRow
+            key={id}
+            actions={!preset.builtIn ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="preset-delete-btn"
                 onClick={() => deletePreset(id)}
-                title="Удалить"
+                title={t('settings.cards.presets.delete')}
               >
                 ✕
-              </button>
-            )}
-          </div>
+              </Button>
+            ) : null}
+          >
+            <Button
+              size="sm"
+              className="preset-apply-btn"
+              onClick={() => applyPreset(id)}
+              title={t('settings.cards.presets.applyPresetTitle', { name: preset.name })}
+            >
+              {preset.name}
+            </Button>
+          </SettingsActionRow>
         ))}
-      </div>
+      </SettingsActionList>
 
       <div className="preset-save-row">
-        <input
-          className="input-minimal"
-          type="text"
+        <TextInput
           value={newName}
           onChange={e => setNewName(e.target.value)}
-          placeholder="Название нового пресета…"
+          placeholder={t('settings.cards.presets.savePlaceholder')}
           maxLength={40}
           onKeyDown={e => e.key === 'Enter' && handleSave()}
         />
-        <button className="btn-accent btn-sm" onClick={handleSave} disabled={!newName.trim()}>
-          {justSaved ? '✓' : 'Сохранить'}
-        </button>
+        <Button variant="accent" size="sm" onClick={handleSave} disabled={!newName.trim()}>
+          {justSaved ? '✓' : t('settings.cards.presets.save')}
+        </Button>
       </div>
 
       <div className="preset-io-row">
-        <button className="btn-secondary btn-sm" onClick={() => exportConfig()}>Экспорт конфигурации</button>
-        <button className="btn-secondary btn-sm" onClick={handleImport}>Импорт</button>
-        {importMsg && <span className="card-desc" style={{ marginLeft: 8 }}>{importMsg}</span>}
+        <Button size="sm" onClick={() => exportConfig()}>{t('settings.cards.presets.exportConfig')}</Button>
+        <Button size="sm" onClick={handleImport}>{t('settings.cards.presets.import')}</Button>
+        {importMsg && <span className="card-desc preset-inline-message">{importMsg}</span>}
       </div>
-    </div>
+    </SettingsCard>
   );
 }

@@ -1,6 +1,11 @@
 import type { ReactElement } from 'react';
 import { useEffect } from 'react';
-import { AppProvider, useApp } from './contexts/AppContext';
+import {
+  AppProvider,
+  useAppNavigation,
+  useAppPractice,
+  useAppSettings,
+} from './contexts/AppContext';
 import { Titlebar } from './components/Titlebar';
 import { Sidebar } from './components/Sidebar';
 import { Keyboard } from './components/keyboard/Keyboard';
@@ -13,7 +18,8 @@ import { StatsPage } from './pages/StatsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { HomePage } from './pages/HomePage';
 import { AddonsPage } from './pages/AddonsPage';
-import { FlawlessPage, SurvivalPage } from './pages/ChallengeModePage';
+import { SurvivalPage } from './pages/ChallengeModePage';
+import { I18nProvider, useI18n } from './contexts/I18nContext';
 
 /** Render sanitised HTML from a mod inside a sandboxed container */
 function ModPage({ html }: { html: string }) {
@@ -31,10 +37,19 @@ function ModPanelView({ html }: { html: string }) {
 
 function AppInner() {
   const {
-    ready, currentMode, settings, layouts, currentLanguage, currentLayout,
-    saveSetting, setCurrentLanguage, setCurrentLayout,
+    ready, currentMode,
     modCssSnippets, modPanels, modModes,
-  } = useApp();
+  } = useAppNavigation();
+  const { layouts } = useAppPractice();
+  const {
+    settings,
+    currentLanguage,
+    currentLayout,
+    saveSetting,
+    setCurrentLanguage,
+    setCurrentLayout,
+  } = useAppSettings();
+  const { t } = useI18n();
 
   // Inject mod CSS snippets into <head>
   useEffect(() => {
@@ -55,7 +70,7 @@ function AppInner() {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             width: '100%', height: '100%', color: 'var(--subtext)',
           }}>
-            Загрузка…
+            {t('app.loading')}
           </div>
         </div>
       </>
@@ -95,7 +110,7 @@ function AppInner() {
       case 'home':     page = <HomePage />;     break;
       case 'test':     page = <SprintPage />;   break;
       case 'survival': page = <SurvivalPage />; break;
-      case 'flawless': page = <FlawlessPage />; break;
+      case 'flawless': page = <SurvivalPage initialFlawless />; break;
       case 'lessons':  page = <LessonsPage />;  break;
       case 'game':     page = <GamePage />;     break;
       case 'stats':    page = <StatsPage />;    break;
@@ -108,6 +123,7 @@ function AppInner() {
   const topPanels = modPanels.filter(p => p.location === 'page-top');
   const bottomPanels = modPanels.filter(p => p.location === 'page-bottom');
   const overlayPanels = modPanels.filter(p => p.location === 'overlay');
+  const showKeyboard = currentMode !== 'addons';
 
   return (
     <>
@@ -130,7 +146,7 @@ function AppInner() {
             {page}
             {bottomPanels.map(p => <ModPanelView key={p.id} html={p.html} />)}
           </div>
-          <Keyboard />
+          {showKeyboard ? <Keyboard /> : null}
         </main>
         {overlayPanels.map(p => (
           <div key={p.id} className="mod-overlay">
@@ -145,7 +161,9 @@ function AppInner() {
 export default function App() {
   return (
     <AppProvider>
-      <AppInner />
+      <I18nProvider>
+        <AppInner />
+      </I18nProvider>
     </AppProvider>
   );
 }

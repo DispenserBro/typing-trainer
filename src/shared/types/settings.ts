@@ -16,6 +16,7 @@ export interface UserSettings {
   highlightCurrentChar: boolean;
   textDisplay: TextDisplayMode;
   theme: string;
+  interfaceLanguage: string;
   language: string;
   layout: string;
   useYo: boolean;
@@ -57,15 +58,20 @@ export interface ModePracticeSettings {
   contentMode?: PracticeContentMode;
   selectedContentPackId?: string;
   sprintDurationSeconds?: number;
+  flawlessEnabled?: boolean;
 }
 
 export interface CustomThemeColors {
   bg: string;
   surface: string;
   surface2: string;
+  surface3?: string;
   text: string;
+  textDim?: string;
   subtext: string;
   accent: string;
+  accentHover?: string;
+  accentDim?: string;
   green: string;
   red: string;
   yellow: string;

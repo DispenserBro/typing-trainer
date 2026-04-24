@@ -9,7 +9,15 @@
  *     api.events.on('sessionFinish', (data) => { ... });
  *   };
  */
-import type { GameItemDefinition, GameAchievementDefinition, UserSettings, Lesson, Layout, LayoutsData } from '../../shared/types';
+import type {
+  AddonInterfaceLocaleDefinition,
+  GameItemDefinition,
+  GameAchievementDefinition,
+  InterfaceLocaleDefinition,
+  UserSettings,
+  Lesson,
+} from '../../shared/types';
+import { normalizeExternalInterfaceLocaleDefinitions } from '../i18n/resources';
 
 /* ── Event types ────────────────────────────────────────── */
 
@@ -141,6 +149,13 @@ export interface ModModesAPI {
   unregister(modeId: string): void;
 }
 
+export interface ModI18nAPI {
+  /** Register one interface locale from a mod script */
+  registerLocale(locale: AddonInterfaceLocaleDefinition): void;
+  /** Register several interface locales from a mod script */
+  registerLocales(locales: AddonInterfaceLocaleDefinition[]): void;
+}
+
 export interface ModLogAPI {
   info(message: string): void;
   warn(message: string): void;
@@ -165,6 +180,7 @@ export interface ModAPI {
   lessons: ModLessonsAPI;
   ui: ModUIAPI;
   modes: ModModesAPI;
+  i18n: ModI18nAPI;
   log: ModLogAPI;
 }
 
@@ -200,6 +216,8 @@ export interface ModAPIState {
   /* ── Modes ── */
   registeredModes: ModModeDefinition[];
   unregisteredModeIds: Set<string>;
+  /* ── Interface translations ── */
+  interfaceLocales: InterfaceLocaleDefinition[];
 }
 
 export function createEmptyModState(): ModAPIState {
@@ -224,6 +242,7 @@ export function createEmptyModState(): ModAPIState {
     cssSnippets: [],
     registeredModes: [],
     unregisteredModeIds: new Set(),
+    interfaceLocales: [],
   };
 }
 
@@ -349,6 +368,30 @@ export function createModAPI(
     },
   };
 
+  const i18n: ModI18nAPI = {
+    registerLocale(locale) {
+      guard('i18n', () => {
+        state.interfaceLocales.push(...normalizeExternalInterfaceLocaleDefinitions([
+          {
+            ...locale,
+            sourceName: modName,
+          },
+        ], 'mod'));
+      });
+    },
+    registerLocales(locales) {
+      guard('i18n', () => {
+        state.interfaceLocales.push(...normalizeExternalInterfaceLocaleDefinitions(
+          locales.map((locale) => ({
+            ...locale,
+            sourceName: modName,
+          })),
+          'mod',
+        ));
+      });
+    },
+  };
+
   const log: ModLogAPI = {
     info(msg) { console.log(`[Mod:${modId}] ${msg}`); },
     warn(msg) { console.warn(`[Mod:${modId}] ${msg}`); },
@@ -368,6 +411,7 @@ export function createModAPI(
     lessons,
     ui,
     modes,
+    i18n,
     log,
   };
 }

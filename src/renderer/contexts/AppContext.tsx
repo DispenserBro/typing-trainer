@@ -2,15 +2,16 @@ import {
   createContext, useContext, useState, useCallback, useEffect, useRef, useMemo,
   type ReactNode,
 } from 'react';
-import { flushSync } from 'react-dom';
 import type {
-  LayoutsData, Layout, Progress, CustomThemes, CustomPresets, UserPreset, CharStat,
+  LayoutsData, Layout, Progress, CustomThemes, CustomPresets, CharStat,
   UserSettings, PracticeSettings, PresetSettings, PracticeState, LayoutProgressState,
   LanguageInfo, GameState, GameItemDefinition,
   GameEquipmentSlot, GameRunState, GameAchievementDefinition,
   PracticeInsightsState, LayoutPracticeInsights, PracticeRhythmSessionEntry, PracticeContentPack,
   MotivationProgress,
-  ModePracticeSettings, ModePracticeSettingsId, PracticeContentMode, PracticeTrainingMode, PracticeContentScenarioId, ExportPayload, InstalledAddon, InstalledMod, AddonInstallResult, ModInstallResult,
+  ModePracticeSettings, ModePracticeSettingsId, PracticeContentMode, PracticeTrainingMode, PracticeContentScenarioId, InstalledAddon, InstalledMod, InstalledExtensionSource, AddonInstallResult, ModInstallResult, ExtensionCatalogEntry, ExtensionCatalogInstallResult, ExtensionSourceInput, ExtensionSourceInstallResult, ExtensionSourceSyncResult, ImportedInterfaceLocaleDefinition,
+  InterfaceLocaleDefinition,
+  InstalledTheme, ThemeDefinitions, ThemeInstallResult,
 } from '../../shared/types';
 import {
   formatSpeed, speedLabel,
@@ -20,9 +21,7 @@ import { GAME_ITEM_CATALOG } from '../../core/game/items';
 import { GAME_ACHIEVEMENT_CATALOG } from '../../core/game/gameAchievements';
 import {
   BUILT_IN_THEMES,
-  BUILT_IN_PRESETS,
   defaultModePracticeSettings,
-  extractPresetSettings,
   defaultSettings,
   defaultPracticeSettings,
 } from './appDefaults';
@@ -40,22 +39,91 @@ import {
 import { createPracticeActions } from './appActionsPractice';
 import { createStatsActions } from './appActionsStats';
 import { createGameActions } from './appActionsGame';
-import {
-  mergeAddonWords,
-  mergeAddonLayouts,
-  mergeAddonThemes,
-  mergeAddonItems,
-  mergeAddonAchievements,
-  mergeAddonPracticePacks,
-} from '../../core/addons/addonMerger';
-import { runAllMods } from '../../core/addons/modRunner';
-import type { ModAPIState } from '../../core/addons/modApi';
+import { createAchievementActions } from './appAchievementActions';
+import { commitProgressUpdate } from './progressUpdate';
+import { replaceResolvedProgressState, resolveLoadedProgressState } from './appProgressState';
+import type { ModModeDefinition, ModPanel } from '../../core/addons/modApi';
 import { normalizeMotivationProgress } from '../../core/motivation/progress';
+import { importInterfaceLocaleFromPo } from '../../core/i18n';
+import { applyThemeDom } from './appThemeDom';
+import {
+  isInterfaceLocaleAvailableOutsideImports,
+  removeImportedInterfaceLocaleFromProgress,
+  resolveImportedInterfaceLocales,
+} from './appInterfaceLocaleState';
+import {
+  addCurrentSettingsPreset,
+  applyPresetToSettings,
+  deleteCustomPreset,
+  resolveCustomPresets,
+} from './appPresetState';
+import {
+  clearModeProfileFromProgress,
+  resolveModeProfiles,
+  saveModeProfileToProgress,
+} from './appModeProfileState';
+import {
+  CONFIG_EXPORT_FILENAME,
+  applyImportedConfigProgress,
+  buildConfigExportPayload,
+  buildThemeExportPayload,
+  getThemeExportFilename,
+  parseConfigImport,
+} from './appConfigTransfer';
+import { resolveCurrentLanguageLayoutState } from './appLanguageLayoutState';
+import { loadMergedWords } from './appWordsState';
+import {
+  loadMergedAddonResourceState,
+} from './appAddonResourceState';
+import { buildAvailableThemeDefinitions } from './appThemeRegistry';
+import {
+  applyModLessonEffects,
+  applyModWordEffects,
+  hasModLessonEffects,
+  hasModWordEffects,
+  resolveModEffectState,
+} from './appModEffectState';
+import { loadInitialAppBootstrapState } from './appBootstrapState';
+import { createExtensionLifecycleActions } from './appExtensionLifecycleActions';
 
 export { BUILT_IN_THEMES } from './appDefaults';
 
-export interface AppContextValue {
+export type SaveHistory = (
+  mode: 'test' | 'lesson' | 'practice' | 'game',
+  wpm: number,
+  acc: number,
+  extras?: {
+    contentScenarioId?: PracticeContentScenarioId;
+    trainingMode?: PracticeTrainingMode;
+    contentMode?: PracticeContentMode;
+    durationSeconds?: number;
+    gameLevel?: number;
+    gameStageType?: 'normal' | 'boss';
+    passed?: boolean;
+    victory?: boolean;
+    timedOut?: boolean;
+    charStats?: Record<string, CharStat>;
+  },
+) => void;
+
+export interface AppUiContextValue {
+  activeChar: string | undefined;
+  setActiveChar: (ch: string | undefined) => void;
+  keyboardPreviewActive: boolean;
+  setKeyboardPreviewActive: (active: boolean) => void;
+}
+
+export interface AppNavigationContextValue {
   ready: boolean;
+  currentMode: string;
+  switchMode: (mode: string) => void;
+  disabledSections: string[];
+  modCssSnippets: string[];
+  modPanels: ModPanel[];
+  modModes: ModModeDefinition[];
+}
+
+export interface AppPracticeContextValue {
   layouts: LayoutsData;
   allWords: string[];
   ngramModel: NgramModel | null;
@@ -64,63 +132,44 @@ export interface AppContextValue {
   practiceInsights: PracticeInsightsState;
   practiceRhythmHistory: Record<string, PracticeRhythmSessionEntry[]>;
   practiceContentPacks: PracticeContentPack[];
-  customThemes: CustomThemes;
-  gameState: GameState;
-  gameItemCatalog: GameItemDefinition[];
   gameAchievementCatalog: GameAchievementDefinition[];
-
-  settings: UserSettings;
-  practiceSettings: PracticeSettings;
-  currentLayout: string;
-  currentLanguage: string;
-  currentMode: string;
-
-  languages: LanguageInfo[];
-  layoutsForLanguage: [string, Layout][];
-
-  switchMode: (mode: string) => void;
-  setCurrentLayout: (layout: string) => void;
-  setCurrentLanguage: (lang: string) => void;
-  saveSetting: <K extends keyof UserSettings>(key: K, val: UserSettings[K]) => void;
-  savePracticeSetting: <K extends keyof PracticeSettings>(key: K, val: PracticeSettings[K]) => void;
-  getModePracticeSettings: (mode: ModePracticeSettingsId) => ModePracticeSettings;
-  saveModePracticeSettings: (mode: ModePracticeSettingsId, patch: Partial<ModePracticeSettings>) => ModePracticeSettings;
-  saveProgress: (p: Progress) => void;
-  updateMotivationProgress: (updater: (current: MotivationProgress) => MotivationProgress) => MotivationProgress;
-  saveCustomThemes: (t: CustomThemes) => void;
-  applyTheme: (name: string) => void;
-  reloadWords: () => Promise<void>;
-
-  customPresets: CustomPresets;
-  applyPreset: (presetId: string) => void;
-  saveCurrentAsPreset: (name: string) => string;
-  deletePreset: (presetId: string) => void;
-
+  unlockedAchievementIds: string[];
   fmtSpeed: (wpm: number) => string;
   spdLabel: string;
+  switchMode: (mode: string) => void;
+  saveProgress: (p: Progress) => void;
+  updateMotivationProgress: (updater: (current: MotivationProgress) => MotivationProgress) => MotivationProgress;
   getLayoutProgress: () => LayoutProgressState;
   getPracticeState: () => PracticeState;
   getPracticeInsights: () => LayoutPracticeInsights;
   savePracticeInsights: (insights: LayoutPracticeInsights) => void;
   savePracticeRhythmSession: (entry: Omit<PracticeRhythmSessionEntry, 'id' | 'date'> & { id?: string; date?: string }) => void;
   saveCharStats: (cs: Record<string, CharStat>) => void;
-  saveHistory: (
-    mode: 'test' | 'lesson' | 'practice' | 'game',
-    wpm: number,
-    acc: number,
-    extras?: {
-      contentScenarioId?: PracticeContentScenarioId;
-      trainingMode?: PracticeTrainingMode;
-      contentMode?: PracticeContentMode;
-      durationSeconds?: number;
-      gameLevel?: number;
-      gameStageType?: 'normal' | 'boss';
-      passed?: boolean;
-      victory?: boolean;
-      timedOut?: boolean;
-      charStats?: Record<string, CharStat>;
-    },
-  ) => void;
+  saveHistory: SaveHistory;
+  unlockAchievements: (achievementIds: string[]) => GameAchievementDefinition[];
+}
+
+export interface AppStatsContextValue {
+  layouts: LayoutsData;
+  progress: Progress;
+  practiceInsights: PracticeInsightsState;
+  practiceRhythmHistory: Record<string, PracticeRhythmSessionEntry[]>;
+}
+
+export interface AppGameContextValue {
+  layouts: LayoutsData;
+  allWords: string[];
+  ngramModel: NgramModel | null;
+  progress: Progress;
+  motivationProgress: MotivationProgress;
+  gameState: GameState;
+  gameItemCatalog: GameItemDefinition[];
+  gameAchievementCatalog: GameAchievementDefinition[];
+  unlockedAchievementIds: string[];
+  fmtSpeed: (wpm: number) => string;
+  spdLabel: string;
+  getLayoutProgress: () => LayoutProgressState;
+  saveHistory: SaveHistory;
   saveGameState: (game: GameState) => void;
   grantGameItem: (itemId: string) => string | null;
   equipGameItem: (slot: GameEquipmentSlot, inventoryItemId: string) => boolean;
@@ -133,63 +182,90 @@ export interface AppContextValue {
   peekNextGameLetter: () => string | null;
   unlockNextGameLetter: () => string | null;
   unlockGameAchievements: (achievementIds: string[]) => GameAchievementDefinition[];
-  /** Глобальный список разблокированных достижений (все категории). */
-  unlockedAchievementIds: string[];
-  /** Разблокировать достижения по ID. Возвращает только новые (ранее не открытые). */
-  unlockAchievements: (achievementIds: string[]) => GameAchievementDefinition[];
   saveCurrentGameRun: (run: GameRunState | null) => void;
   clearCurrentGameRun: (destroyItems?: boolean) => void;
+  updateMotivationProgress: (updater: (current: MotivationProgress) => MotivationProgress) => MotivationProgress;
+  modRuleOverrides: Map<string, unknown>;
+}
 
-  exportTheme: (themeName: string) => Promise<boolean>;
-  exportConfig: () => Promise<boolean>;
-  importConfig: () => Promise<string | null>;
-
-  modeProfiles: Partial<Record<string, Partial<PresetSettings>>>;
-  saveModeProfile: (mode: string) => void;
-  clearModeProfile: (mode: string) => void;
-
+export interface AppExtensionsContextValue {
+  extensionSources: InstalledExtensionSource[];
+  extensionCatalogEntries: ExtensionCatalogEntry[];
+  installExtensionSource: (input: ExtensionSourceInput) => Promise<ExtensionSourceInstallResult>;
+  installExtensionCatalogEntry: (sourceId: string, kind: 'addons' | 'mods' | 'themes', entryId: string) => Promise<ExtensionCatalogInstallResult>;
+  updateExtensionSource: (sourceId: string, input: ExtensionSourceInput) => Promise<ExtensionSourceInstallResult>;
+  removeExtensionSource: (id: string) => Promise<boolean>;
+  toggleExtensionSource: (id: string, enabled: boolean) => Promise<boolean>;
+  syncExtensionSource: (id: string) => Promise<ExtensionSourceSyncResult>;
+  refreshSources: () => Promise<void>;
+  refreshCatalog: () => Promise<void>;
   installedAddons: InstalledAddon[];
   installAddon: () => Promise<AddonInstallResult>;
   removeAddon: (id: string) => Promise<boolean>;
   toggleAddon: (id: string, enabled: boolean) => Promise<boolean>;
   refreshAddons: () => Promise<void>;
-
   installedMods: InstalledMod[];
+  modInterfaceLocales: InterfaceLocaleDefinition[];
   installMod: () => Promise<ModInstallResult>;
   removeMod: (id: string) => Promise<boolean>;
   toggleMod: (id: string, enabled: boolean) => Promise<boolean>;
   refreshMods: () => Promise<void>;
-
-  /** Sidebar sections disabled by active mods */
-  disabledSections: string[];
-
-  /** Rule overrides from active mods (e.g. 'game.baseHp' → 120) */
-  modRuleOverrides: Map<string, unknown>;
-
-  /** Setting overrides from active mods */
-  modSettingOverrides: Map<string, unknown>;
-
-  /** Custom CSS snippets injected by mods */
-  modCssSnippets: string[];
-
-  /** Custom panels injected by mods */
-  modPanels: import('../../core/addons/modApi').ModPanel[];
-
-  /** Custom modes/pages registered by mods */
-  modModes: import('../../core/addons/modApi').ModModeDefinition[];
+  installedThemes: InstalledTheme[];
+  installTheme: () => Promise<ThemeInstallResult>;
+  removeTheme: (themeId: string) => Promise<boolean>;
+  refreshThemes: () => Promise<void>;
 }
 
-export interface AppUiContextValue {
-  activeChar: string | undefined;
-  setActiveChar: (ch: string | undefined) => void;
-  keyboardPreviewActive: boolean;
-  setKeyboardPreviewActive: (active: boolean) => void;
+export interface AppSettingsContextValue {
+  settings: UserSettings;
+  practiceSettings: PracticeSettings;
+  importedInterfaceLocales: Record<string, ImportedInterfaceLocaleDefinition>;
+  interfaceLanguage: string;
+  currentLayout: string;
+  currentLanguage: string;
+  languages: LanguageInfo[];
+  layoutsForLanguage: [string, Layout][];
+  setCurrentLayout: (layout: string) => void;
+  setCurrentLanguage: (lang: string) => void;
+  saveSetting: <K extends keyof UserSettings>(key: K, val: UserSettings[K]) => void;
+  savePracticeSetting: <K extends keyof PracticeSettings>(key: K, val: PracticeSettings[K]) => void;
+  getModePracticeSettings: (mode: ModePracticeSettingsId) => ModePracticeSettings;
+  saveModePracticeSettings: (mode: ModePracticeSettingsId, patch: Partial<ModePracticeSettings>) => ModePracticeSettings;
+  customThemes: CustomThemes;
+  availableThemes: ThemeDefinitions;
+  installedThemes: InstalledTheme[];
+  saveCustomThemes: (themes: CustomThemes) => void;
+  applyTheme: (name: string) => void;
+  installTheme: () => Promise<ThemeInstallResult>;
+  removeTheme: (themeId: string) => Promise<boolean>;
+  exportTheme: (themeName: string) => Promise<boolean>;
+  customPresets: CustomPresets;
+  applyPreset: (presetId: string) => void;
+  saveCurrentAsPreset: (name: string) => string;
+  deletePreset: (presetId: string) => void;
+  exportConfig: () => Promise<boolean>;
+  importConfig: () => Promise<string | null>;
+  importInterfaceLocale: () => Promise<string | null>;
+  removeImportedInterfaceLocale: (localeId: string) => void;
+  modeProfiles: Partial<Record<string, Partial<PresetSettings>>>;
+  saveModeProfile: (mode: string) => void;
+  clearModeProfile: (mode: string) => void;
 }
 
-const AppContext = createContext<AppContextValue>(null!);
 const AppUiContext = createContext<AppUiContextValue>(null!);
-export const useApp = () => useContext(AppContext);
+const AppPracticeContext = createContext<AppPracticeContextValue>(null!);
+const AppStatsContext = createContext<AppStatsContextValue>(null!);
+const AppGameContext = createContext<AppGameContextValue>(null!);
+const AppExtensionsContext = createContext<AppExtensionsContextValue>(null!);
+const AppSettingsContext = createContext<AppSettingsContextValue>(null!);
+const AppNavigationContext = createContext<AppNavigationContextValue>(null!);
 export const useAppUi = () => useContext(AppUiContext);
+export const useAppPractice = () => useContext(AppPracticeContext);
+export const useAppStats = () => useContext(AppStatsContext);
+export const useAppGame = () => useContext(AppGameContext);
+export const useAppExtensions = () => useContext(AppExtensionsContext);
+export const useAppSettings = () => useContext(AppSettingsContext);
+export const useAppNavigation = () => useContext(AppNavigationContext);
 
 function isStringListEqual(left: string[], right: string[]) {
   if (left.length !== right.length) return false;
@@ -197,75 +273,6 @@ function isStringListEqual(left: string[], right: string[]) {
     if (left[i] !== right[i]) return false;
   }
   return true;
-}
-
-function isGameInventoryItemEqual(
-  left: GameState['inventory'][number],
-  right: GameState['inventory'][number],
-) {
-  return (
-    left.id === right.id
-    && left.itemId === right.itemId
-    && left.durability === right.durability
-    && left.maxDurability === right.maxDurability
-  );
-}
-
-function isInventoryEqual(left: GameState['inventory'], right: GameState['inventory']) {
-  if (left.length !== right.length) return false;
-  for (let i = 0; i < left.length; i += 1) {
-    if (!isGameInventoryItemEqual(left[i]!, right[i]!)) return false;
-  }
-  return true;
-}
-
-function isEquipmentEqual(left: GameState['equipped'], right: GameState['equipped']) {
-  return (
-    left.slotA === right.slotA
-    && left.slotB === right.slotB
-    && left.slotC === right.slotC
-  );
-}
-
-function isGameRunEqual(left: GameRunState | null | undefined, right: GameRunState | null | undefined) {
-  if (left === right) return true;
-  if (!left || !right) return false;
-  return JSON.stringify(left) === JSON.stringify(right);
-}
-
-function stabilizeGameState(prev: GameState | null, next: GameState) {
-  if (!prev) return next;
-
-  const ghostRunEqual = prev.ghostRun === next.ghostRun || JSON.stringify(prev.ghostRun) === JSON.stringify(next.ghostRun);
-  const dailyRunEqual = prev.dailyRun === next.dailyRun || JSON.stringify(prev.dailyRun) === JSON.stringify(next.dailyRun);
-
-  if (
-    prev.highestLevel === next.highestLevel
-    && isInventoryEqual(prev.inventory, next.inventory)
-    && isStringListEqual(prev.discoveredItemIds, next.discoveredItemIds)
-    && isStringListEqual(prev.achievements, next.achievements)
-    && isEquipmentEqual(prev.equipped, next.equipped)
-    && isGameRunEqual(prev.currentRun, next.currentRun)
-    && ghostRunEqual
-    && dailyRunEqual
-  ) {
-    return prev;
-  }
-
-  return {
-    highestLevel: next.highestLevel,
-    inventory: isInventoryEqual(prev.inventory, next.inventory) ? prev.inventory : next.inventory,
-    discoveredItemIds: isStringListEqual(prev.discoveredItemIds, next.discoveredItemIds)
-      ? prev.discoveredItemIds
-      : next.discoveredItemIds,
-    achievements: isStringListEqual(prev.achievements, next.achievements)
-      ? prev.achievements
-      : next.achievements,
-    equipped: isEquipmentEqual(prev.equipped, next.equipped) ? prev.equipped : next.equipped,
-    currentRun: isGameRunEqual(prev.currentRun, next.currentRun) ? prev.currentRun : next.currentRun,
-    ghostRun: ghostRunEqual ? prev.ghostRun : next.ghostRun,
-    dailyRun: dailyRunEqual ? prev.dailyRun : next.dailyRun,
-  };
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -279,6 +286,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const [progress, setProgress] = useState<Progress>({});
   const [customThemes, setCustomThemes] = useState<CustomThemes>({});
+  const [installedThemes, setInstalledThemes] = useState<InstalledTheme[]>([]);
   const [practiceContentPacks, setPracticeContentPacks] = useState<PracticeContentPack[]>([]);
   const [settingsState, setSettingsState] = useState<UserSettings>(() => resolveSettings({}));
   const [practiceSettingsState, setPracticeSettingsState] = useState<PracticeSettings>(() => defaultPracticeSettings());
@@ -288,16 +296,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [currentMode, setCurrentMode] = useState('home');
   const [activeChar, setActiveChar] = useState<string | undefined>(undefined);
   const [keyboardPreviewActive, setKeyboardPreviewActive] = useState(false);
+  const [extensionSources, setExtensionSources] = useState<InstalledExtensionSource[]>([]);
+  const [extensionCatalogEntries, setExtensionCatalogEntries] = useState<ExtensionCatalogEntry[]>([]);
   const [installedAddons, setInstalledAddons] = useState<InstalledAddon[]>([]);
   const [installedMods, setInstalledMods] = useState<InstalledMod[]>([]);
+  const [modInterfaceLocales, setModInterfaceLocales] = useState<InterfaceLocaleDefinition[]>([]);
   const [mergedItemCatalog, setMergedItemCatalog] = useState<GameItemDefinition[]>(GAME_ITEM_CATALOG);
   const [mergedAchievementCatalog, setMergedAchievementCatalog] = useState<GameAchievementDefinition[]>(GAME_ACHIEVEMENT_CATALOG);
   const [disabledSections, setDisabledSections] = useState<string[]>([]);
   const [modRuleOverrides, setModRuleOverrides] = useState<Map<string, unknown>>(new Map());
   const [modSettingOverrides, setModSettingOverrides] = useState<Map<string, unknown>>(new Map());
   const [modCssSnippets, setModCssSnippets] = useState<string[]>([]);
-  const [modPanels, setModPanels] = useState<import('../../core/addons/modApi').ModPanel[]>([]);
-  const [modModes, setModModes] = useState<import('../../core/addons/modApi').ModModeDefinition[]>([]);
+  const [modPanels, setModPanels] = useState<ModPanel[]>([]);
+  const [modModes, setModModes] = useState<ModModeDefinition[]>([]);
 
   const progressRef = useRef(progress);
   progressRef.current = progress;
@@ -341,231 +352,111 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const customThemesRef = useRef(customThemes);
   customThemesRef.current = customThemes;
 
+  const installedThemesRef = useRef(installedThemes);
+  installedThemesRef.current = installedThemes;
+
   const installedAddonsRef = useRef(installedAddons);
   installedAddonsRef.current = installedAddons;
 
   const installedModsRef = useRef(installedMods);
   installedModsRef.current = installedMods;
 
-  const applyThemeDOM = useCallback((name: string, themesOverride?: CustomThemes) => {
-    const themes = themesOverride ?? customThemesRef.current;
-    const extendedVars = ['--font-sans', '--font-mono', '--radius', '--radius-sm', '--transition'] as const;
-    if (BUILT_IN_THEMES.includes(name)) {
-      document.body.setAttribute('data-theme', name);
-      const root = document.documentElement.style;
-      ['--bg', '--surface', '--surface2', '--surface3', '--text', '--text-dim', '--subtext',
-        '--accent', '--accent-hover', '--accent-dim', '--green', '--red', '--yellow',
-        ...extendedVars]
-        .forEach(variable => root.removeProperty(variable));
-      return;
-    }
+  const modInterfaceLocalesRef = useRef(modInterfaceLocales);
+  modInterfaceLocalesRef.current = modInterfaceLocales;
 
-    if (themes[name]) {
-      document.body.setAttribute('data-theme', 'custom');
-      const colors = themes[name];
-      const root = document.documentElement.style;
-      root.setProperty('--bg', colors.bg);
-      root.setProperty('--surface', colors.surface);
-      root.setProperty('--surface2', colors.surface2);
-      root.setProperty('--text', colors.text);
-      root.setProperty('--subtext', colors.subtext);
-      root.setProperty('--accent', colors.accent);
-      root.setProperty('--green', colors.green);
-      root.setProperty('--red', colors.red);
-      root.setProperty('--yellow', colors.yellow);
-      /* Расширенные параметры (шрифты, радиусы, анимация) */
-      if (colors.fontSans) root.setProperty('--font-sans', colors.fontSans);
-      else root.removeProperty('--font-sans');
-      if (colors.fontMono) root.setProperty('--font-mono', colors.fontMono);
-      else root.removeProperty('--font-mono');
-      if (colors.radius) root.setProperty('--radius', colors.radius);
-      else root.removeProperty('--radius');
-      if (colors.radiusSm) root.setProperty('--radius-sm', colors.radiusSm);
-      else root.removeProperty('--radius-sm');
-      if (colors.transitionSpeed) root.setProperty('--transition', `${colors.transitionSpeed} ease`);
-      else root.removeProperty('--transition');
-    }
+  const availableThemes = useMemo(
+    () => buildAvailableThemeDefinitions({
+      customThemes,
+      addons: installedAddons,
+      installedThemes,
+    }),
+    [customThemes, installedAddons, installedThemes],
+  );
+
+  const availableThemesRef = useRef<ThemeDefinitions>(availableThemes);
+  availableThemesRef.current = availableThemes;
+
+  const applyThemeDOM = useCallback((name: string, themesOverride?: ThemeDefinitions) => {
+    applyThemeDom(name, themesOverride ?? availableThemesRef.current);
   }, []);
-
-  /** Ref to store active mod event handlers from last run */
-  const modStateRef = useRef<ModAPIState | null>(null);
 
   /** Run all mod scripts and merge their effects into app state */
   const applyModEffects = useCallback(async (mods: InstalledMod[], addons: InstalledAddon[]) => {
-    // Merge addon items & achievements (content addons — synchronous)
-    const items = mergeAddonItems(GAME_ITEM_CATALOG, addons);
-    const achievements = mergeAddonAchievements(GAME_ACHIEVEMENT_CATALOG, addons);
-
-    // Run mod scripts (async — reads entry.js via IPC)
-    const { state, errors } = await runAllMods(
+    const modEffects = await resolveModEffectState({
       mods,
-      (modId) => window.api.readModScript(modId),
-      () => settingsRef.current,
-      () => items,
-      () => achievements,
-      () => allWordsRef.current,
-      (layoutId) => {
-        const layout = layoutsRef.current.layouts[layoutId];
-        return layout ? layout.lessonOrder : [];
-      },
-    );
+      addons,
+      settings: settingsRef.current,
+      words: allWordsRef.current,
+      layouts: layoutsRef.current,
+      readModScript: (modId) => window.api.readModScript(modId),
+      readModLocaleResources: (modId) => window.api.readModLocaleResources(modId),
+    });
 
-    if (errors.length > 0) {
-      for (const e of errors) console.error(`[Mod:${e.modId}] ${e.error}`);
+    if (modEffects.errors.length > 0) {
+      for (const error of modEffects.errors) console.error(`[Mod:${error.modId}] ${error.error}`);
     }
 
-    modStateRef.current = state;
-
-    // ── Items ──
-    let finalItems = items.filter(i => !state.removedItemIds.has(i.id));
-    for (const [id, replacement] of state.replacedItems) {
-      finalItems = finalItems.filter(i => i.id !== id);
-      finalItems.push(replacement);
-    }
-    finalItems.push(...state.addedItems);
-
-    // ── Achievements ──
-    let finalAchievements = achievements.filter(a => !state.removedAchievementIds.has(a.id));
-    for (const [id, replacement] of state.replacedAchievements) {
-      finalAchievements = finalAchievements.filter(a => a.id !== id);
-      finalAchievements.push(replacement);
-    }
-    const normalizedAddedAchievements = state.addedAchievements.map(ach => ({
-      ...ach,
-      category: ach.category || 'game',
-    }));
-    finalAchievements.push(...normalizedAddedAchievements);
-
-    // ── Words ──
-    if (state.addedWords.length > 0 || state.removedWords.size > 0) {
-      setAllWords(prev => {
-        let words = state.removedWords.size > 0
-          ? prev.filter(w => !state.removedWords.has(w))
-          : [...prev];
-        if (state.addedWords.length > 0) {
-          const set = new Set(words);
-          for (const w of state.addedWords) set.add(w);
-          words = Array.from(set);
-        }
-        return words;
-      });
+    if (hasModWordEffects(modEffects.state)) {
+      setAllWords(prev => applyModWordEffects(prev, modEffects.state));
     }
 
-    // ── Lessons (mutate layouts) ──
-    if (state.addedLessons.size > 0 || state.removedLessonIds.size > 0 || state.replacedLessons.size > 0) {
-      setLayouts(prev => {
-        const newLayouts = { ...prev.layouts };
-        // Remove lessons
-        for (const [layoutId, ids] of state.removedLessonIds) {
-          if (newLayouts[layoutId]) {
-            newLayouts[layoutId] = {
-              ...newLayouts[layoutId],
-              lessonOrder: newLayouts[layoutId].lessonOrder.filter(l => !ids.has(l.id)),
-            };
-          }
-        }
-        // Replace lessons
-        for (const [layoutId, replacements] of state.replacedLessons) {
-          if (newLayouts[layoutId]) {
-            newLayouts[layoutId] = {
-              ...newLayouts[layoutId],
-              lessonOrder: newLayouts[layoutId].lessonOrder.map(l =>
-                replacements.has(l.id) ? replacements.get(l.id)! : l,
-              ),
-            };
-          }
-        }
-        // Add lessons
-        for (const [layoutId, lessons] of state.addedLessons) {
-          if (newLayouts[layoutId]) {
-            const existingIds = new Set(newLayouts[layoutId].lessonOrder.map(l => l.id));
-            const newLessons = lessons.filter(l => !existingIds.has(l.id));
-            if (newLessons.length > 0) {
-              newLayouts[layoutId] = {
-                ...newLayouts[layoutId],
-                lessonOrder: [...newLayouts[layoutId].lessonOrder, ...newLessons],
-              };
-            }
-          }
-        }
-        return { ...prev, layouts: newLayouts };
-      });
+    if (hasModLessonEffects(modEffects.state)) {
+      setLayouts(prev => applyModLessonEffects(prev, modEffects.state));
     }
 
-    setMergedItemCatalog(finalItems);
-    setMergedAchievementCatalog(finalAchievements);
-    setDisabledSections([...state.disabledSections]);
-    setModRuleOverrides(new Map(state.ruleOverrides));
-    setModSettingOverrides(new Map(state.settingOverrides));
-    setModCssSnippets([...state.cssSnippets]);
-    setModPanels(state.panels.filter(p => !state.removedPanelIds.has(p.id)));
-    setModModes(state.registeredModes.filter(m => !state.unregisteredModeIds.has(m.id)));
+    setMergedItemCatalog(modEffects.itemCatalog);
+    setMergedAchievementCatalog(modEffects.achievementCatalog);
+    setDisabledSections(modEffects.disabledSections);
+    setModRuleOverrides(modEffects.ruleOverrides);
+    setModSettingOverrides(modEffects.settingOverrides);
+    setModCssSnippets(modEffects.cssSnippets);
+    setModPanels(modEffects.panels);
+    setModModes(modEffects.modes);
+    setModInterfaceLocales(modEffects.interfaceLocales);
   }, []);
 
   useEffect(() => {
     (async () => {
-      const [loadedLayouts, loadedProgress, loadedThemes, loadedPracticeContentPacks, loadedAddons, loadedMods] = await Promise.all([
-        window.api.getLayouts(),
-        window.api.getProgress(),
-        window.api.getCustomThemes(),
-        window.api.getPracticeContentPacks(),
-        window.api.scanAddons(),
-        window.api.scanMods(),
-      ]);
+      const bootstrap = await loadInitialAppBootstrapState({
+        previousGameState: gameStateRef.current,
+        readLayouts: () => window.api.getLayouts(),
+        readProgress: () => window.api.getProgress(),
+        readThemes: () => window.api.getCustomThemes(),
+        readPracticeContentPacks: () => window.api.getPracticeContentPacks(),
+        readAddons: () => window.api.scanAddons(),
+        readMods: () => window.api.scanMods(),
+        readInstalledThemes: () => window.api.scanThemes(),
+        readWords: window.api.getWords,
+      });
 
-      setInstalledAddons(loadedAddons);
-      setInstalledMods(loadedMods);
-      await applyModEffects(loadedMods, loadedAddons);
+      setExtensionSources(await window.api.scanExtensionSources());
+      setExtensionCatalogEntries(await window.api.scanExtensionCatalog());
+      setInstalledAddons(bootstrap.addons);
+      setInstalledMods(bootstrap.mods);
+      setInstalledThemes(bootstrap.themes);
+      await applyModEffects(bootstrap.mods, bootstrap.addons);
 
-      /* Merge addon resources into base data */
-      const mergedLayouts = mergeAddonLayouts(loadedLayouts, loadedAddons);
-      const mergedThemes = mergeAddonThemes(loadedThemes, loadedAddons);
-      const mergedPracticeContentPacks = mergeAddonPracticePacks(loadedPracticeContentPacks, loadedAddons);
+      setLayouts(bootstrap.resources.layouts);
+      setPracticeContentPacks(bootstrap.resources.practiceContentPacks);
+      setProgress(bootstrap.progressState.nextProgress);
+      setSettingsState(bootstrap.progressState.settings);
+      setPracticeSettingsState(bootstrap.progressState.practiceSettings);
+      setGameState(bootstrap.progressState.gameState);
+      setCustomThemes(bootstrap.customThemes);
+      setCurrentLanguageState(bootstrap.currentSelection.language);
+      setCurrentLayoutState(bootstrap.currentSelection.layout);
+      setAllWords(bootstrap.words);
 
-      const normalizedProgress = (() => {
-        const base = {
-          ...loadedProgress,
-          game: resolveGameState(loadedProgress),
-        };
-        // Миграция: скопировать game.achievements в progress.achievements (глобальное хранилище).
-        const gameAchievements = base.game.achievements ?? [];
-        const progressAchievements = base.achievements ?? [];
-        const merged = Array.from(new Set([...progressAchievements, ...gameAchievements]));
-        return { ...base, achievements: merged };
-      })();
-      const normalizedGameState = stabilizeGameState(gameStateRef.current, normalizedProgress.game);
-      const normalizedSettings = resolveSettings(normalizedProgress);
-      const normalizedPracticeSettings = defaultPracticeSettings(normalizedProgress.practiceSettings);
+      void window.api.saveProgress(bootstrap.progressState.nextProgress);
 
-      setLayouts(mergedLayouts);
-      setPracticeContentPacks(mergedPracticeContentPacks);
-      setProgress(normalizedProgress);
-      setSettingsState(normalizedSettings);
-      setPracticeSettingsState(normalizedPracticeSettings);
-      setGameState(normalizedGameState);
-      setCustomThemes(mergedThemes);
-
-      let nextLanguage = normalizedSettings.language;
-      if (!nextLanguage || !(mergedLayouts.languages ?? []).some((language: LanguageInfo) => language.id === nextLanguage)) {
-        nextLanguage = mergedLayouts.languages?.[0]?.id ?? 'en';
-      }
-      setCurrentLanguageState(nextLanguage);
-
-      let nextLayout = normalizedSettings.layout;
-      const compatibleLayouts = Object.entries(mergedLayouts.layouts)
-        .filter(([, layout]) => layout.lang === nextLanguage);
-      if (!nextLayout || !mergedLayouts.layouts[nextLayout] || mergedLayouts.layouts[nextLayout].lang !== nextLanguage) {
-        nextLayout = compatibleLayouts[0]?.[0] ?? Object.keys(mergedLayouts.layouts)[0] ?? '';
-      }
-      setCurrentLayoutState(nextLayout);
-
-      const baseWords = await window.api.getWords(nextLanguage);
-      const mergedWords = mergeAddonWords(baseWords, nextLanguage, loadedAddons);
-      setAllWords(mergedWords);
-
-      void window.api.saveProgress(normalizedProgress);
-
-      applyThemeDOM(normalizedSettings.theme ?? 'dark-orange', mergedThemes);
+      applyThemeDOM(
+        bootstrap.progressState.settings.theme ?? 'dark-orange',
+        buildAvailableThemeDefinitions({
+          customThemes: bootstrap.customThemes,
+          addons: bootstrap.addons,
+          installedThemes: bootstrap.themes,
+        }),
+      );
       setReady(true);
     })();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- runs once on mount
@@ -584,7 +475,36 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!ready) return;
     applyThemeDOM(settings.theme ?? 'dark-orange');
-  }, [ready, settings.theme, customThemes]); // eslint-disable-line react-hooks/exhaustive-deps -- applyThemeDOM is stable (reads customThemes via ref)
+  }, [ready, settings.theme, availableThemes]); // eslint-disable-line react-hooks/exhaustive-deps -- applyThemeDOM is stable (reads available themes via ref)
+
+  const syncCurrentLanguageAndLayout = useCallback((nextSettings: UserSettings) => {
+    const currentSelection = resolveCurrentLanguageLayoutState(nextSettings, layoutsRef.current);
+    setCurrentLanguageState(prev => (prev === currentSelection.language ? prev : currentSelection.language));
+    setCurrentLayoutState(prev => (prev === currentSelection.layout ? prev : currentSelection.layout));
+  }, []);
+
+  const replaceResolvedProgress = useCallback((nextProgress: Progress) => {
+    const resolved = replaceResolvedProgressState({
+      nextProgress,
+      setProgress,
+      setSettingsState,
+      setPracticeSettingsState,
+      setGameState,
+      persistProgress: window.api.saveProgress,
+      progressRef,
+      settingsRef,
+      practiceSettingsRef,
+      gameStateRef,
+    });
+    syncCurrentLanguageAndLayout(resolved.settings);
+    return resolved.nextProgress;
+  }, [syncCurrentLanguageAndLayout]);
+
+  const commitResolvedProgress = useCallback((updater: (prev: Progress) => Progress) => {
+    const nextProgress = updater(progressRef.current);
+    if (nextProgress === progressRef.current) return nextProgress;
+    return replaceResolvedProgress(nextProgress);
+  }, [replaceResolvedProgress]);
 
   const applyTheme = useCallback((name: string) => {
     applyThemeDOM(name);
@@ -603,38 +523,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setCurrentLayout = useCallback((layout: string) => {
-    setCurrentLayoutState(layout);
     const nextSettings = { ...settingsRef.current, layout };
-    setSettingsState(nextSettings);
-    setProgress(prev => {
-      const next = { ...prev, settings: nextSettings };
-      window.api.saveProgress(next);
-      return next;
-    });
-  }, []);
+    commitResolvedProgress(prev => ({ ...prev, settings: nextSettings }));
+  }, [commitResolvedProgress]);
 
   const setCurrentLanguage = useCallback((language: string) => {
-    setCurrentLanguageState(language);
-    const compatibleLayouts = Object.entries(layouts.layouts)
+    const compatibleLayouts = Object.entries(layoutsRef.current.layouts)
       .filter(([, layout]) => layout.lang === language);
     const nextLayout = compatibleLayouts[0]?.[0] ?? '';
-    setCurrentLayoutState(nextLayout);
     const nextSettings = { ...settingsRef.current, language, layout: nextLayout };
-    setSettingsState(nextSettings);
-    setProgress(prev => {
-      const next = {
-        ...prev,
-        settings: nextSettings,
-      };
-      window.api.saveProgress(next);
-      return next;
-    });
-  }, [layouts.layouts]);
+    commitResolvedProgress(prev => ({ ...prev, settings: nextSettings }));
+  }, [commitResolvedProgress]);
 
   const reloadWords = useCallback(async () => {
-    const baseWords = await window.api.getWords(currentLanguage);
-    const merged = mergeAddonWords(baseWords, currentLanguage, installedAddonsRef.current);
-    setAllWords(merged);
+    setAllWords(await loadMergedWords(currentLanguage, installedAddonsRef.current, window.api.getWords));
   }, [currentLanguage]);
 
   useEffect(() => {
@@ -642,27 +544,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [ready, currentLanguage, reloadWords]);
 
   const saveSetting = useCallback(<K extends keyof UserSettings>(key: K, val: UserSettings[K]) => {
+    if (settingsRef.current[key] === val) return;
     const nextSettings = { ...settingsRef.current, [key]: val };
-    setSettingsState(nextSettings);
-    setProgress(prev => {
-      const next = { ...prev, settings: nextSettings };
-      window.api.saveProgress(next);
-      return next;
-    });
-  }, []);
+    commitResolvedProgress(prev => ({ ...prev, settings: nextSettings }));
+  }, [commitResolvedProgress]);
 
   const savePracticeSetting = useCallback(<K extends keyof PracticeSettings>(key: K, val: PracticeSettings[K]) => {
+    if (practiceSettingsRef.current[key] === val) return;
     const nextPracticeSettings = { ...practiceSettingsRef.current, [key]: val };
-    setPracticeSettingsState(nextPracticeSettings);
-    setProgress(prev => {
-      const next = {
-        ...prev,
-        practiceSettings: nextPracticeSettings,
-      };
-      window.api.saveProgress(next);
-      return next;
-    });
-  }, []);
+    commitResolvedProgress(prev => ({
+      ...prev,
+      practiceSettings: nextPracticeSettings,
+    }));
+  }, [commitResolvedProgress]);
 
   const getModePracticeSettings = useCallback((mode: ModePracticeSettingsId) => {
     return defaultModePracticeSettings(progressRef.current.modePracticeSettings?.[mode]);
@@ -674,46 +568,36 @@ export function AppProvider({ children }: { children: ReactNode }) {
       ...patch,
     });
 
-    setProgress(prev => {
+    commitResolvedProgress(prev => {
       nextModeSettings = defaultModePracticeSettings({
         ...prev.modePracticeSettings?.[mode],
         ...patch,
       });
-      const next = {
+      return {
         ...prev,
         modePracticeSettings: {
           ...(prev.modePracticeSettings ?? {}),
           [mode]: nextModeSettings,
         },
       };
-      progressRef.current = next;
-      window.api.saveProgress(next);
-      return next;
     });
 
     return nextModeSettings;
-  }, []);
+  }, [commitResolvedProgress]);
 
   const saveProgressCb = useCallback((nextProgress: Progress) => {
-    setSettingsState(resolveSettings(nextProgress));
-    setPracticeSettingsState(defaultPracticeSettings(nextProgress.practiceSettings));
-    setGameState(prev => stabilizeGameState(prev, resolveGameState(nextProgress)));
-    setProgress(nextProgress);
-    window.api.saveProgress(nextProgress);
-  }, []);
+    replaceResolvedProgress(nextProgress);
+  }, [replaceResolvedProgress]);
 
   const updateMotivationProgress = useCallback((updater: (current: MotivationProgress) => MotivationProgress) => {
     let nextMotivation = normalizeMotivationProgress(progressRef.current.motivation);
-    setProgress(prev => {
+    commitResolvedProgress(prev => {
       const current = normalizeMotivationProgress(prev.motivation);
       nextMotivation = normalizeMotivationProgress(updater(current));
-      const next = { ...prev, motivation: nextMotivation };
-      progressRef.current = next;
-      window.api.saveProgress(next);
-      return next;
+      return { ...prev, motivation: nextMotivation };
     });
     return nextMotivation;
-  }, []);
+  }, [commitResolvedProgress]);
 
   const saveCustomThemesCb = useCallback((themes: CustomThemes) => {
     customThemesRef.current = themes;
@@ -721,23 +605,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
     window.api.saveCustomThemes(themes);
   }, []);
 
+  const commitProgress = useCallback((updater: (prev: Progress) => Progress) => {
+    commitProgressUpdate({
+      setProgress,
+      progressRef,
+      persistProgress: window.api.saveProgress,
+      updater,
+    });
+  }, []);
+
   const {
     savePracticeInsights,
     savePracticeRhythmSession,
   } = useMemo(() => createPracticeActions({
-    setProgress,
-    persistProgress: window.api.saveProgress,
+    commitProgress,
     currentLayout,
-  }), [currentLayout]);
+  }), [commitProgress, currentLayout]);
 
   const {
     saveCharStats,
     saveHistory,
   } = useMemo(() => createStatsActions({
-    setProgress,
-    persistProgress: window.api.saveProgress,
+    commitProgress,
     currentLayout,
-  }), [currentLayout]);
+  }), [commitProgress, currentLayout]);
 
   const {
     saveGameState,
@@ -764,163 +655,48 @@ export function AppProvider({ children }: { children: ReactNode }) {
     achievementCatalog: mergedAchievementCatalog,
   }), [currentLayout, layouts, mergedAchievementCatalog]);
 
-  // Глобальное разблокирование достижений (все категории).
-  const unlockAchievements = useCallback((achievementIds: string[]): GameAchievementDefinition[] => {
-    const catalog = mergedAchievementCatalog;
-    const achievementMap = Object.fromEntries(catalog.map(a => [a.id, a]));
-    const current = progressRef.current.achievements ?? [];
-    const knownIds = new Set(current);
-    const unlocked: GameAchievementDefinition[] = [];
-
-    for (const id of achievementIds) {
-      const def = achievementMap[id];
-      if (!def || knownIds.has(id)) continue;
-      knownIds.add(id);
-      unlocked.push(def);
-    }
-    if (!unlocked.length) return unlocked;
-
-    const next = Array.from(knownIds);
-    
-    // Обновляем ref НЕМЕДЛЕННО перед setProgress
-    const updated = { ...progressRef.current, achievements: next };
-    progressRef.current = updated;
-    
-    // Сохраняем на диск
-    window.api.saveProgress(updated);
-    
-    // Обновляем state СИНХРОННО чтобы избежать batch updates проблемы
-    flushSync(() => {
-      setProgress(() => updated);
-    });
-    
-    return unlocked;
-  }, [mergedAchievementCatalog]);
-
-  /**
-   * Разблокировать игровые достижения: пишет в game.achievements (для GamePage)
-   * и синхронизирует с глобальным progress.achievements в ОДНОМ setProgress.
-   */
-  const unlockGameAchievements = useCallback((achievementIds: string[]): GameAchievementDefinition[] => {
-    if (!achievementIds.length) return [];
-    
-    // Шаг 1: Получить достижения, которые должны быть разблокированы в game.achievements
-    const catalog = mergedAchievementCatalog;
-    const achievementMap = Object.fromEntries(catalog.map(a => [a.id, a]));
-    const game = gameStateRef.current;
-    
-    // Если gameState не инициализирован, обновим только progress.achievements
-    if (!game) {
-      const currentProgressAchievements = progressRef.current.achievements ?? [];
-      const knownGlobalAchievements = new Set(currentProgressAchievements);
-      const unlockedGame: GameAchievementDefinition[] = [];
-      
-      for (const achievementId of achievementIds) {
-        const achievement = achievementMap[achievementId];
-        if (!achievement || knownGlobalAchievements.has(achievementId)) continue;
-        knownGlobalAchievements.add(achievementId);
-        unlockedGame.push(achievement);
-      }
-      
-      if (!unlockedGame.length) return unlockedGame;
-      
-      const nextGlobalAchievements = Array.from(knownGlobalAchievements);
-      setProgress(prev => ({
-        ...prev,
-        achievements: nextGlobalAchievements,
-      }));
-      
-      return unlockedGame;
-    }
-    
-    const knownGameAchievements = new Set(game.achievements);
-    const unlockedGame: GameAchievementDefinition[] = [];
-
-    for (const achievementId of achievementIds) {
-      const achievement = achievementMap[achievementId];
-      if (!achievement || knownGameAchievements.has(achievementId)) continue;
-      knownGameAchievements.add(achievementId);
-      unlockedGame.push(achievement);
-    }
-
-    if (!unlockedGame.length) return unlockedGame;
-
-    // Шаг 2: Подготовить новые значения для обоих game.achievements и progress.achievements
-    const nextGameAchievements = Array.from(knownGameAchievements);
-    const nextGameState = {
-      ...game,
-      achievements: nextGameAchievements,
-    };
-
-    // Шаг 3: Синхронизировать с progress.achievements в ОДНОМ setProgress
-    const unlockedIds = unlockedGame.map(a => a.id);
-    const currentProgressAchievements = progressRef.current.achievements ?? [];
-    const knownGlobalAchievements = new Set(currentProgressAchievements);
-    for (const id of unlockedIds) {
-      knownGlobalAchievements.add(id);
-    }
-    const nextGlobalAchievements = Array.from(knownGlobalAchievements);
-
-    // Один setProgress вызов для обоих - обновляем ref сразу же
-    const updated = {
-      ...progressRef.current,
-      game: nextGameState,
-      achievements: nextGlobalAchievements,
-    };
-    progressRef.current = updated;
-    gameStateRef.current = nextGameState;
-    
-    window.api.saveProgress(updated);
-    
-    // Обновляем state СИНХРОННО
-    flushSync(() => {
-      setProgress(() => updated);
-      setGameState(() => nextGameState);
-    });
-
-
-    return unlockedGame;
-  }, [mergedAchievementCatalog]);
+  const {
+    unlockAchievements,
+    unlockGameAchievements,
+  } = useMemo(() => createAchievementActions({
+    setProgress,
+    setGameState,
+    persistProgress: window.api.saveProgress,
+    progressRef,
+    gameStateRef,
+    achievementCatalog: mergedAchievementCatalog,
+  }), [mergedAchievementCatalog]);
 
   // ── Presets ──────────────────────────────────────────
   const customPresets = useMemo<CustomPresets>(() => {
-    return { ...BUILT_IN_PRESETS, ...(progress.customPresets ?? {}) };
+    return resolveCustomPresets(progress.customPresets);
   }, [progress.customPresets]);
+
+  const importedInterfaceLocales = useMemo<Record<string, ImportedInterfaceLocaleDefinition>>(
+    () => resolveImportedInterfaceLocales(progress),
+    [progress.importedInterfaceLocales],
+  );
 
   const applyPreset = useCallback((presetId: string) => {
     const preset = customPresets[presetId];
     if (!preset) return;
-    const nextSettings = { ...settingsRef.current, ...preset.settings };
-    setSettingsState(nextSettings);
-    setProgress(prev => {
-      const next = { ...prev, settings: nextSettings };
-      window.api.saveProgress(next);
-      return next;
-    });
-  }, [customPresets]);
+    const nextSettings = applyPresetToSettings(settingsRef.current, preset);
+    commitResolvedProgress(prev => ({ ...prev, settings: nextSettings }));
+  }, [commitResolvedProgress, customPresets]);
 
   const saveCurrentAsPreset = useCallback((name: string): string => {
-    const id = `custom_${Date.now()}`;
-    const preset: UserPreset = { name, settings: extractPresetSettings(settingsRef.current) };
-    setProgress(prev => {
-      const next = {
-        ...prev,
-        customPresets: { ...(prev.customPresets ?? {}), [id]: preset },
-      };
-      window.api.saveProgress(next);
-      return next;
+    let nextId = '';
+    commitProgress(prev => {
+      const next = addCurrentSettingsPreset(prev, settingsRef.current, name);
+      nextId = next.id;
+      return next.progress;
     });
-    return id;
-  }, []);
+    return nextId;
+  }, [commitProgress]);
 
   const deletePreset = useCallback((presetId: string) => {
-    setProgress(prev => {
-      const { [presetId]: _, ...rest } = prev.customPresets ?? {};
-      const next = { ...prev, customPresets: rest };
-      window.api.saveProgress(next);
-      return next;
-    });
-  }, []);
+    commitProgress(prev => deleteCustomPreset(prev, presetId));
+  }, [commitProgress]);
 
   const fmtSpeed = useCallback((wpm: number) => formatSpeed(wpm, settings.speedUnit), [settings.speedUnit]);
   const spdLabel = speedLabel(settings.speedUnit);
@@ -930,339 +706,241 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const getPracticeInsightsCb = useCallback(() => getLayoutPracticeInsights(progressRef.current, currentLayout), [currentLayout]);
 
   const modeProfiles = useMemo(
-    () => progress.modeProfiles ?? {},
+    () => resolveModeProfiles(progress.modeProfiles),
     [progress.modeProfiles],
   );
 
   const saveModeProfile = useCallback((mode: string) => {
-    const preset = extractPresetSettings(settingsRef.current);
-    setProgress(prev => {
-      const next = { ...prev, modeProfiles: { ...(prev.modeProfiles ?? {}), [mode]: preset } };
-      window.api.saveProgress(next);
-      return next;
-    });
-  }, []);
+    commitProgress(prev => saveModeProfileToProgress(prev, mode, settingsRef.current));
+  }, [commitProgress]);
 
   const clearModeProfile = useCallback((mode: string) => {
-    setProgress(prev => {
-      const profiles = { ...(prev.modeProfiles ?? {}) };
-      delete profiles[mode];
-      const next = { ...prev, modeProfiles: profiles };
-      window.api.saveProgress(next);
-      return next;
-    });
-  }, []);
+    commitProgress(prev => clearModeProfileFromProgress(prev, mode));
+  }, [commitProgress]);
 
   const exportTheme = useCallback(async (themeName: string): Promise<boolean> => {
-    const colors = customThemesRef.current[themeName];
-    if (!colors) return false;
-    const payload: ExportPayload = { version: 1, type: 'theme', theme: { name: themeName, colors } };
-    return window.api.exportFile(`theme-${themeName}.json`, JSON.stringify(payload, null, 2));
+    const payload = buildThemeExportPayload(themeName, customThemesRef.current);
+    if (!payload) return false;
+    return window.api.exportFile(getThemeExportFilename(themeName), JSON.stringify(payload, null, 2));
   }, []);
 
   const exportConfig = useCallback(async (): Promise<boolean> => {
-    const p = progressRef.current;
-    const payload: ExportPayload = {
-      version: 1,
-      type: 'full',
-      settings: p.settings,
-      practiceSettings: p.practiceSettings,
-      modePracticeSettings: p.modePracticeSettings,
-      customPresets: p.customPresets,
-      customPracticePacks: p.customPracticePacks,
-    };
-    return window.api.exportFile('typing-trainer-config.json', JSON.stringify(payload, null, 2));
+    const payload = buildConfigExportPayload(progressRef.current);
+    return window.api.exportFile(CONFIG_EXPORT_FILENAME, JSON.stringify(payload, null, 2));
   }, []);
 
   const importConfig = useCallback(async (): Promise<string | null> => {
     const imported = await window.api.importFile();
     if (!imported) return null;
-    try {
-      const data = JSON.parse(imported.content) as ExportPayload;
-      if (!data || data.version !== 1) return 'Неподдерживаемый формат файла';
+    const parsed = parseConfigImport(imported.content);
+    if (!parsed.ok) return parsed.error;
+    const data = parsed.payload;
 
-      if (data.type === 'theme' && data.theme) {
-        const ct = { ...customThemesRef.current, [data.theme.name]: data.theme.colors };
-        saveCustomThemesCb(ct);
-        applyThemeDOM(data.theme.name, ct);
-        settingsRef.current = { ...settingsRef.current, theme: data.theme.name };
-        setSettingsState(prev => ({ ...prev, theme: data.theme!.name }));
-        setProgress(prev => {
-          const next = { ...prev, settings: { ...prev.settings, theme: data.theme!.name } as UserSettings };
-          window.api.saveProgress(next);
-          return next;
-        });
-        return null;
-      }
-
-      if ((data.type === 'config' || data.type === 'full') && data.settings) {
-        const merged = defaultSettings({ ...settingsRef.current, ...data.settings });
-        settingsRef.current = merged;
-        setSettingsState(merged);
-        setProgress(prev => {
-          const next: Progress = {
-            ...prev,
-            settings: merged,
-            ...(data.practiceSettings ? { practiceSettings: defaultPracticeSettings(data.practiceSettings) } : {}),
-            ...(data.modePracticeSettings ? { modePracticeSettings: data.modePracticeSettings } : {}),
-            ...(data.customPresets ? { customPresets: { ...(prev.customPresets ?? {}), ...data.customPresets } } : {}),
-            ...(data.customPracticePacks ? { customPracticePacks: { ...(prev.customPracticePacks ?? {}), ...data.customPracticePacks } } : {}),
-          };
-          window.api.saveProgress(next);
-          return next;
-        });
-        applyThemeDOM(merged.theme);
-        return null;
-      }
-
-      return 'Неизвестный тип конфигурации';
-    } catch {
-      return 'Ошибка чтения файла';
+    if (data.type === 'theme' && data.theme) {
+      const ct = { ...customThemesRef.current, [data.theme.name]: data.theme.colors };
+      saveCustomThemesCb(ct);
+      applyThemeDOM(data.theme.name, buildAvailableThemeDefinitions({
+        customThemes: ct,
+        addons: installedAddonsRef.current,
+        installedThemes: installedThemesRef.current,
+      }));
+      const nextSettings = { ...settingsRef.current, theme: data.theme.name };
+      commitResolvedProgress(prev => ({
+        ...prev,
+        settings: nextSettings,
+      }));
+      return null;
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const importedProgress = applyImportedConfigProgress({
+      currentProgress: progressRef.current,
+      currentSettings: settingsRef.current,
+      payload: data,
+    });
+    if (importedProgress) {
+      commitResolvedProgress(() => importedProgress.progress);
+      applyThemeDOM(importedProgress.settings.theme);
+      return null;
+    }
+
+    return 'Неизвестный тип конфигурации';
+  }, [commitResolvedProgress, saveCustomThemesCb, applyThemeDOM]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const importInterfaceLocale = useCallback(async (): Promise<string | null> => {
+    const imported = await window.api.importFile({
+      title: 'Импорт перевода интерфейса',
+      filters: [
+        { name: 'Gettext PO', extensions: ['po'] },
+      ],
+    });
+
+    if (!imported) return null;
+
+    const result = importInterfaceLocaleFromPo(imported.content, imported.name);
+    if (!result.ok) {
+      switch (result.error) {
+        case 'invalid-format':
+          return 'settings.cards.language.poImportErrors.invalidFormat';
+        case 'missing-language':
+          return 'settings.cards.language.poImportErrors.missingLanguage';
+        case 'empty-dictionary':
+          return 'settings.cards.language.poImportErrors.emptyDictionary';
+        case 'conflicting-keys':
+          return 'settings.cards.language.poImportErrors.conflictingKeys';
+        case 'invalid-plural-forms':
+          return 'settings.cards.language.poImportErrors.invalidPluralForms';
+        case 'duplicate-entry':
+          return 'settings.cards.language.poImportErrors.duplicateEntry';
+        default:
+          return 'settings.cards.language.poImportErrors.unknown';
+      }
+    }
+
+    commitProgress(prev => ({
+      ...prev,
+      importedInterfaceLocales: {
+        ...(prev.importedInterfaceLocales ?? {}),
+        [result.locale.id]: result.locale,
+      },
+    }));
+
+    return null;
+  }, [commitProgress]);
+
+  const removeImportedInterfaceLocale = useCallback((localeId: string) => {
+    if (!localeId) return;
+
+    const localeStillAvailable = isInterfaceLocaleAvailableOutsideImports({
+      installedAddons: installedAddonsRef.current,
+      localeId,
+      modLocales: modInterfaceLocalesRef.current,
+    });
+    commitResolvedProgress(prev => {
+      return removeImportedInterfaceLocaleFromProgress({
+        localeId,
+        localeStillAvailable,
+        progress: prev,
+        settings: settingsRef.current,
+      });
+    });
+  }, [commitResolvedProgress]);
 
   // ── Addon management ─────────────────────────────────
   const refreshAddons = useCallback(async () => {
     const addons = await window.api.scanAddons();
     setInstalledAddons(addons);
+    setExtensionCatalogEntries(await window.api.scanExtensionCatalog());
     await applyModEffects(installedModsRef.current, addons);
 
-    // Re-merge layouts
-    const baseLayouts = await window.api.getLayouts();
-    const mergedLayouts = mergeAddonLayouts(baseLayouts, addons);
-    setLayouts(mergedLayouts);
-
-    // Re-merge themes
-    const baseThemes = await window.api.getCustomThemes();
-    const mergedThemes = mergeAddonThemes(baseThemes, addons);
-    setCustomThemes(mergedThemes);
-    customThemesRef.current = mergedThemes;
-
-    const basePracticeContentPacks = await window.api.getPracticeContentPacks();
-    setPracticeContentPacks(mergeAddonPracticePacks(basePracticeContentPacks, addons));
-
-    // Re-merge words
-    const baseWords = await window.api.getWords(currentLanguage);
-    const mergedWords = mergeAddonWords(baseWords, currentLanguage, addons);
-    setAllWords(mergedWords);
+    const mergedResources = await loadMergedAddonResourceState({
+      addons,
+      language: currentLanguage,
+      readLayouts: () => window.api.getLayouts(),
+      readPracticeContentPacks: () => window.api.getPracticeContentPacks(),
+      readWords: window.api.getWords,
+    });
+    setLayouts(mergedResources.layouts);
+    setPracticeContentPacks(mergedResources.practiceContentPacks);
+    setAllWords(mergedResources.words);
   }, [currentLanguage, applyModEffects]);
+
+  const refreshSources = useCallback(async () => {
+    setExtensionSources(await window.api.scanExtensionSources());
+    setExtensionCatalogEntries(await window.api.scanExtensionCatalog());
+  }, []);
+
+  const refreshCatalog = useCallback(async () => {
+    setExtensionCatalogEntries(await window.api.scanExtensionCatalog());
+  }, []);
+
+  const refreshThemes = useCallback(async () => {
+    setInstalledThemes(await window.api.scanThemes());
+    setExtensionCatalogEntries(await window.api.scanExtensionCatalog());
+  }, []);
 
   const refreshMods = useCallback(async () => {
     const mods = await window.api.scanMods();
     setInstalledMods(mods);
+    setExtensionCatalogEntries(await window.api.scanExtensionCatalog());
     await applyModEffects(mods, installedAddonsRef.current);
   }, [applyModEffects]);
 
-  const installAddonCb = useCallback(async (): Promise<AddonInstallResult> => {
-    const result = await window.api.installAddon();
-    if (result.ok) await refreshAddons();
+  const {
+    installExtensionSource: installExtensionSourceCb,
+    updateExtensionSource: updateExtensionSourceCb,
+    removeExtensionSource: removeExtensionSourceCb,
+    toggleExtensionSource: toggleExtensionSourceCb,
+    syncExtensionSource: syncExtensionSourceCb,
+    installAddon: installAddonCb,
+    removeAddon: removeAddonCb,
+    toggleAddon: toggleAddonCb,
+    installMod: installModCb,
+    removeMod: removeModCb,
+    toggleMod: toggleModCb,
+  } = useMemo(() => createExtensionLifecycleActions({
+    installExtensionSource: (input) => window.api.installExtensionSource(input),
+    updateExtensionSource: (sourceId, input) => window.api.updateExtensionSource(sourceId, input),
+    removeExtensionSource: (id) => window.api.removeExtensionSource(id),
+    toggleExtensionSource: (id, enabled) => window.api.toggleExtensionSource(id, enabled),
+    syncExtensionSource: (id) => window.api.syncExtensionSource(id),
+    refreshSources,
+    installAddon: () => window.api.installAddon(),
+    removeAddon: (id) => window.api.removeAddon(id),
+    toggleAddon: (id, enabled) => window.api.toggleAddon(id, enabled),
+    refreshAddons,
+    installMod: () => window.api.installMod(),
+    removeMod: (id) => window.api.removeMod(id),
+    toggleMod: (id, enabled) => window.api.toggleMod(id, enabled),
+    refreshMods,
+  }), [refreshAddons, refreshMods, refreshSources]);
+
+  const installExtensionCatalogEntryCb = useCallback(async (
+    sourceId: string,
+    kind: 'addons' | 'mods' | 'themes',
+    entryId: string,
+  ) => {
+    const result = await window.api.installExtensionCatalogEntry(sourceId, kind, entryId);
+    if (result.ok) {
+      if (kind === 'mods') {
+        await refreshMods();
+      } else if (kind === 'themes') {
+        await refreshThemes();
+      } else {
+        await refreshAddons();
+      }
+    }
     return result;
-  }, [refreshAddons]);
+  }, [refreshAddons, refreshMods, refreshThemes]);
 
-  const removeAddonCb = useCallback(async (id: string): Promise<boolean> => {
-    const ok = await window.api.removeAddon(id);
-    if (ok) await refreshAddons();
-    return ok;
-  }, [refreshAddons]);
-
-  const toggleAddonCb = useCallback(async (id: string, enabled: boolean): Promise<boolean> => {
-    const ok = await window.api.toggleAddon(id, enabled);
-    if (ok) await refreshAddons();
-    return ok;
-  }, [refreshAddons]);
-
-  const installModCb = useCallback(async (): Promise<ModInstallResult> => {
-    const result = await window.api.installMod();
-    if (result.ok) await refreshMods();
+  const installThemeCb = useCallback(async (): Promise<ThemeInstallResult> => {
+    const result = await window.api.installTheme();
+    if (result.ok) await refreshThemes();
     return result;
-  }, [refreshMods]);
+  }, [refreshThemes]);
 
-  const removeModCb = useCallback(async (id: string): Promise<boolean> => {
-    const ok = await window.api.removeMod(id);
-    if (ok) await refreshMods();
-    return ok;
-  }, [refreshMods]);
+  const removeThemeCb = useCallback(async (themeId: string): Promise<boolean> => {
+    const ok = await window.api.removeTheme(themeId);
+    if (!ok) return false;
 
-  const toggleModCb = useCallback(async (id: string, enabled: boolean): Promise<boolean> => {
-    const ok = await window.api.toggleMod(id, enabled);
-    if (ok) await refreshMods();
+    await refreshThemes();
+
+    if (settingsRef.current.theme === themeId) {
+      const fallbackTheme = BUILT_IN_THEMES[0] ?? 'dark-orange';
+      const nextSettings = { ...settingsRef.current, theme: fallbackTheme };
+      commitResolvedProgress(prev => ({
+        ...prev,
+        settings: nextSettings,
+      }));
+      applyThemeDOM(fallbackTheme);
+    }
+
     return ok;
-  }, [refreshMods]);
+  }, [applyThemeDOM, commitResolvedProgress, refreshThemes]);
 
   // Мемоизируем unlockedAchievementIds чтобы оно пересчитывалось при изменении progress
   const unlockedAchievementIds = useMemo(() => {
     return progress.achievements ?? [];
   }, [progress.achievements]);
-
-  const value = useMemo<AppContextValue>(() => ({
-    ready,
-    layouts,
-    allWords,
-    ngramModel,
-    progress,
-    motivationProgress,
-    practiceInsights,
-    practiceRhythmHistory,
-    practiceContentPacks,
-    customThemes,
-    gameState,
-    gameItemCatalog: mergedItemCatalog,
-    gameAchievementCatalog: mergedAchievementCatalog,
-    settings,
-    practiceSettings,
-    currentLayout,
-    currentLanguage,
-    currentMode,
-    languages,
-    layoutsForLanguage,
-    switchMode,
-    setCurrentLayout,
-    setCurrentLanguage,
-    saveSetting,
-    savePracticeSetting,
-    getModePracticeSettings,
-    saveModePracticeSettings,
-    saveProgress: saveProgressCb,
-    updateMotivationProgress,
-    saveCustomThemes: saveCustomThemesCb,
-    applyTheme,
-    reloadWords,
-    customPresets,
-    applyPreset,
-    saveCurrentAsPreset,
-    deletePreset,
-    fmtSpeed,
-    spdLabel,
-    getLayoutProgress: getLayoutProgressCb,
-    getPracticeState: getPracticeStateCb,
-    getPracticeInsights: getPracticeInsightsCb,
-    savePracticeInsights,
-    savePracticeRhythmSession,
-    saveCharStats,
-    saveHistory,
-    saveGameState,
-    grantGameItem,
-    equipGameItem,
-    unequipGameItem,
-    repairGameItems,
-    wearEquippedGameItems,
-    resetGameInventory,
-    resetGameProgress,
-    markGameLevelReached,
-    peekNextGameLetter,
-    unlockNextGameLetter,
-    unlockGameAchievements,
-    unlockedAchievementIds,
-    unlockAchievements,
-    saveCurrentGameRun,
-    clearCurrentGameRun,
-    exportTheme,
-    exportConfig,
-    importConfig,
-    modeProfiles,
-    saveModeProfile,
-    clearModeProfile,
-    installedAddons,
-    installAddon: installAddonCb,
-    removeAddon: removeAddonCb,
-    toggleAddon: toggleAddonCb,
-    refreshAddons,
-    installedMods,
-    installMod: installModCb,
-    removeMod: removeModCb,
-    toggleMod: toggleModCb,
-    refreshMods,
-    disabledSections,
-    modRuleOverrides,
-    modSettingOverrides,
-    modCssSnippets,
-    modPanels,
-    modModes,
-  }), [
-    ready,
-    layouts,
-    allWords,
-    ngramModel,
-    progress,
-    motivationProgress,
-    practiceInsights,
-    practiceRhythmHistory,
-    practiceContentPacks,
-    customThemes,
-    gameState,
-    mergedItemCatalog,
-    mergedAchievementCatalog,
-    settings,
-    practiceSettings,
-    currentLayout,
-    currentLanguage,
-    currentMode,
-    languages,
-    layoutsForLanguage,
-    switchMode,
-    setCurrentLayout,
-    setCurrentLanguage,
-    saveSetting,
-    savePracticeSetting,
-    getModePracticeSettings,
-    saveModePracticeSettings,
-    saveProgressCb,
-    updateMotivationProgress,
-    saveCustomThemesCb,
-    applyTheme,
-    reloadWords,
-    customPresets,
-    applyPreset,
-    saveCurrentAsPreset,
-    deletePreset,
-    fmtSpeed,
-    spdLabel,
-    getLayoutProgressCb,
-    getPracticeStateCb,
-    getPracticeInsightsCb,
-    savePracticeInsights,
-    savePracticeRhythmSession,
-    saveCharStats,
-    saveHistory,
-    saveGameState,
-    grantGameItem,
-    equipGameItem,
-    unequipGameItem,
-    repairGameItems,
-    wearEquippedGameItems,
-    resetGameInventory,
-    resetGameProgress,
-    markGameLevelReached,
-    peekNextGameLetter,
-    unlockNextGameLetter,
-    unlockGameAchievements,
-    unlockedAchievementIds,
-    unlockAchievements,
-    saveCurrentGameRun,
-    clearCurrentGameRun,
-    exportTheme,
-    exportConfig,
-    importConfig,
-    modeProfiles,
-    saveModeProfile,
-    clearModeProfile,
-    installedAddons,
-    installAddonCb,
-    removeAddonCb,
-    toggleAddonCb,
-    refreshAddons,
-    installedMods,
-    installModCb,
-    removeModCb,
-    toggleModCb,
-    refreshMods,
-    disabledSections,
-    modRuleOverrides,
-    modSettingOverrides,
-    modCssSnippets,
-    modPanels,
-    modModes,
-  ]);
 
   const uiValue = useMemo<AppUiContextValue>(() => ({
     activeChar,
@@ -1271,9 +949,280 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setKeyboardPreviewActive,
   }), [activeChar, keyboardPreviewActive]);
 
+  const navigationValue = useMemo<AppNavigationContextValue>(() => ({
+    ready,
+    currentMode,
+    switchMode,
+    disabledSections,
+    modCssSnippets,
+    modPanels,
+    modModes,
+  }), [
+    ready,
+    currentMode,
+    switchMode,
+    disabledSections,
+    modCssSnippets,
+    modPanels,
+    modModes,
+  ]);
+
+  const practiceValue = useMemo<AppPracticeContextValue>(() => ({
+    layouts,
+    allWords,
+    ngramModel,
+    progress,
+    motivationProgress,
+    practiceInsights,
+    practiceRhythmHistory,
+    practiceContentPacks,
+    gameAchievementCatalog: mergedAchievementCatalog,
+    unlockedAchievementIds,
+    fmtSpeed,
+    spdLabel,
+    switchMode,
+    saveProgress: saveProgressCb,
+    updateMotivationProgress,
+    getLayoutProgress: getLayoutProgressCb,
+    getPracticeState: getPracticeStateCb,
+    getPracticeInsights: getPracticeInsightsCb,
+    savePracticeInsights,
+    savePracticeRhythmSession,
+    saveCharStats,
+    saveHistory,
+    unlockAchievements,
+  }), [
+    layouts,
+    allWords,
+    ngramModel,
+    progress,
+    motivationProgress,
+    practiceInsights,
+    practiceRhythmHistory,
+    practiceContentPacks,
+    mergedAchievementCatalog,
+    unlockedAchievementIds,
+    fmtSpeed,
+    spdLabel,
+    switchMode,
+    saveProgressCb,
+    updateMotivationProgress,
+    getLayoutProgressCb,
+    getPracticeStateCb,
+    getPracticeInsightsCb,
+    savePracticeInsights,
+    savePracticeRhythmSession,
+    saveCharStats,
+    saveHistory,
+    unlockAchievements,
+  ]);
+
+  const statsValue = useMemo<AppStatsContextValue>(() => ({
+    layouts,
+    progress,
+    practiceInsights,
+    practiceRhythmHistory,
+  }), [layouts, progress, practiceInsights, practiceRhythmHistory]);
+
+  const gameValue = useMemo<AppGameContextValue>(() => ({
+    layouts,
+    allWords,
+    ngramModel,
+    progress,
+    motivationProgress,
+    gameState,
+    gameItemCatalog: mergedItemCatalog,
+    gameAchievementCatalog: mergedAchievementCatalog,
+    unlockedAchievementIds,
+    fmtSpeed,
+    spdLabel,
+    getLayoutProgress: getLayoutProgressCb,
+    saveHistory,
+    saveGameState,
+    grantGameItem,
+    equipGameItem,
+    unequipGameItem,
+    repairGameItems,
+    wearEquippedGameItems,
+    resetGameInventory,
+    resetGameProgress,
+    markGameLevelReached,
+    peekNextGameLetter,
+    unlockNextGameLetter,
+    unlockGameAchievements,
+    saveCurrentGameRun,
+    clearCurrentGameRun,
+    updateMotivationProgress,
+    modRuleOverrides,
+  }), [
+    layouts,
+    allWords,
+    ngramModel,
+    progress,
+    motivationProgress,
+    gameState,
+    mergedItemCatalog,
+    mergedAchievementCatalog,
+    unlockedAchievementIds,
+    fmtSpeed,
+    spdLabel,
+    getLayoutProgressCb,
+    saveHistory,
+    saveGameState,
+    grantGameItem,
+    equipGameItem,
+    unequipGameItem,
+    repairGameItems,
+    wearEquippedGameItems,
+    resetGameInventory,
+    resetGameProgress,
+    markGameLevelReached,
+    peekNextGameLetter,
+    unlockNextGameLetter,
+    unlockGameAchievements,
+    saveCurrentGameRun,
+    clearCurrentGameRun,
+    updateMotivationProgress,
+    modRuleOverrides,
+  ]);
+
+  const extensionsValue = useMemo<AppExtensionsContextValue>(() => ({
+    extensionSources,
+    extensionCatalogEntries,
+    installExtensionSource: installExtensionSourceCb,
+    installExtensionCatalogEntry: installExtensionCatalogEntryCb,
+    updateExtensionSource: updateExtensionSourceCb,
+    removeExtensionSource: removeExtensionSourceCb,
+    toggleExtensionSource: toggleExtensionSourceCb,
+    syncExtensionSource: syncExtensionSourceCb,
+    refreshSources,
+    refreshCatalog,
+    installedAddons,
+    installAddon: installAddonCb,
+    removeAddon: removeAddonCb,
+    toggleAddon: toggleAddonCb,
+    refreshAddons,
+    installedMods,
+    modInterfaceLocales,
+    installMod: installModCb,
+    removeMod: removeModCb,
+    toggleMod: toggleModCb,
+    refreshMods,
+    installedThemes,
+    installTheme: installThemeCb,
+    removeTheme: removeThemeCb,
+    refreshThemes,
+  }), [
+    extensionSources,
+    extensionCatalogEntries,
+    installExtensionSourceCb,
+    installExtensionCatalogEntryCb,
+    updateExtensionSourceCb,
+    removeExtensionSourceCb,
+    toggleExtensionSourceCb,
+    syncExtensionSourceCb,
+    refreshSources,
+    refreshCatalog,
+    installedAddons,
+    installAddonCb,
+    removeAddonCb,
+    toggleAddonCb,
+    refreshAddons,
+    installedMods,
+    modInterfaceLocales,
+    installModCb,
+    removeModCb,
+    toggleModCb,
+    refreshMods,
+    installedThemes,
+    installThemeCb,
+    removeThemeCb,
+    refreshThemes,
+  ]);
+
+  const settingsValue = useMemo<AppSettingsContextValue>(() => ({
+    settings,
+    practiceSettings,
+    importedInterfaceLocales,
+    interfaceLanguage: settings.interfaceLanguage,
+    currentLayout,
+    currentLanguage,
+    languages,
+    layoutsForLanguage,
+    setCurrentLayout,
+    setCurrentLanguage,
+    saveSetting,
+    savePracticeSetting,
+    getModePracticeSettings,
+    saveModePracticeSettings,
+    customThemes,
+    availableThemes,
+    installedThemes,
+    saveCustomThemes: saveCustomThemesCb,
+    applyTheme,
+    installTheme: installThemeCb,
+    removeTheme: removeThemeCb,
+    exportTheme,
+    customPresets,
+    applyPreset,
+    saveCurrentAsPreset,
+    deletePreset,
+    exportConfig,
+    importConfig,
+    importInterfaceLocale,
+    removeImportedInterfaceLocale,
+    modeProfiles,
+    saveModeProfile,
+    clearModeProfile,
+  }), [
+    settings,
+    practiceSettings,
+    importedInterfaceLocales,
+    settings.interfaceLanguage,
+    currentLayout,
+    currentLanguage,
+    languages,
+    layoutsForLanguage,
+    setCurrentLayout,
+    setCurrentLanguage,
+    saveSetting,
+    savePracticeSetting,
+    getModePracticeSettings,
+    saveModePracticeSettings,
+    customThemes,
+    availableThemes,
+    installedThemes,
+    saveCustomThemesCb,
+    applyTheme,
+    installThemeCb,
+    removeThemeCb,
+    exportTheme,
+    customPresets,
+    applyPreset,
+    saveCurrentAsPreset,
+    deletePreset,
+    exportConfig,
+    importConfig,
+    importInterfaceLocale,
+    removeImportedInterfaceLocale,
+    modeProfiles,
+    saveModeProfile,
+    clearModeProfile,
+  ]);
+
   return (
-    <AppContext.Provider value={value}>
-      <AppUiContext.Provider value={uiValue}>{children}</AppUiContext.Provider>
-    </AppContext.Provider>
+    <AppNavigationContext.Provider value={navigationValue}>
+      <AppPracticeContext.Provider value={practiceValue}>
+        <AppStatsContext.Provider value={statsValue}>
+          <AppGameContext.Provider value={gameValue}>
+            <AppUiContext.Provider value={uiValue}>
+              <AppExtensionsContext.Provider value={extensionsValue}>
+                <AppSettingsContext.Provider value={settingsValue}>{children}</AppSettingsContext.Provider>
+              </AppExtensionsContext.Provider>
+            </AppUiContext.Provider>
+          </AppGameContext.Provider>
+        </AppStatsContext.Provider>
+      </AppPracticeContext.Provider>
+    </AppNavigationContext.Provider>
   );
 }

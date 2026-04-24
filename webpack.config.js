@@ -65,6 +65,10 @@ module.exports = {
         test: /\.svg$/,
         type: 'asset/source',
       },
+      {
+        test: /\.po$/,
+        type: 'asset/source',
+      },
     ],
   },
   plugins: [

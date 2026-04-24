@@ -1,38 +1,47 @@
-import { speedLabel } from '../../../core/engine';
 import { ProgressChart } from './ProgressChart';
 import { getChartThemeColors } from './chartTheme';
 
 type OverallProgressChartsProps = {
+  accData: number[];
+  accuracyTitle: string;
+  accuracyValueLabel: string;
+  chartEmptyLabel: string;
   chartTimestamps: string[];
   speedData: number[];
-  accData: number[];
-  unit: 'wpm' | 'cpm' | 'cps';
+  speedTitle: string;
+  speedValueLabel: string;
 };
 
 export function OverallProgressCharts({
+  accData,
+  accuracyTitle,
+  accuracyValueLabel,
+  chartEmptyLabel,
   chartTimestamps,
   speedData,
-  accData,
-  unit,
+  speedTitle,
+  speedValueLabel,
 }: OverallProgressChartsProps) {
   const { accent, green } = getChartThemeColors();
 
   return (
     <div className="stats-grid">
       <ProgressChart
-        title="Прогресс скорости"
+        title={speedTitle}
         values={speedData}
         timestamps={chartTimestamps}
         color={accent}
-        valueLabel={speedLabel(unit)}
+        emptyText={chartEmptyLabel}
+        valueLabel={speedValueLabel}
         minValue={0}
       />
       <ProgressChart
-        title="Прогресс точности"
+        title={accuracyTitle}
         values={accData}
         timestamps={chartTimestamps}
         color={green}
-        valueLabel="Accuracy %"
+        emptyText={chartEmptyLabel}
+        valueLabel={accuracyValueLabel}
         minValue={50}
         maxValue={100}
       />

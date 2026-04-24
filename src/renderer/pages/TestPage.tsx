@@ -1,121 +1,76 @@
-import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { Medal, Zap } from 'lucide-react';
-import { useApp } from '../contexts/AppContext';
+import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useAppPractice, useAppSettings } from '../contexts/AppContext';
 import { useTypingSession } from '../hooks/useTypingSession';
-import { TextDisplay } from '../components/TextDisplay';
 import { AchievementsModal } from '../components/AchievementsModal';
 import { GameAchievementToastStack } from '../components/game/GameAchievementToastStack';
-import { ResultComparisonPanel } from '../components/ResultComparisonPanel';
-import { ModeQuickSettings } from '../components/practice/ModeQuickSettings';
-import type {
-  GameAchievementDefinition,
-  PracticeContentMode,
-  PracticeContentPack,
-  PracticeContentPackQuickAction,
-} from '../../shared/types';
-import { checkAchievements, type AchievementEvent } from '../../core/achievements/achievementEngine';
+import { ModePageHeader } from '../components/practice/ModePageHeader';
+import { ModeSessionStage } from '../components/practice/ModeSessionStage';
+import { SprintResultFlow } from '../components/practice/SprintResultFlow';
+import { SprintSettingsSection } from '../components/practice/SprintSettingsSection';
+import { useI18n } from '../contexts/I18nContext';
 import {
-  buildPracticeContentPackPreflightSummary,
-  buildPracticeContentPackQualitySummary,
   buildPracticeContentText,
-  filterYoKeys,
-  filterYoWords,
   getPracticeContentScenario,
-  getWorstChar,
 } from '../../core/engine';
 import {
-  getActiveMotivationGoalSnapshots,
-  getMotivationStreakSnapshots,
   updateMotivationAfterPractice,
 } from '../../core/motivation/progress';
+import { useModeContentPackActions } from '../hooks/practice/useModeContentPackActions';
+import { useModeAchievements } from '../hooks/practice/useModeAchievements';
+import { useModePreviewState } from '../hooks/practice/useModePreviewState';
+import { useModeKeyboardStart } from '../hooks/practice/useModeKeyboardStart';
+import { useModeResultFollowup } from '../hooks/practice/useModeResultFollowup';
+import { useModeBestResultLabel } from '../hooks/practice/useModeBestResultLabel';
+import { buildSprintResultCallout } from '../hooks/practice/modeResultCallouts';
+import { buildSprintWordCount } from '../hooks/practice/modeWordCounts';
 import {
-  buildModeResultFollowupRecommendation,
-  buildSprintResultComparison,
-} from '../../core/motivation/records';
-
-const CONTENT_MODE_LABELS: Record<PracticeContentMode, string> = {
-  'adaptive-words': 'Слова',
-  syllables: 'Слоги',
-  'pseudo-words': 'Псевдослова',
-  sentences: 'Предложения',
-  custom: 'Свои наборы',
-};
+  buildPracticeBuildOptionsKey,
+  usePracticeBuildOptions,
+} from '../hooks/practice/usePracticeBuildOptions';
+import { useModeContentPackSelection } from '../hooks/practice/useModeContentPackSelection';
+import { useModeMotivationSnapshots } from '../hooks/practice/useModeMotivationSnapshots';
+import { useModeTextInputs } from '../hooks/practice/useModeTextInputs';
+import { buildModePreviewKey } from '../hooks/practice/modePreviewKey';
+import { useModeResultHistory } from '../hooks/practice/useModeResultHistory';
+import { useModeMaterialLabels } from '../hooks/practice/useModeMaterialLabels';
+import { InlineStatsBar } from '../components/ui/InlineStatsBar';
 
 const SPRINT_DURATION_OPTIONS = [15, 30, 45, 60];
 
-function buildSprintWordCount(duration: number, baseWordCount: number) {
-  return Math.max(baseWordCount * 4, Math.ceil((duration / 15) * baseWordCount * 4));
-}
-
-function buildSprintResultCallout(
-  result: { wpm: number; acc: number; errors: number },
-  comparison: ReturnType<typeof buildSprintResultComparison> | null,
-) {
-  if (comparison?.recentBestDelta?.tone === 'up' && comparison.recentBestDelta.speedDelta > 0 && comparison.recentBestDelta.accuracyDelta >= 0) {
-    return {
-      title: 'Спринт стал сильнее',
-      detail: 'Новый результат выше лучшей недавней попытки без просадки по точности. Режим начинает работать как реальный контрольный забег на темп.',
-    };
-  }
-  if (result.errors === 0 && result.acc >= 98) {
-    return {
-      title: 'Чистый спринт',
-      detail: 'Темп набран без шума и лишних промахов. Такой результат хорошо использовать как эталон короткой разогревающей сессии.',
-    };
-  }
-  if (result.acc < 92 || result.errors >= 6) {
-    return {
-      title: 'Темп съели ошибки',
-      detail: 'Спринт ещё не удерживает качество под таймером. Полезнее сохранить ритм чуть спокойнее, чем разгоняться ценой серии промахов.',
-    };
-  }
-  if (comparison?.previousDelta?.tone === 'down') {
-    return {
-      title: 'Попытка ниже прошлой',
-      detail: 'Просадка небольшая, но заметная. Обычно это знак, что старт был резким или середина спринта рассыпалась по точности.',
-    };
-  }
-  return {
-    title: 'Рабочий темповый проход',
-    detail: 'Спринт уже даёт полезный срез по скорости и плотности набора. Ещё несколько повторов помогут сделать пик результата стабильнее.',
-  };
-}
-
 export function SprintPage() {
+  const { t } = useI18n();
   const {
     layouts,
-    currentLayout,
-    currentLanguage,
     allWords,
     ngramModel,
     progress,
-    settings,
-    practiceSettings,
     switchMode,
     fmtSpeed,
     spdLabel,
     saveHistory,
-    savePracticeSetting,
-    getModePracticeSettings,
     getLayoutProgress,
     getPracticeInsights,
-    saveModePracticeSettings,
     practiceContentPacks,
     gameAchievementCatalog,
     unlockedAchievementIds,
     unlockAchievements,
     motivationProgress,
     updateMotivationProgress,
-  } = useApp();
+  } = useAppPractice();
+  const {
+    currentLayout,
+    currentLanguage,
+    settings,
+    practiceSettings,
+    savePracticeSetting,
+    getModePracticeSettings,
+    saveModePracticeSettings,
+  } = useAppSettings();
   const useYo = settings.useYo;
-  const sprintScenario = getPracticeContentScenario('sprint');
+  const sprintScenario = getPracticeContentScenario('sprint', t);
   const sprintModeSettings = getModePracticeSettings('test');
 
-  const [showAchievements, setShowAchievements] = useState(false);
-  const [achievementToasts, setAchievementToasts] = useState<GameAchievementDefinition[]>([]);
-  const [showOverlay, setShowOverlay] = useState(true);
   const [timerValue, setTimerValue] = useState(sprintModeSettings.sprintDurationSeconds ?? 30);
-  const [sprintText, setSprintText] = useState('');
   const [result, setResult] = useState<{
     wpm: number;
     acc: number;
@@ -123,79 +78,66 @@ export function SprintPage() {
     chars: number;
     errors: number;
   } | null>(null);
-  const previewKeyRef = useRef('');
-
-  const handleAchievementEvent = useCallback((event: AchievementEvent) => {
-    const newlyUnlockedIds = checkAchievements(
-      gameAchievementCatalog,
-      new Set(unlockedAchievementIds),
-      event,
-    );
-    if (newlyUnlockedIds.length === 0) return;
-
-    const unlockedObjects = unlockAchievements(newlyUnlockedIds);
-    if (unlockedObjects.length > 0) {
-      setAchievementToasts(prev => [...prev, ...unlockedObjects]);
-    }
-  }, [gameAchievementCatalog, unlockedAchievementIds, unlockAchievements]);
-
-  const handleRemoveToast = useCallback((achievementIndex: number) => {
-    setAchievementToasts(prev => prev.filter((_, idx) => idx !== achievementIndex));
-  }, []);
-
-  const sprintAchievementCatalog = useMemo(
-    () => gameAchievementCatalog.filter(a => (a.category ?? 'game') === 'test'),
-    [gameAchievementCatalog],
-  );
-
-  const sprintUnlockedCount = useMemo(
-    () => sprintAchievementCatalog.filter(a => unlockedAchievementIds.includes(a.id)).length,
-    [sprintAchievementCatalog, unlockedAchievementIds],
-  );
+  const {
+    achievementCatalog: sprintAchievementCatalog,
+    achievementToasts,
+    handleAchievementEvent,
+    handleRemoveToast,
+    setShowAchievements,
+    showAchievements,
+    unlockedCount: sprintUnlockedCount,
+  } = useModeAchievements({
+    category: 'test',
+    gameAchievementCatalog,
+    unlockedAchievementIds,
+    unlockAchievements,
+  });
 
   const layout = layouts.layouts[currentLayout];
-  const words = useMemo(() => filterYoWords(allWords, useYo), [allWords, useYo]);
-  const practiceUnlockOrder = useMemo(
-    () => filterYoKeys(layout?.practiceUnlockOrder ?? [], useYo),
-    [layout, useYo],
-  );
   const layoutProgress = getLayoutProgress();
-  const unlockedChars = practiceUnlockOrder.slice(0, layoutProgress.unlocked);
-  const weakChar = getWorstChar(progress.keyStats?.[currentLayout], unlockedChars);
+  const {
+    practiceUnlockOrder,
+    unlockedChars,
+    weakChar,
+    words,
+  } = useModeTextInputs({
+    allWords,
+    keyStats: progress.keyStats?.[currentLayout],
+    layout,
+    layoutProgress,
+    useYo,
+  });
 
-  const customPracticePacks = useMemo(
-    () => Object.values(progress.customPracticePacks ?? {}).sort((left, right) => right.importedAt.localeCompare(left.importedAt)),
-    [progress.customPracticePacks],
-  );
-  const availableContentPacks = useMemo<PracticeContentPack[]>(() => {
-    const builtInAndAddon = practiceContentPacks.filter(pack => pack.language === 'any' || pack.language === currentLanguage);
-    return [...builtInAndAddon, ...customPracticePacks];
-  }, [practiceContentPacks, customPracticePacks, currentLanguage]);
-  const contentMode = sprintModeSettings.contentMode ?? practiceSettings.contentMode;
-  const selectedContentPackId = sprintModeSettings.selectedContentPackId || practiceSettings.selectedContentPackId;
-  const selectedContentPack = useMemo<PracticeContentPack | null>(() => {
-    const selected = availableContentPacks.find(pack => pack.id === selectedContentPackId);
-    return selected ?? availableContentPacks[0] ?? null;
-  }, [availableContentPacks, selectedContentPackId]);
-  const selectedContentPackSummary = useMemo(
-    () => selectedContentPack
-      ? buildPracticeContentPackQualitySummary(selectedContentPack, 'sprint')
-      : null,
-    [selectedContentPack],
-  );
-  const effectiveContentMode = contentMode === 'custom' && !selectedContentPack ? 'adaptive-words' : contentMode;
-  const selectedContentPackPreflight = useMemo(
-    () => effectiveContentMode === 'custom' && selectedContentPack
-      ? buildPracticeContentPackPreflightSummary(selectedContentPack, 'sprint')
-      : null,
-    [effectiveContentMode, selectedContentPack],
-  );
+  const {
+    availableContentPacks,
+    contentMode,
+    effectiveContentMode,
+    selectedContentPack,
+    selectedContentPackControlId,
+    selectedContentPackDisplayName,
+    selectedContentPackPreflight,
+    selectedContentPackSummary,
+  } = useModeContentPackSelection({
+    currentLanguage,
+    customPracticePacks: progress.customPracticePacks,
+    modeSettings: sprintModeSettings,
+    practiceContentPacks,
+    practiceSettings,
+    scenarioId: 'sprint',
+    t,
+  });
+  const {
+    contentModeLabel: sprintContentModeLabel,
+    trainingMaterialLabel: sprintTrainingMaterialLabel,
+  } = useModeMaterialLabels(effectiveContentMode, 'sprint.material', t);
   const duration = sprintModeSettings.sprintDurationSeconds ?? 30;
   const sprintWordCount = useMemo(
     () => buildSprintWordCount(duration, sprintScenario.targetWordCount),
     [duration, sprintScenario.targetWordCount],
   );
   const practiceInsights = getPracticeInsights();
+  const practiceBuildOptions = usePracticeBuildOptions(practiceSettings);
+  const practiceBuildOptionsKey = buildPracticeBuildOptionsKey(practiceBuildOptions);
 
   const buildSprintText = useCallback(() => buildPracticeContentText({
     allWords: words,
@@ -207,12 +149,7 @@ export function SprintPage() {
     wordCountOverride: sprintWordCount,
     ngramModel: ngramModel ?? undefined,
     insights: practiceInsights,
-    buildOptions: {
-      trainingMode: 'normal',
-      smartAdaptationEnabled: practiceSettings.smartAdaptationEnabled ?? true,
-      smartAdaptationStrength: practiceSettings.smartAdaptationStrength ?? 'medium',
-      smartAdaptationFocus: practiceSettings.smartAdaptationFocus ?? 'balanced',
-    },
+    buildOptions: practiceBuildOptions,
   }), [
     words,
     unlockedChars,
@@ -222,9 +159,7 @@ export function SprintPage() {
     sprintWordCount,
     ngramModel,
     practiceInsights,
-    practiceSettings.smartAdaptationEnabled,
-    practiceSettings.smartAdaptationStrength,
-    practiceSettings.smartAdaptationFocus,
+    practiceBuildOptions,
   ]);
 
   const onFinish = useCallback((wpm: number, acc: number, elapsed: number, ses: any) => {
@@ -269,7 +204,6 @@ export function SprintPage() {
   const startSprint = useCallback(() => {
     if (session.active) return;
     const nextText = buildSprintText();
-    previewKeyRef.current = '';
     setSprintText(nextText);
     setShowOverlay(false);
     setResult(null);
@@ -282,42 +216,29 @@ export function SprintPage() {
     startSprint();
   }, [startSprint, stop]);
 
-  useEffect(() => {
-    if (!layout || !words.length) return;
-    const previewKey = [
-      currentLayout,
-      useYo ? 'yo' : 'no-yo',
-      effectiveContentMode,
-      selectedContentPack?.id ?? 'no-pack',
-      sprintWordCount,
-      practiceUnlockOrder.join(''),
-      layoutProgress.unlocked,
-      practiceSettings.smartAdaptationEnabled ? 'smart-on' : 'smart-off',
-      practiceSettings.smartAdaptationStrength,
-      practiceSettings.smartAdaptationFocus,
-    ].join('|');
-    if (previewKeyRef.current === previewKey) return;
-    previewKeyRef.current = previewKey;
-    setSprintText(buildSprintText());
-    setShowOverlay(true);
-    setResult(null);
-    setTimerValue(duration);
-  }, [
-    buildSprintText,
+  const sprintPreviewKey = buildModePreviewKey({
+    buildOptionsKey: practiceBuildOptionsKey,
+    contentMode: effectiveContentMode,
     currentLayout,
-    duration,
-    effectiveContentMode,
-    layout,
-    layoutProgress.unlocked,
-    practiceSettings.smartAdaptationEnabled,
-    practiceSettings.smartAdaptationFocus,
-    practiceSettings.smartAdaptationStrength,
     practiceUnlockOrder,
-    selectedContentPack,
-    sprintWordCount,
+    selectedContentPackId: selectedContentPack?.id,
+    unlockedCount: layoutProgress.unlocked,
     useYo,
-    words.length,
-  ]);
+    wordCount: sprintWordCount,
+  });
+  const {
+    setShowOverlay,
+    setText: setSprintText,
+    showOverlay,
+    text: sprintText,
+  } = useModePreviewState({
+    buildText: buildSprintText,
+    enabled: !!layout && words.length > 0,
+    onPreviewReset: () => setTimerValue(duration),
+    onResultReset: () => setResult(null),
+    previewKey: sprintPreviewKey,
+    sessionActive: session.active,
+  });
 
   useEffect(() => {
     if (!session.active) {
@@ -337,158 +258,61 @@ export function SprintPage() {
     return () => clearInterval(interval);
   }, [duration, finish, session.active, session.startTime]);
 
-  useEffect(() => {
-    const handler = (event: KeyboardEvent) => {
-      const isPrintable = event.key.length === 1 && !event.ctrlKey && !event.altKey && !event.metaKey;
-      const isBackspace = event.key === 'Backspace';
+  useModeKeyboardStart({
+    handleKey,
+    onRetry: () => retrySprint(),
+    onStart: () => startSprint(),
+    overlayVisible: showOverlay,
+    previewText: sprintText,
+    resultVisible: !!result,
+    sessionActive: session.active,
+  });
 
-      if (!session.active && result && isPrintable) {
-        retrySprint();
-        return;
-      }
-
-      if (!session.active && showOverlay && sprintText && isPrintable) {
-        startSprint();
-        return;
-      }
-
-      if (!session.active) return;
-      if (isPrintable || isBackspace) handleKey(event);
-    };
-
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [handleKey, result, retrySprint, session.active, showOverlay, sprintText, startSprint]);
-
-  useEffect(() => {
-    if (!achievementToasts.length) return;
-    const timeout = setTimeout(() => {
-      setAchievementToasts(prev => prev.slice(1));
-    }, 4200);
-    return () => clearTimeout(timeout);
-  }, [achievementToasts]);
-
-  const historyEntries = progress.history?.[currentLayout] ?? [];
-  const sprintResultComparison = useMemo(
-    () => result ? buildSprintResultComparison(historyEntries, {
-      wpm: result.wpm,
-      acc: result.acc,
-      contentScenarioId: 'sprint',
-      durationSeconds: result.elapsed,
-      contentMode: effectiveContentMode,
-    }) : null,
-    [effectiveContentMode, historyEntries, result],
-  );
-  const activeSprintGoals = useMemo(
-    () => getActiveMotivationGoalSnapshots(motivationProgress, 2, [
-      'practice-sessions',
-      'practice-minutes',
-      'target-speed-sessions',
-      'high-accuracy-sessions',
-    ]),
-    [motivationProgress],
-  );
-  const sprintStreaks = useMemo(
-    () => getMotivationStreakSnapshots(motivationProgress, [
-      'flawless-practice',
-      'successful-practice',
-    ]),
-    [motivationProgress],
-  );
-  const bestSprint = historyEntries
-    .filter(entry => entry.mode === 'test')
-    .reduce<typeof historyEntries[number] | null>((best, entry) => {
-      if (!best) return entry;
-      if (entry.wpm !== best.wpm) return entry.wpm > best.wpm ? entry : best;
-      if (entry.acc !== best.acc) return entry.acc > best.acc ? entry : best;
-      return new Date(entry.date).getTime() > new Date(best.date).getTime() ? entry : best;
-    }, null);
+  const {
+    bestEntries: sprintHistoryEntries,
+    resultComparison: sprintResultComparison,
+  } = useModeResultHistory({
+    contentMode: effectiveContentMode,
+    currentLayout,
+    historyByLayout: progress.history,
+    mode: 'sprint',
+    result,
+    scenarioId: 'sprint',
+    t,
+  });
+  const {
+    activeGoals: activeSprintGoals,
+    activeStreaks: sprintStreaks,
+  } = useModeMotivationSnapshots(motivationProgress, t);
+  const sprintBestResult = useModeBestResultLabel({
+    emptyLabel: t('sprint.noResults'),
+    entries: sprintHistoryEntries,
+    formatSpeed: fmtSpeed,
+    speedLabel: spdLabel,
+  });
   const sprintCallout = useMemo(
-    () => result ? buildSprintResultCallout(result, sprintResultComparison) : null,
-    [result, sprintResultComparison],
+    () => result ? buildSprintResultCallout(t, result, sprintResultComparison) : null,
+    [result, sprintResultComparison, t],
   );
-  const followupRecommendation = useMemo(
-    () => result ? buildModeResultFollowupRecommendation({
+  const { followupRecommendation, handleFollowupAction } = useModeResultFollowup({
+    result: result ? {
       mode: 'test',
       wpm: result.wpm,
       acc: result.acc,
       errors: result.errors,
-    }) : null,
-    [result],
-  );
+    } : null,
+    switchMode,
+    t,
+  });
 
-  const handleContentPackAction = useCallback((guidedAction: PracticeContentPackQuickAction) => {
-    if (!selectedContentPack) return;
-    const { action } = guidedAction;
-
-    const applyCustomPackToMode = (
-      targetMode: 'practice' | 'test' | 'survival' | 'flawless',
-      options: {
-        trainingMode?: 'normal' | 'rhythm';
-        sprintDurationSeconds?: number;
-      } = {},
-    ) => {
-      if (targetMode === 'practice') {
-        savePracticeSetting('contentMode', 'custom');
-        savePracticeSetting('selectedContentPackId', selectedContentPack.id);
-        savePracticeSetting('trainingMode', options.trainingMode ?? 'normal');
-        switchMode('practice');
-        return;
-      }
-
-      saveModePracticeSettings(targetMode, {
-        contentMode: 'custom',
-        selectedContentPackId: selectedContentPack.id,
-        ...(options.sprintDurationSeconds ? { sprintDurationSeconds: options.sprintDurationSeconds } : {}),
-      });
-      if (targetMode !== 'test') {
-        switchMode(targetMode);
-      }
-    };
-
-    const applyBaseMaterialToMode = (
-      targetMode: 'practice' | 'test' | 'survival' | 'flawless',
-      options: {
-        trainingMode?: 'normal' | 'rhythm';
-        sprintDurationSeconds?: number;
-      } = {},
-    ) => {
-      if (targetMode === 'practice') {
-        savePracticeSetting('contentMode', 'adaptive-words');
-        savePracticeSetting('selectedContentPackId', '');
-        savePracticeSetting('trainingMode', options.trainingMode ?? 'normal');
-        switchMode('practice');
-        return;
-      }
-
-      saveModePracticeSettings(targetMode, {
-        contentMode: 'adaptive-words',
-        selectedContentPackId: '',
-        ...(options.sprintDurationSeconds ? { sprintDurationSeconds: options.sprintDurationSeconds } : {}),
-      });
-      if (targetMode !== 'test') {
-        switchMode(targetMode);
-      }
-    };
-
-    if (action.kind === 'shorten-distance') {
-      saveModePracticeSettings('test', { sprintDurationSeconds: 15 });
-      return;
-    }
-
-    if (action.kind === 'switch-mode') {
-      applyCustomPackToMode(action.targetMode, {
-        trainingMode: action.trainingMode,
-        sprintDurationSeconds: action.sprintDurationSeconds,
-      });
-      return;
-    }
-
-    applyBaseMaterialToMode(action.targetMode, {
-      trainingMode: action.trainingMode,
-      sprintDurationSeconds: action.sprintDurationSeconds,
-    });
-  }, [saveModePracticeSettings, savePracticeSetting, selectedContentPack, switchMode]);
+  const handleContentPackAction = useModeContentPackActions({
+    onShortenDistance: () => saveModePracticeSettings('test', { sprintDurationSeconds: 15 }),
+    saveModePracticeSettings,
+    savePracticeSetting,
+    selfMode: 'test',
+    selectedContentPack,
+    switchMode,
+  });
 
   return (
     <section className="mode-panel active">
@@ -501,159 +325,76 @@ export function SprintPage() {
         onClose={() => setShowAchievements(false)}
       />
 
-      <div className="panel-header">
-        <div className="game-header-title">
-          <div>
-            <h1>Спринт</h1>
-            <p className="card-desc">
-              Короткий таймерный забег на темп и точность поверх общего content-pipeline.
-            </p>
-          </div>
-          <button
-            type="button"
-            className="btn-secondary btn-sm game-achievements-button"
-            onClick={() => setShowAchievements(true)}
-          >
-            <Medal size={14} />
-            Достижения
-            <span className="game-achievements-count">{sprintUnlockedCount}/{sprintAchievementCatalog.length}</span>
-          </button>
-        </div>
-        <div className="header-right">
-          <button className="btn-accent" disabled={session.active} onClick={startSprint}>Начать спринт</button>
-        </div>
-      </div>
-
-      <ModeQuickSettings
-        contentMode={contentMode}
-        selectedContentPackId={selectedContentPack?.id ?? ''}
-        availableContentPacks={availableContentPacks}
-        selectedContentPack={selectedContentPack}
-        contentPackSummary={selectedContentPackSummary}
-        contentPackPreflight={selectedContentPackPreflight}
-        onContentModeChange={(value) => saveModePracticeSettings('test', { contentMode: value })}
-        onSelectedContentPackIdChange={(value) => saveModePracticeSettings('test', { selectedContentPackId: value })}
-        onContentPackAction={handleContentPackAction}
-        actionsDisabled={session.active}
-        extraControls={(
-          <div className="pstat daily-goal-row">
-            <Zap size={16} />
-            <span className="daily-goal-label">Длительность</span>
-            <select
-              className="select-minimal"
-              value={duration}
-              disabled={session.active}
-              onChange={(event) => saveModePracticeSettings('test', { sprintDurationSeconds: Number(event.target.value) })}
-            >
-              {SPRINT_DURATION_OPTIONS.map((value) => (
-                <option key={value} value={value}>{value} сек</option>
-              ))}
-            </select>
-          </div>
-        )}
+      <ModePageHeader
+        title={t('sprint.title')}
+        description={t('sprint.description')}
+        achievementsLabel={t('sprint.achievements')}
+        achievementsUnlocked={sprintUnlockedCount}
+        achievementsTotal={sprintAchievementCatalog.length}
+        onOpenAchievements={() => setShowAchievements(true)}
+        onStart={startSprint}
+        startDisabled={session.active}
+        startLabel={t('sprint.start')}
       />
 
-      <div className="practice-stats-row">
-        <div className="pstat daily-goal-row">
-          <span className="daily-goal-label">
-            Материал: {CONTENT_MODE_LABELS[effectiveContentMode]}
-            {effectiveContentMode === 'custom' && selectedContentPack ? ` · ${selectedContentPack.name}` : ''}
-          </span>
-        </div>
-        <div className="pstat daily-goal-row">
-          <span className="daily-goal-label">
-            Лучший спринт: {bestSprint ? `${fmtSpeed(bestSprint.wpm)} ${spdLabel} · ${Math.round(bestSprint.acc)}%` : 'ещё нет результатов'}
-          </span>
-        </div>
-      </div>
+      <SprintSettingsSection
+        actionsDisabled={session.active}
+        availableContentPacks={availableContentPacks}
+        contentMode={contentMode}
+        contentModeLabel={sprintContentModeLabel}
+        duration={duration}
+        durationLabel={t('sprint.duration')}
+        durationOptions={SPRINT_DURATION_OPTIONS}
+        durationValueLabel={(value) => t('sprint.durationValue', { value })}
+        bestLabel={t('sprint.best')}
+        bestValue={sprintBestResult.bestValue}
+        onContentModeChange={(value) => saveModePracticeSettings('test', { contentMode: value })}
+        onContentPackAction={handleContentPackAction}
+        onDurationChange={(value) => saveModePracticeSettings('test', { sprintDurationSeconds: value })}
+        onSelectedContentPackIdChange={(value) => saveModePracticeSettings('test', { selectedContentPackId: value })}
+        selectedContentPack={selectedContentPack}
+        selectedContentPackId={selectedContentPackControlId}
+        selectedContentPackName={selectedContentPackDisplayName}
+        selectedContentPackPreflight={selectedContentPackPreflight}
+        selectedContentPackSummary={selectedContentPackSummary}
+      />
 
       {session.active && (
-        <div className="stats-bar">
-          <div className="metric"><b>{timerValue.toFixed(timerValue >= 10 ? 0 : 1)}</b> с</div>
-          <div className="metric"><b>{fmtSpeed(wpm)}</b> <small className="speed-unit">{spdLabel}</small></div>
-          <div className="metric"><b>{Math.round(acc)}</b>%</div>
-        </div>
+        <InlineStatsBar
+          items={[
+            { id: 'timer', content: <><b>{timerValue.toFixed(timerValue >= 10 ? 0 : 1)}</b> {t('common.secondsShort')}</> },
+            { id: 'speed', content: <><b>{fmtSpeed(wpm)}</b> <small className="speed-unit">{spdLabel}</small></> },
+            { id: 'accuracy', content: <><b>{Math.round(acc)}</b>%</> },
+          ]}
+        />
       )}
 
-      <TextDisplay
+      <ModeSessionStage
         text={session.active ? session.text : sprintText}
         pos={session.active ? session.pos : 0}
         errPositions={session.active ? session.errPositions : new Set()}
         waitingForSpace={waitingForSpace}
-        overlay={showOverlay ? 'Нажмите здесь или «Начать спринт» для старта' : null}
+        overlay={showOverlay ? t('sprint.overlay', { start: t('sprint.start') }) : null}
         onOverlayClick={startSprint}
       />
 
-      {result && (
-        <div className="result-card">
-          <h3>Результат спринта</h3>
-          <div className="result-big">{fmtSpeed(result.wpm)} {spdLabel}</div>
-          <p>
-            Точность: <b>{Math.round(result.acc)}%</b> ·
-            Время: <b>{Math.round(result.elapsed)} с</b> ·
-            Материал: <b>{CONTENT_MODE_LABELS[effectiveContentMode]}</b>
-          </p>
-          <div className="result-metrics">
-            <div className="result-metric">
-              <span className="result-metric-value">{result.chars}</span>
-              <span className="result-metric-label">Символов</span>
-            </div>
-            <div className="result-metric">
-              <span className={`result-metric-value${result.errors === 0 ? ' good' : result.errors <= 3 ? ' warn' : ' bad'}`}>
-                {result.errors}
-              </span>
-              <span className="result-metric-label">Ошибок</span>
-            </div>
-            <div className="result-metric">
-              <span className="result-metric-value">{Math.max(1, Math.round(result.elapsed))} с</span>
-              <span className="result-metric-label">Длительность</span>
-            </div>
-          </div>
-          <div className="result-metrics" style={{ marginTop: 12 }}>
-            {activeSprintGoals.map((goal) => (
-              <div key={goal.definition.id} className="result-metric">
-                <span className="result-metric-value">
-                  {goal.nextTarget != null
-                    ? `${Math.round(goal.current)} / ${goal.nextTarget}`
-                    : `${Math.round(goal.current)}`}
-                </span>
-                <span className="result-metric-label">{goal.definition.title}</span>
-              </div>
-            ))}
-            {sprintStreaks.map((streak) => (
-              <div key={streak.definition.id} className="result-metric">
-                <span className={`result-metric-value${streak.current > 0 ? ' good' : ''}`}>{streak.current}</span>
-                <span className="result-metric-label">{streak.definition.title}</span>
-              </div>
-            ))}
-          </div>
-          {sprintResultComparison && (
-            <ResultComparisonPanel
-              comparison={sprintResultComparison}
-              formatSpeed={fmtSpeed}
-              speedLabel={spdLabel}
-            />
-          )}
-          {sprintCallout && (
-            <p style={{ marginTop: 10 }}>
-              <b>{sprintCallout.title}.</b> {sprintCallout.detail}
-            </p>
-          )}
-          <div className="game-actions">
-            <button className="btn-accent" onClick={retrySprint}>Ещё раз</button>
-            {followupRecommendation && (
-              <button className="btn-secondary" onClick={() => switchMode(followupRecommendation.actionMode)}>
-                {followupRecommendation.actionLabel}
-              </button>
-            )}
-            {followupRecommendation?.actionMode !== 'practice' && (
-              <button className="btn-secondary" onClick={() => switchMode('practice')}>
-                В практику
-              </button>
-            )}
-          </div>
-        </div>
-      )}
+      {result ? (
+        <SprintResultFlow
+          activeSprintGoals={activeSprintGoals}
+          followupRecommendation={followupRecommendation}
+          formatSpeed={fmtSpeed}
+          onFollowupAction={handleFollowupAction}
+          onRetry={retrySprint}
+          onToPractice={() => switchMode('practice')}
+          result={result}
+          resultCallout={sprintCallout}
+          speedLabel={spdLabel}
+          sprintResultComparison={sprintResultComparison}
+          sprintStreaks={sprintStreaks}
+          t={t}
+          trainingMaterialLabel={sprintTrainingMaterialLabel}
+        />
+      ) : null}
     </section>
   );
 }

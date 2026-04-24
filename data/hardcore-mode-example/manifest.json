@@ -12,6 +12,7 @@
     "items",
     "achievements",
     "rules",
-    "events"
+    "events",
+    "i18n"
   ]
 }

@@ -29,6 +29,7 @@ import type {
   EnemyStats,
   EnemyTier,
 } from '../../shared/types';
+import { resolveRuntimeTranslation } from '../i18n';
 
 /* ── Player base constants ── */
 
@@ -53,25 +54,25 @@ interface EnemyStatRange {
 
 const ENEMY_STAT_RANGES: Record<EnemyTier, EnemyStatRange> = {
   normal: {
-    baseHp: 32,
+    baseHp: 3,
     defenseMin: 15,
     defenseMax: 30,
     baseDamage: 8,
   },
   elite: {
-    baseHp: 56,
+    baseHp: 5,
     defenseMin: 25,
     defenseMax: 40,
     baseDamage: 12,
   },
   miniboss: {
-    baseHp: 80,
+    baseHp: 7,
     defenseMin: 30,
     defenseMax: 45,
     baseDamage: 15,
   },
   boss: {
-    baseHp: 96,
+    baseHp: 9,
     defenseMin: 35,
     defenseMax: 50,
     baseDamage: 18,
@@ -80,11 +81,11 @@ const ENEMY_STAT_RANGES: Record<EnemyTier, EnemyStatRange> = {
 
 const BOSS_HP_COEFF = 1.25;
 
-const ENEMY_NAMES: Record<EnemyTier, string[]> = {
-  normal: ['Скриптер', 'Часовой', 'Страж тропы', 'Дозорный', 'Тень кода'],
-  elite: ['Палач темпа', 'Мастер клавиш', 'Стражник ритма', 'Адепт точности'],
-  miniboss: ['Хранитель порога', 'Надзиратель', 'Титан строк'],
-  boss: ['Вратарь ветви', 'Повелитель волн', 'Архонт скорости', 'Абсолют'],
+const ENEMY_NAME_KEYS: Record<EnemyTier, string[]> = {
+  normal: ['scripter', 'watcher', 'pathGuard', 'sentinel', 'codeShadow'],
+  elite: ['tempoExecutioner', 'keyMaster', 'rhythmGuard', 'accuracyAdept'],
+  miniboss: ['thresholdKeeper', 'overseer', 'lineTitan'],
+  boss: ['branchWarden', 'waveLord', 'speedArchon', 'absolute'],
 };
 
 const BOSS_DEBUFFS: BossDebuff[] = ['cpm', 'accuracy', 'rhythm'];
@@ -101,6 +102,10 @@ function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
 
+function t(key: string, params?: Record<string, string | number>) {
+  return resolveRuntimeTranslation(key, params);
+}
+
 /* ── Enemy creation ── */
 
 /**
@@ -115,7 +120,8 @@ export function createEnemy(tier: EnemyTier, level: number): EnemyStats {
     hp = Math.round(hp * BOSS_HP_COEFF);
   }
   const defense = randInt(range.defenseMin, range.defenseMax);
-  const name = randFrom(ENEMY_NAMES[tier]);
+  const nameKey = randFrom(ENEMY_NAME_KEYS[tier]);
+  const name = t(`game.core.events.battle.enemyNames.${tier}.${nameKey}`);
   const debuff = tier === 'boss' ? randFrom(BOSS_DEBUFFS) : null;
 
   return { name, tier, maxHp: hp, hp, hitChance: 100, defense, debuff };

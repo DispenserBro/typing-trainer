@@ -10,8 +10,10 @@ import type {
   PracticeContentScenarioId,
   PracticeModeRoute,
   PracticeTrainingMode,
+  TranslationParams,
 } from '../../shared/types';
 import type { NgramModel, PracticeBuildOptions } from '../text/ngramUtils';
+import { i18n } from '../i18n';
 import { generatePracticeText } from './engine';
 import {
   getPracticeContentPackQualityMetrics,
@@ -21,11 +23,16 @@ import {
   generateSyllableText,
 } from './content';
 
-const CONTENT_SCENARIOS: Record<PracticeContentScenarioId, PracticeContentScenario> = {
+type TranslateFn = (key: string, params?: TranslationParams) => string;
+
+type PracticeContentScenarioDefinition = Omit<PracticeContentScenario, 'label' | 'description'>;
+
+const translateWithI18n: TranslateFn = (key, params) =>
+  i18n.t(key, params ?? {}) as string;
+
+const CONTENT_SCENARIOS: Record<PracticeContentScenarioId, PracticeContentScenarioDefinition> = {
   'practice-normal': {
     id: 'practice-normal',
-    label: 'Обычная практика',
-    description: 'Средняя дистанция для регулярной тренировки скорости, точности и спокойной устойчивости.',
     trainingMode: 'normal',
     targetWordCount: 25,
     targetWordCountByContentMode: {
@@ -47,8 +54,6 @@ const CONTENT_SCENARIOS: Record<PracticeContentScenarioId, PracticeContentScenar
   },
   'practice-rhythm': {
     id: 'practice-rhythm',
-    label: 'Ритм-практика',
-    description: 'Укороченные серии для ровного темпа и аккуратного контроля ритма.',
     trainingMode: 'rhythm',
     targetWordCount: 18,
     targetWordCountByContentMode: {
@@ -70,8 +75,6 @@ const CONTENT_SCENARIOS: Record<PracticeContentScenarioId, PracticeContentScenar
   },
   sprint: {
     id: 'sprint',
-    label: 'Спринт',
-    description: 'Самые короткие и плотные тексты для быстрых таймерных забегов.',
     trainingMode: 'normal',
     targetWordCount: 16,
     targetWordCountByContentMode: {
@@ -93,8 +96,6 @@ const CONTENT_SCENARIOS: Record<PracticeContentScenarioId, PracticeContentScenar
   },
   survival: {
     id: 'survival',
-    label: 'Выживание',
-    description: 'Удлинённая дистанция с более длинными сериями для удержания стабильности под нагрузкой.',
     trainingMode: 'normal',
     targetWordCount: 24,
     targetWordCountByContentMode: {
@@ -116,8 +117,6 @@ const CONTENT_SCENARIOS: Record<PracticeContentScenarioId, PracticeContentScenar
   },
   flawless: {
     id: 'flawless',
-    label: 'Безошибочный режим',
-    description: 'Более компактные и чистые серии, где важнее точность, чем дистанция.',
     trainingMode: 'normal',
     targetWordCount: 18,
     targetWordCountByContentMode: {
@@ -139,12 +138,20 @@ const CONTENT_SCENARIOS: Record<PracticeContentScenarioId, PracticeContentScenar
   },
 };
 
+const CONTENT_SCENARIO_DESCRIPTION_KEYS: Record<PracticeContentScenarioId, string> = {
+  'practice-normal': 'practice.scenarios.practice-normal.description',
+  'practice-rhythm': 'practice.scenarios.practice-rhythm.description',
+  sprint: 'practice.scenarios.sprint.description',
+  survival: 'practice.scenarios.survival.description',
+  flawless: 'practice.scenarios.flawless.description',
+};
+
 type PackModeRecommendation = {
   targetMode: PracticeModeRoute;
   trainingMode?: PracticeTrainingMode;
   sprintDurationSeconds?: number;
-  label: string;
-  reason: string;
+  labelKey: string;
+  reasonKey: string;
 };
 
 export interface BuildPracticeContentTextInput {
@@ -160,16 +167,69 @@ export interface BuildPracticeContentTextInput {
   buildOptions?: PracticeBuildOptions;
 }
 
-export function getPracticeContentScenario(id: PracticeContentScenarioId): PracticeContentScenario {
-  return CONTENT_SCENARIOS[id];
+function getRecommendedModeLabel(t: TranslateFn, recommendation: PackModeRecommendation) {
+  return t(recommendation.labelKey);
+}
+
+function getRecommendedModeReason(t: TranslateFn, recommendation: PackModeRecommendation) {
+  return t(recommendation.reasonKey);
+}
+
+function getPackFitMessage(
+  t: TranslateFn,
+  repetitionRisk: PracticeContentPackQualitySummary['repetitionRisk'],
+) {
+  if (repetitionRisk === 'high') {
+    return t('practice.packSummary.fit.tight');
+  }
+  if (repetitionRisk === 'low') {
+    return t('practice.packSummary.fit.comfortable');
+  }
+  return t('practice.packSummary.fit.workable');
+}
+
+function localizeScenario(
+  scenario: PracticeContentScenarioDefinition,
+  t: TranslateFn,
+): PracticeContentScenario {
+  return {
+    ...scenario,
+    label: t(resolveScenarioModeLabelKey(scenario.id)),
+    description: t(CONTENT_SCENARIO_DESCRIPTION_KEYS[scenario.id]),
+  };
+}
+
+export function getPracticeContentScenario(
+  id: PracticeContentScenarioId,
+  t: TranslateFn = translateWithI18n,
+): PracticeContentScenario {
+  const scenario = CONTENT_SCENARIOS[id];
+  return localizeScenario(scenario, t);
 }
 
 export function getPracticeContentScenarioForTrainingMode(
   trainingMode: PracticeTrainingMode,
+  t: TranslateFn = translateWithI18n,
 ): PracticeContentScenario {
   return trainingMode === 'rhythm'
-    ? CONTENT_SCENARIOS['practice-rhythm']
-    : CONTENT_SCENARIOS['practice-normal'];
+    ? getPracticeContentScenario('practice-rhythm', t)
+    : getPracticeContentScenario('practice-normal', t);
+}
+
+function resolveScenarioModeLabelKey(id: PracticeContentScenarioId) {
+  switch (id) {
+    case 'practice-normal':
+      return 'practice.packSummary.recommended.practiceNormal';
+    case 'practice-rhythm':
+      return 'practice.packSummary.recommended.practiceRhythm';
+    case 'sprint':
+      return 'practice.packSummary.recommended.sprint';
+    case 'survival':
+      return 'practice.packSummary.recommended.survival';
+    case 'flawless':
+    default:
+      return 'practice.packSummary.recommended.flawless';
+  }
 }
 
 function resolveScenarioCustomPackKind(contentMode: PracticeContentMode, contentPack?: PracticeContentPack | null) {
@@ -245,22 +305,22 @@ function resolvePackModeRecommendation(
       return {
         targetMode: 'practice',
         trainingMode: 'rhythm',
-        label: 'Ритм-практика',
-        reason: 'Короткий набор предложений безопаснее запускать в укороченной спокойной сессии, чем растягивать в длинный сценарий.',
+        labelKey: 'practice.packSummary.recommended.practiceRhythm',
+        reasonKey: 'practice.packSummary.reasons.sentencesShortRhythm',
       };
     }
     if (summary.averageWordsPerItem >= 5.5) {
       return {
         targetMode: 'survival',
-        label: 'Выживание',
-        reason: 'Длинные фразы и большой объём текста лучше раскрываются на длинной устойчивой дистанции.',
+        labelKey: 'practice.packSummary.recommended.survival',
+        reasonKey: 'practice.packSummary.reasons.sentencesLongSurvival',
       };
     }
     return {
       targetMode: 'practice',
       trainingMode: 'normal',
-      label: 'Обычная практика',
-      reason: 'Связный текст без экстремальной длины удобнее всего держать в средней регулярной тренировке.',
+      labelKey: 'practice.packSummary.recommended.practiceNormal',
+      reasonKey: 'practice.packSummary.reasons.sentencesNormalPractice',
     };
   }
 
@@ -269,22 +329,22 @@ function resolvePackModeRecommendation(
       return {
         targetMode: 'test',
         sprintDurationSeconds: 30,
-        label: 'Спринт',
-        reason: 'Плотный словарь хорошо работает в коротком таймерном режиме, где важен чистый темповый срез.',
+        labelKey: 'practice.packSummary.recommended.sprint',
+        reasonKey: 'practice.packSummary.reasons.wordsSprint',
       };
     }
     if (itemCount <= 10) {
       return {
         targetMode: 'flawless',
-        label: 'Безошибочный режим',
-        reason: 'Небольшой словарь лучше проявляет себя в компактном режиме на контроль точности без длинной дистанции.',
+        labelKey: 'practice.packSummary.recommended.flawless',
+        reasonKey: 'practice.packSummary.reasons.wordsFlawless',
       };
     }
     return {
       targetMode: 'practice',
       trainingMode: 'normal',
-      label: 'Обычная практика',
-      reason: 'Средний словарь лучше всего работает как универсальная регулярная тренировка.',
+      labelKey: 'practice.packSummary.recommended.practiceNormal',
+      reasonKey: 'practice.packSummary.reasons.wordsNormalPractice',
     };
   }
 
@@ -292,25 +352,35 @@ function resolvePackModeRecommendation(
     return {
       targetMode: 'practice',
       trainingMode: 'normal',
-      label: 'Обычная практика',
-      reason: 'Короткий mixed-пул не стоит тянуть в жёсткие или длинные сценарии; ему нужна спокойная средняя дистанция.',
+      labelKey: 'practice.packSummary.recommended.practiceNormal',
+      reasonKey: 'practice.packSummary.reasons.mixedTightPractice',
     };
   }
 
   if (summary.averageWordsPerItem >= 4.5) {
     return {
       targetMode: 'survival',
-      label: 'Выживание',
-      reason: 'Mixed-контент с длинными фрагментами лучше раскрывается в длинном устойчивом проходе.',
+      labelKey: 'practice.packSummary.recommended.survival',
+      reasonKey: 'practice.packSummary.reasons.mixedLongSurvival',
     };
   }
 
   return {
     targetMode: 'practice',
     trainingMode: 'normal',
-    label: 'Обычная практика',
-    reason: 'Смешанный набор без сильного перекоса удобнее всего держать в обычной практике.',
+    labelKey: 'practice.packSummary.recommended.practiceNormal',
+    reasonKey: 'practice.packSummary.reasons.mixedNormalPractice',
   };
+}
+
+function resolvePackModeRecommendationFromSummary(
+  pack: PracticeContentPack,
+  summary: Pick<PracticeContentPackQualitySummary, 'averageWordsPerItem' | 'itemCount' | 'repetitionRisk'>,
+) {
+  return resolvePackModeRecommendation(pack, {
+    averageWordsPerItem: summary.averageWordsPerItem,
+    repetitionRisk: summary.repetitionRisk,
+  }, summary.itemCount);
 }
 
 export function resolvePracticeContentTargetWordCount(
@@ -329,8 +399,9 @@ export function resolvePracticeContentTargetWordCount(
 export function buildPracticeContentPackQualitySummary(
   pack: PracticeContentPack,
   scenarioId: PracticeContentScenarioId,
+  t: TranslateFn,
 ): PracticeContentPackQualitySummary {
-  const scenario = getPracticeContentScenario(scenarioId);
+  const scenario = getPracticeContentScenario(scenarioId, t);
   const targetWordCount = resolvePracticeContentTargetWordCount(scenario, 'custom', pack);
   const metrics = getPracticeContentPackQualityMetrics(pack, targetWordCount);
   const repetitionRisk = metrics.itemCount <= 5 || metrics.repetitionPressure >= 1.75
@@ -338,11 +409,7 @@ export function buildPracticeContentPackQualitySummary(
     : metrics.itemCount <= 10 || metrics.repetitionPressure >= 0.95
       ? 'medium'
       : 'low';
-  const repetitionRiskLabel = repetitionRisk === 'high'
-    ? 'Высокий'
-    : repetitionRisk === 'medium'
-      ? 'Средний'
-      : 'Низкий';
+  const repetitionRiskLabel = t(`practice.packSummary.risks.${repetitionRisk}`);
 
   const recommendation = resolvePackModeRecommendation(pack, {
     averageWordsPerItem: metrics.averageWordsPerItem,
@@ -351,20 +418,14 @@ export function buildPracticeContentPackQualitySummary(
 
   const notes: string[] = [];
   if (metrics.itemCount <= 8) {
-    notes.push(`Короткий пул: всего ${metrics.itemCount} элементов, поэтому длинные сценарии быстрее упрутся в повторы.`);
+    notes.push(t('practice.packSummary.notes.shortPool', { count: metrics.itemCount }));
   }
   if (pack.kind === 'sentences' && metrics.averageWordsPerItem >= 6) {
-    notes.push('Фразы сами по себе длинные, поэтому даже короткий сценарий будет ощущаться объёмнее обычного.');
+    notes.push(t('practice.packSummary.notes.longSentences'));
   }
   if (pack.kind !== 'sentences' && metrics.averageWordsPerItem <= 1.6) {
-    notes.push('Элементы очень короткие, поэтому набор особенно хорошо подходит для разогрева и контроля точности.');
+    notes.push(t('practice.packSummary.notes.shortItems'));
   }
-
-  const fitMessage = repetitionRisk === 'high' && (scenarioId === 'survival' || scenarioId === 'practice-normal')
-    ? `Для ${scenario.label.toLowerCase()} этот набор уже на старте выглядит тесным по пулу.`
-    : repetitionRisk === 'low'
-      ? `Для ${scenario.label.toLowerCase()} набор выглядит комфортным по объёму и риску повторов.`
-      : `Для ${scenario.label.toLowerCase()} набор рабочий, но в длинных проходах повторы будут заметнее.`;
 
   return {
     itemCount: metrics.itemCount,
@@ -373,9 +434,9 @@ export function buildPracticeContentPackQualitySummary(
     estimatedWordsPerText: metrics.estimatedWordsPerText,
     repetitionRisk,
     repetitionRiskLabel,
-    recommendedModeLabel: recommendation.label,
-    recommendationReason: recommendation.reason,
-    fitMessage,
+    recommendedModeLabel: getRecommendedModeLabel(t, recommendation),
+    recommendationReason: getRecommendedModeReason(t, recommendation),
+    fitMessage: getPackFitMessage(t, repetitionRisk),
     notes,
   };
 }
@@ -383,30 +444,30 @@ export function buildPracticeContentPackQualitySummary(
 export function buildPracticeContentPackPreflightSummary(
   pack: PracticeContentPack,
   scenarioId: PracticeContentScenarioId,
+  t: TranslateFn,
 ): PracticeContentPackPreflightSummary | null {
-  const summary = buildPracticeContentPackQualitySummary(pack, scenarioId);
-  const recommendation = resolvePackModeRecommendation(pack, {
-    averageWordsPerItem: summary.averageWordsPerItem,
-    repetitionRisk: summary.repetitionRisk,
-  }, summary.itemCount);
+  const summary = buildPracticeContentPackQualitySummary(pack, scenarioId, t);
+  const recommendation = resolvePackModeRecommendationFromSummary(pack, summary);
+  const recommendedModeLabel = getRecommendedModeLabel(t, recommendation);
+  const recommendedModeReason = getRecommendedModeReason(t, recommendation);
 
   if (scenarioId === 'survival' && summary.repetitionRisk !== 'low') {
     return {
       severity: 'warning',
-      title: 'Этот набор коротковат для выживания',
-      detail: 'Длинная дистанция быстро упрётся в повторы или тяжёлые фразы. Лучше сократить сценарий или вернуть базовый материал для чистого survival-забега.',
+      title: t('practice.packPreflight.survival.title'),
+      detail: t('practice.packPreflight.survival.detail'),
       actions: [
         createSwitchModeAction(
           'survival-practice',
-          'Перейти в практику',
-          'Оставить текущий набор, но вернуться в более спокойную среднюю дистанцию.',
+          t('practice.packPreflight.survival.actions.practice.label'),
+          t('practice.packPreflight.survival.actions.practice.description'),
           'practice',
           { trainingMode: 'normal' },
         ),
         createSwitchModeAction(
           'survival-recommended',
-          `Открыть ${recommendation.label}`,
-          recommendation.reason,
+          t('practice.packPreflight.actions.openMode', { mode: recommendedModeLabel }),
+          recommendedModeReason,
           recommendation.targetMode,
           {
             trainingMode: recommendation.trainingMode,
@@ -415,8 +476,8 @@ export function buildPracticeContentPackPreflightSummary(
         ),
         createUseBaseMaterialAction(
           'survival-base',
-          'Вернуть базовый материал',
-          'Оставить режим выживания, но убрать короткий pack и вернуться к обычному адаптивному материалу.',
+          t('practice.packPreflight.survival.actions.base.label'),
+          t('practice.packPreflight.survival.actions.base.description'),
           'survival',
         ),
       ],
@@ -426,19 +487,19 @@ export function buildPracticeContentPackPreflightSummary(
   if (scenarioId === 'practice-normal' && summary.repetitionRisk === 'high') {
     return {
       severity: 'warning',
-      title: 'Для обычной практики набор тесноват',
-      detail: 'Средняя дистанция быстро начнёт повторять элементы. Полезнее сократить сессию или перевести pack в более подходящий режим одним кликом.',
+      title: t('practice.packPreflight.practice.title'),
+      detail: t('practice.packPreflight.practice.detail'),
       actions: [
         {
           id: 'practice-shorten',
-          label: 'Сократить дистанцию',
-          description: 'Переключить практику на ритм-режим и оставить текущий набор.',
+          label: t('practice.packPreflight.practice.actions.shorten.label'),
+          description: t('practice.packPreflight.practice.actions.shorten.description'),
           action: { kind: 'shorten-distance' },
         },
         createSwitchModeAction(
           'practice-recommended',
-          `Открыть ${recommendation.label}`,
-          recommendation.reason,
+          t('practice.packPreflight.actions.openMode', { mode: recommendedModeLabel }),
+          recommendedModeReason,
           recommendation.targetMode,
           {
             trainingMode: recommendation.trainingMode,
@@ -447,8 +508,8 @@ export function buildPracticeContentPackPreflightSummary(
         ),
         createUseBaseMaterialAction(
           'practice-base',
-          'Вернуть базовый материал',
-          'Снять кастомный pack и вернуться к стандартной адаптивной практике.',
+          t('practice.packPreflight.practice.actions.base.label'),
+          t('practice.packPreflight.practice.actions.base.description'),
           'practice',
           { trainingMode: 'normal' },
         ),
@@ -459,26 +520,26 @@ export function buildPracticeContentPackPreflightSummary(
   if (scenarioId === 'sprint' && pack.kind === 'sentences' && (summary.averageWordsPerItem >= 5 || summary.repetitionRisk !== 'low')) {
     return {
       severity: 'warning',
-      title: 'Спринт получается слишком тяжёлым для фраз',
-      detail: 'Длинные предложения под таймером создают лишнюю нагрузку и ломают чистый темповый сигнал. Либо укоротите забег, либо уйдите в более подходящий сценарий.',
+      title: t('practice.packPreflight.sprint.title'),
+      detail: t('practice.packPreflight.sprint.detail'),
       actions: [
         {
           id: 'sprint-shorten',
-          label: 'Сделать спринт короче',
-          description: 'Оставить pack, но быстро сбросить таймер к самой короткой дистанции.',
+          label: t('practice.packPreflight.sprint.actions.shorten.label'),
+          description: t('practice.packPreflight.sprint.actions.shorten.description'),
           action: { kind: 'shorten-distance' },
         },
         createSwitchModeAction(
           'sprint-practice',
-          'Перейти в ритм-практику',
-          'Для фраз такой набор лучше раскрывается в укороченной спокойной практике без жёсткого таймера.',
+          t('practice.packPreflight.sprint.actions.rhythm.label'),
+          t('practice.packPreflight.sprint.actions.rhythm.description'),
           'practice',
           { trainingMode: 'rhythm' },
         ),
         createUseBaseMaterialAction(
           'sprint-base',
-          'Оставить спринт, но взять базу',
-          'Сохранить таймерный режим и вернуть стандартный материал вместо тяжёлого sentence-pack.',
+          t('practice.packPreflight.sprint.actions.base.label'),
+          t('practice.packPreflight.sprint.actions.base.description'),
           'test',
           { sprintDurationSeconds: 15 },
         ),
@@ -489,20 +550,20 @@ export function buildPracticeContentPackPreflightSummary(
   if (scenarioId === 'flawless' && pack.kind === 'mixed' && summary.repetitionRisk !== 'low') {
     return {
       severity: 'warning',
-      title: 'Mixed-набор слишком шумный для flawless',
-      detail: 'Смешанный и короткий pack делает безошибочный режим жёстче, чем нужно. Лучше сначала выровнять материал или уйти в обычную практику.',
+      title: t('practice.packPreflight.flawless.title'),
+      detail: t('practice.packPreflight.flawless.detail'),
       actions: [
         createSwitchModeAction(
           'flawless-practice',
-          'Перейти в обычную практику',
-          'Оставить текущий pack, но перенести его в более мягкий сценарий без мгновенного провала.',
+          t('practice.packPreflight.flawless.actions.practice.label'),
+          t('practice.packPreflight.flawless.actions.practice.description'),
           'practice',
           { trainingMode: 'normal' },
         ),
         createSwitchModeAction(
           'flawless-recommended',
-          `Открыть ${recommendation.label}`,
-          recommendation.reason,
+          t('practice.packPreflight.actions.openMode', { mode: recommendedModeLabel }),
+          recommendedModeReason,
           recommendation.targetMode,
           {
             trainingMode: recommendation.trainingMode,
@@ -511,8 +572,8 @@ export function buildPracticeContentPackPreflightSummary(
         ),
         createUseBaseMaterialAction(
           'flawless-base',
-          'Оставить flawless, но взять базу',
-          'Сохранить безошибочный режим и вернуть стандартный материал без смешанного короткого пула.',
+          t('practice.packPreflight.flawless.actions.base.label'),
+          t('practice.packPreflight.flawless.actions.base.description'),
           'flawless',
         ),
       ],
@@ -522,13 +583,13 @@ export function buildPracticeContentPackPreflightSummary(
   if (!isScenarioAlignedWithRecommendation(scenarioId, recommendation)) {
     return {
       severity: 'info',
-      title: `У набора есть более естественный сценарий: ${recommendation.label}`,
-      detail: recommendation.reason,
+      title: t('practice.packPreflight.info.title', { mode: recommendedModeLabel }),
+      detail: recommendedModeReason,
       actions: [
         createSwitchModeAction(
           'info-recommended',
-          `Переключить на ${recommendation.label}`,
-          'Применить рекомендованный сценарий и оставить текущий pack активным.',
+          t('practice.packPreflight.info.actions.switch.label', { mode: recommendedModeLabel }),
+          t('practice.packPreflight.info.actions.switch.description'),
           recommendation.targetMode,
           {
             trainingMode: recommendation.trainingMode,
@@ -542,45 +603,45 @@ export function buildPracticeContentPackPreflightSummary(
   return null;
 }
 
-export function resolveImportedPracticePackPreset(pack: PracticeContentPack): {
+export function resolveImportedPracticePackPreset(
+  pack: PracticeContentPack,
+  t: TranslateFn,
+): {
   trainingMode: PracticeTrainingMode;
   label: string;
   reason: string;
 } {
-  const summary = buildPracticeContentPackQualitySummary(pack, 'practice-normal');
-  const recommendation = resolvePackModeRecommendation(pack, {
-    averageWordsPerItem: summary.averageWordsPerItem,
-    repetitionRisk: summary.repetitionRisk,
-  }, summary.itemCount);
+  const summary = buildPracticeContentPackQualitySummary(pack, 'practice-normal', t);
+  const recommendation = resolvePackModeRecommendationFromSummary(pack, summary);
 
   if (recommendation.targetMode === 'practice' && recommendation.trainingMode === 'rhythm') {
     return {
       trainingMode: 'rhythm',
-      label: 'Ритм-практика',
-      reason: 'Набор сразу поставлен в более короткую практику, чтобы старт был рабочим даже при небольшом пуле.',
+      label: t('practice.packSummary.recommended.practiceRhythm'),
+      reason: t('practice.importPreset.reasons.rhythmShort'),
     };
   }
 
   if (recommendation.targetMode === 'survival') {
     return {
       trainingMode: 'normal',
-      label: 'Обычная практика',
-      reason: 'Импорт оставлен на средней дистанции: так набор сначала проверяется в базовом режиме, а потом уже переносится в длинный survival.',
+      label: t('practice.packSummary.recommended.practiceNormal'),
+      reason: t('practice.importPreset.reasons.normalForSurvival'),
     };
   }
 
   if (recommendation.targetMode === 'test' || recommendation.targetMode === 'flawless') {
     return {
       trainingMode: 'rhythm',
-      label: 'Ритм-практика',
-      reason: 'Для первого старта набор сокращён до спокойной короткой практики, чтобы не перегружать пользователя жёстким сценарием сразу после импорта.',
+      label: t('practice.packSummary.recommended.practiceRhythm'),
+      reason: t('practice.importPreset.reasons.rhythmAfterStrict'),
     };
   }
 
   return {
     trainingMode: 'normal',
-    label: 'Обычная практика',
-    reason: 'Набор уже выглядит достаточно устойчивым для стандартной практики, поэтому дополнительный short-preset не нужен.',
+    label: t('practice.packSummary.recommended.practiceNormal'),
+    reason: t('practice.importPreset.reasons.normalStable'),
   };
 }
 

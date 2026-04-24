@@ -8,6 +8,7 @@ import type {
   GameRunRouteState,
 } from '../../shared/types';
 import { BOSS_LEVEL_INTERVAL, isBossLevel } from './runUtils';
+import { i18n, sanitizeTranslationParams } from '../i18n';
 
 type CreateGameRouteArgs = {
   level: number;
@@ -18,6 +19,10 @@ type CreateGameRouteArgs = {
 
 function createRouteId(level: number) {
   return `route-${level}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+}
+
+function t(key: string, params?: Record<string, string | number>) {
+  return i18n.t(key, sanitizeTranslationParams(params)) as string;
 }
 
 function createChoice(
@@ -45,17 +50,17 @@ export function shouldOfferGameRoute(level: number) {
 }
 
 export function getRouteKindLabel(kind: GameRouteNodeKind) {
-  if (kind === 'battle') return 'Прямая тропа';
-  if (kind === 'rest') return 'Передышка';
-  if (kind === 'treasure') return 'Тайник';
-  if (kind === 'shop') return 'Лавка';
-  if (kind === 'elite') return 'Элитный враг';
-  if (kind === 'miniboss') return 'Мини-босс';
-  return 'Риск';
+  if (kind === 'battle') return t('game.core.routes.kind.battle');
+  if (kind === 'rest') return t('game.core.routes.kind.rest');
+  if (kind === 'treasure') return t('game.core.routes.kind.treasure');
+  if (kind === 'shop') return t('game.core.routes.kind.shop');
+  if (kind === 'elite') return t('game.core.routes.kind.elite');
+  if (kind === 'miniboss') return t('game.core.routes.kind.miniboss');
+  return t('game.core.routes.kind.risk');
 }
 
 export function getMapKindLabel(kind: GameRunMapNode['kind']) {
-  if (kind === 'boss') return 'Босс';
+  if (kind === 'boss') return t('game.core.routes.kind.boss');
   return getRouteKindLabel(kind);
 }
 
@@ -69,9 +74,9 @@ function buildRouteNode(
     return createChoice(
       id,
       kind,
-      'Прямая тропа',
-      'Без остановок идти к следующему уровню',
-      'Чистый боевой путь: без комнат подготовки, но и без задержки перед новой волной.',
+      t('game.core.routes.routeNode.battle.title'),
+      t('game.core.routes.routeNode.battle.flavor'),
+      t('game.core.routes.routeNode.battle.description'),
       lane,
       column,
     );
@@ -80,9 +85,9 @@ function buildRouteNode(
     return createChoice(
       id,
       kind,
-      'Передышка у костра',
-      'Подлечиться и перевести дыхание',
-      'Комната отдыха: ремонт, восстановление здоровья и мягкие темповые бафы.',
+      t('game.core.routes.routeNode.rest.title'),
+      t('game.core.routes.routeNode.rest.flavor'),
+      t('game.core.routes.routeNode.rest.description'),
       lane,
       column,
     );
@@ -91,9 +96,9 @@ function buildRouteNode(
     return createChoice(
       id,
       kind,
-      'Тайник на обочине',
-      'Забрать припасы и реликвии',
-      'Комната трофеев: шанс забрать бесплатный предмет или запас под следующую волну.',
+      t('game.core.routes.routeNode.treasure.title'),
+      t('game.core.routes.routeNode.treasure.flavor'),
+      t('game.core.routes.routeNode.treasure.description'),
       lane,
       column,
     );
@@ -102,9 +107,9 @@ function buildRouteNode(
     return createChoice(
       id,
       kind,
-      'Лавка сборщика',
-      'Подготовиться в безопасной комнате',
-      'Комната торговли: ремонт, новая реликвия или короткое усиление перед следующим боем.',
+      t('game.core.routes.routeNode.shop.title'),
+      t('game.core.routes.routeNode.shop.flavor'),
+      t('game.core.routes.routeNode.shop.description'),
       lane,
       column,
     );
@@ -113,9 +118,9 @@ function buildRouteNode(
     return createChoice(
       id,
       kind,
-      'Элитный враг',
-      'Противник сильнее обычного, но щедрее на лут',
-      'Усиленная схватка: текст длиннее, требования выше, но за победу ждёт дополнительная награда.',
+      t('game.core.routes.routeNode.elite.title'),
+      t('game.core.routes.routeNode.elite.flavor'),
+      t('game.core.routes.routeNode.elite.description'),
       lane,
       column,
     );
@@ -124,9 +129,9 @@ function buildRouteNode(
     return createChoice(
       id,
       kind,
-      'Мини-босс',
-      'Серьёзное испытание между обычными боями',
-      'Мини-босс: таймер и повышенная точность, но без трофеев настоящего босса. Победа даёт мощный временный буст.',
+      t('game.core.routes.routeNode.miniboss.title'),
+      t('game.core.routes.routeNode.miniboss.flavor'),
+      t('game.core.routes.routeNode.miniboss.description'),
       lane,
       column,
     );
@@ -134,9 +139,9 @@ function buildRouteNode(
   return createChoice(
     id,
     kind,
-    'Сделка на грани',
-    'Пойти в риск ради сильного буста',
-    'Рискованная комната: сильные бонусы, но каждое предложение требует плату заранее.',
+    t('game.core.routes.routeNode.risk.title'),
+    t('game.core.routes.routeNode.risk.flavor'),
+    t('game.core.routes.routeNode.risk.description'),
     lane,
     column,
   );
@@ -181,8 +186,22 @@ function buildRouteLinks(nodes: GameRunRouteChoice[]): GameRunRouteLink[] {
   return links;
 }
 
-function randomFrom<T>(items: T[]) {
-  return items[Math.floor(Math.random() * items.length)] ?? items[0];
+function createSeededRandom(seed: string) {
+  let hash = 2166136261;
+  for (let index = 0; index < seed.length; index += 1) {
+    hash ^= seed.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+
+  let state = hash >>> 0;
+  return () => {
+    state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
+    return state / 0x100000000;
+  };
+}
+
+function randomFrom<T>(items: T[], random: () => number = Math.random) {
+  return items[Math.floor(random() * items.length)] ?? items[0];
 }
 
 function createMapNode(
@@ -196,9 +215,9 @@ function createMapNode(
     return {
       id,
       kind,
-      title: 'Вратарь ветви',
-      flavor: 'Главная проверка этого маршрута',
-      description: `Каждый ${BOSS_LEVEL_INTERVAL}-й уровень — это бой с таймером и повышенным требованием к точности.`,
+      title: t('game.core.routes.mapNode.boss.title'),
+      flavor: t('game.core.routes.mapNode.boss.flavor'),
+      description: t('game.core.routes.mapNode.boss.description', { interval: BOSS_LEVEL_INTERVAL }),
       column,
       lane,
       battleLevel,
@@ -209,9 +228,9 @@ function createMapNode(
     return {
       id,
       kind,
-      title: 'Схватка',
-      flavor: 'Обычный бой на скорость и точность',
-      description: 'Стандартная волна текста. Удерживай темп и проходи дальше по карте.',
+      title: t('game.core.routes.mapNode.battleEncounter.title'),
+      flavor: t('game.core.routes.mapNode.battleEncounter.flavor'),
+      description: t('game.core.routes.mapNode.battleEncounter.description'),
       column,
       lane,
       battleLevel,
@@ -222,9 +241,9 @@ function createMapNode(
     return {
       id,
       kind,
-      title: 'Прямая тропа',
-      flavor: 'Сразу перейти к следующему бою',
-      description: 'Короткий путь без остановок и комнат подготовки.',
+      title: t('game.core.routes.mapNode.battle.title'),
+      flavor: t('game.core.routes.mapNode.battle.flavor'),
+      description: t('game.core.routes.mapNode.battle.description'),
       column,
       lane,
       battleLevel,
@@ -235,9 +254,9 @@ function createMapNode(
     return {
       id,
       kind,
-      title: 'Передышка у костра',
-      flavor: 'Подлечиться и перевести дух',
-      description: 'Комната отдыха: ремонт, восстановление здоровья и спокойный темп перед следующим боем.',
+      title: t('game.core.routes.mapNode.rest.title'),
+      flavor: t('game.core.routes.mapNode.rest.flavor'),
+      description: t('game.core.routes.mapNode.rest.description'),
       column,
       lane,
       battleLevel,
@@ -248,9 +267,9 @@ function createMapNode(
     return {
       id,
       kind,
-      title: 'Тайник на обочине',
-      flavor: 'Забрать реликвии и припасы',
-      description: 'Комната добычи: бесплатный предмет или полезный запас под следующий бой.',
+      title: t('game.core.routes.mapNode.treasure.title'),
+      flavor: t('game.core.routes.mapNode.treasure.flavor'),
+      description: t('game.core.routes.mapNode.treasure.description'),
       column,
       lane,
       battleLevel,
@@ -261,9 +280,9 @@ function createMapNode(
     return {
       id,
       kind,
-      title: 'Лавка сборщика',
-      flavor: 'Ремонт и подготовка',
-      description: 'Комната торговли: ремонт, новая реликвия или короткий боевой буст.',
+      title: t('game.core.routes.mapNode.shop.title'),
+      flavor: t('game.core.routes.mapNode.shop.flavor'),
+      description: t('game.core.routes.mapNode.shop.description'),
       column,
       lane,
       battleLevel,
@@ -274,9 +293,9 @@ function createMapNode(
     return {
       id,
       kind,
-      title: 'Элитный враг',
-      flavor: 'Усиленный бой за щедрую награду',
-      description: 'Элитный противник: текст длиннее, точность выше, но победа приносит мощный модификатор.',
+      title: t('game.core.routes.mapNode.elite.title'),
+      flavor: t('game.core.routes.mapNode.elite.flavor'),
+      description: t('game.core.routes.mapNode.elite.description'),
       column,
       lane,
       battleLevel,
@@ -287,9 +306,9 @@ function createMapNode(
     return {
       id,
       kind,
-      title: 'Мини-босс',
-      flavor: 'Серьёзное испытание посреди маршрута',
-      description: 'Мини-босс с таймером. Слабее настоящего босса, но сильнее обычного врага. Даёт временный буст.',
+      title: t('game.core.routes.mapNode.miniboss.title'),
+      flavor: t('game.core.routes.mapNode.miniboss.flavor'),
+      description: t('game.core.routes.mapNode.miniboss.description'),
       column,
       lane,
       battleLevel,
@@ -299,9 +318,9 @@ function createMapNode(
   return {
     id,
     kind,
-    title: 'Сделка на грани',
-    flavor: 'Риск ради сильного буста',
-    description: 'Опасная комната: мощные бонусы, но за них придется платить заранее.',
+    title: t('game.core.routes.mapNode.risk.title'),
+    flavor: t('game.core.routes.mapNode.risk.flavor'),
+    description: t('game.core.routes.mapNode.risk.description'),
     column,
     lane,
     battleLevel,
@@ -312,7 +331,13 @@ function createMapNode(
  * Pick a random node kind for a segment column.
  * The node kind pool depends on progression and the lane.
  */
-function getSegmentNodeKind(bossLevel: number, lane: number, colIndex: number, totalCols: number): GameMapNodeKind {
+function getSegmentNodeKind(
+  bossLevel: number,
+  lane: number,
+  colIndex: number,
+  totalCols: number,
+  random: () => number,
+): GameMapNodeKind {
   const canElite = bossLevel >= 10;
   const canMiniboss = bossLevel >= 15;
 
@@ -338,7 +363,7 @@ function getSegmentNodeKind(bossLevel: number, lane: number, colIndex: number, t
     if (canElite && lane !== 1) pool.push('elite');
   }
 
-  return randomFrom(pool);
+  return randomFrom(pool, random);
 }
 
 /**
@@ -356,11 +381,11 @@ function getSegmentBranchCount(bossLevel: number): number {
  * This is the number of columns BETWEEN the boss-start and the next boss.
  * (Battles within these columns count as the non-boss fights.)
  */
-function getSegmentDepth(bossLevel: number): number {
-  if (bossLevel >= 60) return randomFrom([3, 3, 4, 4, 5]);
-  if (bossLevel >= 30) return randomFrom([2, 3, 3, 4]);
-  if (bossLevel >= 15) return randomFrom([2, 2, 3, 3]);
-  return randomFrom([2, 2, 3]);
+function getSegmentDepth(bossLevel: number, random: () => number): number {
+  if (bossLevel >= 60) return randomFrom([3, 3, 4, 4, 5], random);
+  if (bossLevel >= 30) return randomFrom([2, 3, 3, 4], random);
+  if (bossLevel >= 15) return randomFrom([2, 2, 3, 3], random);
+  return randomFrom([2, 2, 3], random);
 }
 
 /**
@@ -390,7 +415,8 @@ function isCombatKind(kind: GameMapNodeKind): boolean {
      preferring same lane ± 1 but sometimes crossing further.
    ══════════════════════════════════════════════════════════ */
 
-export function createGameRunMap(totalLevels: number): GameRunMapState {
+export function createGameRunMap(totalLevels: number, seed = `game-map:${totalLevels}`): GameRunMapState {
+  const random = createSeededRandom(seed);
   const nodes: GameRunMapNode[] = [];
   const links: GameRunRouteLink[] = [];
   let currentColumn = 0;
@@ -415,7 +441,7 @@ export function createGameRunMap(totalLevels: number): GameRunMapState {
     }
 
     // Number of intermediate columns
-    const depth = getSegmentDepth(bossLevel);
+    const depth = getSegmentDepth(bossLevel, random);
     const maxLanes = 5; // lanes 0..4
 
     // Build width profile: how many nodes in each column (diamond shape)
@@ -423,7 +449,7 @@ export function createGameRunMap(totalLevels: number): GameRunMapState {
     for (let col = 0; col < depth; col += 1) {
       const t = depth <= 1 ? 0.5 : col / (depth - 1); // 0..1
       // Diamond: width peaks in the middle
-      const peak = getSegmentPeakWidth(bossLevel);
+      const peak = getSegmentPeakWidth(bossLevel, random);
       const edge = bossIdx === 1 && col === 0 ? 2 : 2; // start/end narrower
       const w = Math.round(edge + (peak - edge) * Math.sin(t * Math.PI));
       widths.push(Math.max(2, Math.min(maxLanes, w)));
@@ -442,7 +468,7 @@ export function createGameRunMap(totalLevels: number): GameRunMapState {
       const lanes = columnLanes[col];
       const colNodeIds: string[] = [];
       for (const lane of lanes) {
-        const kind = getSegmentNodeKind(bossLevel, lane, col, depth);
+        const kind = getSegmentNodeKind(bossLevel, lane, col, depth, random);
         let battleLevel: number | null = null;
         if (isCombatKind(kind) && battleLevelCursor < segBattleLevels.length) {
           battleLevel = segBattleLevels[battleLevelCursor];
@@ -471,7 +497,7 @@ export function createGameRunMap(totalLevels: number): GameRunMapState {
       const fromIds = columnNodeIds[col];
       const toIds = columnNodeIds[col + 1];
 
-      connectColumnsWithMesh(fromLanes, fromIds, toLanes, toIds, links);
+      connectColumnsWithMesh(fromLanes, fromIds, toLanes, toIds, links, random);
     }
 
     // Connect last column → boss
@@ -554,11 +580,11 @@ export function createGameRunMap(totalLevels: number): GameRunMapState {
 /* ── Helpers for the new map generator ──────────────────── */
 
 /** Peak width for a segment (how wide the diamond gets) */
-function getSegmentPeakWidth(bossLevel: number): number {
-  if (bossLevel >= 60) return randomFrom([4, 4, 5, 5]);
-  if (bossLevel >= 30) return randomFrom([3, 4, 4, 5]);
-  if (bossLevel >= 15) return randomFrom([3, 3, 4, 4]);
-  return randomFrom([3, 3, 4]);
+function getSegmentPeakWidth(bossLevel: number, random: () => number): number {
+  if (bossLevel >= 60) return randomFrom([4, 4, 5, 5], random);
+  if (bossLevel >= 30) return randomFrom([3, 4, 4, 5], random);
+  if (bossLevel >= 15) return randomFrom([3, 3, 4, 4], random);
+  return randomFrom([3, 3, 4], random);
 }
 
 /** Spread `count` lanes evenly across 0..maxLanes-1 */
@@ -585,6 +611,7 @@ function connectColumnsWithMesh(
   toLanes: number[],
   toIds: string[],
   links: GameRunRouteLink[],
+  random: () => number,
 ) {
   const incoming = new Set<string>();
 
@@ -614,13 +641,13 @@ function connectColumnsWithMesh(
     }
 
     // 30% chance: add one cross-link to a node at distance 2
-    if (Math.random() < 0.3) {
+    if (random() < 0.3) {
       const far: number[] = [];
       for (let j = 0; j < toLanes.length; j += 1) {
         if (Math.abs(toLanes[j] - fLane) === 2) far.push(j);
       }
       if (far.length > 0) {
-        const pick = far[Math.floor(Math.random() * far.length)];
+        const pick = far[Math.floor(random() * far.length)];
         links.push({ fromId: fromIds[i], toId: toIds[pick] });
         incoming.add(toIds[pick]);
       }

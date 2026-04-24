@@ -6,3 +6,6 @@ export * from './types/motivation';
 export * from './types/progress';
 export * from './types/electron';
 export * from './types/addon';
+export * from './types/i18n';
+export * from './types/extensionSource';
+export * from './types/theme';

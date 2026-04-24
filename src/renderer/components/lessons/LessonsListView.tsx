@@ -1,6 +1,8 @@
 import { Fragment, type ReactNode } from 'react';
 import { Check, ChevronDown, ChevronRight, Play } from 'lucide-react';
 import type { Lesson } from '../../../shared/types';
+import { useI18n } from '../../contexts/I18nContext';
+import { PageHeader } from '../ui/PageHeader';
 
 type LessonsListViewProps = {
   lessons: Lesson[];
@@ -30,14 +32,10 @@ export function LessonsListView({
   exerciseCount,
   headerRight,
 }: LessonsListViewProps) {
+  const { t } = useI18n();
   return (
     <section className="mode-panel active">
-      <div className="panel-header">
-        <div className="game-header-title">
-          <h1>Уроки</h1>
-          {headerRight}
-        </div>
-      </div>
+      <PageHeader title={t('lessons.title')} inlineActions={headerRight} />
       <div className="lesson-grid">
         {lessons.map((lesson, idx) => {
           const done = lessonsDone[idx] ?? 0;
@@ -75,7 +73,7 @@ export function LessonsListView({
                   <span className="lesson-keys">{lessonFocusLabel(resolvedLesson, keys)}</span>
                   {!unlocked && (
                     <span className="lesson-locked-note">
-                      Сначала заверши предыдущий урок в этой секции
+                      {t('lessons.lockedNote')}
                     </span>
                   )}
                   <div className="lesson-progress-bar">

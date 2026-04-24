@@ -1,6 +1,10 @@
 import { memo, useMemo } from 'react';
 import { Medal } from 'lucide-react';
 import type { GameAchievementDefinition } from '../../../shared/types';
+import { useI18n } from '../../contexts/I18nContext';
+import { ActionRow } from '../ui/ActionRow';
+import { Button } from '../ui/Button';
+import { ModalLayout } from '../ui/ModalLayout';
 
 type GameAchievementsModalProps = {
   open: boolean;
@@ -15,6 +19,7 @@ export const GameAchievementsModal = memo(function GameAchievementsModal({
   achievementCatalog,
   onClose,
 }: GameAchievementsModalProps) {
+  const { t } = useI18n();
   // Фильтруем только игровые достижения
   const gameAchievements = useMemo(
     () => achievementCatalog.filter(a => (a.category ?? 'game') === 'game'),
@@ -29,12 +34,19 @@ export const GameAchievementsModal = memo(function GameAchievementsModal({
   if (!open) return null;
 
   return (
-    <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="modal game-achievements-modal">
-        <h3>Достижения</h3>
-        <p className="card-desc">
-          Открыто <b>{unlockedCount}</b> из {gameAchievements.length}.
-        </p>
+    <ModalLayout
+      className="game-achievements-modal"
+      onClose={onClose}
+      size="lg"
+      scrollBody
+      title={t('achievements.title')}
+      description={<>{t('achievements.opened')} <b>{unlockedCount}</b> {t('achievements.of')} {gameAchievements.length}.</>}
+      footer={(
+        <ActionRow stretch className="modal-actions">
+          <Button onClick={onClose}>{t('common.close')}</Button>
+        </ActionRow>
+      )}
+    >
         <div className="game-achievements-list">
           {gameAchievements.map(achievement => {
             const unlocked = unlockedAchievementIds.includes(achievement.id);
@@ -47,15 +59,11 @@ export const GameAchievementsModal = memo(function GameAchievementsModal({
                   <div className="game-achievement-name">{achievement.name}</div>
                   <div className="game-achievement-description">{achievement.description}</div>
                 </div>
-                <div className="game-achievement-state">{unlocked ? 'Открыто' : 'Закрыто'}</div>
+                <div className="game-achievement-state">{unlocked ? t('achievements.state.open') : t('achievements.state.closed')}</div>
               </div>
             );
           })}
         </div>
-        <div className="modal-actions">
-          <button className="btn-secondary" onClick={onClose}>Закрыть</button>
-        </div>
-      </div>
-    </div>
+    </ModalLayout>
   );
 });

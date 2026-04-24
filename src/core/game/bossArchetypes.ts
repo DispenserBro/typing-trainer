@@ -8,6 +8,7 @@
  *  3. endurance  – extra-long text
  *  4. flawless   – streak without any error (allowed error budget = 0-2)
  */
+import { resolveRuntimeTranslation } from '../i18n';
 
 export type BossArchetypeId = 'precision' | 'steadiness' | 'endurance' | 'flawless';
 
@@ -46,14 +47,13 @@ export interface BossArchetypeConfig {
   rewardMultiplier: number;
 }
 
-export const BOSS_ARCHETYPES: Record<BossArchetypeId, BossArchetypeConfig> = {
+type BossArchetypeBaseConfig = Omit<BossArchetypeConfig, 'name' | 'subtitle' | 'description'>;
+
+const BOSS_ARCHETYPE_BASES: Record<BossArchetypeId, BossArchetypeBaseConfig> = {
   precision: {
     id: 'precision',
-    name: 'Снайпер',
-    subtitle: 'Точность — всё',
     accent: 'red',
     icon: 'crosshair',
-    description: 'Требования к точности резко повышены. Каждый промах ощутим.',
     wordCountMultiplier: 1,
     extraAccuracy: 3,
     maxErrors: 0,
@@ -64,11 +64,8 @@ export const BOSS_ARCHETYPES: Record<BossArchetypeId, BossArchetypeConfig> = {
   },
   steadiness: {
     id: 'steadiness',
-    name: 'Метроном',
-    subtitle: 'Ровный темп решает',
     accent: 'blue',
     icon: 'activity',
-    description: 'Важна не скорость, а стабильность ритма. Резкие просадки и ускорения караются.',
     wordCountMultiplier: 1,
     extraAccuracy: 0,
     maxErrors: 0,
@@ -79,11 +76,8 @@ export const BOSS_ARCHETYPES: Record<BossArchetypeId, BossArchetypeConfig> = {
   },
   endurance: {
     id: 'endurance',
-    name: 'Марафон',
-    subtitle: 'Длинная дистанция',
     accent: 'purple',
     icon: 'scroll-text',
-    description: 'Текст значительно длиннее обычного. Нужна выносливость и устойчивый темп.',
     wordCountMultiplier: 1.5,
     extraAccuracy: 0,
     maxErrors: 0,
@@ -94,11 +88,8 @@ export const BOSS_ARCHETYPES: Record<BossArchetypeId, BossArchetypeConfig> = {
   },
   flawless: {
     id: 'flawless',
-    name: 'Абсолют',
-    subtitle: 'Ноль ошибок',
     accent: 'orange',
     icon: 'shield-check',
-    description: 'Допускается не больше 2 ошибок за весь бой. Одно лишнее нажатие — провал.',
     wordCountMultiplier: 0.85,
     extraAccuracy: 0,
     maxErrors: 2,
@@ -107,6 +98,26 @@ export const BOSS_ARCHETYPES: Record<BossArchetypeId, BossArchetypeConfig> = {
     maxRhythmDeviation: 0,
     rewardMultiplier: 1.25,
   },
+};
+
+function t(key: string, params?: Record<string, string | number>) {
+  return resolveRuntimeTranslation(key, params);
+}
+
+function localizeBossArchetype(id: BossArchetypeId, base: BossArchetypeBaseConfig): BossArchetypeConfig {
+  return {
+    ...base,
+    name: t(`game.core.events.bosses.${id}.name`),
+    subtitle: t(`game.core.events.bosses.${id}.subtitle`),
+    description: t(`game.core.events.bosses.${id}.description`),
+  };
+}
+
+export const BOSS_ARCHETYPES: Record<BossArchetypeId, BossArchetypeConfig> = {
+  precision: localizeBossArchetype('precision', BOSS_ARCHETYPE_BASES.precision),
+  steadiness: localizeBossArchetype('steadiness', BOSS_ARCHETYPE_BASES.steadiness),
+  endurance: localizeBossArchetype('endurance', BOSS_ARCHETYPE_BASES.endurance),
+  flawless: localizeBossArchetype('flawless', BOSS_ARCHETYPE_BASES.flawless),
 };
 
 const ARCHETYPE_IDS: BossArchetypeId[] = ['precision', 'steadiness', 'endurance', 'flawless'];
@@ -122,7 +133,7 @@ export function getBossArchetype(bossLevel: number): BossArchetypeConfig {
   // Simple shuffle via golden-ratio offset
   const shuffled = (bossIndex * 3 + 1) % ARCHETYPE_IDS.length;
   const id = ARCHETYPE_IDS[Math.max(0, shuffled)] ?? 'precision';
-  return BOSS_ARCHETYPES[id];
+  return localizeBossArchetype(id, BOSS_ARCHETYPE_BASES[id]);
 }
 
 /**

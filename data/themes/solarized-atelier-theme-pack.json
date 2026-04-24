@@ -1,0 +1,59 @@
+{
+  "manifestVersion": 1,
+  "id": "solarized-atelier-theme-pack",
+  "name": "Solarized Atelier",
+  "version": "1.0.1",
+  "icon": "sun",
+  "description": "Демо-тема на чистом CSS с палитрой Solarized и более графичным контрастом интерфейса.",
+  "author": "Typing Trainer Demo Source",
+  "type": "theme",
+  "preview": {
+    "bg": "#002b36",
+    "surface": "#073642",
+    "surface2": "#0b4452",
+    "surface3": "#145563",
+    "text": "#fdf6e3",
+    "textDim": "#d8cfb7",
+    "subtext": "#93a1a1",
+    "accent": "#cb4b16",
+    "accentHover": "#dc322f",
+    "accentDim": "#6f3114",
+    "green": "#859900",
+    "red": "#dc322f",
+    "yellow": "#b58900",
+    "fontSans": "\"Segoe UI\", \"Trebuchet MS\", sans-serif",
+    "fontMono": "\"JetBrains Mono\", \"Consolas\", monospace",
+    "radius": "14px",
+    "radiusSm": "9px",
+    "transitionSpeed": "0.18s"
+  },
+  "style": {
+    "colors": {
+      "bg": "#002b36",
+      "surface": "#073642",
+      "surface2": "#0b4452",
+      "surface3": "#145563",
+      "text": "#fdf6e3",
+      "textDim": "#d8cfb7",
+      "subtext": "#93a1a1",
+      "accent": "#cb4b16",
+      "accentHover": "#dc322f",
+      "accentDim": "#6f3114",
+      "green": "#859900",
+      "red": "#dc322f",
+      "yellow": "#b58900",
+      "fontSans": "\"Segoe UI\", \"Trebuchet MS\", sans-serif",
+      "fontMono": "\"JetBrains Mono\", \"Consolas\", monospace",
+      "radius": "14px",
+      "radiusSm": "9px",
+      "transitionSpeed": "0.18s"
+    },
+    "variables": {
+      "--panel-glow": "0 0 0 1px rgba(203, 75, 22, 0.24)"
+    },
+    "css": "body.theme-solarized-atelier {\n  background-image: linear-gradient(180deg, rgba(7, 54, 66, 0.94), rgba(0, 43, 54, 0.98));\n}\n\nbody.theme-solarized-atelier .panel,\nbody.theme-solarized-atelier .mode-panel,\nbody.theme-solarized-atelier .modal {\n  border-color: rgba(38, 139, 210, 0.26);\n  background: linear-gradient(180deg, rgba(11, 68, 82, 0.96), rgba(7, 54, 66, 0.94));\n}\n\nbody.theme-solarized-atelier .page-title,\nbody.theme-solarized-atelier h1,\nbody.theme-solarized-atelier h2,\nbody.theme-solarized-atelier h3 {\n  color: #fdf6e3;\n  letter-spacing: 0.01em;\n}\n\nbody.theme-solarized-atelier .btn,\nbody.theme-solarized-atelier .chip {\n  border-radius: 999px;\n}\n\nbody.theme-solarized-atelier .btn-accent {\n  background: linear-gradient(135deg, #cb4b16, #dc322f);\n  color: #fdf6e3;\n}\n\nbody.theme-solarized-atelier .settings-pill.is-active,\nbody.theme-solarized-atelier .addons-tab.is-active {\n  box-shadow: inset 0 0 0 1px rgba(253, 246, 227, 0.16);\n}",
+    "bodyClasses": [
+      "theme-solarized-atelier"
+    ]
+  }
+}

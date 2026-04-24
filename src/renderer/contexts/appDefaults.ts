@@ -96,6 +96,7 @@ export function defaultSettings(s?: Partial<UserSettings>): UserSettings {
     highlightCurrentChar: s?.highlightCurrentChar ?? true,
     textDisplay: s?.textDisplay ?? 'block',
     theme: s?.theme ?? 'dark-orange',
+    interfaceLanguage: s?.interfaceLanguage ?? (s?.language === 'en' ? 'en' : 'ru'),
     language: s?.language ?? '',
     layout: s?.layout ?? '',
     useYo: s?.useYo ?? false,
@@ -146,6 +147,7 @@ export function defaultModePracticeSettings(settings?: Partial<ModePracticeSetti
     contentMode: settings?.contentMode,
     selectedContentPackId: settings?.selectedContentPackId ?? '',
     sprintDurationSeconds,
+    flawlessEnabled: settings?.flawlessEnabled ?? false,
   };
 }
 

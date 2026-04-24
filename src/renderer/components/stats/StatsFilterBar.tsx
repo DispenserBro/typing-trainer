@@ -1,76 +1,36 @@
-import {
-  LAYOUT_SCOPE_OPTIONS,
-  MODE_OPTIONS,
-  PERIOD_OPTIONS,
-  type StatsLayoutScope,
-  type StatsModeFilter,
-  type StatsPeriod,
-} from '../../../core/stats/utils';
+import type {
+  StatsFilterBarGroupId,
+  StatsFilterBarGroupViewModel,
+} from '../../../core/stats/viewModel';
+import { SegmentedControl } from '../ui/SegmentedControl';
 
 type StatsFilterBarProps = {
-  statsPeriod: StatsPeriod;
-  setStatsPeriod: (value: StatsPeriod) => void;
-  statsMode: StatsModeFilter;
-  setStatsMode: (value: StatsModeFilter) => void;
-  layoutScope: StatsLayoutScope;
-  setLayoutScope: (value: StatsLayoutScope) => void;
+  filters: StatsFilterBarGroupViewModel[];
+  onOptionSelect: (groupId: StatsFilterBarGroupId, value: string) => void;
 };
 
 export function StatsFilterBar({
-  statsPeriod,
-  setStatsPeriod,
-  statsMode,
-  setStatsMode,
-  layoutScope,
-  setLayoutScope,
+  filters,
+  onOptionSelect,
 }: StatsFilterBarProps) {
   return (
     <div className="card-like stats-filter-card mt-16">
       <div className="stats-filters-grid">
-        <label className="field">
-          <span>Период</span>
-          <div className="seg-group">
-            {PERIOD_OPTIONS.map(option => (
-              <button
-                key={option.value}
-                className={`seg-btn${statsPeriod === option.value ? ' active' : ''}`}
-                onClick={() => setStatsPeriod(option.value)}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </label>
+        {filters.map(group => {
+          const activeOption = group.options.find(option => option.active) ?? group.options[0];
 
-        <label className="field">
-          <span>Режим</span>
-          <div className="seg-group">
-            {MODE_OPTIONS.map(option => (
-              <button
-                key={option.value}
-                className={`seg-btn${statsMode === option.value ? ' active' : ''}`}
-                onClick={() => setStatsMode(option.value)}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </label>
-
-        <label className="field">
-          <span>Срез</span>
-          <div className="seg-group">
-            {LAYOUT_SCOPE_OPTIONS.map(option => (
-              <button
-                key={option.value}
-                className={`seg-btn${layoutScope === option.value ? ' active' : ''}`}
-                onClick={() => setLayoutScope(option.value)}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </label>
+          return (
+            <label className="field" key={group.id}>
+              <span>{group.label}</span>
+              <SegmentedControl
+                ariaLabel={group.label}
+                value={activeOption?.value ?? ''}
+                onChange={value => onOptionSelect(group.id, value)}
+                options={group.options}
+              />
+            </label>
+          );
+        })}
       </div>
     </div>
   );

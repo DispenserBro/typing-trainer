@@ -1,0 +1,5533 @@
+msgid ""
+msgstr ""
+"Language: ru\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=4; plural=(n%10==1 && n%100!=11 ? 2 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 0 : 1);\n"
+"X-Language-Label: Russian\n"
+"X-Language-Native-Label: Русский\n"
+
+msgid "app.loading"
+msgstr "Загрузка…"
+
+msgid "app.sidebar.home"
+msgstr "Главное меню"
+
+msgid "app.sidebar.section"
+msgstr "режим"
+
+msgid "app.sidebar.modes.practice"
+msgstr "Практика"
+
+msgid "app.sidebar.modes.sprint"
+msgstr "Спринт"
+
+msgid "app.sidebar.modes.survival"
+msgstr "Выживание"
+
+msgid "app.sidebar.modes.lessons"
+msgstr "Уроки"
+
+msgid "app.sidebar.modes.game"
+msgstr "Игра"
+
+msgid "app.sidebar.modes.stats"
+msgstr "Статистика"
+
+msgid "app.sidebar.modes.extensions"
+msgstr "Дополнения"
+
+msgid "app.sidebar.modes.settings"
+msgstr "Настройки"
+
+msgid "common.close"
+msgstr "Закрыть"
+
+msgid "common.accuracy"
+msgstr "Точность"
+
+msgid "common.time"
+msgstr "Время"
+
+msgid "common.secondsShort"
+msgstr "с"
+
+msgid "common.characters"
+msgstr "Символов"
+
+msgid "common.errors"
+msgstr "Ошибок"
+
+msgid "common.retry"
+msgstr "Ещё раз"
+
+msgid "common.toPractice"
+msgstr "Вернуться в практику"
+
+msgid "achievements.title"
+msgstr "Достижения"
+
+msgid "achievements.opened"
+msgstr "Открыто"
+
+msgid "achievements.of"
+msgstr "из"
+
+msgid "achievements.all"
+msgstr "Все достижения"
+
+msgid "achievements.empty"
+msgstr "В этой категории пока нет достижений."
+
+msgid "achievements.categories.game"
+msgstr "Игра"
+
+msgid "achievements.categories.practice"
+msgstr "Практика"
+
+msgid "achievements.categories.lessons"
+msgstr "Уроки"
+
+msgid "achievements.categories.test"
+msgstr "Спринт"
+
+msgid "achievements.state.open"
+msgstr "Открыто"
+
+msgid "achievements.state.closed"
+msgstr "Закрыто"
+
+msgid "achievements.catalog.first-level.name"
+msgstr "Первый шаг"
+
+msgid "achievements.catalog.first-level.description"
+msgstr "Пройти первый уровень игрового режима."
+
+msgid "achievements.catalog.first-boss.name"
+msgstr "Разбитая корона"
+
+msgid "achievements.catalog.first-boss.description"
+msgstr "Победить первого босса на 5 уровне."
+
+msgid "achievements.catalog.unlock-letter.name"
+msgstr "Пробуждение знака"
+
+msgid "achievements.catalog.unlock-letter.description"
+msgstr "Открыть новую букву во время забега."
+
+msgid "achievements.catalog.collect-item.name"
+msgstr "Первая находка"
+
+msgid "achievements.catalog.collect-item.description"
+msgstr "Получить любой предмет после победы над боссом."
+
+msgid "achievements.catalog.collect-durable-item.name"
+msgstr "Хрупкая сила"
+
+msgid "achievements.catalog.collect-durable-item.description"
+msgstr "Получить предмет с прочностью."
+
+msgid "achievements.catalog.collect-top-rarity-item.name"
+msgstr "Свет реликвии"
+
+msgid "achievements.catalog.collect-top-rarity-item.description"
+msgstr "Получить предмет максимальной редкости."
+
+msgid "achievements.catalog.equip-item.name"
+msgstr "Во всеоружии"
+
+msgid "achievements.catalog.equip-item.description"
+msgstr "Экипировать любой предмет."
+
+msgid "achievements.catalog.full-top-rarity-loadout.name"
+msgstr "Трон коллекционера"
+
+msgid "achievements.catalog.full-top-rarity-loadout.description"
+msgstr "Заполнить все 3 слота предметами максимальной редкости."
+
+msgid "achievements.catalog.boss-25.name"
+msgstr "Страж четверти пути"
+
+msgid "achievements.catalog.boss-25.description"
+msgstr "Победить босса 25 уровня."
+
+msgid "achievements.catalog.boss-50.name"
+msgstr "Сердце бури"
+
+msgid "achievements.catalog.boss-50.description"
+msgstr "Победить босса 50 уровня."
+
+msgid "achievements.catalog.boss-75.name"
+msgstr "На краю выносливости"
+
+msgid "achievements.catalog.boss-75.description"
+msgstr "Победить босса 75 уровня."
+
+msgid "achievements.catalog.game-complete.name"
+msgstr "Повелитель ритма"
+
+msgid "achievements.catalog.game-complete.description"
+msgstr "Пройти все 100 уровней игрового режима."
+
+msgid "achievements.catalog.practice-first-session.name"
+msgstr "Разминка"
+
+msgid "achievements.catalog.practice-first-session.description"
+msgstr "Завершить первую сессию практики."
+
+msgid "achievements.catalog.practice-unlock-letter.name"
+msgstr "Новый горизонт"
+
+msgid "achievements.catalog.practice-unlock-letter.description"
+msgstr "Открыть новую букву в практике."
+
+msgid "achievements.catalog.practice-10-sessions.name"
+msgstr "Постоянство"
+
+msgid "achievements.catalog.practice-10-sessions.description"
+msgstr "Завершить 10 сессий практики."
+
+msgid "achievements.catalog.lessons-first-complete.name"
+msgstr "Ученик"
+
+msgid "achievements.catalog.lessons-first-complete.description"
+msgstr "Завершить первый урок."
+
+msgid "achievements.catalog.lessons-section-complete.name"
+msgstr "Глава закрыта"
+
+msgid "achievements.catalog.lessons-section-complete.description"
+msgstr "Завершить все уроки одной секции."
+
+msgid "achievements.catalog.lessons-all-complete.name"
+msgstr "Выпускник"
+
+msgid "achievements.catalog.lessons-all-complete.description"
+msgstr "Завершить все уроки текущей раскладки."
+
+msgid "achievements.catalog.test-first-complete.name"
+msgstr "Проверка связи"
+
+msgid "achievements.catalog.test-first-complete.description"
+msgstr "Завершить первый спринт."
+
+msgid "achievements.catalog.test-high-accuracy.name"
+msgstr "Снайпер"
+
+msgid "achievements.catalog.test-high-accuracy.description"
+msgstr "Завершить спринт с точностью 98% или выше."
+
+msgid "achievements.catalog.test-speed-60.name"
+msgstr "Скоростной режим"
+
+msgid "achievements.catalog.test-speed-60.description"
+msgstr "Набрать 60 WPM или выше в спринте."
+
+msgid "mastery.currentScore"
+msgstr "Текущие очки мастерства"
+
+msgid "mastery.remainingPoints"
+msgstr "До «{{title}}» осталось {{count}} очк."
+
+msgid "mastery.maxReached"
+msgstr "Максимальная ступень уже достигнута"
+
+msgid "mastery.activeReward"
+msgstr "Активный эффект повышения"
+
+msgid "mastery.nextReward"
+msgstr "Следующая награда"
+
+msgid "mastery.milestones"
+msgstr "Ступеней мастерства"
+
+msgid "mastery.symbolsUnlocked"
+msgstr "Символов открыто"
+
+msgid "mastery.practiceSessions"
+msgstr "Практик"
+
+msgid "mastery.bestPace"
+msgstr "Лучший темп"
+
+msgid "mastery.scoreDelta"
+msgstr "Прирост мастерства"
+
+msgid "mastery.beforeAttempt"
+msgstr "Было до попытки"
+
+msgid "mastery.newMilestone"
+msgstr "Новая ступень"
+
+msgid "mastery.currentMilestone"
+msgstr "Текущая ступень"
+
+msgid "mastery.signalSummary"
+msgstr "Открыто {{unlocked}}/{{total}} символов · {{sessions}} практик · лучший темп {{speed}} WPM"
+
+msgid "mastery.ranks.private.title"
+msgstr "Рядовой"
+
+msgid "mastery.ranks.private.description"
+msgstr "Раскладка только поступила на службу: база уже есть, но руки ещё сверяются с клавишами почти на каждом сложном переходе."
+
+msgid "mastery.ranks.private.rewardTitle"
+msgstr "Постановка в строй"
+
+msgid "mastery.ranks.private.rewardDescription"
+msgstr "Раскладка получает собственный статус в профиле и начинает копить явную цепочку мастерства от первых стабильных попыток."
+
+msgid "mastery.ranks.corporal.title"
+msgstr "Ефрейтор"
+
+msgid "mastery.ranks.corporal.description"
+msgstr "Первые движения становятся надёжнее: раскладка уже узнаётся без лишних пауз, а грубые промахи случаются заметно реже."
+
+msgid "mastery.ranks.corporal.rewardTitle"
+msgstr "Первый знак устойчивости"
+
+msgid "mastery.ranks.corporal.rewardDescription"
+msgstr "Профиль начинает видеть, что раскладка вышла из стадии случайных проб и реально закрепляется в повседневной практике."
+
+msgid "mastery.ranks.sergeant.title"
+msgstr "Сержант"
+
+msgid "mastery.ranks.sergeant.description"
+msgstr "База закрепилась: пользователь начинает лучше контролировать слабые места, а темп уже не срывается на каждом трудном сочетании."
+
+msgid "mastery.ranks.sergeant.rewardTitle"
+msgstr "Контроль слабых мест"
+
+msgid "mastery.ranks.sergeant.rewardDescription"
+msgstr "Мастерство начинает точнее подсвечивать, какие буквы, биграммы и ритмические провалы ещё отделяют раскладку от следующего звания."
+
+msgid "mastery.ranks.lieutenant.title"
+msgstr "Лейтенант"
+
+msgid "mastery.ranks.lieutenant.description"
+msgstr "Темп уже можно считать управляемым: раскладка держится в обычной практике и не разваливается при первом усложнении сценария."
+
+msgid "mastery.ranks.lieutenant.rewardTitle"
+msgstr "Управляемый темп"
+
+msgid "mastery.ranks.lieutenant.rewardDescription"
+msgstr "Результаты по раскладке становятся достаточно ровными, чтобы видеть уже не просто факт прогресса, а его качество от сессии к сессии."
+
+msgid "mastery.ranks.captain.title"
+msgstr "Капитан"
+
+msgid "mastery.ranks.captain.description"
+msgstr "Пользователь уверенно ведёт длинные отрезки, быстрее возвращается в рабочий ритм после ошибки и лучше читает свои слабые зоны."
+
+msgid "mastery.ranks.captain.rewardTitle"
+msgstr "Разбор после попытки"
+
+msgid "mastery.ranks.captain.rewardDescription"
+msgstr "Прогрессия начинает читаться по итогам попыток заметно яснее: расширенный разбор прогресса становится частью устойчивого роста, а не редкой вспышкой."
+
+msgid "mastery.ranks.major.title"
+msgstr "Майор"
+
+msgid "mastery.ranks.major.description"
+msgstr "Навык работает стабильно на дистанции: результаты меньше зависят от удачи и всё чаще повторяются в разных режимах и с разным материалом."
+
+msgid "mastery.ranks.major.rewardTitle"
+msgstr "Устойчивость на дистанции"
+
+msgid "mastery.ranks.major.rewardDescription"
+msgstr "Раскладка получает выраженный статус надёжной боевой единицы: долгие проходы и обычная практика начинают работать на одну общую мета-прогрессию."
+
+msgid "mastery.ranks.colonel.title"
+msgstr "Полковник"
+
+msgid "mastery.ranks.colonel.description"
+msgstr "Раскладка становится одной из опорных: высокий темп сочетается с дисциплиной, а качество ввода держится даже под нагрузкой."
+
+msgid "mastery.ranks.colonel.rewardTitle"
+msgstr "Опорная раскладка"
+
+msgid "mastery.ranks.colonel.rewardDescription"
+msgstr "Профиль начинает относиться к этой раскладке как к одной из ведущих и выделяет её как зрелый, почти полностью выведенный в строй навык."
+
+msgid "mastery.ranks.colonel-general.title"
+msgstr "Генерал-полковник"
+
+msgid "mastery.ranks.colonel-general.description"
+msgstr "Максимальный ранг: раскладка полностью освоена и держит темп, точность и устойчивость как штатный инструмент, готовый к любой дальнейшей мета-прогрессии."
+
+msgid "mastery.ranks.colonel-general.rewardTitle"
+msgstr "Полное введение в строй"
+
+msgid "mastery.ranks.colonel-general.rewardDescription"
+msgstr "Раскладка считается полностью введённой в строй и может быть отмечена как одна из максимально освоенных в дальнейшем развитии профиля."
+
+msgid "addons.title"
+msgstr "Аддоны и модификации"
+
+msgid "addons.tabs.addons"
+msgstr "Аддоны"
+
+msgid "addons.tabs.sources"
+msgstr "Источники"
+
+msgid "addons.tabs.mods"
+msgstr "Модификации"
+
+msgid "addons.views.catalog"
+msgstr "Каталог"
+
+msgid "addons.views.installed"
+msgstr "Установлено"
+
+msgid "addons.searchPlaceholder"
+msgstr "Поиск…"
+
+msgid "addons.addonsHint"
+msgstr "Аддоны — это JSON-файлы, которые добавляют контент: словари, уроки, раскладки, предметы, достижения и темы."
+
+msgid "addons.modsHintBefore"
+msgstr "Каждый мод хранится в отдельной папке с"
+
+msgid "addons.modsHintAfter"
+msgstr "и точкой входа JS. Устанавливайте только из доверенных источников."
+
+msgid "addons.missingDependencies"
+msgstr "Не хватает модов: {{ids}}"
+
+msgid "addons.modExecWarning"
+msgstr "Выполняет JS-скрипт · точка входа:"
+
+msgid "addons.actions.enable"
+msgstr "Включить"
+
+msgid "addons.actions.disable"
+msgstr "Отключить"
+
+msgid "addons.actions.remove"
+msgstr "Удалить"
+
+msgid "addons.actions.installDependencies"
+msgstr "Установите необходимые моды"
+
+msgid "addons.actions.installAddon"
+msgstr "Установить аддон…"
+
+msgid "addons.actions.installMod"
+msgstr "Установить мод…"
+
+msgid "addons.actions.applyTheme"
+msgstr "Применить тему"
+
+msgid "addons.installError.addon"
+msgstr "Ошибка установки аддона: {{error}}"
+
+msgid "addons.installError.mod"
+msgstr "Ошибка установки мода: {{error}}"
+
+msgid "addons.installError.theme"
+msgstr "Ошибка установки темы: {{error}}"
+
+msgid "addons.confirmRemoveAddon"
+msgstr "Удалить аддон «{{name}}»?"
+
+msgid "addons.confirmRemoveMod"
+msgstr "Удалить мод «{{name}}»?"
+
+msgid "addons.confirmRemoveTheme"
+msgstr "Удалить тему «{{name}}»?"
+
+msgid "addons.empty.search"
+msgstr "Ничего не найдено"
+
+msgid "addons.empty.addonsTitle"
+msgstr "Нет установленных аддонов."
+
+msgid "addons.empty.addonsSubtitle"
+msgstr "Выберите JSON-файл аддона, чтобы установить."
+
+msgid "addons.empty.sourcesTitle"
+msgstr "Пока нет добавленных источников."
+
+msgid "addons.empty.sourcesSubtitle"
+msgstr "Добавьте локальный manifest, прямой URL или GitHub-источник, чтобы собрать основу центра расширений."
+
+msgid "addons.empty.modsTitle"
+msgstr "Нет установленных модификаций."
+
+msgid "addons.empty.modsSubtitle"
+msgstr "Укажите manifest.json из папки мода, чтобы установить."
+
+msgid "addons.empty.installedTitle"
+msgstr "Пока ничего не установлено."
+
+msgid "addons.empty.installedSubtitle"
+msgstr "Установите аддон, мод или тему, чтобы они появились в этом разделе."
+
+msgid "addons.empty.themesTitle"
+msgstr "Нет установленных тем."
+
+msgid "addons.empty.themesSubtitle"
+msgstr "Установите пакет темы, чтобы он появился в этом разделе."
+
+msgid "addons.tags.words"
+msgstr "Слова"
+
+msgid "addons.tags.lessons"
+msgstr "Уроки"
+
+msgid "addons.tags.layouts"
+msgstr "Раскладки"
+
+msgid "addons.tags.languages"
+msgstr "Языки"
+
+msgid "addons.tags.items"
+msgstr "Предметы"
+
+msgid "addons.tags.achievements"
+msgstr "Достижения"
+
+msgid "addons.tags.themes"
+msgstr "Темы"
+
+msgid "addons.tags.practicePacks"
+msgstr "Контент-паки"
+
+msgid "addons.tags.interfaceLocales"
+msgstr "Языки интерфейса"
+
+msgid "addons.permissions.sections"
+msgstr "Управление разделами"
+
+msgid "addons.permissions.settings"
+msgstr "Переопределение настроек"
+
+msgid "addons.permissions.items"
+msgstr "Управление предметами"
+
+msgid "addons.permissions.achievements"
+msgstr "Управление достижениями"
+
+msgid "addons.permissions.rules"
+msgstr "Изменение правил"
+
+msgid "addons.permissions.ui"
+msgstr "Пользовательский UI"
+
+msgid "addons.permissions.events"
+msgstr "Подписка на события"
+
+msgid "addons.permissions.words"
+msgstr "Управление словами"
+
+msgid "addons.permissions.lessons"
+msgstr "Управление уроками"
+
+msgid "addons.permissions.i18n"
+msgstr "Переводы интерфейса"
+
+msgid "addons.permissions.modes"
+msgstr "Новые режимы"
+
+msgid "addons.sources.hint"
+msgstr "Источники — это внешние каталоги с manifest, списками аддонов, модов, тем и карточками описания."
+
+msgid "addons.sources.noDescription"
+msgstr "Источник не указал описание."
+
+msgid "addons.sources.syncErrorFallback"
+msgstr "Не удалось синхронизировать источник."
+
+msgid "addons.sources.confirmRemove"
+msgstr "Удалить источник «{{name}}»?"
+
+msgid "addons.sources.lastSync"
+msgstr "Последняя синхронизация:"
+
+msgid "addons.sources.status.ready"
+msgstr "Синхронизирован"
+
+msgid "addons.sources.status.error"
+msgstr "Ошибка синхронизации"
+
+msgid "addons.sources.status.never"
+msgstr "Ещё не синхронизирован"
+
+msgid "addons.sources.status.disabled"
+msgstr "Отключён"
+
+msgid "addons.sources.types.local"
+msgstr "Локальный файл"
+
+msgid "addons.sources.types.url"
+msgstr "Прямой URL"
+
+msgid "addons.sources.types.github"
+msgstr "GitHub"
+
+msgid "addons.sources.actions.add"
+msgstr "Добавить источник"
+
+msgid "addons.sources.actions.edit"
+msgstr "Изменить"
+
+msgid "addons.sources.actions.save"
+msgstr "Сохранить источник"
+
+msgid "addons.sources.actions.sync"
+msgstr "Синхронизировать"
+
+msgid "addons.actions.openCard"
+msgstr "Открыть карточку"
+
+msgid "addons.sources.form.createTitle"
+msgstr "Добавить источник расширений"
+
+msgid "addons.sources.form.editTitle"
+msgstr "Изменить источник расширений"
+
+msgid "addons.sources.form.type"
+msgstr "Тип источника"
+
+msgid "addons.sources.form.manifestPath"
+msgstr "Путь к manifest"
+
+msgid "addons.sources.form.manifestPathPlaceholder"
+msgstr "D:\\Каталоги\\typing-trainer\\manifest.json"
+
+msgid "addons.sources.form.chooseFile"
+msgstr "Выбрать файл"
+
+msgid "addons.sources.form.manifestUrl"
+msgstr "URL manifest"
+
+msgid "addons.sources.form.manifestUrlPlaceholder"
+msgstr "https://example.com/typing-trainer/manifest.json"
+
+msgid "addons.sources.form.githubUrl"
+msgstr "GitHub URL"
+
+msgid "addons.sources.form.githubUrlPlaceholder"
+msgstr "https://github.com/owner/repo/tree/main/catalog"
+
+msgid "addons.sources.form.owner"
+msgstr "Владелец GitHub"
+
+msgid "addons.sources.form.repo"
+msgstr "Репозиторий"
+
+msgid "addons.sources.form.branch"
+msgstr "Ветка"
+
+msgid "addons.sources.form.basePath"
+msgstr "Базовый путь"
+
+msgid "addons.sources.form.githubManifestPath"
+msgstr "Путь к manifest внутри репозитория"
+
+msgid "addons.sources.form.pickManifestTitle"
+msgstr "Выберите manifest источника расширений"
+
+msgid "addons.sources.form.invalid"
+msgstr "Сначала заполните обязательные поля источника."
+
+msgid "addons.sources.counts.addons"
+msgstr "Аддоны: {{count}}"
+
+msgid "addons.sources.counts.mods"
+msgstr "Моды: {{count}}"
+
+msgid "addons.sources.counts.themes"
+msgstr "Темы: {{count}}"
+
+msgid "addons.catalog.title"
+msgstr "Каталог"
+
+msgid "addons.catalog.subtitle"
+msgstr "Просматривайте кэшированные записи из подключённых источников, открывайте их карточки и устанавливайте поддерживаемые контентные пакеты."
+
+msgid "addons.catalog.emptyTitle"
+msgstr "Записей каталога пока нет."
+
+msgid "addons.catalog.emptySubtitle"
+msgstr "Синхронизируйте источник со списками, чтобы заполнить этот каталог."
+
+msgid "addons.catalog.noDescription"
+msgstr "У этой записи каталога нет описания."
+
+msgid "addons.catalog.filters.all"
+msgstr "Все"
+
+msgid "addons.installed.filters.all"
+msgstr "Все"
+
+msgid "addons.installed.filters.addons"
+msgstr "Аддоны"
+
+msgid "addons.installed.filters.mods"
+msgstr "Моды"
+
+msgid "addons.installed.filters.themes"
+msgstr "Темы"
+
+msgid "addons.installed.contentFilters.all"
+msgstr "Все типы"
+
+msgid "addons.catalog.kinds.addons"
+msgstr "Аддоны"
+
+msgid "addons.catalog.kinds.mods"
+msgstr "Моды"
+
+msgid "addons.catalog.kinds.themes"
+msgstr "Темы"
+
+msgid "addons.catalog.status.available"
+msgstr "Доступно"
+
+msgid "addons.catalog.status.installed"
+msgstr "Установлено"
+
+msgid "addons.catalog.status.updateAvailable"
+msgstr "Доступно обновление"
+
+msgid "addons.catalog.status.sourceDisabled"
+msgstr "Источник отключён"
+
+msgid "addons.catalog.status.sourceError"
+msgstr "Источник недоступен"
+
+msgid "addons.catalog.status.invalid"
+msgstr "Битый manifest"
+
+msgid "addons.catalog.actions.installAddon"
+msgstr "Установить аддон"
+
+msgid "addons.catalog.actions.installTheme"
+msgstr "Установить тему"
+
+msgid "addons.catalog.actions.installMod"
+msgstr "Установить мод"
+
+msgid "addons.catalog.actions.update"
+msgstr "Обновить"
+
+msgid "addons.catalog.actions.installed"
+msgstr "Установлено"
+
+msgid "addons.catalog.actions.manualOnly"
+msgstr "Только вручную"
+
+msgid "addons.catalog.installedVersion"
+msgstr "Установлено: v{{version}}"
+
+msgid "addons.catalog.dependencies"
+msgstr "Зависимости: {{ids}}"
+
+msgid "addons.catalog.permissions"
+msgstr "Разрешения: {{permissions}}"
+
+msgid "addons.catalog.duplicateSources"
+msgstr "Этот же пакет есть и в других источниках: {{sources}}"
+
+msgid "addons.markdown.author"
+msgstr "Автор: {{author}}"
+
+msgid "addons.markdown.version"
+msgstr "Версия: v{{version}}"
+
+msgid "addons.markdown.minAppVersion"
+msgstr "Мин. версия приложения: {{version}}"
+
+msgid "addons.themes.current"
+msgstr "Текущая"
+
+msgid "addons.themes.installedAt"
+msgstr "Установлена: {{date}}"
+
+msgid "home.hero.kicker"
+msgstr "Typing Trainer"
+
+msgid "home.hero.title"
+msgstr "Быстрый вход и понятный следующий шаг."
+
+msgid "home.hero.description"
+msgstr "Продолжайте текущий сценарий или сразу переходите в нужный режим без лишних экранов."
+
+msgid "home.hero.dynamic.currentRun.title"
+msgstr "Забег уже ждёт продолжения."
+
+msgid "home.hero.dynamic.currentRun.description"
+msgstr "Возвращайтесь в сохранённый маршрут и не теряйте темп, прогресс и выбранную ветку."
+
+msgid "home.hero.dynamic.firstSteps.title"
+msgstr "Начните с понятной базы."
+
+msgid "home.hero.dynamic.firstSteps.description"
+msgstr "Спокойнее всего войти в ритм через урок {{lesson}}, а режимы подключать уже после базового закрепления."
+
+msgid "home.hero.dynamic.lessons.title"
+msgstr "Следующий шаг — урок {{lesson}}."
+
+msgid "home.hero.dynamic.lessons.description"
+msgstr "Сейчас полезнее укрепить раскладку по структуре, чем распыляться между режимами."
+
+msgid "home.hero.dynamic.practice.title"
+msgstr "Практика сейчас даст лучший отклик."
+
+msgid "home.hero.dynamic.practice.description"
+msgstr "Самый прямой способ подтянуть слабые места, стабилизировать точность и вернуть уверенный ритм."
+
+msgid "home.hero.dynamic.test.title"
+msgstr "Пора проверить темп."
+
+msgid "home.hero.dynamic.test.description"
+msgstr "Короткий спринт покажет, насколько скорость уже держится без долгой раскачки."
+
+msgid "home.hero.dynamic.survival.title"
+msgstr "Навык готов к длинной дистанции."
+
+msgid "home.hero.dynamic.survival.description"
+msgstr "Сейчас важнее проверить устойчивость темпа и контроля на длинном проходе, а не только пик скорости."
+
+msgid "home.hero.dynamic.game.title"
+msgstr "Игровой прогресс снова актуален."
+
+msgid "home.hero.dynamic.game.description"
+msgstr "Можно вернуться в забег или использовать игру как более живую форму закрепления текущего темпа."
+
+msgid "home.hero.openGame"
+msgstr "Открыть игру"
+
+msgid "home.hero.openPractice"
+msgstr "Открыть практику"
+
+msgid "home.recommendation.label"
+msgstr "Что делать дальше"
+
+msgid "home.sections.profile"
+msgstr "Профиль сейчас"
+
+msgid "home.sections.weekly"
+msgstr "Недельные задачи"
+
+msgid "home.sections.achievements"
+msgstr "Достижения"
+
+msgid "home.sections.progressCenter"
+msgstr "Панель прогресса"
+
+msgid "home.sections.modes"
+msgstr "Режимы"
+
+msgid "home.sections.quickActions"
+msgstr "Быстрый доступ"
+
+msgid "home.quickInsights.title"
+msgstr "Краткая сводка"
+
+msgid "home.weekly.remainingDays"
+msgid_plural "home.weekly.remainingDays"
+msgstr[0] "{{title}} · до сброса остался {{count}} день."
+msgstr[1] "{{title}} · до сброса осталось {{count}} дня."
+msgstr[2] "{{title}} · до сброса осталось {{count}} дней."
+msgstr[3] "{{title}} · до сброса осталось {{count}} дней."
+
+msgid "home.achievements.description"
+msgstr "Ваши награды за игровые, учебные и тренировочные успехи."
+
+msgid "home.achievements.collectionTitle"
+msgstr "Коллекция трофеев"
+
+msgid "home.achievements.collectionDescription"
+msgstr "Посмотреть все разблокированные достижения из всех режимов"
+
+msgid "home.progressCenter.season.title"
+msgstr "Сезонный фокус"
+
+msgid "home.progressCenter.season.summary"
+msgstr "{{completed}}/{{total}} целей"
+
+msgid "home.progressCenter.season.next"
+msgstr "Следующий акцент: {{title}}."
+
+msgid "home.progressCenter.season.completed"
+msgstr "Текущий сезонный пакет уже закрыт полностью."
+
+msgid "home.progressCenter.modeFocus.title"
+msgstr "Режимный фокус"
+
+msgid "home.progressCenter.modeFocus.summaryMissing"
+msgid_plural "home.progressCenter.modeFocus.summaryMissing"
+msgstr[0] "{{count}} режим без попыток"
+msgstr[1] "{{count}} режима без попыток"
+msgstr[2] "{{count}} режимов без попыток"
+msgstr[3] "{{count}} режимов без попыток"
+
+msgid "home.progressCenter.modeFocus.summaryReady"
+msgstr "Цикл уже собран"
+
+msgid "home.progressCenter.modeFocus.descriptionMissing"
+msgstr "Показывает, какие режимы ещё не встроены в вашу тренировочную рутину."
+
+msgid "home.progressCenter.modeFocus.descriptionReady"
+msgstr "Можно точечно балансировать режимы, а не догонять пустые зоны."
+
+msgid "home.progressCenter.records.title"
+msgstr "Личные рекорды"
+
+msgid "home.progressCenter.records.summary"
+msgstr "{{count}}/{{total}} режимов"
+
+msgid "home.progressCenter.records.description"
+msgstr "Лучшие результаты по текущей раскладке и языку в одном окне."
+
+msgid "home.progressCenter.mastery.title"
+msgstr "Цепочка мастерства"
+
+msgid "home.progressCenter.mastery.description"
+msgstr "Текущие очки мастерства: {{score}}/100."
+
+msgid "home.progressCenter.goals.title"
+msgstr "Долгие цели"
+
+msgid "home.progressCenter.goals.summary"
+msgstr "{{count}} активных вех"
+
+msgid "home.progressCenter.goals.description"
+msgstr "Крупные цели, которые держат долгую инерцию между отдельными сессиями."
+
+msgid "home.progressCenter.streaks.title"
+msgstr "Серии"
+
+msgid "home.progressCenter.streaks.summaryActive"
+msgstr "{{count}} сейчас"
+
+msgid "home.progressCenter.streaks.summaryEmpty"
+msgstr "Нет серий"
+
+msgid "home.progressCenter.streaks.descriptionActive"
+msgstr "Самая живая серия сейчас: {{title}}."
+
+msgid "home.progressCenter.streaks.descriptionEmpty"
+msgstr "Серия появится после нескольких стабильных попыток подряд."
+
+msgid "home.detail.season.title"
+msgstr "Сезонный фокус"
+
+msgid "home.detail.season.description"
+msgid_plural "home.detail.season.description"
+msgstr[0] "{{title}} · ещё {{count}} день в текущем цикле."
+msgstr[1] "{{title}} · ещё {{count}} дня в текущем цикле."
+msgstr[2] "{{title}} · ещё {{count}} дней в текущем цикле."
+msgstr[3] "{{title}} · ещё {{count}} дней в текущем цикле."
+
+msgid "home.detail.season.progress"
+msgstr "{{completed}}/{{total}} целей закрыто"
+
+msgid "home.detail.season.goalDone"
+msgstr "Выполнено в текущем сезоне"
+
+msgid "home.detail.modeFocus.title"
+msgstr "Режимный фокус"
+
+msgid "home.detail.modeFocus.description"
+msgstr "Сводка по режимам, чтобы видеть, где цикл уже устойчив, а где всё ещё не хватает попыток."
+
+msgid "home.detail.modeFocus.attempts"
+msgid_plural "home.detail.modeFocus.attempts"
+msgstr[0] "{{count}} попытка · {{date}}"
+msgstr[1] "{{count}} попытки · {{date}}"
+msgstr[2] "{{count}} попыток · {{date}}"
+msgstr[3] "{{count}} попыток · {{date}}"
+
+msgid "home.detail.records.title"
+msgstr "Личные рекорды"
+
+msgid "home.detail.records.description"
+msgstr "Лучшие результаты по ключевым режимам в рамках текущей раскладки и языка."
+
+msgid "home.detail.mastery.title"
+msgstr "Цепочка мастерства"
+
+msgid "home.detail.mastery.description"
+msgstr "Текущая ступень раскладки, активный эффект повышения и ближайшая награда."
+
+msgid "home.detail.goals.title"
+msgstr "Долгие цели"
+
+msgid "home.detail.goals.description"
+msgstr "Большие мотивационные вехи, которые копятся между отдельными тренировками и игровыми сессиями."
+
+msgid "home.detail.streaks.title"
+msgstr "Серии"
+
+msgid "home.detail.streaks.description"
+msgstr "Текущие и лучшие цепочки, которые показывают устойчивость, а не только разовые пики."
+
+msgid "home.detail.streaks.best"
+msgid_plural "home.detail.streaks.best"
+msgstr[0] "Лучший результат: {{count}} раз"
+msgstr[1] "Лучший результат: {{count}} раза"
+msgstr[2] "Лучший результат: {{count}} раз"
+msgstr[3] "Лучший результат: {{count}} раз"
+
+msgid "home.common.openWindow"
+msgstr "Открыть окно"
+
+msgid "home.common.expandSection"
+msgstr "Развернуть"
+
+msgid "home.common.collapseSection"
+msgstr "Свернуть"
+
+msgid "home.common.noAttempts"
+msgstr "Нет попыток"
+
+msgid "home.common.noDate"
+msgstr "нет даты"
+
+msgid "home.common.noData"
+msgstr "Нет данных"
+
+msgid "home.viewModel.activeRun.label"
+msgstr "Уровень {{level}} · {{lives}} HP"
+
+msgid "home.viewModel.activeRun.empty"
+msgstr "Нет активного забега"
+
+msgid "home.viewModel.dailyGoal.sessionsProgress"
+msgstr "{{current}} / {{target}} сессий"
+
+msgid "home.viewModel.dailyGoal.minutesProgress"
+msgstr "{{current}} / {{target}} мин"
+
+msgid "home.viewModel.weakness.char"
+msgstr "Символ {{label}} чаще других тормозит ритм и даёт промахи."
+
+msgid "home.viewModel.weakness.bigram"
+msgstr "Связка {{label}} проседает сильнее остальных переходов."
+
+msgid "home.viewModel.weakness.rhythmLabel"
+msgstr "Ритм"
+
+msgid "home.viewModel.weakness.rhythm"
+msgstr "Среднее отклонение ритма около {{deviation}} мс, и серия пока держится неровно."
+
+msgid "home.viewModel.recommendation.continueRun.title"
+msgstr "Продолжить забег"
+
+msgid "home.viewModel.recommendation.continueRun.description"
+msgstr "Активный игровой забег уже сохранён. Самый ценный следующий шаг — вернуться в него и не терять инерцию."
+
+msgid "home.viewModel.recommendation.continueRun.action"
+msgstr "Продолжить игру"
+
+msgid "home.viewModel.recommendation.startLessons.title"
+msgstr "Начать с уроков"
+
+msgid "home.viewModel.recommendation.startLessons.description"
+msgstr "История ещё пустая, а урок {{lesson}} быстрее всего поставит базу раскладки и снизит хаос в первых сессиях."
+
+msgid "home.viewModel.recommendation.startLessons.action"
+msgstr "Открыть уроки"
+
+msgid "home.viewModel.recommendation.startPractice.title"
+msgstr "Собрать базовую практику"
+
+msgid "home.viewModel.recommendation.startPractice.description"
+msgstr "Пока нет ни одной завершённой сессии, лучший старт — короткая практика, чтобы собрать первую статистику по скорости и точности."
+
+msgid "home.viewModel.recommendation.startPractice.action"
+msgstr "Открыть практику"
+
+msgid "home.viewModel.recommendation.fixWeakness.bigramTitle"
+msgstr "Добить слабую связку {{label}}"
+
+msgid "home.viewModel.recommendation.fixWeakness.charTitle"
+msgstr "Добить слабую букву {{label}}"
+
+msgid "home.viewModel.recommendation.fixWeakness.rhythmTitle"
+msgstr "Выравнять ритм набора"
+
+msgid "home.viewModel.recommendation.fixWeakness.description"
+msgstr "{{detail}} При этом базовая практика в недавних сессиях держит около {{accuracy}}% точности, так что самый полезный следующий шаг — точечно вернуться в практику, а не распыляться на новый режим."
+
+msgid "home.viewModel.recommendation.fixWeakness.action"
+msgstr "Открыть практику"
+
+msgid "home.viewModel.recommendation.stabilizeAccuracy.title"
+msgstr "Стабилизировать точность"
+
+msgid "home.viewModel.recommendation.stabilizeAccuracy.description"
+msgstr "За последние {{count}} сессий средняя точность около {{accuracy}}%. Сейчас полезнее вернуться в практику и снять лишние промахи, чем гнаться за новым режимом."
+
+msgid "home.viewModel.recommendation.stabilizeAccuracy.action"
+msgstr "Открыть практику"
+
+msgid "home.viewModel.recommendation.catchDecline.title"
+msgstr "Поймать начавшуюся просадку"
+
+msgid "home.viewModel.recommendation.catchDecline.description"
+msgstr "Недавняя практика начала проседать: скорость изменилась примерно на {{speed}} {{speedLabel}}, а точность — на {{accuracy}} п.п. относительно предыдущего окна. Сейчас нужен спокойный проход на стабилизацию, пока спад не закрепился."
+
+msgid "home.viewModel.recommendation.catchDecline.action"
+msgstr "Открыть практику"
+
+msgid "home.viewModel.recommendation.checkSprint.title"
+msgstr "Проверить темп в спринте"
+
+msgid "home.viewModel.recommendation.checkSprint.description"
+msgstr "База уже выглядит зрелой: {{count}} недавних практик держат около {{accuracy}}% точности. Самое полезное следующее измерение — короткий спринт под таймером."
+
+msgid "home.viewModel.recommendation.checkSprint.action"
+msgstr "Открыть спринт"
+
+msgid "home.viewModel.recommendation.keepSprint.title"
+msgstr "Не терять скоростной режим"
+
+msgid "home.viewModel.recommendation.keepSprint.description"
+msgstr "Практика за последние 14 дней уже набрала {{count}} уверенных сессий при точности около {{accuracy}}%, но спринтов в этом окне не было. Самый полезный следующий шаг — снять контрольный замер скорости под таймером."
+
+msgid "home.viewModel.recommendation.keepSprint.action"
+msgstr "Открыть спринт"
+
+msgid "home.viewModel.recommendation.recoverAfterSprint.title"
+msgstr "Снять хаос после спринтов"
+
+msgid "home.viewModel.recommendation.recoverAfterSprint.description"
+msgstr "Недавние спринты держат только около {{accuracy}}% точности. Сейчас лучше вернуть контроль в обычной практике, а потом снова давить на скорость."
+
+msgid "home.viewModel.recommendation.recoverAfterSprint.action"
+msgstr "Вернуться в практику"
+
+msgid "home.viewModel.recommendation.sprintToSurvival.title"
+msgstr "Перенести спринт на длинную дистанцию"
+
+msgid "home.viewModel.recommendation.sprintToSurvival.description"
+msgstr "Спринт уже не просто вспышка: в последних попытках темп вырос примерно на {{speed}} {{speedLabel}}, а точность тоже подросла. Самое честное продолжение — проверить устойчивость в выживании."
+
+msgid "home.viewModel.recommendation.sprintToSurvival.action"
+msgstr "Открыть выживание"
+
+msgid "home.viewModel.recommendation.checkLongRun.title"
+msgstr "Проверить длинную дистанцию"
+
+msgid "home.viewModel.recommendation.checkLongRun.description"
+msgstr "Короткая база уже собрана: в недавней истории точность держится около {{accuracy}}%, но длинных проходов ещё нет. Выживание покажет, сохраняется ли техника вне коротких серий."
+
+msgid "home.viewModel.recommendation.checkLongRun.action"
+msgstr "Открыть выживание"
+
+msgid "home.viewModel.recommendation.returnLongRuns.title"
+msgstr "Вернуть длинные проходы в цикл"
+
+msgid "home.viewModel.recommendation.returnLongRuns.description"
+msgstr "База по практике не выглядит пустой, но за последние 14 дней длинных проходов не было. Сейчас полезно проверить, держится ли техника дальше первых минут, а не только в коротких сериях."
+
+msgid "home.viewModel.recommendation.returnLongRuns.action"
+msgstr "Открыть выживание"
+
+msgid "home.viewModel.recommendation.stabilizeSurvival.title"
+msgstr "Выравнять длинную серию"
+
+msgid "home.viewModel.recommendation.stabilizeSurvival.description"
+msgstr "Недавние проходы выживания идут примерно на {{accuracy}}% точности. Проблема уже не в старте, а в устойчивости на длинном тексте, так что полезнее вернуться в базовую практику."
+
+msgid "home.viewModel.recommendation.stabilizeSurvival.action"
+msgstr "В практику"
+
+msgid "home.viewModel.recommendation.raiseSurvival.title"
+msgstr "Поднять планку в выживании"
+
+msgid "home.viewModel.recommendation.raiseSurvival.description"
+msgstr "Выживание уже выглядит зрелым: успешных проходов {{passed}} из {{total}}, а недавняя точность держится около {{accuracy}}%. Самое честное усложнение — включить «Без ошибок»."
+
+msgid "home.viewModel.recommendation.raiseSurvival.action"
+msgstr "Открыть выживание"
+
+msgid "home.viewModel.recommendation.enableFlawless.title"
+msgstr "Включить строгий режим контроля"
+
+msgid "home.viewModel.recommendation.enableFlawless.description"
+msgstr "Обычное выживание уже держится уверенно: успешных длинных проходов {{passed}} из {{total}}, а недавняя точность около {{accuracy}}%. Логичный следующий шаг — включить «Без ошибок» и проверить дисциплину без права на промах."
+
+msgid "home.viewModel.recommendation.enableFlawless.action"
+msgstr "Открыть выживание"
+
+msgid "home.viewModel.recommendation.foundationLessons.title"
+msgstr "Добрать фундамент через уроки"
+
+msgid "home.viewModel.recommendation.foundationLessons.description"
+msgstr "Пройдено только {{completed}}/{{total}} уроков, а плотной базы практики пока немного. Следующий полезный шаг — урок {{lesson}}, чтобы снизить системные ошибки в раскладке."
+
+msgid "home.viewModel.recommendation.foundationLessons.action"
+msgstr "Открыть уроки"
+
+msgid "home.viewModel.recommendation.unlockNextLetter.title"
+msgstr "Дожать следующую букву"
+
+msgid "home.viewModel.recommendation.unlockNextLetter.description"
+msgstr "До новой буквы {{letter}} остался последний шаг. Практика сейчас даст более ценный прирост, чем переключение на другой режим."
+
+msgid "home.viewModel.recommendation.unlockNextLetter.action"
+msgstr "Открыть практику"
+
+msgid "home.viewModel.recommendation.dailyGoal.title"
+msgstr "Добрать дневную норму"
+
+msgid "home.viewModel.recommendation.dailyGoal.sessionsDescription"
+msgstr "Сегодня закрыто только {{current}} из {{target}} сессий. Полезнее не распыляться, а сделать ещё одну спокойную практику и вернуть ритм дня."
+
+msgid "home.viewModel.recommendation.dailyGoal.minutesDescription"
+msgstr "Сегодня собрано только {{current}} из {{target}} минут. Перед более тяжёлым режимом лучше добрать базовый объём и собрать статистику дня."
+
+msgid "home.viewModel.recommendation.dailyGoal.action"
+msgstr "Открыть практику"
+
+msgid "home.viewModel.recommendation.dailyRun.title"
+msgstr "Зайти в ежедневный забег"
+
+msgid "home.viewModel.recommendation.dailyRun.description"
+msgstr "Дневная база уже собрана на {{progress}}%, а недавняя точность выглядит устойчиво. Ежедневный забег сейчас даст полезную длинную проверку без случайного перегруза."
+
+msgid "home.viewModel.recommendation.dailyRun.action"
+msgstr "Открыть игру"
+
+msgid "home.viewModel.recommendation.weeklyProgress"
+msgstr "{{description}} Сейчас недельный цикл закрыт на {{progress}}%."
+
+msgid "home.viewModel.recommendation.modeFocus.title"
+msgstr "Проверить режим: {{title}}"
+
+msgid "home.viewModel.recommendation.modeFocus.action"
+msgstr "Открыть {{title}}"
+
+msgid "home.viewModel.recommendation.default.title"
+msgstr "Открыть практику"
+
+msgid "home.viewModel.recommendation.default.description"
+msgstr "Лучший следующий шаг — короткая практика, чтобы сохранить темп, выровнять точность и продвинуть прогресс раскладки."
+
+msgid "home.viewModel.recommendation.default.action"
+msgstr "Открыть практику"
+
+msgid "home.viewModel.actions.continueRun.title"
+msgstr "Продолжить забег"
+
+msgid "home.viewModel.actions.continueRun.description"
+msgstr "Вернуться в сохранённый игровой прогресс с тем же уровнем, HP и маршрутом."
+
+msgid "home.viewModel.actions.startPractice.title"
+msgstr "Быстрая практика"
+
+msgid "home.viewModel.actions.startPractice.description"
+msgstr "Открыть тренировку слабых мест и сразу начать текущую конфигурацию практики."
+
+msgid "home.viewModel.actions.startPractice.nextLetter"
+msgstr "Следующая буква: {{letter}}"
+
+msgid "home.viewModel.actions.startPractice.complete"
+msgstr "Все буквы текущей раскладки открыты"
+
+msgid "home.viewModel.actions.replayLast.description"
+msgstr "Повторить последний сценарий с ориентиром {{speed}} {{speedLabel}} и точностью {{accuracy}}%."
+
+msgid "home.viewModel.actions.replayLast.meta"
+msgstr "Последняя попытка: {{date}}"
+
+msgid "home.viewModel.actions.lessons.title"
+msgstr "Вернуться к урокам"
+
+msgid "home.viewModel.actions.lessons.description"
+msgstr "Продолжить обучение по структуре раскладки и упражнениям на переходы."
+
+msgid "home.viewModel.actions.lessons.nextLesson"
+msgstr "Следующий урок: {{lesson}}"
+
+msgid "home.viewModel.actions.lessons.complete"
+msgstr "Все уроки текущей раскладки завершены"
+
+msgid "home.viewModel.actions.stats.title"
+msgstr "Открыть статистику"
+
+msgid "home.viewModel.actions.stats.description"
+msgstr "Посмотреть динамику скорости, точности, ритма и проблемных сочетаний."
+
+msgid "home.viewModel.actions.stats.lastSession"
+msgstr "Последняя сессия: {{date}}"
+
+msgid "home.viewModel.actions.stats.empty"
+msgstr "Статистика появится после первых попыток"
+
+msgid "home.viewModel.modeCards.practice.title"
+msgstr "Практика"
+
+msgid "home.viewModel.modeCards.practice.description"
+msgstr "Короткие адаптивные сессии для слабых букв, биграмм и ритма."
+
+msgid "home.viewModel.modeCards.practice.nextLetter"
+msgstr "До новой буквы: {{count}}/3"
+
+msgid "home.viewModel.modeCards.practice.complete"
+msgstr "Раскладка открыта полностью"
+
+msgid "home.viewModel.modeCards.test.title"
+msgstr "Спринт"
+
+msgid "home.viewModel.modeCards.test.description"
+msgstr "Короткий таймерный забег на темп и аккуратность поверх общего content-pipeline."
+
+msgid "home.viewModel.modeCards.test.best"
+msgstr "Лучший спринт: {{speed}} {{speedLabel}}"
+
+msgid "home.viewModel.modeCards.test.empty"
+msgstr "Ещё нет спринтов"
+
+msgid "home.viewModel.modeCards.survival.title"
+msgstr "Выживание"
+
+msgid "home.viewModel.modeCards.survival.description"
+msgstr "Длинный проход с лимитом ошибок и встроенным переключателем \"Без ошибок\" для более жёсткой версии режима."
+
+msgid "home.viewModel.modeCards.survival.best"
+msgstr "Лучший проход: {{speed}} {{speedLabel}}"
+
+msgid "home.viewModel.modeCards.survival.bestFlawless"
+msgstr "Лучший безошибочный: {{speed}} {{speedLabel}}"
+
+msgid "home.viewModel.modeCards.survival.empty"
+msgstr "Ещё нет проходов"
+
+msgid "home.viewModel.modeCards.lessons.title"
+msgstr "Уроки"
+
+msgid "home.viewModel.modeCards.lessons.description"
+msgstr "Пошаговое обучение раскладке от базовых рядов до связок и ритма."
+
+msgid "home.viewModel.modeCards.lessons.meta"
+msgstr "{{completed}}/{{total}} уроков завершено"
+
+msgid "home.viewModel.modeCards.game.title"
+msgstr "Игра"
+
+msgid "home.viewModel.modeCards.game.description"
+msgstr "Длинные забеги с боссами, предметами, маршрутами, событиями и наградами."
+
+msgid "home.viewModel.modeCards.game.bestLevel"
+msgstr "Лучший уровень: {{level}}"
+
+msgid "home.viewModel.modeCards.stats.title"
+msgstr "Статистика"
+
+msgid "home.viewModel.modeCards.stats.description"
+msgstr "Графики прогресса, тепловая карта клавиатуры, анализ ритма и разбор сессий."
+
+msgid "home.viewModel.modeCards.stats.lastEntry"
+msgstr "Последняя запись: {{date}}"
+
+msgid "home.viewModel.modeCards.stats.empty"
+msgstr "Появится после первых сессий"
+
+msgid "home.viewModel.modeCards.settings.title"
+msgstr "Настройки"
+
+msgid "home.viewModel.modeCards.settings.description"
+msgstr "Темы, клавиатура, текст, визуал и параметры ввода под себя."
+
+msgid "home.viewModel.modeCards.badges.active"
+msgstr "Активно"
+
+msgid "home.viewModel.modeCards.badges.next"
+msgstr "Дальше"
+
+msgid "home.viewModel.modeCards.badges.last"
+msgstr "Последнее"
+
+msgid "home.viewModel.summary.layout.label"
+msgstr "Текущая раскладка"
+
+msgid "home.viewModel.summary.layout.description"
+msgstr "{{progress}} букв открыто"
+
+msgid "home.viewModel.summary.dailyGoal.label"
+msgstr "Дневная цель"
+
+msgid "home.viewModel.summary.dailyGoal.sessions"
+msgstr "Ежедневные сессии"
+
+msgid "home.viewModel.summary.dailyGoal.minutes"
+msgstr "Ежедневная практика"
+
+msgid "home.viewModel.summary.lessons.label"
+msgstr "Уроки"
+
+msgid "home.viewModel.summary.lessons.next"
+msgstr "Следующий урок: {{lesson}}"
+
+msgid "home.viewModel.summary.lessons.complete"
+msgstr "Все уроки завершены"
+
+msgid "home.viewModel.summary.game.label"
+msgstr "Игровой прогресс"
+
+msgid "home.viewModel.summary.game.currentLevel"
+msgstr "Уровень {{level}}"
+
+msgid "home.viewModel.summary.game.bestLevel"
+msgstr "Уровень {{level}}"
+
+msgid "home.viewModel.summary.game.currentRun"
+msgstr "{{lives}} HP в активном забеге"
+
+msgid "home.viewModel.summary.game.empty"
+msgstr "Активного забега нет"
+
+msgid "home.viewModel.quickInsights.lastSession.label"
+msgstr "Последняя сессия"
+
+msgid "home.viewModel.quickInsights.lastSession.empty"
+msgstr "Пока нет завершённых сессий"
+
+msgid "home.viewModel.quickInsights.bestSpeed.label"
+msgstr "Лучшая скорость"
+
+msgid "home.viewModel.quickInsights.bestSpeed.description"
+msgstr "{{accuracy}}% точности"
+
+msgid "home.viewModel.quickInsights.bestSpeed.empty"
+msgstr "Появится после первых результатов"
+
+msgid "home.viewModel.quickInsights.dailySeries.label"
+msgstr "Текущая серия дня"
+
+msgid "home.viewModel.quickInsights.dailySeries.minutesValue"
+msgid_plural "home.viewModel.quickInsights.dailySeries.minutesValue"
+msgstr[0] "{{count}} минута"
+msgstr[1] "{{count}} минуты"
+msgstr[2] "{{count}} минут"
+msgstr[3] "{{count}} минут"
+
+msgid "home.viewModel.quickInsights.dailySeries.sessions"
+msgstr "Сессий сегодня"
+
+msgid "home.viewModel.quickInsights.dailySeries.minutes"
+msgstr "Практики сегодня"
+
+msgid "home.viewModel.quickInsights.dailyRun.label"
+msgstr "Ежедневный забег"
+
+msgid "home.viewModel.quickInsights.dailyRun.complete"
+msgstr "Пройден"
+
+msgid "home.viewModel.quickInsights.dailyRun.incomplete"
+msgstr "Не пройден"
+
+msgid "home.viewModel.quickInsights.dailyRun.attempts"
+msgid_plural "home.viewModel.quickInsights.dailyRun.attempts"
+msgstr[0] "{{count}} попытка"
+msgstr[1] "{{count}} попытки"
+msgstr[2] "{{count}} попыток"
+msgstr[3] "{{count}} попыток"
+
+msgid "home.viewModel.quickInsights.dailyRun.empty"
+msgstr "Сегодня ещё не было попыток"
+
+msgid "home.viewModel.heroTags.dailyGoal"
+msgstr "Дневная цель: {{value}}"
+
+msgid "home.viewModel.heroTags.weekly"
+msgstr "Неделя: {{completed}}/{{total}}"
+
+msgid "home.viewModel.heroTags.nextLesson"
+msgstr "Урок {{lesson}}"
+
+msgid "home.viewModel.heroTags.runSaved"
+msgstr "Активный забег сохранён"
+
+msgid "home.viewModel.heroTags.newSession"
+msgstr "Можно стартовать новую сессию"
+
+msgid "home.viewModel.replayTitle"
+msgstr "Открыть практику"
+
+msgid "home.summary.replay.openPractice"
+msgstr "Открыть практику"
+
+msgid "home.summary.replay.retrySprint"
+msgstr "Повторить спринт"
+
+msgid "home.summary.replay.retrySurvival"
+msgstr "Повторить выживание"
+
+msgid "home.summary.replay.retryFlawless"
+msgstr "Повторить выживание без ошибок"
+
+msgid "home.summary.replay.backToPractice"
+msgstr "Вернуться в практику"
+
+msgid "home.viewModel.weeklyGoalDone"
+msgstr "Задача недели закрыта"
+
+msgid "home.modes.description"
+msgstr "Каждый режим отвечает за свой тип прогресса и сценарий занятия."
+
+msgid "resultComparison.previousAttempt"
+msgstr "Предыдущая попытка"
+
+msgid "resultComparison.deltaToPrevious"
+msgstr "Δ к прошлой"
+
+msgid "resultComparison.recentBest"
+msgstr "Лучший недавний"
+
+msgid "resultComparison.deltaToBest"
+msgstr "Δ к лучшему"
+
+msgid "resultComparison.accuracyDelta"
+msgstr "Точность {{value}}%"
+
+msgid "records.practiceTrainingModes.normal"
+msgstr "Обычный темп"
+
+msgid "records.practiceTrainingModes.rhythm"
+msgstr "Ровный ритм"
+
+msgid "records.practiceContentModes.adaptive-words"
+msgstr "Слова"
+
+msgid "records.practiceContentModes.syllables"
+msgstr "Слоги"
+
+msgid "records.practiceContentModes.pseudo-words"
+msgstr "Псевдослова"
+
+msgid "records.practiceContentModes.sentences"
+msgstr "Предложения"
+
+msgid "records.practiceContentModes.custom"
+msgstr "Свои наборы"
+
+msgid "records.practiceScenarios.practice-normal"
+msgstr "Обычная практика"
+
+msgid "records.practiceScenarios.practice-rhythm"
+msgstr "Ритм-практика"
+
+msgid "records.practiceScenarios.sprint"
+msgstr "Спринт"
+
+msgid "records.practiceScenarios.survival"
+msgstr "Выживание"
+
+msgid "records.practiceScenarios.flawless"
+msgstr "Выживание без ошибок"
+
+msgid "records.context.practice"
+msgstr "Практика"
+
+msgid "records.context.sprint"
+msgstr "Спринт"
+
+msgid "records.context.lesson"
+msgstr "Урок"
+
+msgid "records.context.contentUnknown"
+msgstr "Материал не указан"
+
+msgid "records.context.gameStageBoss"
+msgstr "Босс"
+
+msgid "records.context.gameStageNormal"
+msgstr "Обычный бой"
+
+msgid "records.context.gameLevel"
+msgstr "ур. {{level}}"
+
+msgid "records.context.gameLevelUnknown"
+msgstr "уровень не указан"
+
+msgid "records.context.durationSeconds"
+msgid_plural "records.context.durationSeconds"
+msgstr[0] "{{count}} с"
+msgstr[1] "{{count}} с"
+msgstr[2] "{{count}} с"
+msgstr[3] "{{count}} с"
+
+msgid "records.context.durationUnknown"
+msgstr "время не указано"
+
+msgid "records.cards.practice.title"
+msgstr "Рекорд практики"
+
+msgid "records.cards.practice.subtitle"
+msgstr "Лучший результат по режиму"
+
+msgid "records.cards.game.title"
+msgstr "Рекорд игры"
+
+msgid "records.cards.game.subtitle"
+msgstr "Лучший результат по режиму"
+
+msgid "records.cards.sprint.title"
+msgstr "Рекорд спринта"
+
+msgid "records.cards.sprint.subtitle"
+msgstr "Лучший короткий забег"
+
+msgid "records.cards.currentLayout.title"
+msgstr "Текущая раскладка"
+
+msgid "records.cards.currentLanguage.title"
+msgstr "Текущий язык"
+
+msgid "records.cards.currentLanguage.none"
+msgstr "Язык не выбран"
+
+msgid "records.modeFocus.practice.title"
+msgstr "Практика"
+
+msgid "records.modeFocus.practice.description"
+msgstr "Базовый режим для повседневного закрепления скорости, точности и слабых мест."
+
+msgid "records.modeFocus.practice.recommendation.empty"
+msgstr "Нужна хотя бы одна базовая практика, чтобы на ней держались остальные режимы."
+
+msgid "records.modeFocus.practice.recommendation.lowAccuracy"
+msgstr "Сейчас практика проседает по точности. Лучше стабилизировать базу перед challenge-режимами."
+
+msgid "records.modeFocus.practice.recommendation.ready"
+msgstr "База выглядит уверенно. Практика уже может быть точкой разогрева перед спринтом или выживанием без ошибок."
+
+msgid "records.modeFocus.practice.recommendation.building"
+msgstr "Ещё немного базовых сессий, и режимы на выносливость и чистоту будут ощущаться заметно ровнее."
+
+msgid "records.modeFocus.test.title"
+msgstr "Спринт"
+
+msgid "records.modeFocus.test.description"
+msgstr "Короткий таймерный режим на разгон, плотность набора и контроль ошибок под давлением времени."
+
+msgid "records.modeFocus.test.recommendation.empty"
+msgstr "Спринт ещё не открыт в реальном цикле тренировок. Стоит сделать хотя бы один короткий забег на калибровку темпа."
+
+msgid "records.modeFocus.test.recommendation.lowAccuracy"
+msgstr "Спринт теряет результат на ошибках. Полезно сохранить темп, но снизить хаотичные промахи на старте."
+
+msgid "records.modeFocus.test.recommendation.ready"
+msgstr "Спринт уже даёт сильный пик скорости. Можно использовать его как короткую контрольную сессию между практиками."
+
+msgid "records.modeFocus.test.recommendation.building"
+msgstr "Режим уже в работе, но ему ещё нужны повторения, чтобы темп стал устойчивее, а не разовым всплеском."
+
+msgid "records.modeFocus.survival.title"
+msgstr "Выживание"
+
+msgid "records.modeFocus.survival.description"
+msgstr "Длинный проход с лимитом ошибок и встроенным переключателем \"Без ошибок\" для более жёсткой версии режима."
+
+msgid "records.modeFocus.survival.recommendation.empty"
+msgstr "Выживание пока не встроено в ритм занятий. Один длинный проход быстро покажет, держится ли навык вне коротких серий, а переключатель \"Без ошибок\" пригодится уже после разогрева."
+
+msgid "records.modeFocus.survival.recommendation.flawlessReady"
+msgstr "Внутренний безошибочный вариант уже даёт сильные результаты. Режим можно использовать и как длинную проверку, и как точный контроль через переключатель."
+
+msgid "records.modeFocus.survival.recommendation.lowAccuracy"
+msgstr "Режим упирается не в пиковую скорость, а в устойчивость. Стоит добрать более ровную точность на длинной дистанции, а безошибочный переключатель пока включать точечно."
+
+msgid "records.modeFocus.survival.recommendation.ready"
+msgstr "Выживание уже выглядит зрелым режимом для вас. Им удобно проверять, не рассыпается ли техника на длинном тексте, а \"Без ошибок\" можно включать как более строгий подрежим."
+
+msgid "records.modeFocus.survival.recommendation.building"
+msgstr "Есть рабочая база, но режиму ещё полезны несколько длинных проходов, чтобы сгладить середину и конец текста."
+
+msgid "records.modeFocus.survival.recommendation.buildingWithFlawless"
+msgstr "Есть рабочая база, но режиму ещё полезны несколько длинных проходов, чтобы сгладить середину и конец текста и увереннее включать \"Без ошибок\"."
+
+msgid "records.homeRecord.noAttempts"
+msgstr "Ещё нет завершённых попыток"
+
+msgid "stats.title"
+msgstr "Статистика"
+
+msgid "stats.common.msValue"
+msgstr "{{value}}мс"
+
+msgid "stats.empty.chart"
+msgstr "Недостаточно данных для графика."
+
+msgid "stats.empty.noDataYet"
+msgstr "Пока нет данных"
+
+msgid "stats.filters.period"
+msgstr "Период"
+
+msgid "stats.filters.mode"
+msgstr "Режим"
+
+msgid "stats.filters.scope"
+msgstr "Срез"
+
+msgid "stats.filters.periodOptions.all"
+msgstr "Все"
+
+msgid "stats.filters.periodOptions.day"
+msgstr "День"
+
+msgid "stats.filters.periodOptions.week"
+msgstr "Неделя"
+
+msgid "stats.filters.periodOptions.month"
+msgstr "Месяц"
+
+msgid "stats.filters.modeOptions.all"
+msgstr "Все"
+
+msgid "stats.filters.modeOptions.practice"
+msgstr "Практика"
+
+msgid "stats.filters.modeOptions.game"
+msgstr "Игра"
+
+msgid "stats.filters.modeOptions.lesson"
+msgstr "Уроки"
+
+msgid "stats.filters.modeOptions.test"
+msgstr "Спринт"
+
+msgid "stats.filters.layoutOptions.current"
+msgstr "Текущая раскладка"
+
+msgid "stats.filters.layoutOptions.all"
+msgstr "Все раскладки"
+
+msgid "stats.fingers.index_left"
+msgstr "Левый указательный"
+
+msgid "stats.fingers.index_right"
+msgstr "Правый указательный"
+
+msgid "stats.fingers.middle_left"
+msgstr "Левый средний"
+
+msgid "stats.fingers.middle_right"
+msgstr "Правый средний"
+
+msgid "stats.fingers.ring_left"
+msgstr "Левый безымянный"
+
+msgid "stats.fingers.ring_right"
+msgstr "Правый безымянный"
+
+msgid "stats.fingers.pinky_left"
+msgstr "Левый мизинец"
+
+msgid "stats.fingers.pinky_right"
+msgstr "Правый мизинец"
+
+msgid "stats.rows.top"
+msgstr "Верхний ряд"
+
+msgid "stats.rows.middle"
+msgstr "Основной ряд"
+
+msgid "stats.rows.bottom"
+msgstr "Нижний ряд"
+
+msgid "stats.modes.practice"
+msgstr "Практика"
+
+msgid "stats.modes.game"
+msgstr "Игра"
+
+msgid "stats.modes.lesson"
+msgstr "Урок"
+
+msgid "stats.modes.test"
+msgstr "Спринт"
+
+msgid "stats.scenarios.practice-normal"
+msgstr "Обычная практика"
+
+msgid "stats.scenarios.practice-rhythm"
+msgstr "Ритм-практика"
+
+msgid "stats.scenarios.sprint"
+msgstr "Спринт"
+
+msgid "stats.scenarios.survival"
+msgstr "Выживание"
+
+msgid "stats.scenarios.flawless"
+msgstr "Выживание без ошибок"
+
+msgid "stats.trainingModes.normal"
+msgstr "Обычная"
+
+msgid "stats.trainingModes.rhythm"
+msgstr "Ритм"
+
+msgid "stats.trend.notEnoughData"
+msgstr "Недостаточно данных"
+
+msgid "stats.trend.stable"
+msgstr "Стабильно"
+
+msgid "stats.trend.growing"
+msgstr "Растет"
+
+msgid "stats.trend.falling"
+msgstr "Падает"
+
+msgid "stats.summary.bestSpeed"
+msgstr "Лучший темп"
+
+msgid "stats.summary.bestAccuracy"
+msgstr "Лучшая точность"
+
+msgid "stats.summary.bestRhythm"
+msgstr "Самая ровная сессия"
+
+msgid "stats.summary.weakestFinger"
+msgstr "Проблемный палец"
+
+msgid "stats.summary.weakestRow"
+msgstr "Проблемный ряд"
+
+msgid "stats.summary.trend"
+msgstr "Тренд"
+
+msgid "stats.summary.speed"
+msgstr "Темп"
+
+msgid "stats.summary.accuracy"
+msgstr "Точность"
+
+msgid "stats.summary.noRhythmData"
+msgstr "Нет практик с ритм-данными"
+
+msgid "stats.summary.weakestFingerNote"
+msgstr "{{errorRate}}% ошибок · {{avgMs}}мс · текущая раскладка"
+
+msgid "stats.summary.weakestRowNote"
+msgstr "{{errorRate}}% ошибок · {{avgMs}}мс · текущая раскладка"
+
+msgid "stats.summary.notEnoughAnalytics"
+msgstr "Недостаточно накопленной аналитики"
+
+msgid "stats.summary.rowsBalanced"
+msgstr "Ряды пока выровнены"
+
+msgid "stats.summary.accuracyTrendNote"
+msgstr "{{value}} п.п."
+
+msgid "stats.overallProgress.title"
+msgstr "Общий прогресс"
+
+msgid "stats.overallProgress.description"
+msgstr "Темп и точность по истории попыток. Наведи на точку, чтобы увидеть дату и время."
+
+msgid "stats.overallProgress.speedTitle"
+msgstr "Прогресс темпа"
+
+msgid "stats.overallProgress.accuracyTitle"
+msgstr "Прогресс точности"
+
+msgid "stats.overallProgress.accuracyValueLabel"
+msgstr "Точность %"
+
+msgid "stats.keys.title"
+msgstr "Статистика по клавишам"
+
+msgid "stats.keys.description"
+msgstr "Проблемные клавиши, локальный темп и тепловая карта по текущей раскладке с учетом выбранных периода и режима."
+
+msgid "stats.keys.worstKeys"
+msgstr "Топ-5 проблемных клавиш"
+
+msgid "stats.keys.speedByKey"
+msgstr "Темп по клавишам"
+
+msgid "stats.keys.errorRateShort"
+msgstr "ош: {{value}}%"
+
+msgid "stats.keys.keyTimeTitle"
+msgstr "{{key}}: {{value}}мс"
+
+msgid "stats.heatmap.title"
+msgstr "Тепловая карта клавиатуры"
+
+msgid "stats.heatmap.description"
+msgstr "Цвет показывает, где чаще ошибаешься или теряешь темп."
+
+msgid "stats.heatmap.controlsAria"
+msgstr "Режим тепловой карты клавиатуры"
+
+msgid "stats.heatmap.errors"
+msgstr "Ошибки"
+
+msgid "stats.heatmap.slow"
+msgstr "Медленные"
+
+msgid "stats.heatmap.less"
+msgstr "Меньше"
+
+msgid "stats.heatmap.more"
+msgstr "Больше"
+
+msgid "stats.heatmap.errorTitle"
+msgstr "{{key}}: {{value}}% ошибок"
+
+msgid "stats.heatmap.slowTitle"
+msgstr "{{key}}: {{value}}мс"
+
+msgid "stats.heatmap.empty"
+msgstr "Пока недостаточно данных. Заверши несколько практик, чтобы увидеть раскладку по проблемным клавишам."
+
+msgid "stats.insights.title"
+msgstr "Аналитика умной практики"
+
+msgid "stats.insights.description"
+msgstr "Здесь видно, почему система считает конкретные буквы, сочетания и зоны клавиатуры слабыми."
+
+msgid "stats.insights.notEnoughData"
+msgstr "Пока недостаточно данных. Заверши несколько практик, чтобы увидеть аналитику."
+
+msgid "stats.insights.metricLine"
+msgstr "{{errorRate}}% ошибок · {{avgMs}}мс"
+
+msgid "stats.insights.bigramMetricLine"
+msgstr "{{errorRate}}% сбоев · {{avgMs}}мс"
+
+msgid "stats.insights.weakChars.title"
+msgstr "Слабые буквы"
+
+msgid "stats.insights.weakChars.subtitle"
+msgstr "Ошибки + медленное нажатие"
+
+msgid "stats.insights.weakChars.empty"
+msgstr "Пока все ровно."
+
+msgid "stats.insights.weakBigrams.title"
+msgstr "Слабые сочетания"
+
+msgid "stats.insights.weakBigrams.subtitle"
+msgstr "Ошибки перехода и потеря темпа"
+
+msgid "stats.insights.weakBigrams.empty"
+msgstr "Недостаточно данных по биграммам."
+
+msgid "stats.insights.zones.title"
+msgstr "Пальцы и ряды"
+
+msgid "stats.insights.zones.subtitle"
+msgstr "Где копится нагрузка"
+
+msgid "stats.insights.zones.fingers"
+msgstr "Пальцы"
+
+msgid "stats.insights.zones.fingersEmpty"
+msgstr "Пока без явного перекоса."
+
+msgid "stats.insights.zones.rows"
+msgstr "Ряды"
+
+msgid "stats.insights.zones.rowsEmpty"
+msgstr "Ряды пока выровнены."
+
+msgid "stats.insights.rhythm.title"
+msgstr "Ритм печати"
+
+msgid "stats.insights.rhythm.subtitle"
+msgstr "Насколько ровно держится темп"
+
+msgid "stats.insights.rhythm.empty"
+msgstr "Пока недостаточно интервалов для оценки ритма."
+
+msgid "stats.insights.rhythm.score"
+msgstr "оценка ритма"
+
+msgid "stats.insights.rhythm.avgInterval"
+msgstr "Средний интервал: {{value}}мс"
+
+msgid "stats.insights.rhythm.avgDeviation"
+msgstr "Среднее отклонение: {{value}}мс"
+
+msgid "stats.insights.rhythm.samples"
+msgstr "Замеров: {{value}}"
+
+msgid "stats.sessions.title"
+msgstr "Сессии"
+
+msgid "stats.sessions.description"
+msgstr "Ритм последней сессии и история попыток с локальным разбором."
+
+msgid "stats.sessions.historyTitle"
+msgstr "История сессий"
+
+msgid "stats.sessions.historyDescription"
+msgstr "Выбери конкретную попытку, чтобы посмотреть ее локальные проблемы и быстрый разбор."
+
+msgid "stats.sessions.empty"
+msgstr "По текущим фильтрам пока нет подходящих сессий."
+
+msgid "stats.sessions.selectPrompt"
+msgstr "Выбери сессию слева."
+
+msgid "stats.sessions.rhythm.title"
+msgstr "Ритм сессии"
+
+msgid "stats.sessions.rhythm.description"
+msgstr "График обновляется по выбранной записи из истории сессий."
+
+msgid "stats.sessions.rhythm.empty"
+msgstr "Для выбранной сессии нет детальных данных ритма. Выбери практику с сохраненной аналитикой."
+
+msgid "stats.sessions.rhythm.score"
+msgstr "Оценка ритма"
+
+msgid "stats.sessions.rhythm.avgInterval"
+msgstr "Средний интервал"
+
+msgid "stats.sessions.rhythm.avgDeviation"
+msgstr "Среднее отклонение"
+
+msgid "stats.sessions.rhythm.worstDrop"
+msgstr "Худший провал"
+
+msgid "stats.sessions.rhythm.bestStableRun"
+msgstr "Лучший ровный отрезок"
+
+msgid "stats.sessions.rhythm.symbolsValue"
+msgstr "{{value}} символов"
+
+msgid "stats.sessions.rhythm.session"
+msgstr "Сессия"
+
+msgid "stats.sessions.rhythm.sessionValue"
+msgstr "{{characters}} знаков · {{accuracy}}%"
+
+msgid "stats.sessions.detail.mode"
+msgstr "Режим"
+
+msgid "stats.sessions.detail.scenario"
+msgstr "Сценарий"
+
+msgid "stats.sessions.detail.layout"
+msgstr "Раскладка"
+
+msgid "stats.sessions.detail.speed"
+msgstr "Скорость"
+
+msgid "stats.sessions.detail.accuracy"
+msgstr "Точность"
+
+msgid "stats.sessions.detail.rhythm"
+msgstr "Ритм"
+
+msgid "stats.sessions.detail.worstDrop"
+msgstr "Худший провал"
+
+msgid "stats.sessions.detail.heatmapTitle"
+msgstr "Тепловая карта сессии"
+
+msgid "stats.sessions.detail.heatmapDescription"
+msgstr "Локальная картина по этой попытке."
+
+msgid "stats.sessions.detail.worstKeys"
+msgstr "Проблемные клавиши сессии"
+
+msgid "stats.sessions.detail.noKeyData"
+msgstr "Для этой попытки пока нет детальных клавишных данных."
+
+msgid "stats.sessions.detail.noCharStats"
+msgstr "Для этой сессии нет детальных `charStats`, поэтому доступен только общий разбор."
+
+msgid "stats.charts.interval"
+msgstr "Интервал"
+
+msgid "stats.charts.averageInterval"
+msgstr "Средний интервал"
+
+msgid "stats.charts.rhythmUnavailable"
+msgstr "График ритма временно недоступен. Остальная статистика сохранена."
+
+msgid "practice.title"
+msgstr "Практика"
+
+msgid "practice.achievements"
+msgstr "Достижения"
+
+msgid "practice.dailyMinutes"
+msgstr "{{current}} / {{target}} мин"
+
+msgid "practice.packLine"
+msgstr "Набор: {{name}} · {{kind}} · ~{{words}} слов"
+
+msgid "practice.packRiskLine"
+msgstr "Повторы: {{risk}} · Лучше: {{mode}}"
+
+msgid "practice.weakTooltip"
+msgstr "Проблемная · {{speed}} {{speedLabel}}"
+
+msgid "practice.importDialogTitle"
+msgstr "Импортировать пользовательский набор"
+
+msgid "practice.importSuccess"
+msgstr "Импортирован набор «{{name}}». Около {{words}} слов на попытку, лучше всего подходит: {{mode}}. Стартовый пресет: {{preset}}."
+
+msgid "practice.importDeleted"
+msgstr "Набор удалён."
+
+msgid "practice.importFailed"
+msgstr "Не удалось импортировать набор."
+
+msgid "practice.importErrors.noExercises"
+msgstr "В файле нет упражнений или текстов для импорта."
+
+msgid "practice.importErrors.emptyText"
+msgstr "Текстовый файл пустой."
+
+msgid "practice.importErrors.noTexts"
+msgstr "Не удалось извлечь тексты из файла."
+
+msgid "practice.importedPackTitle"
+msgstr "Импортированный набор"
+
+msgid "practice.untilUnlock"
+msgstr "До открытия: {{current}}/{{target}}"
+
+msgid "practice.overlay"
+msgstr "Нажмите здесь или начните печатать"
+
+msgid "practice.resultTitle"
+msgstr "Результат практики"
+
+msgid "practice.feedback.title"
+msgstr "Разбор практики"
+
+msgid "practice.feedback.description"
+msgstr "Система отметила текущие слабые места по накопленной аналитике."
+
+msgid "practice.feedback.prompt"
+msgstr "Нажмите любую клавишу для новой попытки"
+
+msgid "practice.feedback.weakestChar.label"
+msgstr "Худшая буква"
+
+msgid "practice.feedback.weakestChar.note"
+msgstr "Ее стоит чаще закреплять в обычных подходах."
+
+msgid "practice.feedback.weakestBigram.label"
+msgstr "Худшее сочетание"
+
+msgid "practice.feedback.weakestBigram.note"
+msgstr "Здесь чаще всего теряется темп при переходе между буквами."
+
+msgid "practice.feedback.weakestFinger.label"
+msgstr "Проблемный палец"
+
+msgid "practice.feedback.weakestFinger.empty"
+msgstr "Пока не определен"
+
+msgid "practice.feedback.weakestFinger.note"
+msgstr "Полезно следить за расслаблением и точной посадкой руки."
+
+msgid "practice.feedback.rhythm.label"
+msgstr "Оценка ритма"
+
+msgid "practice.feedback.rhythmLabels.even"
+msgstr "Ровный темп"
+
+msgid "practice.feedback.rhythmLabels.good"
+msgstr "Хороший темп"
+
+msgid "practice.feedback.rhythmLabels.unstable"
+msgstr "Темп плавает"
+
+msgid "practice.feedback.rhythmLabels.dropping"
+msgstr "Ритм проседает"
+
+msgid "practice.rhythm"
+msgstr "Ритм"
+
+msgid "practice.msShort"
+msgstr "мс"
+
+msgid "practice.rhythmDeviation"
+msgstr "Δ отклонение"
+
+msgid "practice.problemChar"
+msgstr "Проблемная"
+
+msgid "practice.letters"
+msgstr "Букв"
+
+msgid "practice.newLetter"
+msgstr "Новая!"
+
+msgid "practice.untilNew"
+msgstr "До новой"
+
+msgid "practice.pressAnyKey"
+msgstr "Нажмите любую клавишу или кнопку ниже"
+
+msgid "practice.continue"
+msgstr "Продолжить"
+
+msgid "practice.letterUnlockedTitle"
+msgstr "Новая буква открыта"
+
+msgid "practice.letterUnlockedDescription"
+msgstr "Эта буква теперь доступна в режиме практики."
+
+msgid "practice.letterUnlockedHint"
+msgstr "Нажмите `Enter`, `Пробел` или кнопку ниже."
+
+msgid "practice.focusMode"
+msgstr "Фокус-режим"
+
+msgid "practice.contentModes.adaptive-words"
+msgstr "Слова"
+
+msgid "practice.contentModes.syllables"
+msgstr "Слоги"
+
+msgid "practice.contentModes.pseudo-words"
+msgstr "Псевдослова"
+
+msgid "practice.contentModes.sentences"
+msgstr "Предложения"
+
+msgid "practice.contentModes.custom"
+msgstr "Мой набор"
+
+msgid "practice.contentModes.customPackShort"
+msgstr "Набор"
+
+msgid "practice.scenarios.practice-normal.description"
+msgstr "Средняя дистанция для регулярной тренировки скорости, точности и спокойной устойчивости."
+
+msgid "practice.scenarios.practice-rhythm.description"
+msgstr "Укороченные серии для ровного темпа и аккуратного контроля ритма."
+
+msgid "practice.scenarios.sprint.description"
+msgstr "Самые короткие и плотные тексты для быстрых таймерных забегов."
+
+msgid "practice.scenarios.survival.description"
+msgstr "Удлинённая дистанция с более длинными сериями для удержания стабильности под нагрузкой."
+
+msgid "practice.scenarios.flawless.description"
+msgstr "Более компактные и чистые серии, где важнее точность, чем дистанция."
+
+msgid "practice.quickSettings.material"
+msgstr "Материал"
+
+msgid "practice.quickSettings.pack"
+msgstr "Набор"
+
+msgid "practice.quickSettings.itemsShort"
+msgstr "эл."
+
+msgid "practice.quickSettings.wordsShort"
+msgstr "слов"
+
+msgid "practice.quickSettings.repetition"
+msgstr "Повторы"
+
+msgid "practice.quickSettings.bestFor"
+msgstr "Лучше"
+
+msgid "practice.packSummary.risks.low"
+msgstr "Низкий"
+
+msgid "practice.packSummary.risks.medium"
+msgstr "Средний"
+
+msgid "practice.packSummary.risks.high"
+msgstr "Высокий"
+
+msgid "practice.packSummary.recommended.practiceNormal"
+msgstr "Обычная практика"
+
+msgid "practice.packSummary.recommended.practiceRhythm"
+msgstr "Ритм-практика"
+
+msgid "practice.packSummary.recommended.sprint"
+msgstr "Спринт"
+
+msgid "practice.packSummary.recommended.survival"
+msgstr "Выживание"
+
+msgid "practice.packSummary.recommended.flawless"
+msgstr "Выживание без ошибок"
+
+msgid "practice.packSummary.fit.tight"
+msgstr "Набор на старте выглядит тесным по пулу и быстрее упрётся в повторы."
+
+msgid "practice.packSummary.fit.comfortable"
+msgstr "Набор выглядит комфортным по объёму и риску повторов."
+
+msgid "practice.packSummary.fit.workable"
+msgstr "Набор рабочий, но в длинных проходах повторы будут заметнее."
+
+msgid "practice.packSummary.reasons.sentencesShortRhythm"
+msgstr "Короткий набор предложений безопаснее запускать в укороченной спокойной сессии, чем растягивать в длинный сценарий."
+
+msgid "practice.packSummary.reasons.sentencesLongSurvival"
+msgstr "Длинные фразы и большой объём текста лучше раскрываются на длинной устойчивой дистанции."
+
+msgid "practice.packSummary.reasons.sentencesNormalPractice"
+msgstr "Связный текст без экстремальной длины удобнее всего держать в средней регулярной тренировке."
+
+msgid "practice.packSummary.reasons.wordsSprint"
+msgstr "Плотный словарь хорошо работает в коротком таймерном режиме, где важен чистый темповый срез."
+
+msgid "practice.packSummary.reasons.wordsFlawless"
+msgstr "Небольшой словарь лучше проявляет себя в компактном режиме на контроль точности без длинной дистанции."
+
+msgid "practice.packSummary.reasons.wordsNormalPractice"
+msgstr "Средний словарь лучше всего работает как универсальная регулярная тренировка."
+
+msgid "practice.packSummary.reasons.mixedTightPractice"
+msgstr "Короткий mixed-пул не стоит тянуть в жёсткие или длинные сценарии; ему нужна спокойная средняя дистанция."
+
+msgid "practice.packSummary.reasons.mixedLongSurvival"
+msgstr "Mixed-контент с длинными фрагментами лучше раскрывается в длинном устойчивом проходе."
+
+msgid "practice.packSummary.reasons.mixedNormalPractice"
+msgstr "Смешанный набор без сильного перекоса удобнее всего держать в обычной практике."
+
+msgid "practice.packSummary.notes.shortPool"
+msgid_plural "practice.packSummary.notes.shortPool"
+msgstr[0] "Короткий пул: всего {{count}} элемент, поэтому длинные сценарии быстрее упрутся в повторы."
+msgstr[1] "Короткий пул: всего {{count}} элемента, поэтому длинные сценарии быстрее упрутся в повторы."
+msgstr[2] "Короткий пул: всего {{count}} элементов, поэтому длинные сценарии быстрее упрутся в повторы."
+msgstr[3] "Короткий пул: всего {{count}} элементов, поэтому длинные сценарии быстрее упрутся в повторы."
+
+msgid "practice.packSummary.notes.longSentences"
+msgstr "Фразы сами по себе длинные, поэтому даже короткий сценарий будет ощущаться объёмнее обычного."
+
+msgid "practice.packSummary.notes.shortItems"
+msgstr "Элементы очень короткие, поэтому набор особенно хорошо подходит для разогрева и контроля точности."
+
+msgid "practice.packPreflight.actions.openMode"
+msgstr "Открыть {{mode}}"
+
+msgid "practice.packPreflight.survival.title"
+msgstr "Этот набор коротковат для выживания"
+
+msgid "practice.packPreflight.survival.detail"
+msgstr "Длинная дистанция быстро упрётся в повторы или тяжёлые фразы. Лучше сократить сценарий или вернуть базовый материал для чистого survival-забега."
+
+msgid "practice.packPreflight.survival.actions.practice.label"
+msgstr "Открыть практику"
+
+msgid "practice.packPreflight.survival.actions.practice.description"
+msgstr "Оставить текущий набор, но вернуться в более спокойную среднюю дистанцию."
+
+msgid "practice.packPreflight.survival.actions.base.label"
+msgstr "Вернуть базовый материал"
+
+msgid "practice.packPreflight.survival.actions.base.description"
+msgstr "Оставить режим выживания, но убрать короткий pack и вернуться к обычному адаптивному материалу."
+
+msgid "practice.packPreflight.practice.title"
+msgstr "Для обычной практики набор тесноват"
+
+msgid "practice.packPreflight.practice.detail"
+msgstr "Средняя дистанция быстро начнёт повторять элементы. Полезнее сократить сессию или перевести pack в более подходящий режим одним кликом."
+
+msgid "practice.packPreflight.practice.actions.shorten.label"
+msgstr "Сократить дистанцию"
+
+msgid "practice.packPreflight.practice.actions.shorten.description"
+msgstr "Переключить практику на ритм-режим и оставить текущий набор."
+
+msgid "practice.packPreflight.practice.actions.base.label"
+msgstr "Вернуть базовый материал"
+
+msgid "practice.packPreflight.practice.actions.base.description"
+msgstr "Снять кастомный pack и вернуться к стандартной адаптивной практике."
+
+msgid "practice.packPreflight.sprint.title"
+msgstr "Спринт получается слишком тяжёлым для фраз"
+
+msgid "practice.packPreflight.sprint.detail"
+msgstr "Длинные предложения под таймером создают лишнюю нагрузку и ломают чистый темповый сигнал. Либо укоротите забег, либо уйдите в более подходящий сценарий."
+
+msgid "practice.packPreflight.sprint.actions.shorten.label"
+msgstr "Сделать спринт короче"
+
+msgid "practice.packPreflight.sprint.actions.shorten.description"
+msgstr "Оставить pack, но быстро сбросить таймер к самой короткой дистанции."
+
+msgid "practice.packPreflight.sprint.actions.rhythm.label"
+msgstr "Перейти в ритм-практику"
+
+msgid "practice.packPreflight.sprint.actions.rhythm.description"
+msgstr "Для фраз такой набор лучше раскрывается в укороченной спокойной практике без жёсткого таймера."
+
+msgid "practice.packPreflight.sprint.actions.base.label"
+msgstr "Оставить спринт, но взять базу"
+
+msgid "practice.packPreflight.sprint.actions.base.description"
+msgstr "Сохранить таймерный режим и вернуть стандартный материал вместо тяжёлого sentence-pack."
+
+msgid "practice.packPreflight.flawless.title"
+msgstr "Mixed-набор слишком шумный для выживания без ошибок"
+
+msgid "practice.packPreflight.flawless.detail"
+msgstr "Смешанный и короткий pack делает безошибочный вариант выживания жёстче, чем нужно. Лучше сначала выровнять материал или уйти в обычную практику."
+
+msgid "practice.packPreflight.flawless.actions.practice.label"
+msgstr "Перейти в обычную практику"
+
+msgid "practice.packPreflight.flawless.actions.practice.description"
+msgstr "Оставить текущий pack, но перенести его в более мягкий сценарий без мгновенного провала."
+
+msgid "practice.packPreflight.flawless.actions.base.label"
+msgstr "Оставить выживание без ошибок, но взять базу"
+
+msgid "practice.packPreflight.flawless.actions.base.description"
+msgstr "Сохранить безошибочный вариант выживания и вернуть стандартный материал без смешанного короткого пула."
+
+msgid "practice.packPreflight.info.title"
+msgstr "У набора есть более естественный сценарий: {{mode}}"
+
+msgid "practice.packPreflight.info.actions.switch.label"
+msgstr "Переключить на {{mode}}"
+
+msgid "practice.packPreflight.info.actions.switch.description"
+msgstr "Применить рекомендованный сценарий и оставить текущий pack активным."
+
+msgid "practice.importPreset.reasons.rhythmShort"
+msgstr "Набор сразу поставлен в более короткую практику, чтобы старт был рабочим даже при небольшом пуле."
+
+msgid "practice.importPreset.reasons.normalForSurvival"
+msgstr "Импорт оставлен на средней дистанции: так набор сначала проверяется в базовом режиме, а потом уже переносится в длинный survival."
+
+msgid "practice.importPreset.reasons.rhythmAfterStrict"
+msgstr "Для первого старта набор сокращён до спокойной короткой практики, чтобы не перегружать пользователя жёстким сценарием сразу после импорта."
+
+msgid "practice.importPreset.reasons.normalStable"
+msgstr "Набор уже выглядит достаточно устойчивым для стандартной практики, поэтому дополнительный short-preset не нужен."
+
+msgid "practice.settings.title"
+msgstr "Настройки практики"
+
+msgid "practice.settings.description"
+msgstr "Длина, темп и характер тренировки."
+
+msgid "practice.settings.dailyGoal"
+msgstr "Цель на день"
+
+msgid "practice.settings.minutes"
+msgstr "Минуты"
+
+msgid "practice.settings.sessionsCount"
+msgstr "Кол-во практик"
+
+msgid "practice.settings.goalSpeed"
+msgstr "Целевая скорость"
+
+msgid "practice.settings.goalSpeedAria"
+msgstr "Целевая скорость практики"
+
+msgid "practice.settings.trainingMode"
+msgstr "Режим практики"
+
+msgid "practice.settings.normal"
+msgstr "Обычная"
+
+msgid "practice.settings.rhythm"
+msgstr "Ритм"
+
+msgid "practice.settings.normalHint"
+msgstr "Базовый режим на скорость и точность."
+
+msgid "practice.settings.rhythmHint"
+msgstr "Короткий текст и ровный темп."
+
+msgid "practice.settings.contentMode"
+msgstr "Тренировочный материал"
+
+msgid "practice.settings.contentModeHints.adaptive-words"
+msgstr "Адаптивные словари с учётом слабых мест."
+
+msgid "practice.settings.contentModeHints.syllables"
+msgstr "Короткие слоги и фонетические связки."
+
+msgid "practice.settings.contentModeHints.pseudo-words"
+msgstr "Синтетические слова из доступных букв."
+
+msgid "practice.settings.contentModeHints.sentences"
+msgstr "Короткие предложения и связный набор текста."
+
+msgid "practice.settings.contentModeHints.custom"
+msgstr "Встроенные, аддонные и пользовательские наборы контента."
+
+msgid "practice.settings.contentPacks"
+msgstr "Наборы контента"
+
+msgid "practice.settings.selectPack"
+msgstr "Выберите набор…"
+
+msgid "practice.settings.importPack"
+msgstr "Импорт TXT/JSON"
+
+msgid "practice.settings.deletePack"
+msgstr "Удалить"
+
+msgid "practice.settings.packsAvailable"
+msgstr "Базовые, аддонные и импортированные наборы доступны в одном списке."
+
+msgid "practice.settings.noPacks"
+msgstr "Пока нет доступных наборов контента."
+
+msgid "practice.settings.packPool"
+msgstr "Пул: {{count}} эл. · Тип: {{kind}} · Сейчас для {{scenario}} ожидается около {{words}} слов."
+
+msgid "practice.settings.packRisk"
+msgstr "Риск повторов: {{risk}}. Лучше всего подходит: {{mode}}."
+
+msgid "practice.settings.smartAdaptation"
+msgstr "Умная адаптация"
+
+msgid "practice.settings.smartAdaptationHint"
+msgstr "Подбирает текст под слабые места."
+
+msgid "practice.settings.adaptationStrength"
+msgstr "Сила адаптации"
+
+msgid "practice.settings.adaptationStrengthLabels.low"
+msgstr "Мягкая"
+
+msgid "practice.settings.adaptationStrengthLabels.medium"
+msgstr "Сбалансированная"
+
+msgid "practice.settings.adaptationStrengthLabels.high"
+msgstr "Жесткая"
+
+msgid "practice.settings.adaptationStrengthHint"
+msgstr "Выше сила — больше акцент на слабых местах."
+
+msgid "practice.settings.adaptationStrengthDisabled"
+msgstr "Включите адаптацию, чтобы менять ее силу."
+
+msgid "practice.settings.adaptationFocus"
+msgstr "Главный акцент"
+
+msgid "practice.settings.adaptationFocusLabels.balanced"
+msgstr "Баланс"
+
+msgid "practice.settings.adaptationFocusLabels.chars"
+msgstr "Буквы"
+
+msgid "practice.settings.adaptationFocusLabels.bigrams"
+msgstr "Сочетания"
+
+msgid "practice.settings.adaptationFocusLabels.rhythm"
+msgstr "Ритм"
+
+msgid "practice.settings.adaptationFocusHints.balanced"
+msgstr "Баланс букв, сочетаний и темпа."
+
+msgid "practice.settings.adaptationFocusHints.chars"
+msgstr "Больше внимания отдельным буквам."
+
+msgid "practice.settings.adaptationFocusHints.bigrams"
+msgstr "Больше внимания переходам между буквами."
+
+msgid "practice.settings.adaptationFocusHints.rhythm"
+msgstr "Больше внимания ровности темпа."
+
+msgid "practice.settings.noStepBack"
+msgstr "Ни шагу назад"
+
+msgid "practice.settings.noStepBackHint"
+msgstr "Backspace отключен."
+
+msgid "sprint.title"
+msgstr "Спринт"
+
+msgid "sprint.description"
+msgstr "Короткий таймерный забег на темп и точность поверх общего content-pipeline."
+
+msgid "sprint.achievements"
+msgstr "Достижения"
+
+msgid "sprint.start"
+msgstr "Начать спринт"
+
+msgid "sprint.duration"
+msgstr "Длительность"
+
+msgid "sprint.durationValue"
+msgstr "{{value}} сек"
+
+msgid "sprint.material"
+msgstr "Материал"
+
+msgid "sprint.best"
+msgstr "Лучший спринт"
+
+msgid "sprint.noResults"
+msgstr "ещё нет результатов"
+
+msgid "sprint.overlay"
+msgstr "Нажмите здесь или «{{start}}» для старта"
+
+msgid "sprint.resultTitle"
+msgstr "Результат спринта"
+
+msgid "sprint.callouts.improved.title"
+msgstr "Спринт стал сильнее"
+
+msgid "sprint.callouts.improved.detail"
+msgstr "Новый результат выше лучшей недавней попытки без просадки по точности. Режим начинает работать как реальный контрольный забег на темп."
+
+msgid "sprint.callouts.clean.title"
+msgstr "Чистый спринт"
+
+msgid "sprint.callouts.clean.detail"
+msgstr "Темп набран без шума и лишних промахов. Такой результат хорошо использовать как эталон короткой разогревающей сессии."
+
+msgid "sprint.callouts.errors.title"
+msgstr "Темп съели ошибки"
+
+msgid "sprint.callouts.errors.detail"
+msgstr "Спринт ещё не удерживает качество под таймером. Полезнее сохранить ритм чуть спокойнее, чем разгоняться ценой серии промахов."
+
+msgid "sprint.callouts.belowPrevious.title"
+msgstr "Попытка ниже прошлой"
+
+msgid "sprint.callouts.belowPrevious.detail"
+msgstr "Просадка небольшая, но заметная. Обычно это знак, что старт был резким или середина спринта рассыпалась по точности."
+
+msgid "sprint.callouts.steady.title"
+msgstr "Рабочий темповый проход"
+
+msgid "sprint.callouts.steady.detail"
+msgstr "Спринт уже даёт полезный срез по скорости и плотности набора. Ещё несколько повторов помогут сделать пик результата стабильнее."
+
+msgid "survival.title"
+msgstr "Выживание"
+
+msgid "survival.description"
+msgstr "Длинная серия с ограничением по ошибкам. Держитесь до конца текста и не растеряйте все жизни."
+
+msgid "survival.toggleDescription"
+msgstr "Стандартный проход с запасом на пару ошибок и акцентом на устойчивость на длинной дистанции."
+
+msgid "survival.flawlessDescription"
+msgstr "Один промах завершает попытку. Это более жёсткий вариант выживания для проверки чистоты и дисциплины."
+
+msgid "survival.flawlessToggleDescription"
+msgstr "Любая ошибка завершает попытку. Этот вариант полезен, когда хочется проверить не темп сам по себе, а полный контроль."
+
+msgid "survival.achievements"
+msgstr "Достижения"
+
+msgid "survival.flawlessToggle"
+msgstr "Без ошибок"
+
+msgid "survival.start"
+msgstr "Начать выживание"
+
+msgid "survival.successTitle"
+msgstr "Выдержано"
+
+msgid "survival.failureTitle"
+msgstr "Жизни закончились"
+
+msgid "survival.flawlessSuccessTitle"
+msgstr "Чистый проход"
+
+msgid "survival.flawlessFailureTitle"
+msgstr "Ошибка завершила попытку"
+
+msgid "survival.flawlessStatus"
+msgstr "Без ошибок · текущий запас: {{lives}}"
+
+msgid "survival.survivalStatus"
+msgstr "Ошибок допустимо: {{errors}} · жизней сейчас: {{lives}}"
+
+msgid "survival.material"
+msgstr "Материал"
+
+msgid "survival.best"
+msgstr "Лучший результат"
+
+msgid "survival.noResults"
+msgstr "ещё нет результатов"
+
+msgid "survival.overlay"
+msgstr "Нажмите здесь или «{{start}}»"
+
+msgid "survival.attemptReserve"
+msgstr "Запас попытки"
+
+msgid "survival.livesLeft"
+msgstr "Жизней осталось"
+
+msgid "survival.callouts.flawlessPerfect.title"
+msgstr "Идеально чистый проход"
+
+msgid "survival.callouts.flawlessPerfect.detail"
+msgstr "Режим прошёлся без единого сбоя. Это уже не просто успешная попытка, а хороший контроль стабильности."
+
+msgid "survival.callouts.survivalNoLoss.title"
+msgstr "Серия выдержана без потерь"
+
+msgid "survival.callouts.survivalNoLoss.detail"
+msgstr "Выживание пройдено без расхода жизней. Значит, темп и дисциплина держались до самого конца текста."
+
+msgid "survival.callouts.edgeFinish.title"
+msgstr "Финиш на грани"
+
+msgid "survival.callouts.edgeFinish.detail"
+msgstr "Попытка успешная, но запас прочности почти закончился. Следующий шаг — сделать такой же проход спокойнее и чище."
+
+msgid "survival.callouts.flawlessLate.title"
+msgstr "Срыв в финальной части"
+
+msgid "survival.callouts.flawlessLate.detail"
+msgstr "Чистый проход почти сложился, но поздняя ошибка оборвала попытку. Это хороший знак: база уже близка к рабочему безошибочному проходу."
+
+msgid "survival.callouts.flawlessStart.title"
+msgstr "Срыв на старте"
+
+msgid "survival.callouts.flawlessStart.detail"
+msgstr "Ошибки приходят слишком рано, поэтому режим ещё не успевает раскрыться. Лучше слегка снизить темп и пройти старт ровнее."
+
+msgid "survival.callouts.flawlessMid.title"
+msgstr "Один промах ломает серию"
+
+msgid "survival.callouts.flawlessMid.detail"
+msgstr "Режим показывает, что чистота пока нестабильна в середине текста. Полезно добрать ещё несколько аккуратных проходов без гонки за скоростью."
+
+msgid "survival.callouts.survivalLate.title"
+msgstr "Не хватило концовки"
+
+msgid "survival.callouts.survivalLate.detail"
+msgstr "Основную дистанцию вы уже держите, но финальная часть текста съедает остаток жизней. Стоит поработать над устойчивостью на длинной серии."
+
+msgid "survival.callouts.survivalStability.title"
+msgstr "Выживание упёрлось в стабильность"
+
+msgid "survival.callouts.survivalStability.detail"
+msgstr "Проблема не в одном провале, а в накоплении ошибок. Здесь важнее ровный проход, чем резкий пик скорости на начале текста."
+
+msgid "survival.callouts.improving.title"
+msgstr "Режим прогрессирует"
+
+msgid "survival.callouts.improving.detail"
+msgstr "Даже если проход не идеален, результат уже лучше недавнего ориентира. Значит, текущая стратегия тренировки движется в нужную сторону."
+
+msgid "survival.callouts.neutral.title"
+msgstr "Режим даёт честный срез"
+
+msgid "survival.callouts.neutral.flawlessDetail"
+msgstr "Этот результат хорошо показывает текущий запас по чистоте набора. Повтор через несколько спокойных практик даст более ровный сигнал."
+
+msgid "survival.callouts.neutral.survivalDetail"
+msgstr "Попытка уже полезна как проверка длинной дистанции. Ещё несколько проходов покажут, где именно стабильно теряются жизни."
+
+msgid "lessons.title"
+msgstr "Уроки"
+
+msgid "lessons.achievements"
+msgstr "Достижения"
+
+msgid "lessons.and"
+msgstr "и"
+
+msgid "lessons.lockedNote"
+msgstr "Сначала заверши предыдущий урок в этой секции"
+
+msgid "lessons.lessonOf"
+msgstr "Урок {{current}} из {{total}}"
+
+msgid "lessons.exerciseFallback"
+msgstr "Упражнение {{index}}"
+
+msgid "lessons.previousLesson"
+msgstr "Предыдущий урок"
+
+msgid "lessons.nextLesson"
+msgstr "Следующий урок"
+
+msgid "lessons.nextSection"
+msgstr "Следующая секция"
+
+msgid "lessons.back"
+msgstr "Назад"
+
+msgid "lessons.overlay"
+msgstr "Нажмите здесь или начните печатать"
+
+msgid "lessons.exerciseCompleted"
+msgstr "Упражнение завершено!"
+
+msgid "lessons.passed"
+msgstr "Пройдено!"
+
+msgid "lessons.needAccuracy"
+msgstr "Нужна точность ≥ 80%"
+
+msgid "lessons.retry"
+msgstr "Повторить"
+
+msgid "lessons.next"
+msgstr "Далее"
+
+msgid "lessons.done"
+msgstr "Готово"
+
+msgid "lessons.rows.top"
+msgstr "верхний ряд"
+
+msgid "lessons.rows.middle"
+msgstr "основной ряд"
+
+msgid "lessons.rows.bottom"
+msgstr "нижний ряд"
+
+msgid "lessons.fingers.index_left"
+msgstr "левый указательный"
+
+msgid "lessons.fingers.index_right"
+msgstr "правый указательный"
+
+msgid "lessons.fingers.middle_left"
+msgstr "левый средний"
+
+msgid "lessons.fingers.middle_right"
+msgstr "правый средний"
+
+msgid "lessons.fingers.ring_left"
+msgstr "левый безымянный"
+
+msgid "lessons.fingers.ring_right"
+msgstr "правый безымянный"
+
+msgid "lessons.fingers.pinky_left"
+msgstr "левый мизинец"
+
+msgid "lessons.fingers.pinky_right"
+msgstr "правый мизинец"
+
+msgid "lessons.exerciseNames.generic.repeats"
+msgstr "Повторения букв"
+
+msgid "lessons.exerciseNames.generic.singleLetters"
+msgstr "Одиночные буквы"
+
+msgid "lessons.exerciseNames.generic.pairs2"
+msgstr "Сочетания по 2"
+
+msgid "lessons.exerciseNames.generic.pairs23"
+msgstr "Сочетания по 2–3"
+
+msgid "lessons.exerciseNames.generic.pairs24"
+msgstr "Сочетания по 2–4"
+
+msgid "lessons.exerciseNames.row.warmup"
+msgstr "Разогрев ряда"
+
+msgid "lessons.exerciseNames.row.singleKeys"
+msgstr "Одиночные клавиши"
+
+msgid "lessons.exerciseNames.row.rowPairs"
+msgstr "Пары по ряду"
+
+msgid "lessons.exerciseNames.row.rowChains"
+msgstr "Связки по ряду"
+
+msgid "lessons.exerciseNames.row.rowLockIn"
+msgstr "Закрепление ряда"
+
+msgid "lessons.exerciseNames.bigrams.warmup"
+msgstr "Разогрев сочетаний"
+
+msgid "lessons.exerciseNames.bigrams.cleanPairs"
+msgstr "Чистые пары"
+
+msgid "lessons.exerciseNames.bigrams.shortChains"
+msgstr "Короткие связки"
+
+msgid "lessons.exerciseNames.bigrams.syllables"
+msgstr "Слоги и фрагменты"
+
+msgid "lessons.exerciseNames.bigrams.lockIn"
+msgstr "Закрепление сочетаний"
+
+msgid "lessons.exerciseNames.transitions.warmup"
+msgstr "Разогрев переходов"
+
+msgid "lessons.exerciseNames.transitions.alternation"
+msgstr "Чередование 1–1"
+
+msgid "lessons.exerciseNames.transitions.shortChains"
+msgstr "Короткие связки"
+
+msgid "lessons.exerciseNames.transitions.longTransitions"
+msgstr "Длинные переходы"
+
+msgid "lessons.exerciseNames.transitions.lockIn"
+msgstr "Закрепление переходов"
+
+msgid "game.header.title"
+msgstr "Игровой режим"
+
+msgid "game.header.restart"
+msgstr "Заново"
+
+msgid "game.start.title"
+msgstr "Новый забег"
+
+msgid "game.start.subtitle"
+msgstr "Задай цель скорости и начни путь через 100 уровней. Каждый 5-й уровень — это босс."
+
+msgid "game.start.targetSpeed"
+msgstr "Целевая скорость"
+
+msgid "game.start.targetSpeedAria"
+msgstr "Целевая скорость игры"
+
+msgid "game.start.activeSetItems"
+msgstr "{{count}} предмета"
+
+msgid "game.start.ghostBest"
+msgstr "Призрак лучшего забега: уровень {{level}}"
+
+msgid "game.start.actions.startRun"
+msgstr "Старт игры"
+
+msgid "game.start.actions.dailyRun"
+msgstr "Ежедневный забег"
+
+msgid "game.hud.boss"
+msgstr "Босс"
+
+msgid "game.hud.level"
+msgstr "Уровень"
+
+msgid "game.hud.letters"
+msgstr "букв"
+
+msgid "game.hud.record"
+msgstr "рекорд"
+
+msgid "game.hud.levelsRemaining"
+msgstr "{{count}} ур."
+
+msgid "game.hud.dailyRun"
+msgstr "Ежедневный забег"
+
+msgid "game.hud.bossTimer"
+msgstr "Таймер босса"
+
+msgid "game.hud.regenTitle"
+msgid_plural "game.hud.regenTitle"
+msgstr[0] "Регенерация: +{{hp}} HP после боя (ещё {{count}} бой)"
+msgstr[1] "Регенерация: +{{hp}} HP после боя (ещё {{count}} боя)"
+msgstr[2] "Регенерация: +{{hp}} HP после боя (ещё {{count}} боёв)"
+msgstr[3] "Регенерация: +{{hp}} HP после боя (ещё {{count}} боёв)"
+
+msgid "game.hud.hpShort"
+msgstr "HP"
+
+msgid "game.inventory.title"
+msgstr "Инвентарь"
+
+msgid "game.inventory.itemsCount"
+msgid_plural "game.inventory.itemsCount"
+msgstr[0] "{{count}} предмет"
+msgstr[1] "{{count}} предмета"
+msgstr[2] "{{count}} предметов"
+msgstr[3] "{{count}} предметов"
+
+msgid "game.inventory.description"
+msgstr "Перетащи предмет в слот, чтобы экипировать его, и обратно в инвентарь, чтобы снять."
+
+msgid "game.inventory.durability"
+msgstr "Прочность"
+
+msgid "game.inventory.dragHint"
+msgstr "Перетащи в слот экипировки"
+
+msgid "game.inventory.dropHere"
+msgstr "Отпусти предмет сюда"
+
+msgid "game.inventory.emptySlot"
+msgstr "Пусто"
+
+msgid "game.inventory.empty.allEquipped"
+msgstr "Все найденные предметы сейчас экипированы. Перетащи реликвию из слота сюда, чтобы снять её."
+
+msgid "game.inventory.empty.afterBoss"
+msgstr "После боссов здесь будут появляться реликвии и артефакты для текущего забега."
+
+msgid "game.inventory.slots.slotA"
+msgstr "Слот 1"
+
+msgid "game.inventory.slots.slotB"
+msgstr "Слот 2"
+
+msgid "game.inventory.slots.slotC"
+msgstr "Слот 3"
+
+msgid "game.inventory.meta.bossOnly"
+msgstr "только на боссах"
+
+msgid "game.inventory.meta.alwaysActive"
+msgstr "работает всегда"
+
+msgid "game.inventory.meta.equipped"
+msgstr "экипирован"
+
+msgid "game.inventory.meta.noDurability"
+msgstr "без износа"
+
+msgid "game.map.title"
+msgstr "Карта забега"
+
+msgid "game.map.subtitle"
+msgstr "Выбирай следующую точку на графе. Бои и комнаты открываются поверх карты, а путь остаётся перед глазами."
+
+msgid "game.map.kind.battle"
+msgstr "Бой"
+
+msgid "game.map.kind.boss"
+msgstr "Босс"
+
+msgid "game.map.kind.rest"
+msgstr "Передышка"
+
+msgid "game.map.kind.treasure"
+msgstr "Тайник"
+
+msgid "game.map.kind.shop"
+msgstr "Лавка"
+
+msgid "game.map.kind.risk"
+msgstr "Риск"
+
+msgid "game.map.kind.elite"
+msgstr "Элита"
+
+msgid "game.map.kind.miniboss"
+msgstr "Мини-босс"
+
+msgid "game.map.legend.battle"
+msgstr "Бой"
+
+msgid "game.map.legend.boss"
+msgstr "Босс"
+
+msgid "game.map.legend.rest"
+msgstr "Передышка"
+
+msgid "game.map.legend.treasure"
+msgstr "Тайник"
+
+msgid "game.map.legend.shop"
+msgstr "Лавка"
+
+msgid "game.map.legend.risk"
+msgstr "Риск"
+
+msgid "game.map.legend.elite"
+msgstr "Элита"
+
+msgid "game.map.legend.miniboss"
+msgstr "Мини-босс"
+
+msgid "game.event.kind.rest"
+msgstr "Передышка"
+
+msgid "game.event.kind.cache"
+msgstr "Тайник"
+
+msgid "game.event.kind.shop"
+msgstr "Лавка"
+
+msgid "game.event.kind.curse"
+msgstr "Проклятие"
+
+msgid "game.event.kind.risk"
+msgstr "Риск"
+
+msgid "game.event.selectChoice"
+msgstr "Выбрать"
+
+msgid "game.event.skip"
+msgstr "Пропустить"
+
+msgid "game.event.continuePath"
+msgstr "Продолжить путь"
+
+msgid "game.event.repairBonus"
+msgstr "Ремонт +{{count}}"
+
+msgid "game.reward.kind.simple"
+msgstr "Тихая реликвия"
+
+msgid "game.reward.kind.durable"
+msgstr "Нестабильный артефакт"
+
+msgid "game.reward.kind.event"
+msgstr "Событие"
+
+msgid "game.reward.kind.letter"
+msgstr "Печать мастера"
+
+msgid "game.overlay.savedRun"
+msgstr "Забег сохранён\nУровень {{level}} · {{hp}} HP\nНажмите, чтобы продолжить"
+
+msgid "game.overlay.battleHeader"
+msgstr "{{enemy}} · Раунд {{round}} · {{phase}}"
+
+msgid "game.overlay.debuffTitle"
+msgstr "Дебафф: {{debuff}}"
+
+msgid "game.overlay.debuffs.accuracy"
+msgstr "точность"
+
+msgid "game.overlay.debuffs.cpm"
+msgstr "темп"
+
+msgid "game.overlay.debuffs.rhythm"
+msgstr "ритм"
+
+msgid "game.overlay.phase.attack"
+msgstr "Атака"
+
+msgid "game.overlay.phase.defense"
+msgstr "Защита"
+
+msgid "game.result.title.victory"
+msgstr "Игра пройдена"
+
+msgid "game.result.title.bossPassed"
+msgstr "Босс повержен"
+
+msgid "game.result.title.levelPassed"
+msgstr "Уровень пройден"
+
+msgid "game.result.title.timeOut"
+msgstr "Время вышло"
+
+msgid "game.result.title.gameOver"
+msgstr "Игра окончена"
+
+msgid "game.result.title.hpLost"
+msgstr "Потеряно HP"
+
+msgid "game.result.rhythm"
+msgstr "Ритм"
+
+msgid "game.result.msShort"
+msgstr "мс"
+
+msgid "game.result.maxRhythm"
+msgstr "макс. {{count}} мс"
+
+msgid "game.result.rhythmStable"
+msgstr "стабильно"
+
+msgid "game.result.rhythmUnstable"
+msgstr "нестабильно"
+
+msgid "game.result.flawlessLimit"
+msgstr "Режим без ошибок"
+
+msgid "game.result.errorsAllowed"
+msgstr "ошибок"
+
+msgid "game.result.brokenItems"
+msgstr "Распались предметы"
+
+msgid "game.result.bossRewardTitle"
+msgstr "Трофей босса"
+
+msgid "game.result.summary.victory"
+msgstr "Вы прошли все {{totalLevels}} уровней. Все реликвии этого забега рассеялись."
+
+msgid "game.result.summary.bossReward"
+msgstr "Трофей босса ждёт выбора. Следующий этап: уровень {{level}}."
+
+msgid "game.result.summary.mapSelection"
+msgstr "Уровень пройден. Теперь выбери следующую точку прямо на карте забега."
+
+msgid "game.result.summary.nextLevel"
+msgstr "Уровень {{level}} завершён. Дальше идёт {{nextLevel}}{{bossSuffix}}."
+
+msgid "game.result.summary.bossSuffix"
+msgstr " — босс"
+
+msgid "game.result.summary.timeout"
+msgstr "Вы не уложились в лимит времени. Осталось HP: {{livesLeft}}."
+
+msgid "game.result.summary.failure"
+msgstr "Нужно держать скорость не ниже цели и точность от {{minAccuracy}}%. Осталось HP: {{livesLeft}}."
+
+msgid "game.result.reward.specialReward"
+msgstr "✦ Особая награда"
+
+msgid "game.result.reward.letterName"
+msgstr "Символ «{{letter}}»"
+
+msgid "game.result.reward.actions.wakeLetter"
+msgstr "Пробудить символ"
+
+msgid "game.result.reward.actions.accept"
+msgstr "Принять"
+
+msgid "game.result.reward.actions.takeRelic"
+msgstr "Забрать реликвию"
+
+msgid "game.result.reward.actions.riskTake"
+msgstr "Рискнуть и взять"
+
+msgid "game.result.actions.toMap"
+msgstr "К карте"
+
+msgid "game.result.actions.nextLevel"
+msgstr "Следующий уровень"
+
+msgid "game.result.actions.retryLevel"
+msgstr "Повторить уровень"
+
+msgid "game.result.actions.playAgain"
+msgstr "Сыграть ещё раз"
+
+msgid "game.result.actions.toMainGame"
+msgstr "К игровому режиму"
+
+msgid "game.system.reward.unlockLetter"
+msgstr "Печать мастера пробудила букву «{{letter}}»."
+
+msgid "game.system.reward.alphabetComplete"
+msgstr "Алфавит уже полностью раскрыт."
+
+msgid "game.system.reward.maxHealth"
+msgstr "Максимальное здоровье: {{hp}}."
+
+msgid "game.system.reward.fullHeal"
+msgstr "Здоровье полностью восстановлено."
+
+msgid "game.system.reward.regenAfterBattle"
+msgid_plural "game.system.reward.regenAfterBattle"
+msgstr[0] "Регенерация: +{{hp}} HP после боя на {{count}} бой."
+msgstr[1] "Регенерация: +{{hp}} HP после боя на {{count}} боя."
+msgstr[2] "Регенерация: +{{hp}} HP после боя на {{count}} боёв."
+msgstr[3] "Регенерация: +{{hp}} HP после боя на {{count}} боёв."
+
+msgid "game.system.reward.healedTo"
+msgstr "Здоровье восстановлено: {{hp}} HP."
+
+msgid "game.system.reward.lostHp"
+msgstr "Потеряно {{hp}} HP."
+
+msgid "game.system.reward.effect"
+msgstr "Эффект: {{description}}."
+
+msgid "game.system.reward.gotDurableArtifact"
+msgstr "Вы забрали нестабильный артефакт «{{item}}». Следи за прочностью."
+
+msgid "game.system.reward.gotRelic"
+msgstr "Вы получили реликвию «{{item}}». Она уже ждёт в инвентаре."
+
+msgid "game.system.event.maxHealthIncreased"
+msgstr "Максимальное здоровье увеличено до {{hp}}."
+
+msgid "game.system.event.fullHealTo"
+msgstr "Здоровье полностью восстановлено: {{hp}} из {{hp}}."
+
+msgid "game.system.event.regenEachBattle"
+msgid_plural "game.system.event.regenEachBattle"
+msgstr[0] "Регенерация: +{{hp}} HP после каждого боя на {{count}} бой."
+msgstr[1] "Регенерация: +{{hp}} HP после каждого боя на {{count}} боя."
+msgstr[2] "Регенерация: +{{hp}} HP после каждого боя на {{count}} боёв."
+msgstr[3] "Регенерация: +{{hp}} HP после каждого боя на {{count}} боёв."
+
+msgid "game.system.event.healedTo"
+msgstr "Здоровье восстановлено: {{hp}} из {{maxHp}}."
+
+msgid "game.system.event.dealLostHp"
+msgstr "Сделка забрала {{hp}} HP."
+
+msgid "game.system.event.repairedItems"
+msgstr "Починены предметы: {{items}}."
+
+msgid "game.system.event.repairNoTargets"
+msgstr "Ремонт завершён, но чинить было почти нечего."
+
+msgid "game.system.event.gotItem"
+msgstr "Вы получили «{{item}}»."
+
+msgid "game.system.event.effectActivated"
+msgstr "Активирован эффект: {{description}}."
+
+msgid "game.system.event.choiceOutcomeFallback"
+msgstr "{{title}} приносит свои плоды."
+
+msgid "game.summary.title"
+msgstr "Итог игры"
+
+msgid "game.summary.victory"
+msgstr "Пройдены все {{totalLevels}} уровней. Инвентарь забега очищен."
+
+msgid "game.summary.defeat"
+msgstr "Пройдено уровней: {{completedLevels}}. Максимум: уровень {{bestLevel}}."
+
+msgid "game.achievementToast.title"
+msgstr "Достижение получено"
+
+msgid "game.core.routes.kind.battle"
+msgstr "Прямая тропа"
+
+msgid "game.core.routes.kind.boss"
+msgstr "Босс"
+
+msgid "game.core.routes.kind.rest"
+msgstr "Передышка"
+
+msgid "game.core.routes.kind.treasure"
+msgstr "Тайник"
+
+msgid "game.core.routes.kind.shop"
+msgstr "Лавка"
+
+msgid "game.core.routes.kind.risk"
+msgstr "Риск"
+
+msgid "game.core.routes.kind.elite"
+msgstr "Элитный враг"
+
+msgid "game.core.routes.kind.miniboss"
+msgstr "Мини-босс"
+
+msgid "game.core.routes.routeNode.battle.title"
+msgstr "Прямая тропа"
+
+msgid "game.core.routes.routeNode.battle.flavor"
+msgstr "Без остановок идти к следующему уровню"
+
+msgid "game.core.routes.routeNode.battle.description"
+msgstr "Чистый боевой путь: без комнат подготовки, но и без задержки перед новой волной."
+
+msgid "game.core.routes.routeNode.rest.title"
+msgstr "Передышка у костра"
+
+msgid "game.core.routes.routeNode.rest.flavor"
+msgstr "Подлечиться и перевести дыхание"
+
+msgid "game.core.routes.routeNode.rest.description"
+msgstr "Комната отдыха: ремонт, восстановление здоровья и мягкие темповые бафы."
+
+msgid "game.core.routes.routeNode.treasure.title"
+msgstr "Тайник на обочине"
+
+msgid "game.core.routes.routeNode.treasure.flavor"
+msgstr "Забрать припасы и реликвии"
+
+msgid "game.core.routes.routeNode.treasure.description"
+msgstr "Комната трофеев: шанс забрать бесплатный предмет или запас под следующую волну."
+
+msgid "game.core.routes.routeNode.shop.title"
+msgstr "Лавка сборщика"
+
+msgid "game.core.routes.routeNode.shop.flavor"
+msgstr "Подготовиться в безопасной комнате"
+
+msgid "game.core.routes.routeNode.shop.description"
+msgstr "Комната торговли: ремонт, новая реликвия или короткое усиление перед следующим боем."
+
+msgid "game.core.routes.routeNode.elite.title"
+msgstr "Элитный враг"
+
+msgid "game.core.routes.routeNode.elite.flavor"
+msgstr "Противник сильнее обычного, но щедрее на лут"
+
+msgid "game.core.routes.routeNode.elite.description"
+msgstr "Усиленная схватка: текст длиннее, требования выше, но за победу ждёт дополнительная награда."
+
+msgid "game.core.routes.routeNode.miniboss.title"
+msgstr "Мини-босс"
+
+msgid "game.core.routes.routeNode.miniboss.flavor"
+msgstr "Серьёзное испытание между обычными боями"
+
+msgid "game.core.routes.routeNode.miniboss.description"
+msgstr "Мини-босс: таймер и повышенная точность, но без трофеев настоящего босса. Победа даёт мощный временный буст."
+
+msgid "game.core.routes.routeNode.risk.title"
+msgstr "Сделка на грани"
+
+msgid "game.core.routes.routeNode.risk.flavor"
+msgstr "Пойти в риск ради сильного буста"
+
+msgid "game.core.routes.routeNode.risk.description"
+msgstr "Рискованная комната: сильные бонусы, но каждое предложение требует плату заранее."
+
+msgid "game.core.routes.mapNode.boss.title"
+msgstr "Вратарь ветви"
+
+msgid "game.core.routes.mapNode.boss.flavor"
+msgstr "Главная проверка этого маршрута"
+
+msgid "game.core.routes.mapNode.boss.description"
+msgstr "Каждый {{interval}}-й уровень — это бой с таймером и повышенным требованием к точности."
+
+msgid "game.core.routes.mapNode.battleEncounter.title"
+msgstr "Схватка"
+
+msgid "game.core.routes.mapNode.battleEncounter.flavor"
+msgstr "Обычный бой на скорость и точность"
+
+msgid "game.core.routes.mapNode.battleEncounter.description"
+msgstr "Стандартная волна текста. Удерживай темп и проходи дальше по карте."
+
+msgid "game.core.routes.mapNode.battle.title"
+msgstr "Прямая тропа"
+
+msgid "game.core.routes.mapNode.battle.flavor"
+msgstr "Сразу перейти к следующему бою"
+
+msgid "game.core.routes.mapNode.battle.description"
+msgstr "Короткий путь без остановок и комнат подготовки."
+
+msgid "game.core.routes.mapNode.rest.title"
+msgstr "Передышка у костра"
+
+msgid "game.core.routes.mapNode.rest.flavor"
+msgstr "Подлечиться и перевести дух"
+
+msgid "game.core.routes.mapNode.rest.description"
+msgstr "Комната отдыха: ремонт, восстановление здоровья и спокойный темп перед следующим боем."
+
+msgid "game.core.routes.mapNode.treasure.title"
+msgstr "Тайник на обочине"
+
+msgid "game.core.routes.mapNode.treasure.flavor"
+msgstr "Забрать реликвии и припасы"
+
+msgid "game.core.routes.mapNode.treasure.description"
+msgstr "Комната добычи: бесплатный предмет или полезный запас под следующий бой."
+
+msgid "game.core.routes.mapNode.shop.title"
+msgstr "Лавка сборщика"
+
+msgid "game.core.routes.mapNode.shop.flavor"
+msgstr "Ремонт и подготовка"
+
+msgid "game.core.routes.mapNode.shop.description"
+msgstr "Комната торговли: ремонт, новая реликвия или короткий боевой буст."
+
+msgid "game.core.routes.mapNode.elite.title"
+msgstr "Элитный враг"
+
+msgid "game.core.routes.mapNode.elite.flavor"
+msgstr "Усиленный бой за щедрую награду"
+
+msgid "game.core.routes.mapNode.elite.description"
+msgstr "Элитный противник: текст длиннее, точность выше, но победа приносит мощный модификатор."
+
+msgid "game.core.routes.mapNode.miniboss.title"
+msgstr "Мини-босс"
+
+msgid "game.core.routes.mapNode.miniboss.flavor"
+msgstr "Серьёзное испытание посреди маршрута"
+
+msgid "game.core.routes.mapNode.miniboss.description"
+msgstr "Мини-босс с таймером. Слабее настоящего босса, но сильнее обычного врага. Даёт временный буст."
+
+msgid "game.core.routes.mapNode.risk.title"
+msgstr "Сделка на грани"
+
+msgid "game.core.routes.mapNode.risk.flavor"
+msgstr "Риск ради сильного буста"
+
+msgid "game.core.routes.mapNode.risk.description"
+msgstr "Опасная комната: мощные бонусы, но за них придётся платить заранее."
+
+msgid "game.core.events.rest.eventTitle"
+msgstr "Передышка у костра"
+
+msgid "game.core.events.rest.eventDescription"
+msgstr "Небольшая пауза между волнами. Выбери, как провести время у костра — каждый выбор влияет на твоё путешествие."
+
+msgid "game.core.events.rest.common.fullHealth"
+msgstr "Здоровье уже полно"
+
+msgid "game.core.events.rest.common.noEffect"
+msgstr "Сейчас это не даст эффекта."
+
+msgid "game.core.events.rest.heal.title"
+msgstr "Глоток воздуха"
+
+msgid "game.core.events.rest.heal.flavorReady"
+msgstr "Восстановить часть здоровья"
+
+msgid "game.core.events.rest.heal.description"
+msgstr "Восстанавливает 20 HP."
+
+msgid "game.core.events.rest.fullHeal.title"
+msgstr "Целебный покой"
+
+msgid "game.core.events.rest.fullHeal.flavorReady"
+msgstr "Полностью восстановить здоровье"
+
+msgid "game.core.events.rest.fullHeal.description"
+msgstr "Восстанавливает здоровье до максимума."
+
+msgid "game.core.events.rest.maxHp.title"
+msgstr "Закалка духа"
+
+msgid "game.core.events.rest.maxHp.flavor"
+msgstr "Увеличить запас здоровья на 10"
+
+msgid "game.core.events.rest.maxHp.description"
+msgstr "Навсегда добавляет +10 к максимальному запасу HP."
+
+msgid "game.core.events.rest.regen.title"
+msgstr "Мантра восстановления"
+
+msgid "game.core.events.rest.regen.flavor"
+msgstr "Регенерация после каждого боя"
+
+msgid "game.core.events.rest.regen.description"
+msgstr "На следующие 3 боя: восстанавливает {{hp}} HP после каждого уровня."
+
+msgid "game.core.events.rest.repair.title"
+msgstr "Полевой ремонт"
+
+msgid "game.core.events.rest.repair.flavorReady"
+msgstr "Подкрутить экипировку перед следующим боем"
+
+msgid "game.core.events.rest.repair.flavorEmpty"
+msgstr "Чинить пока нечего"
+
+msgid "game.core.events.rest.repair.descriptionReady"
+msgstr "Восстанавливает 2 прочности всем экипированным предметам."
+
+msgid "game.core.events.rest.repair.descriptionEmpty"
+msgstr "Ни один экипированный предмет не нуждается в ремонте."
+
+msgid "game.core.events.rest.focus.title"
+msgstr "Ровный вдох"
+
+msgid "game.core.events.rest.focus.flavor"
+msgstr "Поймать спокойный темп перед следующими уровнями"
+
+msgid "game.core.events.rest.focus.description"
+msgstr "На 2 уровня снижает требования к скорости на 4% и к точности на 2%."
+
+msgid "game.core.events.rest.focus.modifierTitle"
+msgstr "Ровный вдох"
+
+msgid "game.core.events.rest.focus.modifierDescription"
+msgstr "-4% к скорости и -2% к точности на 2 уровня"
+
+msgid "game.core.events.cache.eventTitle"
+msgstr "Тайник на обочине"
+
+msgid "game.core.events.cache.eventDescription"
+msgstr "Ты находишь запас припасов и артефактов. Можно забрать готовую реликвию или подготовиться к ближайшему боссу."
+
+msgid "game.core.events.cache.common.noRelics"
+msgstr "Реликвий не осталось"
+
+msgid "game.core.events.cache.common.noArtifacts"
+msgstr "Артефактов не осталось"
+
+msgid "game.core.events.cache.common.unavailable"
+msgstr "Сейчас этот выбор недоступен."
+
+msgid "game.core.events.cache.common.watchDurability"
+msgstr "Придётся следить за прочностью."
+
+msgid "game.core.events.cache.simple.title"
+msgstr "Взять реликвию"
+
+msgid "game.core.events.cache.durable.title"
+msgstr "Поднять артефакт"
+
+msgid "game.core.events.cache.simple2.title"
+msgstr "Ещё одна реликвия"
+
+msgid "game.core.events.cache.durable2.title"
+msgstr "Редкий артефакт"
+
+msgid "game.core.events.cache.clock.title"
+msgstr "Карман времени"
+
+msgid "game.core.events.cache.clock.flavor"
+msgstr "Спрятать запас секунд до ближайшего босса"
+
+msgid "game.core.events.cache.clock.description"
+msgstr "Даёт +4 секунды к таймеру босса на следующие 4 уровня."
+
+msgid "game.core.events.cache.clock.modifierTitle"
+msgstr "Карман времени"
+
+msgid "game.core.events.cache.clock.modifierDescription"
+msgstr "+4 сек. к таймеру босса на 4 уровня"
+
+msgid "game.core.events.cache.speedGem.title"
+msgstr "Камень скорости"
+
+msgid "game.core.events.cache.speedGem.flavor"
+msgstr "Временно снизить требования к скорости"
+
+msgid "game.core.events.cache.speedGem.description"
+msgstr "На 3 уровня требуемая скорость снижается на 8%."
+
+msgid "game.core.events.cache.speedGem.modifierTitle"
+msgstr "Камень скорости"
+
+msgid "game.core.events.cache.speedGem.modifierDescription"
+msgstr "-8% к требуемой скорости на 3 уровня"
+
+msgid "game.core.events.cache.accuracyGem.title"
+msgstr "Камень точности"
+
+msgid "game.core.events.cache.accuracyGem.flavor"
+msgstr "Временно снизить требования к точности"
+
+msgid "game.core.events.cache.accuracyGem.description"
+msgstr "На 3 уровня требуемая точность снижается на 4%."
+
+msgid "game.core.events.cache.accuracyGem.modifierTitle"
+msgstr "Камень точности"
+
+msgid "game.core.events.cache.accuracyGem.modifierDescription"
+msgstr "-4% к требуемой точности на 3 уровня"
+
+msgid "game.core.events.shop.eventTitle"
+msgstr "Лавка сборщика"
+
+msgid "game.core.events.shop.eventDescription"
+msgstr "В тесной лавке можно быстро перевести экипировку в порядок, ухватить одну реликвию или купить короткое усиление перед следующей волной."
+
+msgid "game.core.events.shop.common.shelfEmpty"
+msgstr "Полки опустели"
+
+msgid "game.core.events.shop.common.showcaseEmpty"
+msgstr "Сейчас эта витрина уже пуста."
+
+msgid "game.core.events.shop.common.notAvailable"
+msgstr "Нет в наличии"
+
+msgid "game.core.events.shop.common.notAvailableNow"
+msgstr "Сейчас не в наличии."
+
+msgid "game.core.events.shop.common.needsService"
+msgstr "Требует регулярного обслуживания."
+
+msgid "game.core.events.shop.repair.title"
+msgstr "Подтянуть крепления"
+
+msgid "game.core.events.shop.repair.flavorReady"
+msgstr "Починить экипировку перед боем"
+
+msgid "game.core.events.shop.repair.flavorEmpty"
+msgstr "Чинить почти нечего"
+
+msgid "game.core.events.shop.repair.descriptionReady"
+msgstr "Восстанавливает 3 прочности всем экипированным предметам."
+
+msgid "game.core.events.shop.repair.descriptionEmpty"
+msgstr "Сейчас экипированные предметы почти не нуждаются в ремонте."
+
+msgid "game.core.events.shop.item.title"
+msgstr "Снять с полки"
+
+msgid "game.core.events.shop.item2.title"
+msgstr "Особая находка"
+
+msgid "game.core.events.shop.durable.title"
+msgstr "Фирменный товар"
+
+msgid "game.core.events.shop.buff.title"
+msgstr "Выпить боевой сироп"
+
+msgid "game.core.events.shop.buff.flavor"
+msgstr "Взять короткий буст до следующей серии уровней"
+
+msgid "game.core.events.shop.buff.description"
+msgstr "На 3 уровня снижает требования к скорости на 6% и добавляет 2 секунды к таймеру босса."
+
+msgid "game.core.events.shop.buff.modifierTitle"
+msgstr "Боевой сироп"
+
+msgid "game.core.events.shop.buff.modifierDescription"
+msgstr "-6% к скорости и +2 сек. к таймеру босса на 3 уровня"
+
+msgid "game.core.events.shop.accuracyTonic.title"
+msgstr "Тоник меткости"
+
+msgid "game.core.events.shop.accuracyTonic.flavor"
+msgstr "Краткосрочный бонус к точности"
+
+msgid "game.core.events.shop.accuracyTonic.description"
+msgstr "На 3 уровня снижает требования к точности на 5%."
+
+msgid "game.core.events.shop.accuracyTonic.modifierTitle"
+msgstr "Тоник меткости"
+
+msgid "game.core.events.shop.accuracyTonic.modifierDescription"
+msgstr "-5% к требуемой точности на 3 уровня"
+
+msgid "game.core.events.shop.timerKit.title"
+msgstr "Набор хрономеханика"
+
+msgid "game.core.events.shop.timerKit.flavor"
+msgstr "Растянуть таймер следующих боссов"
+
+msgid "game.core.events.shop.timerKit.description"
+msgstr "На 5 уровней добавляет 3 секунды к таймеру босса."
+
+msgid "game.core.events.shop.timerKit.modifierTitle"
+msgstr "Набор хрономеханика"
+
+msgid "game.core.events.shop.timerKit.modifierDescription"
+msgstr "+3 сек. к таймеру босса на 5 уровней"
+
+msgid "game.core.events.risk.eventTitle"
+msgstr "Сделка на грани"
+
+msgid "game.core.events.risk.eventDescription"
+msgstr "В странной комнате все предложения сильнее обычного, но каждое просит плату заранее. Здесь легко сорваться, но и награда чувствуется сразу."
+
+msgid "game.core.events.risk.common.flavorLowHealth"
+msgstr "Слишком опасно при низком здоровье"
+
+msgid "game.core.events.risk.common.descriptionLowHealth"
+msgstr "Этот выбор недоступен, пока здоровье слишком низкое."
+
+msgid "game.core.events.risk.overclock.title"
+msgstr "Перегрузить темп"
+
+msgid "game.core.events.risk.overclock.flavorReady"
+msgstr "Обменять здоровье на мощный рывок"
+
+msgid "game.core.events.risk.overclock.descriptionReady"
+msgstr "Теряешь 20 HP, но на 2 уровня получаешь -12% к требуемой скорости."
+
+msgid "game.core.events.risk.overclock.modifierTitle"
+msgstr "Перегрузка"
+
+msgid "game.core.events.risk.overclock.modifierDescription"
+msgstr "-12% к требуемой скорости на 2 уровня"
+
+msgid "game.core.events.risk.focus.title"
+msgstr "Сужение фокуса"
+
+msgid "game.core.events.risk.focus.flavorReady"
+msgstr "Снизить требования к точности ценой здоровья"
+
+msgid "game.core.events.risk.focus.descriptionReady"
+msgstr "Теряешь 20 HP, но на 2 уровня получаешь -6% к требуемой точности."
+
+msgid "game.core.events.risk.focus.modifierTitle"
+msgstr "Сужение фокуса"
+
+msgid "game.core.events.risk.focus.modifierDescription"
+msgstr "-6% к требуемой точности на 2 уровня"
+
+msgid "game.core.events.risk.boss.title"
+msgstr "Рывок к боссу"
+
+msgid "game.core.events.risk.boss.flavorReady"
+msgstr "Пожертвовать здоровьем ради сильного бонуса на боссе"
+
+msgid "game.core.events.risk.boss.descriptionReady"
+msgstr "Теряешь 20 HP, но на 4 уровня получаешь -6% к скорости и +6 сек. к таймеру босса."
+
+msgid "game.core.events.risk.boss.modifierTitle"
+msgstr "Погоня за боссом"
+
+msgid "game.core.events.risk.boss.modifierDescription"
+msgstr "-6% к скорости и +6 сек. к таймеру босса на 4 уровня"
+
+msgid "game.core.events.risk.blitz.title"
+msgstr "Стремительный натиск"
+
+msgid "game.core.events.risk.blitz.flavorReady"
+msgstr "Пожертвовать здоровьем ради долгого снижения скорости"
+
+msgid "game.core.events.risk.blitz.descriptionReady"
+msgstr "Теряешь 20 HP, но на 5 уровней получаешь -8% к требуемой скорости."
+
+msgid "game.core.events.risk.blitz.modifierTitle"
+msgstr "Стремительный натиск"
+
+msgid "game.core.events.risk.blitz.modifierDescription"
+msgstr "-8% к требуемой скорости на 5 уровней"
+
+msgid "game.core.events.risk.aegis.title"
+msgstr "Щит ценой крови"
+
+msgid "game.core.events.risk.aegis.flavorReady"
+msgstr "Купить защиту от промахов ценой здоровья"
+
+msgid "game.core.events.risk.aegis.descriptionReady"
+msgstr "Теряешь 20 HP, но на 3 уровня получаешь -8% к требуемой точности и +3 сек. к таймеру."
+
+msgid "game.core.events.risk.aegis.modifierTitle"
+msgstr "Щит ценой крови"
+
+msgid "game.core.events.risk.aegis.modifierDescription"
+msgstr "-8% к точности и +3 сек. к таймеру на 3 уровня"
+
+msgid "game.core.events.curse.eventTitle"
+msgstr "Проклятье тени"
+
+msgid "game.core.events.curse.eventDescription"
+msgstr "Тёмная энергия сгущается вокруг. Выбери, какую печать принять — избежать проклятия нельзя."
+
+msgid "game.core.events.curse.speed.title"
+msgstr "Печать скорости"
+
+msgid "game.core.events.curse.speed.flavor"
+msgstr "Тебя будут гнать быстрее"
+
+msgid "game.core.events.curse.speed.description"
+msgstr "На 3 уровня требования к скорости повышаются на 5%."
+
+msgid "game.core.events.curse.speed.modifierTitle"
+msgstr "Печать скорости"
+
+msgid "game.core.events.curse.speed.modifierDescription"
+msgstr "+5% к требуемой скорости на 3 уровня"
+
+msgid "game.core.events.curse.accuracy.title"
+msgstr "Печать точности"
+
+msgid "game.core.events.curse.accuracy.flavor"
+msgstr "Каждая ошибка станет дороже"
+
+msgid "game.core.events.curse.accuracy.description"
+msgstr "На 3 уровня требования к точности повышаются на 3%."
+
+msgid "game.core.events.curse.accuracy.modifierTitle"
+msgstr "Печать точности"
+
+msgid "game.core.events.curse.accuracy.modifierDescription"
+msgstr "+3% к требуемой точности на 3 уровня"
+
+msgid "game.core.events.curse.timer.title"
+msgstr "Печать времени"
+
+msgid "game.core.events.curse.timer.flavor"
+msgstr "Часы босса пойдут быстрее"
+
+msgid "game.core.events.curse.timer.description"
+msgstr "На 4 уровня таймер босса сокращается на 4 секунды."
+
+msgid "game.core.events.curse.timer.modifierTitle"
+msgstr "Печать времени"
+
+msgid "game.core.events.curse.timer.modifierDescription"
+msgstr "-4 сек. к таймеру босса на 4 уровня"
+
+msgid "game.core.events.curse.silence.title"
+msgstr "Печать тишины"
+
+msgid "game.core.events.curse.silence.flavor"
+msgstr "Сбить руки с привычного ритма"
+
+msgid "game.core.events.curse.silence.description"
+msgstr "На 4 уровня требования к скорости повышаются на 3%, а к точности — на 2%."
+
+msgid "game.core.events.curse.silence.modifierTitle"
+msgstr "Печать тишины"
+
+msgid "game.core.events.curse.silence.modifierDescription"
+msgstr "+3% к скорости и +2% к точности на 4 уровня"
+
+msgid "game.core.events.curse.fog.title"
+msgstr "Печать тумана"
+
+msgid "game.core.events.curse.fog.flavor"
+msgstr "Боссы становятся более неуловимы"
+
+msgid "game.core.events.curse.fog.description"
+msgstr "На 5 уровней таймер босса сокращается на 3 секунды."
+
+msgid "game.core.events.curse.fog.modifierTitle"
+msgstr "Печать тумана"
+
+msgid "game.core.events.curse.fog.modifierDescription"
+msgstr "-3 сек. к таймеру босса на 5 уровней"
+
+msgid "game.core.events.curse.wrath.title"
+msgstr "Печать гнева"
+
+msgid "game.core.events.curse.wrath.flavor"
+msgstr "Враги становятся свирепее"
+
+msgid "game.core.events.curse.wrath.description"
+msgstr "На 4 уровня атака всех врагов увеличивается на 6."
+
+msgid "game.core.events.curse.wrath.modifierTitle"
+msgstr "Печать гнева"
+
+msgid "game.core.events.curse.wrath.modifierDescription"
+msgstr "+6 к атаке врагов на 4 уровня"
+
+msgid "game.core.events.curse.iron.title"
+msgstr "Печать стали"
+
+msgid "game.core.events.curse.iron.flavor"
+msgstr "Враги обретают непробиваемую защиту"
+
+msgid "game.core.events.curse.iron.description"
+msgstr "На 4 уровня защита всех врагов увеличивается на 6."
+
+msgid "game.core.events.curse.iron.modifierTitle"
+msgstr "Печать стали"
+
+msgid "game.core.events.curse.iron.modifierDescription"
+msgstr "+6 к защите врагов на 4 уровня"
+
+msgid "game.core.events.curse.blind.title"
+msgstr "Печать слепоты"
+
+msgid "game.core.events.curse.blind.flavor"
+msgstr "Атаки становятся менее точными"
+
+msgid "game.core.events.curse.blind.description"
+msgstr "На 3 уровня бонус атаки игрока снижается на 8%."
+
+msgid "game.core.events.curse.blind.modifierTitle"
+msgstr "Печать слепоты"
+
+msgid "game.core.events.curse.blind.modifierDescription"
+msgstr "-8% к шансу попасть при атаке на 3 уровня"
+
+msgid "game.core.events.curse.weakness.title"
+msgstr "Печать слабости"
+
+msgid "game.core.events.curse.weakness.flavor"
+msgstr "Удары теряют силу"
+
+msgid "game.core.events.curse.weakness.description"
+msgstr "На 3 уровня коэффициент урона снижается на 20%."
+
+msgid "game.core.events.curse.weakness.modifierTitle"
+msgstr "Печать слабости"
+
+msgid "game.core.events.curse.weakness.modifierDescription"
+msgstr "-20% к коэффициенту урона на 3 уровня"
+
+msgid "game.core.events.curse.fragile.title"
+msgstr "Печать хрупкости"
+
+msgid "game.core.events.curse.fragile.flavor"
+msgstr "Броня тает как лёд"
+
+msgid "game.core.events.curse.fragile.description"
+msgstr "На 3 уровня коэффициент защиты снижается на 20%."
+
+msgid "game.core.events.curse.fragile.modifierTitle"
+msgstr "Печать хрупкости"
+
+msgid "game.core.events.curse.fragile.modifierDescription"
+msgstr "-20% к коэффициенту защиты на 3 уровня"
+
+msgid "game.core.events.curse.unlucky.title"
+msgstr "Печать невезения"
+
+msgid "game.core.events.curse.unlucky.flavor"
+msgstr "Критические удары становятся редкостью"
+
+msgid "game.core.events.curse.unlucky.description"
+msgstr "На 4 уровня шанс крита снижается на 5%."
+
+msgid "game.core.events.curse.unlucky.modifierTitle"
+msgstr "Печать невезения"
+
+msgid "game.core.events.curse.unlucky.modifierDescription"
+msgstr "-5% к шансу крита на 4 уровня"
+
+msgid "game.core.events.battle.enemyNames.normal.scripter"
+msgstr "Скриптер"
+
+msgid "game.core.events.battle.enemyNames.normal.watcher"
+msgstr "Часовой"
+
+msgid "game.core.events.battle.enemyNames.normal.pathGuard"
+msgstr "Страж тропы"
+
+msgid "game.core.events.battle.enemyNames.normal.sentinel"
+msgstr "Дозорный"
+
+msgid "game.core.events.battle.enemyNames.normal.codeShadow"
+msgstr "Тень кода"
+
+msgid "game.core.events.battle.enemyNames.elite.tempoExecutioner"
+msgstr "Палач темпа"
+
+msgid "game.core.events.battle.enemyNames.elite.keyMaster"
+msgstr "Мастер клавиш"
+
+msgid "game.core.events.battle.enemyNames.elite.rhythmGuard"
+msgstr "Стражник ритма"
+
+msgid "game.core.events.battle.enemyNames.elite.accuracyAdept"
+msgstr "Адепт точности"
+
+msgid "game.core.events.battle.enemyNames.miniboss.thresholdKeeper"
+msgstr "Хранитель порога"
+
+msgid "game.core.events.battle.enemyNames.miniboss.overseer"
+msgstr "Надзиратель"
+
+msgid "game.core.events.battle.enemyNames.miniboss.lineTitan"
+msgstr "Титан строк"
+
+msgid "game.core.events.battle.enemyNames.boss.branchWarden"
+msgstr "Вратарь ветви"
+
+msgid "game.core.events.battle.enemyNames.boss.waveLord"
+msgstr "Повелитель волн"
+
+msgid "game.core.events.battle.enemyNames.boss.speedArchon"
+msgstr "Архонт скорости"
+
+msgid "game.core.events.battle.enemyNames.boss.absolute"
+msgstr "Абсолют"
+
+msgid "game.core.events.bosses.precision.name"
+msgstr "Снайпер"
+
+msgid "game.core.events.bosses.precision.subtitle"
+msgstr "Точность — всё"
+
+msgid "game.core.events.bosses.precision.description"
+msgstr "Требования к точности резко повышены. Каждый промах ощутим."
+
+msgid "game.core.events.bosses.steadiness.name"
+msgstr "Метроном"
+
+msgid "game.core.events.bosses.steadiness.subtitle"
+msgstr "Ровный темп решает"
+
+msgid "game.core.events.bosses.steadiness.description"
+msgstr "Важна не скорость, а стабильность ритма. Резкие просадки и ускорения караются."
+
+msgid "game.core.events.bosses.endurance.name"
+msgstr "Марафон"
+
+msgid "game.core.events.bosses.endurance.subtitle"
+msgstr "Длинная дистанция"
+
+msgid "game.core.events.bosses.endurance.description"
+msgstr "Текст значительно длиннее обычного. Нужна выносливость и устойчивый темп."
+
+msgid "game.core.events.bosses.flawless.name"
+msgstr "Абсолют"
+
+msgid "game.core.events.bosses.flawless.subtitle"
+msgstr "Ноль ошибок"
+
+msgid "game.core.events.bosses.flawless.description"
+msgstr "Допускается не больше 2 ошибок за весь бой. Одно лишнее нажатие — провал."
+
+msgid "game.core.events.rewards.simple.title"
+msgstr "Тихая реликвия"
+
+msgid "game.core.events.rewards.durable.title"
+msgstr "Нестабильный артефакт"
+
+msgid "game.core.events.rewards.durable.watchDurability"
+msgstr "Придётся следить за прочностью."
+
+msgid "game.core.events.rewards.letter.title"
+msgstr "Печать мастера"
+
+msgid "game.core.events.rewards.letter.flavor"
+msgstr "Пробуждает символ «{{letter}}»"
+
+msgid "game.core.events.rewards.letter.description"
+msgstr "Навсегда открывает следующую букву для практики и игры."
+
+msgid "game.core.events.rewards.buffSpeed.title"
+msgstr "Ускоритель темпа"
+
+msgid "game.core.events.rewards.buffSpeed.flavor"
+msgstr "Бонус к скорости на несколько уровней"
+
+msgid "game.core.events.rewards.buffSpeed.description"
+msgstr "На 3 уровня снижает требования к скорости на 6%."
+
+msgid "game.core.events.rewards.buffSpeed.modifierTitle"
+msgstr "Ускоритель темпа"
+
+msgid "game.core.events.rewards.buffSpeed.modifierDescription"
+msgstr "-6% к требуемой скорости на 3 уровня"
+
+msgid "game.core.events.rewards.buffDefense.title"
+msgstr "Щит рассвета"
+
+msgid "game.core.events.rewards.buffDefense.flavor"
+msgstr "Снижает атаку врагов"
+
+msgid "game.core.events.rewards.buffDefense.description"
+msgstr "На 4 уровня снижает атаку врагов на 3."
+
+msgid "game.core.events.rewards.buffDefense.modifierTitle"
+msgstr "Щит рассвета"
+
+msgid "game.core.events.rewards.buffDefense.modifierDescription"
+msgstr "-3 к атаке врагов на 4 уровня"
+
+msgid "game.core.events.rewards.extraLife.title"
+msgstr "Запасное сердце"
+
+msgid "game.core.events.rewards.extraLife.flavor"
+msgstr "+10 к максимальному здоровью"
+
+msgid "game.core.events.rewards.extraLife.description"
+msgstr "Увеличивает максимальный запас HP на 10 и полностью восстанавливает его."
+
+msgid "game.core.events.rewards.curseSpeed.title"
+msgstr "Печать скорости"
+
+msgid "game.core.events.rewards.curseSpeed.flavor"
+msgstr "Проклятие: требования к скорости растут"
+
+msgid "game.core.events.rewards.curseSpeed.description"
+msgstr "На 3 уровня требования к скорости повышаются на 5%, но мгновенно восстанавливает 20 HP."
+
+msgid "game.core.events.rewards.curseSpeed.modifierTitle"
+msgstr "Печать скорости"
+
+msgid "game.core.events.rewards.curseSpeed.modifierDescription"
+msgstr "+5% к требуемой скорости на 3 уровня"
+
+msgid "game.core.events.rewards.curseDefense.title"
+msgstr "Печать уязвимости"
+
+msgid "game.core.events.rewards.curseDefense.flavor"
+msgstr "Проклятие: враги бьют точнее"
+
+msgid "game.core.events.rewards.curseDefense.description"
+msgstr "На 4 уровня атака врагов +4, но получаете регенерацию на 4 боя."
+
+msgid "game.core.events.rewards.curseDefense.modifierTitle"
+msgstr "Печать уязвимости"
+
+msgid "game.core.events.rewards.curseDefense.modifierDescription"
+msgstr "+4 к атаке врагов на 4 уровня"
+
+msgid "game.core.events.itemSets.tempo.name"
+msgstr "Гармония темпа"
+
+msgid "game.core.events.itemSets.tempo.description"
+msgstr "Предметы, ускоряющие набор текста."
+
+msgid "game.core.events.itemSets.tempo.bonus2"
+msgstr "Дополнительно -3% к требуемой скорости"
+
+msgid "game.core.events.itemSets.tempo.bonus3"
+msgstr "Дополнительно -5% к требуемой скорости"
+
+msgid "game.core.events.itemSets.fortress.name"
+msgstr "Щит точности"
+
+msgid "game.core.events.itemSets.fortress.description"
+msgstr "Предметы, помогающие не допускать ошибок."
+
+msgid "game.core.events.itemSets.fortress.bonus2"
+msgstr "Дополнительно -2% к требуемой точности"
+
+msgid "game.core.events.itemSets.fortress.bonus3"
+msgstr "Дополнительно -4% к требуемой точности и +2 сек. к таймеру босса"
+
+msgid "game.core.events.itemSets.chrono.name"
+msgstr "Владыка времени"
+
+msgid "game.core.events.itemSets.chrono.description"
+msgstr "Предметы, дающие дополнительное время на боссах."
+
+msgid "game.core.events.itemSets.chrono.bonus2"
+msgstr "Дополнительно +3 сек. к таймеру босса"
+
+msgid "game.core.events.itemSets.chrono.bonus3"
+msgstr "Дополнительно +5 сек. к таймеру босса и -2% к скорости"
+
+msgid "game.core.events.itemSets.gambler.name"
+msgstr "Фортуна рисковых"
+
+msgid "game.core.events.itemSets.gambler.description"
+msgstr "Мощные, но хрупкие артефакты. Вместе — ещё сильнее."
+
+msgid "game.core.events.itemSets.gambler.bonus2"
+msgstr "Дополнительно -4% к скорости и -2% к точности"
+
+msgid "game.core.events.itemSets.gambler.bonus3"
+msgstr "Дополнительно -6% к скорости и -3% к точности"
+
+msgid "modeFollowup.test.speedToSurvival.title"
+msgstr "Перенести темп в длинную сессию"
+
+msgid "modeFollowup.test.speedToSurvival.description"
+msgstr "Сильный спринт стоит сразу проверить в выживании, пока скорость и ритм ещё ощущаются свежо."
+
+msgid "modeFollowup.test.speedToSurvival.action"
+msgstr "Проверить выживание"
+
+msgid "modeFollowup.test.stabilizeBase.title"
+msgstr "Стабилизировать базу"
+
+msgid "modeFollowup.test.stabilizeBase.description"
+msgstr "После спринта полезно вернуться в обычную практику и превратить пик скорости в более ровную серию без таймера."
+
+msgid "modeFollowup.test.stabilizeBase.action"
+msgstr "Вернуться в практику"
+
+msgid "modeFollowup.survival.raiseBar.title"
+msgstr "Поднять планку"
+
+msgid "modeFollowup.survival.raiseBar.description"
+msgstr "Длинная дистанция уже держится. Следующая честная проверка — снова зайти в выживание и включить переключатель «Без ошибок»."
+
+msgid "modeFollowup.survival.raiseBar.action"
+msgstr "Включить без ошибок"
+
+msgid "modeFollowup.survival.returnToPractice.title"
+msgstr "Вернуться к выравниванию"
+
+msgid "modeFollowup.survival.returnToPractice.description"
+msgstr "Сейчас полезнее снять напряжение через базовую практику, а потом снова зайти в длинный проход."
+
+msgid "modeFollowup.survival.returnToPractice.action"
+msgstr "Вернуться в практику"
+
+msgid "modeFollowup.flawless.cleanControl.title"
+msgstr "Закрепить чистый контроль"
+
+msgid "modeFollowup.flawless.cleanControl.description"
+msgstr "Безошибочный проход уже получился, и теперь этот контроль стоит проверить на более длинном тексте в обычном выживании."
+
+msgid "modeFollowup.flawless.cleanControl.action"
+msgstr "Открыть выживание"
+
+msgid "modeFollowup.flawless.softLongRun.title"
+msgstr "Переключиться на мягкую длинную серию"
+
+msgid "modeFollowup.flawless.softLongRun.description"
+msgstr "Ошибка в безошибочном варианте пришла не из-за полной потери формы. Обычное выживание поможет удержать контроль, не ломая попытку одним промахом."
+
+msgid "modeFollowup.flawless.softLongRun.action"
+msgstr "Перейти в выживание"
+
+msgid "modeFollowup.flawless.releasePressure.title"
+msgstr "Снять давление режима"
+
+msgid "modeFollowup.flawless.releasePressure.description"
+msgstr "После провала в безошибочном варианте лучше вернуться в базовую практику и снова собрать чистый, спокойный проход."
+
+msgid "modeFollowup.flawless.releasePressure.action"
+msgstr "Вернуться в практику"
+
+msgid "motivation.goals.practice-sessions.title"
+msgstr "Сессии практики"
+
+msgid "motivation.goals.practice-sessions.description"
+msgstr "Наращивайте общий объём практики и закрепляйте привычку."
+
+msgid "motivation.goals.practice-minutes.title"
+msgstr "Минуты практики"
+
+msgid "motivation.goals.practice-minutes.description"
+msgstr "Набирайте суммарное время за спокойными, регулярными тренировками."
+
+msgid "motivation.goals.target-speed-sessions.title"
+msgstr "Скоростные сессии"
+
+msgid "motivation.goals.target-speed-sessions.description"
+msgstr "Проводите практики на уверенной рабочей скорости."
+
+msgid "motivation.goals.high-accuracy-sessions.title"
+msgstr "Точные сессии"
+
+msgid "motivation.goals.high-accuracy-sessions.description"
+msgstr "Собирайте чистые по точности практики без провалов по аккуратности."
+
+msgid "motivation.goals.game-victories.title"
+msgstr "Победы в забегах"
+
+msgid "motivation.goals.game-victories.description"
+msgstr "Проходите игровые забеги до конца и копите победы."
+
+msgid "motivation.streaks.flawless-practice.title"
+msgstr "Безошибочные практики"
+
+msgid "motivation.streaks.flawless-practice.description"
+msgstr "Сессии практики подряд без ошибок."
+
+msgid "motivation.streaks.successful-practice.title"
+msgstr "Удачные практики подряд"
+
+msgid "motivation.streaks.successful-practice.description"
+msgstr "Сессии подряд, где выполнены рабочие требования по скорости и точности."
+
+msgid "motivation.streaks.clean-game-victories.title"
+msgstr "Чистые победы"
+
+msgid "motivation.streaks.clean-game-victories.description"
+msgstr "Победы в игре без потери жизней по ходу забега."
+
+msgid "motivation.challenges.practice-sessions.title"
+msgstr "Недельный объём"
+
+msgid "motivation.challenges.practice-sessions.description"
+msgstr "Соберите серию коротких практик и поддержите инерцию недели."
+
+msgid "motivation.challenges.practice-minutes.title"
+msgstr "Минуты практики"
+
+msgid "motivation.challenges.practice-minutes.description"
+msgstr "Наберите спокойный объём времени и не теряйте контакт с клавиатурой."
+
+msgid "motivation.challenges.rhythm-sessions.title"
+msgstr "Ритм-сессии"
+
+msgid "motivation.challenges.rhythm-sessions.description"
+msgstr "Проведите несколько практик в режиме ровного темпа."
+
+msgid "motivation.challenges.target-speed-sessions.title"
+msgstr "Скоростные сессии"
+
+msgid "motivation.challenges.target-speed-sessions.description"
+msgstr "Закройте подходы на уверенной рабочей скорости."
+
+msgid "motivation.challenges.high-accuracy-sessions.title"
+msgstr "Чистая точность"
+
+msgid "motivation.challenges.high-accuracy-sessions.description"
+msgstr "Накопите чистые по точности попытки без провалов по аккуратности."
+
+msgid "motivation.challenges.flawless-practice.title"
+msgstr "Практики без ошибок"
+
+msgid "motivation.challenges.flawless-practice.description"
+msgstr "Закрепите аккуратность через безошибочные сессии."
+
+msgid "motivation.challenges.game-levels.title"
+msgstr "Пройденные уровни"
+
+msgid "motivation.challenges.game-levels.description"
+msgstr "Пройдите несколько уровней, чтобы закрепить навык в длинной форме."
+
+msgid "motivation.challenges.game-victories.title"
+msgstr "Победы в забеге"
+
+msgid "motivation.challenges.game-victories.description"
+msgstr "Доведите хотя бы один забег до полной победы."
+
+msgid "motivation.challenges.clean-game-victories.title"
+msgstr "Чистые победы"
+
+msgid "motivation.challenges.clean-game-victories.description"
+msgstr "Победите в забеге, не теряя жизней по пути."
+
+msgid "motivation.weeklyTemplates.steady-practice.title"
+msgstr "Неделя стабильной практики"
+
+msgid "motivation.weeklyTemplates.steady-practice.description"
+msgstr "Спокойный объём, точность и ритм без рывков."
+
+msgid "motivation.weeklyTemplates.tempo-push.title"
+msgstr "Неделя темпа"
+
+msgid "motivation.weeklyTemplates.tempo-push.description"
+msgstr "Фокус на ритме, скорости и аккуратных подходах."
+
+msgid "motivation.weeklyTemplates.hybrid-loop.title"
+msgstr "Смешанный цикл"
+
+msgid "motivation.weeklyTemplates.hybrid-loop.description"
+msgstr "Комбинация длинной практики и игровых забегов."
+
+msgid "motivation.weeklyTemplates.adventure-week.title"
+msgstr "Неделя приключений"
+
+msgid "motivation.weeklyTemplates.adventure-week.description"
+msgstr "Недельный упор на длинные попытки и чистые забеги."
+
+msgid "motivation.seasons.consistency.title"
+msgstr "Сезон устойчивости"
+
+msgid "motivation.seasons.consistency.description"
+msgstr "Ровный прогресс без провалов: объём, регулярность и чистая точность."
+
+msgid "motivation.seasons.precision.title"
+msgstr "Сезон точности"
+
+msgid "motivation.seasons.precision.description"
+msgstr "Фокус на чистом наборе, контроле ритма и уверенных скоростных сессиях."
+
+msgid "motivation.seasons.adventure.title"
+msgstr "Сезон забегов"
+
+msgid "motivation.seasons.adventure.description"
+msgstr "Игровой ритм недели: длинные уровни, победы и чистые проходы."
+
+msgid "motivation.seasons.balanced.title"
+msgstr "Сезон баланса"
+
+msgid "motivation.seasons.balanced.description"
+msgstr "Смешанный темп: практика, скорость и игра работают вместе."
+
+msgid "motivation.recommendation.practice-sessions.title"
+msgstr "Добрать недельный объём практики"
+
+msgid "motivation.recommendation.practice-sessions.description"
+msgid_plural "motivation.recommendation.practice-sessions.description"
+msgstr[0] "До выполнения недельной задачи осталась {{count}} практика. Это самый быстрый способ сохранить темп недели."
+msgstr[1] "До выполнения недельной задачи осталось {{count}} практики. Это самый быстрый способ сохранить темп недели."
+msgstr[2] "До выполнения недельной задачи осталось {{count}} практик. Это самый быстрый способ сохранить темп недели."
+msgstr[3] "До выполнения недельной задачи осталось {{count}} практик. Это самый быстрый способ сохранить темп недели."
+
+msgid "motivation.recommendation.practice-sessions.action"
+msgstr "Открыть практику"
+
+msgid "motivation.recommendation.practice-minutes.title"
+msgstr "Закрыть минуты практики"
+
+msgid "motivation.recommendation.practice-minutes.description"
+msgid_plural "motivation.recommendation.practice-minutes.description"
+msgstr[0] "Осталась около {{count}} минуты до недельной цели. Короткая сессия сейчас хорошо двинет прогресс."
+msgstr[1] "Осталось около {{count}} минут до недельной цели. Короткая сессия сейчас хорошо двинет прогресс."
+msgstr[2] "Осталось около {{count}} минут до недельной цели. Короткая сессия сейчас хорошо двинет прогресс."
+msgstr[3] "Осталось около {{count}} минут до недельной цели. Короткая сессия сейчас хорошо двинет прогресс."
+
+msgid "motivation.recommendation.practice-minutes.action"
+msgstr "Открыть практику"
+
+msgid "motivation.recommendation.rhythm-sessions.title"
+msgstr "Собрать ритм-сессии"
+
+msgid "motivation.recommendation.rhythm-sessions.description"
+msgid_plural "motivation.recommendation.rhythm-sessions.description"
+msgstr[0] "До недельной задачи по ритму остался {{count}} подход. Режим ритма сейчас даст самый полезный прогресс."
+msgstr[1] "До недельной задачи по ритму осталось {{count}} подхода. Режим ритма сейчас даст самый полезный прогресс."
+msgstr[2] "До недельной задачи по ритму осталось {{count}} подходов. Режим ритма сейчас даст самый полезный прогресс."
+msgstr[3] "До недельной задачи по ритму осталось {{count}} подходов. Режим ритма сейчас даст самый полезный прогресс."
+
+msgid "motivation.recommendation.rhythm-sessions.action"
+msgstr "Открыть практику"
+
+msgid "motivation.recommendation.target-speed-sessions.title"
+msgstr "Дожать скоростные сессии"
+
+msgid "motivation.recommendation.target-speed-sessions.description"
+msgid_plural "motivation.recommendation.target-speed-sessions.description"
+msgstr[0] "Остался {{count}} скоростной подход. Самое время забрать уверенную попытку на рабочем темпе."
+msgstr[1] "Осталось {{count}} скоростных подхода. Самое время забрать пару уверенных попыток на рабочем темпе."
+msgstr[2] "Осталось {{count}} скоростных подходов. Самое время забрать пару уверенных попыток на рабочем темпе."
+msgstr[3] "Осталось {{count}} скоростных подходов. Самое время забрать пару уверенных попыток на рабочем темпе."
+
+msgid "motivation.recommendation.target-speed-sessions.action"
+msgstr "Открыть практику"
+
+msgid "motivation.recommendation.high-accuracy-sessions.title"
+msgstr "Собрать чистые попытки"
+
+msgid "motivation.recommendation.high-accuracy-sessions.description"
+msgid_plural "motivation.recommendation.high-accuracy-sessions.description"
+msgstr[0] "До недельной цели по точности не хватает {{count}} аккуратной сессии. Хороший момент замедлиться и набрать чисто."
+msgstr[1] "До недельной цели по точности не хватает {{count}} аккуратных сессий. Хороший момент замедлиться и набрать чисто."
+msgstr[2] "До недельной цели по точности не хватает {{count}} аккуратных сессий. Хороший момент замедлиться и набрать чисто."
+msgstr[3] "До недельной цели по точности не хватает {{count}} аккуратных сессий. Хороший момент замедлиться и набрать чисто."
+
+msgid "motivation.recommendation.high-accuracy-sessions.action"
+msgstr "Открыть практику"
+
+msgid "motivation.recommendation.flawless-practice.title"
+msgstr "Закрыть безошибочную неделю"
+
+msgid "motivation.recommendation.flawless-practice.description"
+msgid_plural "motivation.recommendation.flawless-practice.description"
+msgstr[0] "Осталась {{count}} практика без ошибок. Короткий аккуратный заход сейчас хорошо укрепит серию."
+msgstr[1] "Осталось {{count}} практики без ошибок. Короткий аккуратный заход сейчас хорошо укрепит серию."
+msgstr[2] "Осталось {{count}} практик без ошибок. Короткий аккуратный заход сейчас хорошо укрепит серию."
+msgstr[3] "Осталось {{count}} практик без ошибок. Короткий аккуратный заход сейчас хорошо укрепит серию."
+
+msgid "motivation.recommendation.flawless-practice.action"
+msgstr "Открыть практику"
+
+msgid "motivation.recommendation.game-levels.titleBeforeDaily"
+msgstr "Пройти недельные уровни через ежедневный забег"
+
+msgid "motivation.recommendation.game-levels.titleAfterDaily"
+msgstr "Продвинуть недельные игровые уровни"
+
+msgid "motivation.recommendation.game-levels.descriptionBeforeDaily"
+msgid_plural "motivation.recommendation.game-levels.descriptionBeforeDaily"
+msgstr[0] "До недельной задачи остался {{count}} уровень. Ежедневный забег хорошо закрывает эту цель и добавляет вариативности."
+msgstr[1] "До недельной задачи осталось {{count}} уровня. Ежедневный забег хорошо закрывает эту цель и добавляет вариативности."
+msgstr[2] "До недельной задачи осталось {{count}} уровней. Ежедневный забег хорошо закрывает эту цель и добавляет вариативности."
+msgstr[3] "До недельной задачи осталось {{count}} уровней. Ежедневный забег хорошо закрывает эту цель и добавляет вариативности."
+
+msgid "motivation.recommendation.game-levels.descriptionAfterDaily"
+msgid_plural "motivation.recommendation.game-levels.descriptionAfterDaily"
+msgstr[0] "До недельной цели остался {{count}} пройденный уровень. Игровой режим сейчас даст самый прямой прогресс."
+msgstr[1] "До недельной цели осталось {{count}} пройденных уровня. Игровой режим сейчас даст самый прямой прогресс."
+msgstr[2] "До недельной цели осталось {{count}} пройденных уровней. Игровой режим сейчас даст самый прямой прогресс."
+msgstr[3] "До недельной цели осталось {{count}} пройденных уровней. Игровой режим сейчас даст самый прямой прогресс."
+
+msgid "motivation.recommendation.game-levels.action"
+msgstr "Открыть игру"
+
+msgid "motivation.recommendation.clean-game-victories.title"
+msgstr "Собрать чистую победу недели"
+
+msgid "motivation.recommendation.clean-game-victories.description"
+msgstr "Недельная задача просит пройти забег без потери жизней. Это отличный повод на аккуратный, размеренный забег."
+
+msgid "motivation.recommendation.clean-game-victories.action"
+msgstr "Открыть игру"
+
+msgid "motivation.recommendation.game-victories.title"
+msgstr "Закрыть победу в забеге"
+
+msgid "motivation.recommendation.game-victories.descriptionBeforeDaily"
+msgstr "Недельная цель просит довести забег до победы. Ежедневный забег или основной режим сейчас будут самым ценным следующим шагом."
+
+msgid "motivation.recommendation.game-victories.descriptionAfterDaily"
+msgid_plural "motivation.recommendation.game-victories.descriptionAfterDaily"
+msgstr[0] "До недельной победы остался {{count}} забег. Игровой режим сейчас двигает цель лучше всего."
+msgstr[1] "До недельной победы осталось {{count}} забега. Игровой режим сейчас двигает цель лучше всего."
+msgstr[2] "До недельной победы осталось {{count}} забегов. Игровой режим сейчас двигает цель лучше всего."
+msgstr[3] "До недельной победы осталось {{count}} забегов. Игровой режим сейчас двигает цель лучше всего."
+
+msgid "motivation.recommendation.game-victories.action"
+msgstr "Открыть игру"
+
+msgid "settings.title"
+msgstr "Настройки"
+
+msgid "settings.sectionsTitle"
+msgstr "Разделы"
+
+msgid "settings.sectionsHint"
+msgstr "Выберите раздел настроек."
+
+msgid "settings.categories.general.label"
+msgstr "Общие"
+
+msgid "settings.categories.general.description"
+msgstr "Язык интерфейса, язык тренировки, раскладка и базовое поведение ввода."
+
+msgid "settings.categories.appearance.label"
+msgstr "Оформление"
+
+msgid "settings.categories.appearance.description"
+msgstr "Тема, курсор, отображение текста, визуальная плотность, пресеты и профили режимов."
+
+msgid "settings.categories.keyboard.label"
+msgstr "Клавиатура"
+
+msgid "settings.categories.keyboard.description"
+msgstr "Панель клавиатуры, руки, масштаб, смещение и предпросмотр."
+
+msgid "settings.categories.accessibility.label"
+msgstr "Доступность"
+
+msgid "settings.categories.accessibility.description"
+msgstr "Крупный текст, сниженная анимация, контраст и режимы цветовосприятия."
+
+msgid "settings.categories.profiles.label"
+msgstr "Профили и пресеты"
+
+msgid "settings.categories.profiles.description"
+msgstr "Сохранённые конфигурации интерфейса и автоматические профили по режимам."
+
+msgid "settings.categories.data.label"
+msgstr "Данные"
+
+msgid "settings.categories.data.description"
+msgstr "Сброс игрового и общего прогресса приложения."
+
+msgid "settings.categories.about.label"
+msgstr "О программе"
+
+msgid "settings.categories.about.description"
+msgstr "Основная информация о приложении, версии и локальных данных."
+
+msgid "settings.cards.language.title"
+msgstr "Язык и раскладка"
+
+msgid "settings.cards.language.interfaceLanguage"
+msgstr "Язык интерфейса"
+
+msgid "settings.cards.language.trainingLanguage"
+msgstr "Язык тренировки"
+
+msgid "settings.cards.language.keyboardLayout"
+msgstr "Раскладка клавиатуры"
+
+msgid "settings.cards.language.useYo"
+msgstr "Включить букву Ё"
+
+msgid "settings.cards.language.importPo"
+msgstr "Импорт .po"
+
+msgid "settings.cards.language.poImported"
+msgstr "Перевод интерфейса импортирован"
+
+msgid "settings.cards.language.removeImportedLocale"
+msgstr "Удалить импортированный перевод"
+
+msgid "settings.cards.language.activeSource"
+msgstr "Источник активного перевода"
+
+msgid "settings.cards.language.sourceName"
+msgstr "Источник"
+
+msgid "settings.cards.language.importedAt"
+msgstr "Импортирован"
+
+msgid "settings.cards.language.sourceBuiltIn"
+msgstr "Встроенный язык"
+
+msgid "settings.cards.language.sourceAddon"
+msgstr "Язык из аддона"
+
+msgid "settings.cards.language.sourceMod"
+msgstr "Язык из мода"
+
+msgid "settings.cards.language.sourceImported"
+msgstr "Импортированный перевод"
+
+msgid "settings.cards.language.coverage"
+msgstr "Покрытие"
+
+msgid "settings.cards.language.coverageDetail"
+msgstr "{{translated}} / {{total}} строк интерфейса"
+
+msgid "settings.cards.language.coverageCompact"
+msgstr "Покрытие {{coverage}}% · fallback: {{count}}"
+
+msgid "settings.cards.language.fallbackRisk"
+msgstr "Риск fallback"
+
+msgid "settings.cards.language.fallbackRiskDetail"
+msgid_plural "settings.cards.language.fallbackRiskDetail"
+msgstr[0] "{{count}} строка возьмётся из fallback-цепочки"
+msgstr[1] "{{count}} строки возьмутся из fallback-цепочки"
+msgstr[2] "{{count}} строк возьмутся из fallback-цепочки"
+msgstr[3] "{{count}} строк возьмутся из fallback-цепочки"
+
+msgid "settings.cards.language.fallbackRiskNone"
+msgstr "Вся интерфейсная строка покрыта без fallback."
+
+msgid "settings.cards.language.partialLocaleWarning"
+msgid_plural "settings.cards.language.partialLocaleWarning"
+msgstr[0] "Этот язык покрывает {{coverage}}% интерфейса. {{count}} строка всё ещё будет браться из fallback-цепочки."
+msgstr[1] "Этот язык покрывает {{coverage}}% интерфейса. {{count}} строки всё ещё будут браться из fallback-цепочки."
+msgstr[2] "Этот язык покрывает {{coverage}}% интерфейса. {{count}} строк всё ещё будут браться из fallback-цепочки."
+msgstr[3] "Этот язык покрывает {{coverage}}% интерфейса. {{count}} строк всё ещё будут браться из fallback-цепочки."
+
+msgid "settings.cards.language.overrideInfo"
+msgstr "Этот язык собирается из нескольких слоёв. Внешние переводы переопределяют встроенный текст сверху вниз."
+
+msgid "settings.cards.language.layerPrefix"
+msgstr "Слой {{index}}"
+
+msgid "settings.cards.language.resetToBuiltIn"
+msgstr "Вернуть встроенный перевод"
+
+msgid "settings.cards.language.poImportErrors.invalidFormat"
+msgstr "Файл .po повреждён или имеет неподдерживаемый формат"
+
+msgid "settings.cards.language.poImportErrors.missingLanguage"
+msgstr "В файле .po не указан заголовок Language"
+
+msgid "settings.cards.language.poImportErrors.emptyDictionary"
+msgstr "В файле .po нет пригодных строк интерфейса для импорта"
+
+msgid "settings.cards.language.poImportErrors.conflictingKeys"
+msgstr "В файле .po есть конфликтующие ключи перевода или несовместимые plural-значения"
+
+msgid "settings.cards.language.poImportErrors.invalidPluralForms"
+msgstr "В файле .po есть некорректные plural-формы или неполные plural-слоты"
+
+msgid "settings.cards.language.poImportErrors.duplicateEntry"
+msgstr "В файле .po есть дублирующиеся записи перевода или повторяющиеся plural-индексы"
+
+msgid "settings.cards.language.poImportErrors.unknown"
+msgstr "Не удалось импортировать перевод интерфейса"
+
+msgid "settings.cards.speedUnit.title"
+msgstr "Единица скорости"
+
+msgid "settings.cards.cursor.title"
+msgstr "Курсор"
+
+msgid "settings.cards.cursor.underline"
+msgstr "Подчёркивание"
+
+msgid "settings.cards.cursor.block"
+msgstr "Блок"
+
+msgid "settings.cards.cursor.line"
+msgstr "Линия"
+
+msgid "settings.cards.cursor.smooth"
+msgstr "Плавный"
+
+msgid "settings.cards.cursor.highlight"
+msgstr "Подсветка текущей буквы"
+
+msgid "settings.cards.theme.title"
+msgstr "Тема"
+
+msgid "settings.cards.theme.editor"
+msgstr "Редактор"
+
+msgid "settings.cards.theme.install"
+msgstr "Установить тему…"
+
+msgid "settings.cards.input.title"
+msgstr "Ввод"
+
+msgid "settings.cards.input.endWithSpace"
+msgstr "Заканчивать пробелом"
+
+msgid "settings.cards.text.title"
+msgstr "Текст"
+
+msgid "settings.cards.text.displayMode"
+msgstr "Вид текста"
+
+msgid "settings.cards.text.displayModeBlock"
+msgstr "Блок"
+
+msgid "settings.cards.text.displayModeRunning"
+msgstr "Бегущая строка"
+
+msgid "settings.cards.text.inputFontSize"
+msgstr "Размер текста для ввода"
+
+msgid "settings.cards.display.title"
+msgstr "Интерфейс"
+
+msgid "settings.cards.display.focusMode"
+msgstr "Фокус-режим"
+
+msgid "settings.cards.display.focusModeHint"
+msgstr "Скрывает панели во время активной печати"
+
+msgid "settings.cards.display.density"
+msgstr "Плотность интерфейса"
+
+msgid "settings.cards.display.densityCompact"
+msgstr "Компактный"
+
+msgid "settings.cards.display.densityDefault"
+msgstr "Стандарт"
+
+msgid "settings.cards.display.densityComfortable"
+msgstr "Просторный"
+
+msgid "settings.cards.display.showStats"
+msgstr "Показывать статистику"
+
+msgid "settings.cards.display.showTextPanel"
+msgstr "Показывать панель текста"
+
+msgid "settings.cards.display.keyboardPosition"
+msgstr "Позиция клавиатуры"
+
+msgid "settings.cards.display.keyboardPositionBottom"
+msgstr "Снизу"
+
+msgid "settings.cards.display.keyboardPositionBelowText"
+msgstr "Под текстом"
+
+msgid "settings.cards.accessibility.title"
+msgstr "Доступность"
+
+msgid "settings.cards.accessibility.largeText"
+msgstr "Крупный текст"
+
+msgid "settings.cards.accessibility.largeTextHint"
+msgstr "Увеличивает размер шрифтов по всему интерфейсу"
+
+msgid "settings.cards.accessibility.reducedMotion"
+msgstr "Без анимаций"
+
+msgid "settings.cards.accessibility.reducedMotionHint"
+msgstr "Отключает все анимации и переходы"
+
+msgid "settings.cards.accessibility.highContrast"
+msgstr "Высокий контраст"
+
+msgid "settings.cards.accessibility.highContrastHint"
+msgstr "Повышает контрастность границ и текста"
+
+msgid "settings.cards.accessibility.colorVisionMode"
+msgstr "Режим цветовосприятия"
+
+msgid "settings.cards.accessibility.colorVisionNormal"
+msgstr "Обычный"
+
+msgid "settings.cards.accessibility.colorVisionProtanopia"
+msgstr "Протанопия (красный)"
+
+msgid "settings.cards.accessibility.colorVisionDeuteranopia"
+msgstr "Дейтеранопия (зелёный)"
+
+msgid "settings.cards.accessibility.colorVisionTritanopia"
+msgstr "Тританопия (синий)"
+
+msgid "settings.cards.keyboard.title"
+msgstr "Клавиатура"
+
+msgid "settings.cards.keyboard.showKeyboard"
+msgstr "Показывать клавиатуру"
+
+msgid "settings.cards.keyboard.showHands"
+msgstr "Показывать пальцы"
+
+msgid "settings.cards.keyboard.beta"
+msgstr "Бета"
+
+msgid "settings.cards.keyboard.handsOpacity"
+msgstr "Прозрачность рук"
+
+msgid "settings.cards.keyboard.keyStrokeWidth"
+msgstr "Толщина обводки клавиш"
+
+msgid "settings.cards.keyboard.verticalOffset"
+msgstr "Смещение по вертикали"
+
+msgid "settings.cards.keyboard.verticalOffsetHint"
+msgstr "0 — по центру, отрицательное вниз, положительное вверх."
+
+msgid "settings.cards.keyboard.panelZoom"
+msgstr "Масштаб блока"
+
+msgid "settings.cards.keyboard.panelZoomHint"
+msgstr "100% — стандартный размер, от 10% до 300%."
+
+msgid "settings.cards.keyboard.previewOpen"
+msgstr "Предпросмотр клавиатуры"
+
+msgid "settings.cards.keyboard.previewClose"
+msgstr "Скрыть предпросмотр"
+
+msgid "settings.cards.presets.title"
+msgstr "Пресеты интерфейса"
+
+msgid "settings.cards.presets.description"
+msgstr "Быстро переключайте набор настроек"
+
+msgid "settings.cards.presets.savePlaceholder"
+msgstr "Название нового пресета…"
+
+msgid "settings.cards.presets.save"
+msgstr "Сохранить"
+
+msgid "settings.cards.presets.imported"
+msgstr "Импортировано ✓"
+
+msgid "settings.cards.presets.exportConfig"
+msgstr "Экспорт конфигурации"
+
+msgid "settings.cards.presets.import"
+msgstr "Импорт"
+
+msgid "settings.cards.presets.applyPresetTitle"
+msgstr "Применить пресет «{name}»"
+
+msgid "settings.cards.presets.delete"
+msgstr "Удалить"
+
+msgid "settings.cards.modeProfiles.title"
+msgstr "Профили по режимам"
+
+msgid "settings.cards.modeProfiles.description"
+msgstr "Сохраните текущие настройки как профиль для конкретного режима. При переключении в режим настройки применятся автоматически."
+
+msgid "settings.cards.modeProfiles.configured"
+msgstr "настроен"
+
+msgid "settings.cards.modeProfiles.saveCurrent"
+msgstr "Сохранить текущие"
+
+msgid "settings.cards.modeProfiles.write"
+msgstr "Записать"
+
+msgid "settings.cards.modeProfiles.clear"
+msgstr "Сбросить профиль"
+
+msgid "settings.cards.modeProfiles.saveForModeTitle"
+msgstr "Сохранить текущие настройки для режима «{mode}»"
+
+msgid "settings.cards.progress.title"
+msgstr "Прогресс"
+
+msgid "settings.cards.progress.description"
+msgstr "Выберите, какую часть прогресса нужно очистить. Перед каждым сбросом появится подтверждение."
+
+msgid "settings.cards.progress.resetGame"
+msgstr "Сбросить игровой прогресс"
+
+msgid "settings.cards.progress.resetAll"
+msgstr "Сбросить прогресс"
+
+msgid "settings.cards.progress.actions.game"
+msgstr "Игровой прогресс"
+
+msgid "settings.cards.progress.actions.lessons"
+msgstr "Прогресс уроков"
+
+msgid "settings.cards.progress.actions.mastery"
+msgstr "Мастерство и цели"
+
+msgid "settings.cards.progress.actions.all"
+msgstr "Весь прогресс"
+
+msgid "settings.cards.about.title"
+msgstr "Основная информация"
+
+msgid "settings.cards.about.description"
+msgstr "Краткая сводка о приложении, его версии и о том, как хранятся пользовательские данные."
+
+msgid "settings.cards.about.appName"
+msgstr "Приложение"
+
+msgid "settings.cards.about.appNameValue"
+msgstr "Typing Trainer"
+
+msgid "settings.cards.about.version"
+msgstr "Версия"
+
+msgid "settings.cards.about.author"
+msgstr "Автор"
+
+msgid "settings.cards.about.stack"
+msgstr "Технологии"
+
+msgid "settings.cards.about.stackValue"
+msgstr "Electron, React, TypeScript и i18next"
+
+msgid "settings.cards.about.storage"
+msgstr "Локальные данные"
+
+msgid "settings.cards.about.storageValue"
+msgstr "Настройки, прогресс, пользовательские переводы и пресеты сохраняются локально на этом устройстве."
+
+msgid "settings.cards.resetModal.gameTitle"
+msgstr "Сброс игрового прогресса"
+
+msgid "settings.cards.resetModal.gameDescription"
+msgstr "Это действие необратимо. После подтверждения приложение очистит только прогресс игрового режима."
+
+msgid "settings.cards.resetModal.gameWillReset"
+msgstr "Будет сброшено:"
+
+msgid "settings.cards.resetModal.gameItem1"
+msgstr "текущий забег и достигнутый уровень"
+
+msgid "settings.cards.resetModal.gameItem2"
+msgstr "все достижения игрового режима"
+
+msgid "settings.cards.resetModal.gameItem3"
+msgstr "все собранные предметы и экипировка"
+
+msgid "settings.cards.resetModal.game.title"
+msgstr "Сброс игрового прогресса"
+
+msgid "settings.cards.resetModal.game.description"
+msgstr "Это действие необратимо. После подтверждения приложение очистит прогресс игрового режима."
+
+msgid "settings.cards.resetModal.game.willReset"
+msgstr "Будет сброшено:"
+
+msgid "settings.cards.resetModal.game.gameItem1"
+msgstr "текущий забег и достигнутый уровень"
+
+msgid "settings.cards.resetModal.game.gameItem2"
+msgstr "достижения игрового режима"
+
+msgid "settings.cards.resetModal.game.gameItem3"
+msgstr "предметы, экипировка и открытые игровые находки"
+
+msgid "settings.cards.resetModal.lessons.title"
+msgstr "Сброс прогресса уроков"
+
+msgid "settings.cards.resetModal.lessons.description"
+msgstr "Это действие очистит прохождение уроков для раскладок, не трогая настройки и игровое состояние."
+
+msgid "settings.cards.resetModal.lessons.willReset"
+msgstr "Будет сброшено:"
+
+msgid "settings.cards.resetModal.lessons.lessonsItem1"
+msgstr "отмеченные пройденные уроки"
+
+msgid "settings.cards.resetModal.lessons.lessonsItem2"
+msgstr "прогресс упражнений внутри уроков"
+
+msgid "settings.cards.resetModal.lessons.lessonsItem3"
+msgstr "открытие следующих уроков будет пересчитано заново"
+
+msgid "settings.cards.resetModal.mastery.title"
+msgstr "Сброс мастерства и целей"
+
+msgid "settings.cards.resetModal.mastery.description"
+msgstr "Это действие очистит прогрессию раскладок, долгие цели и серии, не меняя настройки интерфейса."
+
+msgid "settings.cards.resetModal.mastery.willReset"
+msgstr "Будет сброшено:"
+
+msgid "settings.cards.resetModal.mastery.masteryItem1"
+msgstr "очки мастерства и прогресс раскладок"
+
+msgid "settings.cards.resetModal.mastery.masteryItem2"
+msgstr "долгие цели, серии и недельные задачи"
+
+msgid "settings.cards.resetModal.mastery.masteryItem3"
+msgstr "состояние практической прогрессии по раскладкам"
+
+msgid "settings.cards.resetModal.all.title"
+msgstr "Сброс всего прогресса"
+
+msgid "settings.cards.resetModal.all.description"
+msgstr "Это действие необратимо. После подтверждения приложение очистит весь накопленный прогресс, но сохранит настройки, пресеты и пользовательские материалы."
+
+msgid "settings.cards.resetModal.all.willReset"
+msgstr "Будет сброшено:"
+
+msgid "settings.cards.resetModal.all.fullItem1"
+msgstr "статистика по клавишам и история результатов"
+
+msgid "settings.cards.resetModal.all.fullItem2"
+msgstr "прогресс уроков, практики, целей и мастерства"
+
+msgid "settings.cards.resetModal.all.fullItem3"
+msgstr "открытые буквы и прогресс открытия"
+
+msgid "settings.cards.resetModal.all.fullItem4"
+msgstr "весь игровой прогресс, предметы и текущий забег"
+
+msgid "settings.cards.resetModal.fullTitle"
+msgstr "Сброс прогресса"
+
+msgid "settings.cards.resetModal.fullDescription"
+msgstr "Это действие необратимо. После подтверждения приложение очистит весь накопленный прогресс, но сохранит ваши текущие настройки."
+
+msgid "settings.cards.resetModal.fullWillReset"
+msgstr "Будет сброшено:"
+
+msgid "settings.cards.resetModal.fullItem1"
+msgstr "статистика по клавишам и история результатов"
+
+msgid "settings.cards.resetModal.fullItem2"
+msgstr "прогресс уроков и практики"
+
+msgid "settings.cards.resetModal.fullItem3"
+msgstr "открытые буквы и прогресс открытия"
+
+msgid "settings.cards.resetModal.fullItem4"
+msgstr "весь игровой прогресс, предметы и текущий забег"
+
+msgid "settings.cards.resetModal.confirm"
+msgstr "Сбросить"
+
+msgid "settings.cards.resetModal.cancel"
+msgstr "Отмена"
+
+msgid "settings.modes.practice"
+msgstr "Практика"
+
+msgid "settings.modes.test"
+msgstr "Спринт"
+
+msgid "settings.modes.survival"
+msgstr "Выживание"
+
+msgid "settings.modes.lessons"
+msgstr "Уроки"
+
+msgid "settings.modes.game"
+msgstr "Игра"
+
+msgid "game.core.items.catalog.steady-gloves.name"
+msgstr "Перчатки ровного темпа"
+
+msgid "game.core.items.catalog.steady-gloves.shortName"
+msgstr "Темп"
+
+msgid "game.core.items.catalog.steady-gloves.description"
+msgstr "Чуть снижает требование к скорости и повышает коэффициент защиты."
+
+msgid "game.core.items.catalog.focus-lens.name"
+msgstr "Линза безошибочности"
+
+msgid "game.core.items.catalog.focus-lens.shortName"
+msgstr "Фокус"
+
+msgid "game.core.items.catalog.focus-lens.description"
+msgstr "Помогает удерживать точность и увеличивает шанс попадания."
+
+msgid "game.core.items.catalog.path-compass.name"
+msgstr "Компас босса"
+
+msgid "game.core.items.catalog.path-compass.shortName"
+msgstr "Компас"
+
+msgid "game.core.items.catalog.path-compass.description"
+msgstr "Добавляет время на боссах и немного снижает их защиту."
+
+msgid "game.core.items.catalog.whisper-feather.name"
+msgstr "Перо легкого ритма"
+
+msgid "game.core.items.catalog.whisper-feather.shortName"
+msgstr "Перо"
+
+msgid "game.core.items.catalog.whisper-feather.description"
+msgstr "Лёгкая реликвия. Сглаживает темп и даёт небольшой бонус к криту."
+
+msgid "game.core.items.catalog.line-sigil.name"
+msgstr "Печать чистой линии"
+
+msgid "game.core.items.catalog.line-sigil.shortName"
+msgstr "Линия"
+
+msgid "game.core.items.catalog.line-sigil.description"
+msgstr "Два бонуса к прохождению и лёгкое усиление урона."
+
+msgid "game.core.items.catalog.rabbit-step.name"
+msgstr "След кролика"
+
+msgid "game.core.items.catalog.rabbit-step.shortName"
+msgstr "След"
+
+msgid "game.core.items.catalog.rabbit-step.description"
+msgstr "Чистая скорость и уклонение. Хорошо чувствуется в середине забега."
+
+msgid "game.core.items.catalog.radar-thread.name"
+msgstr "Нить радара"
+
+msgid "game.core.items.catalog.radar-thread.shortName"
+msgstr "Радар"
+
+msgid "game.core.items.catalog.radar-thread.description"
+msgstr "Боссовый артефакт: точность, таймер и снижение защиты врагов."
+
+msgid "game.core.items.catalog.crown-oath.name"
+msgstr "Коронный обет"
+
+msgid "game.core.items.catalog.crown-oath.shortName"
+msgstr "Обет"
+
+msgid "game.core.items.catalog.crown-oath.description"
+msgstr "Редкая награда: сильный боссовый бонус к прохождению и урону."
+
+msgid "game.core.items.catalog.mirror-glasses.name"
+msgstr "Зеркальные очки"
+
+msgid "game.core.items.catalog.mirror-glasses.shortName"
+msgstr "Очки"
+
+msgid "game.core.items.catalog.mirror-glasses.description"
+msgstr "Реликвия на точность и защиту от вражеских атак."
+
+msgid "game.core.items.catalog.medal-of-stability.name"
+msgstr "Медаль устойчивости"
+
+msgid "game.core.items.catalog.medal-of-stability.shortName"
+msgstr "Медаль"
+
+msgid "game.core.items.catalog.medal-of-stability.description"
+msgstr "Сбалансированная реликвия: скорость, точность и защита."
+
+msgid "game.core.items.catalog.wind-sigil.name"
+msgstr "Печать попутного ветра"
+
+msgid "game.core.items.catalog.wind-sigil.shortName"
+msgstr "Ветер"
+
+msgid "game.core.items.catalog.wind-sigil.description"
+msgstr "Скорость и усиление урона для спокойных уровней."
+
+msgid "game.core.items.catalog.blessed-bulwark.name"
+msgstr "Благословенный бастион"
+
+msgid "game.core.items.catalog.blessed-bulwark.shortName"
+msgstr "Бастион"
+
+msgid "game.core.items.catalog.blessed-bulwark.description"
+msgstr "Боссовая реликвия: точность, таймер и защитный коэффициент."
+
+msgid "game.core.items.catalog.viper-fang.name"
+msgstr "Клык гадюки"
+
+msgid "game.core.items.catalog.viper-fang.shortName"
+msgstr "Клык"
+
+msgid "game.core.items.catalog.viper-fang.description"
+msgstr "Снижает защиту врагов и повышает коэффициент урона."
+
+msgid "game.core.items.catalog.iron-carapace.name"
+msgstr "Железный панцирь"
+
+msgid "game.core.items.catalog.iron-carapace.shortName"
+msgstr "Панцирь"
+
+msgid "game.core.items.catalog.iron-carapace.description"
+msgstr "Ослабляет атаку врагов и усиливает коэффициент защиты."
+
+msgid "game.core.items.catalog.phantom-cloak.name"
+msgstr "Плащ фантома"
+
+msgid "game.core.items.catalog.phantom-cloak.shortName"
+msgstr "Плащ"
+
+msgid "game.core.items.catalog.phantom-cloak.description"
+msgstr "Повышает уклонение и немного усиливает крит."
+
+msgid "game.core.items.catalog.sharp-rune.name"
+msgstr "Острая руна"
+
+msgid "game.core.items.catalog.sharp-rune.shortName"
+msgstr "Руна"
+
+msgid "game.core.items.catalog.sharp-rune.description"
+msgstr "Усиливает шанс попасть при атаке и коэффициент урона."
+
+msgid "game.core.items.catalog.fury-sigil.name"
+msgstr "Печать ярости"
+
+msgid "game.core.items.catalog.fury-sigil.shortName"
+msgstr "Ярость"
+
+msgid "game.core.items.catalog.fury-sigil.description"
+msgstr "Усиление атаки и снижение защиты врагов."
+
+msgid "game.core.items.catalog.serrated-band.name"
+msgstr "Зазубренный браслет"
+
+msgid "game.core.items.catalog.serrated-band.shortName"
+msgstr "Браслет"
+
+msgid "game.core.items.catalog.serrated-band.description"
+msgstr "Устойчивый бонус к меткости и плоскому урону."
+
+msgid "game.core.items.catalog.fury-crystal.name"
+msgstr "Кристалл ярости"
+
+msgid "game.core.items.catalog.fury-crystal.shortName"
+msgstr "Кристалл"
+
+msgid "game.core.items.catalog.fury-crystal.description"
+msgstr "Повышает коэффициент урона. Универсален и надёжен."
+
+msgid "game.core.items.catalog.rage-pendant.name"
+msgstr "Подвеска бешенства"
+
+msgid "game.core.items.catalog.rage-pendant.shortName"
+msgstr "Бешенство"
+
+msgid "game.core.items.catalog.rage-pendant.description"
+msgstr "Урон и снижение защиты врагов в одном предмете."
+
+msgid "game.core.items.catalog.stoneskin-charm.name"
+msgstr "Амулет каменной кожи"
+
+msgid "game.core.items.catalog.stoneskin-charm.shortName"
+msgstr "Камень"
+
+msgid "game.core.items.catalog.stoneskin-charm.description"
+msgstr "Повышает коэффициент защиты. Снижает входящий урон."
+
+msgid "game.core.items.catalog.guardian-ring.name"
+msgstr "Кольцо стража"
+
+msgid "game.core.items.catalog.guardian-ring.shortName"
+msgstr "Страж"
+
+msgid "game.core.items.catalog.guardian-ring.description"
+msgstr "Защита и уклонение в одном кольце."
+
+msgid "game.core.items.catalog.rhythm-charm.name"
+msgstr "Амулет ритма"
+
+msgid "game.core.items.catalog.rhythm-charm.shortName"
+msgstr "Ритм"
+
+msgid "game.core.items.catalog.rhythm-charm.description"
+msgstr "Повышает шанс крита. Ровный темп — ключ к мощи."
+
+msgid "game.core.items.catalog.precision-lens.name"
+msgstr "Линза точного удара"
+
+msgid "game.core.items.catalog.precision-lens.shortName"
+msgstr "Точность"
+
+msgid "game.core.items.catalog.precision-lens.description"
+msgstr "Бонус крита и атаки игрока."
+
+msgid "game.core.items.catalog.crusher-seal.name"
+msgstr "Печать сокрушителя"
+
+msgid "game.core.items.catalog.crusher-seal.shortName"
+msgstr "Сокрушитель"
+
+msgid "game.core.items.catalog.crusher-seal.description"
+msgstr "Плоский урон и снижение защиты врагов."
+
+msgid "game.core.items.catalog.heavy-strike.name"
+msgstr "Тяжёлый удар"
+
+msgid "game.core.items.catalog.heavy-strike.shortName"
+msgstr "Удар"
+
+msgid "game.core.items.catalog.heavy-strike.description"
+msgstr "Добавляет плоский урон и немного усиливает коэффициент."
+
+msgid "game.core.items.catalog.rift-hourglass.name"
+msgstr "Разломные песочные часы"
+
+msgid "game.core.items.catalog.rift-hourglass.shortName"
+msgstr "Разлом"
+
+msgid "game.core.items.catalog.rift-hourglass.description"
+msgstr "Резко упрощает боссов: таймер и урон по ним, но быстро трескается."
+
+msgid "game.core.items.catalog.storm-anchor.name"
+msgstr "Штормовой якорь"
+
+msgid "game.core.items.catalog.storm-anchor.shortName"
+msgstr "Якорь"
+
+msgid "game.core.items.catalog.storm-anchor.description"
+msgstr "Боссовый артефакт: таймер и коэффициент защиты."
+
+msgid "game.core.items.catalog.overclock-core.name"
+msgstr "Ядро разгона"
+
+msgid "game.core.items.catalog.overclock-core.shortName"
+msgstr "Разгон"
+
+msgid "game.core.items.catalog.overclock-core.description"
+msgstr "Мощная скорость и коэффициент урона. Изнашивается почти каждый уровень."
+
+msgid "game.core.items.catalog.brain-lattice.name"
+msgstr "Мозговая решетка"
+
+msgid "game.core.items.catalog.brain-lattice.shortName"
+msgstr "Решетка"
+
+msgid "game.core.items.catalog.brain-lattice.description"
+msgstr "Точность, атака игрока и крит. Ломается после провалов."
+
+msgid "game.core.items.catalog.aegis-prism.name"
+msgstr "Призма эгиды"
+
+msgid "game.core.items.catalog.aegis-prism.shortName"
+msgstr "Эгида"
+
+msgid "game.core.items.catalog.aegis-prism.description"
+msgstr "Точность, таймер и сильный коэффициент защиты."
+
+msgid "game.core.items.catalog.spark-capsule.name"
+msgstr "Искровая капсула"
+
+msgid "game.core.items.catalog.spark-capsule.shortName"
+msgstr "Искра"
+
+msgid "game.core.items.catalog.spark-capsule.description"
+msgstr "Мощный боссовый буст: скорость, таймер и крит."
+
+msgid "game.core.items.catalog.warden-lock.name"
+msgstr "Замок хранителя"
+
+msgid "game.core.items.catalog.warden-lock.shortName"
+msgstr "Замок"
+
+msgid "game.core.items.catalog.warden-lock.description"
+msgstr "Точность и мощная защита, но жёсткое наказание за провалы."
+
+msgid "game.core.items.catalog.ember-seal.name"
+msgstr "Печать перегрева"
+
+msgid "game.core.items.catalog.ember-seal.shortName"
+msgstr "Перегрев"
+
+msgid "game.core.items.catalog.ember-seal.description"
+msgstr "Мощный буст скорости, точности и урона. Выгорает мгновенно."
+
+msgid "game.core.items.catalog.loaded-die.name"
+msgstr "Загруженная кость"
+
+msgid "game.core.items.catalog.loaded-die.shortName"
+msgstr "Кость"
+
+msgid "game.core.items.catalog.loaded-die.description"
+msgstr "Скорость, точность и шанс крита. Азартный рывок."
+
+msgid "game.core.items.catalog.wand-of-blinks.name"
+msgstr "Жезл вспышек"
+
+msgid "game.core.items.catalog.wand-of-blinks.shortName"
+msgstr "Жезл"
+
+msgid "game.core.items.catalog.wand-of-blinks.description"
+msgstr "Сильнейший боссовый артефакт: скорость, точность и урон."
+
+msgid "game.core.items.catalog.razorblade-edge.name"
+msgstr "Бритвенное лезвие"
+
+msgid "game.core.items.catalog.razorblade-edge.shortName"
+msgstr "Лезвие"
+
+msgid "game.core.items.catalog.razorblade-edge.description"
+msgstr "Снижает защиту врагов и повышает коэффициент урона. Крошится при неудачах."
+
+msgid "game.core.items.catalog.guardian-ward.name"
+msgstr "Тотем стража"
+
+msgid "game.core.items.catalog.guardian-ward.shortName"
+msgstr "Тотем"
+
+msgid "game.core.items.catalog.guardian-ward.description"
+msgstr "Снижает атаку врагов и усиливает коэффициент защиты."
+
+msgid "game.core.items.catalog.shadow-mantle.name"
+msgstr "Мантия теней"
+
+msgid "game.core.items.catalog.shadow-mantle.shortName"
+msgstr "Мантия"
+
+msgid "game.core.items.catalog.shadow-mantle.description"
+msgstr "Мощное уклонение и крит, но быстро истощается."
+
+msgid "game.core.items.catalog.war-talisman.name"
+msgstr "Боевой талисман"
+
+msgid "game.core.items.catalog.war-talisman.shortName"
+msgstr "Талисман"
+
+msgid "game.core.items.catalog.war-talisman.description"
+msgstr "Универсальный боевой артефакт: атака и защита врагов, плюс урон."
+
+msgid "game.core.items.catalog.bloodletter.name"
+msgstr "Кровопускатель"
+
+msgid "game.core.items.catalog.bloodletter.shortName"
+msgstr "Кровник"
+
+msgid "game.core.items.catalog.bloodletter.description"
+msgstr "Атака, урон и крит. Изнашивается от провалов."
+
+msgid "game.core.items.catalog.war-drum.name"
+msgstr "Боевой барабан"
+
+msgid "game.core.items.catalog.war-drum.shortName"
+msgstr "Барабан"
+
+msgid "game.core.items.catalog.war-drum.description"
+msgstr "Мощный боссовый артефакт: атака и коэффициент урона."
+
+msgid "game.core.items.catalog.titan-gauntlet.name"
+msgstr "Перчатка титана"
+
+msgid "game.core.items.catalog.titan-gauntlet.shortName"
+msgstr "Перчатка"
+
+msgid "game.core.items.catalog.titan-gauntlet.description"
+msgstr "Огромный плоский урон и коэффициент урона. Хрупкая."
+
+msgid "game.core.items.catalog.boss-slayer.name"
+msgstr "Убийца боссов"
+
+msgid "game.core.items.catalog.boss-slayer.shortName"
+msgstr "Слэйер"
+
+msgid "game.core.items.catalog.boss-slayer.description"
+msgstr "Только против боссов: плоский урон, коэффициент и крит."
+
+msgid "game.core.items.catalog.berserk-core.name"
+msgstr "Ядро берсерка"
+
+msgid "game.core.items.catalog.berserk-core.shortName"
+msgstr "Берсерк"
+
+msgid "game.core.items.catalog.berserk-core.description"
+msgstr "Огромный коэффициент урона и атака. Быстро изнашивается."
+
+msgid "game.core.items.catalog.fortress-plate.name"
+msgstr "Пластина крепости"
+
+msgid "game.core.items.catalog.fortress-plate.shortName"
+msgstr "Крепость"
+
+msgid "game.core.items.catalog.fortress-plate.description"
+msgstr "Массивная защита и снижение атаки врагов. Не выдержит долгого похода."
+
+msgid "game.core.items.catalog.lucky-die.name"
+msgstr "Счастливая кость"
+
+msgid "game.core.items.catalog.lucky-die.shortName"
+msgstr "Удача"
+
+msgid "game.core.items.catalog.lucky-die.description"
+msgstr "Мощный крит и бонус урона. Удача непостоянна."
+
+msgid "game.core.items.effects.speed.default"
+msgstr "-{value}% к требуемой скорости"
+
+msgid "game.core.items.effects.speed.bossOnly"
+msgstr "-{value}% к скорости на боссе"
+
+msgid "game.core.items.effects.accuracy.default"
+msgstr "-{value}% к требуемой точности"
+
+msgid "game.core.items.effects.accuracy.bossOnly"
+msgstr "-{value}% к точности на боссе"
+
+msgid "game.core.items.effects.timer.default"
+msgstr "+{value} сек. к таймеру босса"
+
+msgid "game.core.items.effects.enemyAttack.default"
+msgstr "-{value} к шансу попадания врагов"
+
+msgid "game.core.items.effects.enemyDefense.default"
+msgstr "-{value} к защите врагов"
+
+msgid "game.core.items.effects.dodge.default"
+msgstr "+{value}% к уклонению"
+
+msgid "game.core.items.effects.playerAttack.default"
+msgstr "+{value}% к шансу попасть"
+
+msgid "game.core.items.effects.playerAttack.bossOnly"
+msgstr "+{value}% к шансу попасть по боссу"
+
+msgid "game.core.items.effects.playerDamage.default"
+msgstr "+{value} к плоскому урону"
+
+msgid "game.core.items.effects.playerDamage.bossOnly"
+msgstr "+{value} к плоскому урону по боссам"
+
+msgid "game.core.items.effects.dmgCoeff.default"
+msgstr "+{value}% к коэфф. урона"
+
+msgid "game.core.items.effects.defCoeff.default"
+msgstr "+{value}% к коэфф. защиты"
+
+msgid "game.core.items.effects.critBonus.default"
+msgstr "+{value}% к шансу крита"

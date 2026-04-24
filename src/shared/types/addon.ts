@@ -2,6 +2,7 @@ import type { Lesson, Layout, LanguageInfo } from './layout';
 import type { GameItemDefinition, GameAchievementDefinition } from './game';
 import type { CustomThemeColors } from './settings';
 import type { CustomPracticePackKind } from './practice';
+import type { TranslationDictionary } from './i18n';
 
 /* ── Manifest version ───────────────────────────────────── */
 export const ADDON_MANIFEST_VERSION = 1;
@@ -55,6 +56,17 @@ export interface AddonPracticePacksResource {
   packs: AddonPracticeContentPack[];
 }
 
+export interface AddonInterfaceLocaleDefinition {
+  id: string;
+  label: string;
+  nativeLabel: string;
+  dictionary: TranslationDictionary;
+}
+
+export interface AddonInterfaceLocalesResource {
+  locales: AddonInterfaceLocaleDefinition[];
+}
+
 export interface AddonResources {
   words?: AddonWordsResource[];
   lessons?: AddonLessonsResource[];
@@ -64,6 +76,9 @@ export interface AddonResources {
   achievements?: AddonAchievementsResource;
   themes?: AddonThemesResource;
   practicePacks?: AddonPracticePacksResource;
+  interfaceLocales?: AddonInterfaceLocalesResource;
+  /** Shorthand for interfaceLocales.locales in simple content addons. */
+  locales?: AddonInterfaceLocaleDefinition[];
 }
 
 export interface AddonManifest {
@@ -71,6 +86,7 @@ export interface AddonManifest {
   id: string;
   name: string;
   version: string;
+  icon?: string;
   description?: string;
   author?: string;
   minAppVersion?: string;
@@ -78,6 +94,8 @@ export interface AddonManifest {
   /** IDs of mods that must be installed and enabled for this addon to work. */
   dependencies?: string[];
   resources?: AddonResources;
+  /** Shorthand for resources.interfaceLocales.locales in simple content addons. */
+  locales?: AddonInterfaceLocaleDefinition[];
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -98,6 +116,7 @@ export type ModPermission =
   | 'events'         // subscribe to app events (key, session, etc.)
   | 'words'          // add / remove / replace words
   | 'lessons'        // add / remove / replace lessons
+  | 'i18n'           // register interface translations
   | 'modes';         // register new sidebar modes / pages
 
 export interface ModManifest {
@@ -105,12 +124,15 @@ export interface ModManifest {
   id: string;
   name: string;
   version: string;
+  icon?: string;
   description?: string;
   author?: string;
   minAppVersion?: string;
   type: 'mod';
   /** Relative path to the entry JS file (e.g. "index.js") */
   entry: string;
+  /** Explicit package file list for remote installation from source catalogs. */
+  files?: string[];
   /** Permissions the mod requires — shown to the user before activation */
   permissions: ModPermission[];
   /** IDs of other mods that must be installed and enabled for this mod to work. */

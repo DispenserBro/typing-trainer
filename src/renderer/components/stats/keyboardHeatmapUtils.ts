@@ -3,9 +3,34 @@ import type { CharStat } from '../../../shared/types';
 
 export type HeatmapMode = 'errors' | 'slow';
 
+export type KeyboardHeatmapLabels = {
+  title: string;
+  description: string;
+  empty: string;
+  controls: {
+    ariaLabel: string;
+    errors: string;
+    slow: string;
+  };
+  legend: {
+    less: string;
+    more: string;
+  };
+  rowLabels: {
+    top: string;
+    middle: string;
+    bottom: string;
+  };
+  keyTitles: {
+    errors: (key: string, value: number) => string;
+    slow: (key: string, value: number) => string;
+  };
+};
+
 export type KeyboardHeatmapProps = {
   layoutId: string;
   keyStats?: Record<string, CharStat>;
+  labels: KeyboardHeatmapLabels;
   title?: string;
   description?: string;
   showControls?: boolean;
@@ -23,14 +48,18 @@ export type HeatmapKey = {
   hasData: boolean;
 };
 
-export const ROW_LABELS = ['Верхний ряд', 'Средний ряд', 'Нижний ряд'] as const;
 export const ROW_OFFSET_UNITS = [0, 0.55, 1.1] as const;
 
 export function normalizeKey(key: string) {
   return key.toLowerCase();
 }
 
-export function buildHeatmapKeys(rows: string[][], keyStats: Record<string, CharStat> | undefined, mode: HeatmapMode) {
+export function buildHeatmapKeys(
+  rows: string[][],
+  keyStats: Record<string, CharStat> | undefined,
+  mode: HeatmapMode,
+  labels: KeyboardHeatmapLabels,
+) {
   const metrics: number[] = [];
   const byRow = rows.map(row => row.map((key) => {
     const stat = keyStats?.[normalizeKey(key)];
@@ -58,10 +87,10 @@ export function buildHeatmapKeys(rows: string[][], keyStats: Record<string, Char
       : 0;
     const label = mode === 'errors'
       ? `${Math.round(entry.errRate * 100)}%`
-      : `${Math.round(entry.avgMs)}мс`;
+      : `${Math.round(entry.avgMs)} ms`;
     const title = mode === 'errors'
-      ? `${entry.key}: ${Math.round(entry.errRate * 100)}% ошибок`
-      : `${entry.key}: ${Math.round(entry.avgMs)}мс`;
+      ? labels.keyTitles.errors(entry.key, Math.round(entry.errRate * 100))
+      : labels.keyTitles.slow(entry.key, Math.round(entry.avgMs));
     return {
       key: entry.key,
       metric: entry.metric,
@@ -73,14 +102,18 @@ export function buildHeatmapKeys(rows: string[][], keyStats: Record<string, Char
   }));
 }
 
-export function buildRowSummaries(rows: HeatmapKey[][]) {
+export function buildRowSummaries(rows: HeatmapKey[][], labels: KeyboardHeatmapLabels) {
   return rows.map((row, index) => {
     const values = row.filter(key => key.hasData).map(key => key.intensity);
     const avgIntensity = values.length
       ? values.reduce((sum, value) => sum + value, 0) / values.length
       : 0;
     return {
-      label: ROW_LABELS[index] ?? `Ряд ${index + 1}`,
+      label: index === 0
+        ? labels.rowLabels.top
+        : index === 1
+          ? labels.rowLabels.middle
+          : labels.rowLabels.bottom,
       intensity: avgIntensity,
       activeKeys: values.length,
     };

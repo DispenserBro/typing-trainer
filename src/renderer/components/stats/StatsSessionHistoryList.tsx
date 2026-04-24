@@ -1,33 +1,26 @@
-import { formatSpeed, speedLabel } from '../../../core/engine';
-import {
-  formatEntryModeLabel,
-  formatScenarioLabel,
-  formatSessionTimestamp,
-  type SessionHistoryItem,
-} from '../../../core/stats/utils';
+import type { StatsSessionHistoryListItemViewModel } from '../../../core/stats/viewModel';
+import { EmptyStateNotice } from '../ui/EmptyStateNotice';
 
 type StatsSessionHistoryListProps = {
-  unit: 'wpm' | 'cpm' | 'cps';
-  filteredSessionHistory: SessionHistoryItem[];
+  emptyLabel: string;
+  items: StatsSessionHistoryListItemViewModel[];
   selectedHistorySessionId: string;
   onSelectSession: (id: string) => void;
-  getLayoutLabel: (layoutId: string) => string;
 };
 
 export function StatsSessionHistoryList({
-  unit,
-  filteredSessionHistory,
+  emptyLabel,
+  items,
   selectedHistorySessionId,
   onSelectSession,
-  getLayoutLabel,
 }: StatsSessionHistoryListProps) {
-  if (!filteredSessionHistory.length) {
-    return <p style={{ opacity: 0.5 }}>По текущим фильтрам пока нет подходящих сессий.</p>;
+  if (!items.length) {
+    return <EmptyStateNotice text={emptyLabel} />;
   }
 
   return (
     <div className="stats-session-list">
-      {filteredSessionHistory.slice(0, 20).map((item) => {
+      {items.map((item) => {
         const isActive = selectedHistorySessionId === item.id;
         return (
           <button
@@ -37,20 +30,16 @@ export function StatsSessionHistoryList({
             onClick={() => onSelectSession(item.id)}
           >
             <div className="stats-session-item-top">
-              <strong>{formatEntryModeLabel(item.entry)}</strong>
-              <span>{formatSessionTimestamp(item.entry.date)}</span>
+              <strong>{item.modeLabel}</strong>
+              <span>{item.timestampLabel}</span>
             </div>
             <div className="stats-session-item-meta">
-              <span>{getLayoutLabel(item.layoutId)}</span>
-              {item.entry.contentScenarioId ? (
-                <span>{formatScenarioLabel(item.entry.contentScenarioId)}</span>
-              ) : item.entry.trainingMode && (
-                <span>{item.entry.trainingMode === 'rhythm' ? 'Ритм' : 'Обычная'}</span>
-              )}
+              <span>{item.layoutLabel}</span>
+              {item.contentLabel && <span>{item.contentLabel}</span>}
             </div>
             <div className="stats-session-item-metrics">
-              <b>{formatSpeed(item.entry.wpm, unit)} {speedLabel(unit)}</b>
-              <b>{Math.round(item.entry.acc)}%</b>
+              <b>{item.speedLabel}</b>
+              <b>{item.accuracyLabel}</b>
             </div>
           </button>
         );

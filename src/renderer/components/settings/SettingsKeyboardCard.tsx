@@ -1,5 +1,11 @@
 import { NumberInput } from '../NumberInput';
 import type { UserSettings } from '../../../shared/types';
+import { useI18n } from '../../contexts/I18nContext';
+import { ActionRow } from '../ui/ActionRow';
+import { Button } from '../ui/Button';
+import { SettingsCard } from '../ui/SettingsCard';
+import { SettingsField } from '../ui/SettingsField';
+import { SettingsToggle } from '../ui/SettingsToggle';
 
 export function SettingsKeyboardCard({
   settings,
@@ -12,39 +18,34 @@ export function SettingsKeyboardCard({
   setKeyboardPreviewActive: (active: boolean) => void;
   saveSetting: <K extends keyof UserSettings>(key: K, val: UserSettings[K]) => void;
 }) {
+  const { t } = useI18n();
   return (
-    <div className="card settings-card">
-      <h4>Клавиатура</h4>
-      <label className="poption-toggle">
-        <input
-          type="checkbox"
-          checked={settings.showKeyboard}
-          onChange={e => {
-            saveSetting('showKeyboard', e.target.checked);
-            if (!e.target.checked) setKeyboardPreviewActive(false);
-          }}
-        />
-        <span className="toggle-switch" />
-        <span className="poption-toggle-text">Показывать клавиатуру</span>
-      </label>
+    <SettingsCard title={t('settings.cards.keyboard.title')}>
+      <SettingsToggle
+        checked={settings.showKeyboard}
+        onChange={checked => {
+          saveSetting('showKeyboard', checked);
+          if (!checked) {
+            setKeyboardPreviewActive(false);
+          }
+        }}
+        label={t('settings.cards.keyboard.showKeyboard')}
+      />
       {settings.showKeyboard && (
         <>
-          <label className="poption-toggle" style={{ marginTop: 10 }}>
-            <input
-              type="checkbox"
-              checked={settings.showHands}
-              onChange={e => saveSetting('showHands', e.target.checked)}
-            />
-            <span className="toggle-switch" />
+          <SettingsToggle
+            className="settings-keyboard-toggle-row"
+            checked={settings.showHands}
+            onChange={checked => saveSetting('showHands', checked)}
+          >
             <span className="settings-beta-row">
-              <span className="poption-toggle-text">Показывать пальцы</span>
-              <span className="settings-beta-tag">Beta</span>
+              <span className="poption-toggle-text">{t('settings.cards.keyboard.showHands')}</span>
+              <span className="settings-beta-tag">{t('settings.cards.keyboard.beta')}</span>
             </span>
-          </label>
+          </SettingsToggle>
 
           {settings.showHands && (
-            <div className="poption" style={{ marginTop: 14 }}>
-              <span className="poption-label">Прозрачность рук</span>
+            <SettingsField className="settings-keyboard-option-row" label={t('settings.cards.keyboard.handsOpacity')}>
               <div className="poption-row">
                 <input
                   type="range"
@@ -54,15 +55,14 @@ export function SettingsKeyboardCard({
                   value={settings.handsOpacity}
                   onChange={e => saveSetting('handsOpacity', Number(e.target.value))}
                   className="range-input"
-                  aria-label="Прозрачность рук"
+                  aria-label={t('settings.cards.keyboard.handsOpacity')}
                 />
                 <span className="poption-hint">{settings.handsOpacity}%</span>
               </div>
-            </div>
+            </SettingsField>
           )}
 
-          <div className="poption" style={{ marginTop: 14 }}>
-            <span className="poption-label">Толщина обводки клавиш</span>
+          <SettingsField className="settings-keyboard-option-row" label={t('settings.cards.keyboard.keyStrokeWidth')}>
             <div className="poption-row">
               <NumberInput
                 value={settings.keyStrokeWidth}
@@ -70,15 +70,18 @@ export function SettingsKeyboardCard({
                 max={4}
                 step={0.5}
                 className="w72"
-                ariaLabel="Толщина обводки клавиш"
+                ariaLabel={t('settings.cards.keyboard.keyStrokeWidth')}
                 onChange={(next) => saveSetting('keyStrokeWidth', Math.round(next * 10) / 10)}
               />
               <span className="poption-hint">px</span>
             </div>
-          </div>
+          </SettingsField>
 
-          <div className="poption" style={{ marginTop: 14 }}>
-            <span className="poption-label">Смещение по вертикали</span>
+          <SettingsField
+            className="settings-keyboard-option-row"
+            label={t('settings.cards.keyboard.verticalOffset')}
+            hint={t('settings.cards.keyboard.verticalOffsetHint')}
+          >
             <div className="poption-row">
               <NumberInput
                 value={settings.keyboardPanelOffset}
@@ -87,16 +90,18 @@ export function SettingsKeyboardCard({
                 step={1}
                 emptyValue={0}
                 className="w96"
-                ariaLabel="Смещение клавиатуры по вертикали"
+                ariaLabel={t('settings.cards.keyboard.verticalOffset')}
                 onChange={(next) => saveSetting('keyboardPanelOffset', Math.round(next))}
               />
               <span className="poption-hint">%</span>
             </div>
-            <span className="poption-hint">0 — по центру, отрицательное вниз, положительное вверх.</span>
-          </div>
+          </SettingsField>
 
-          <div className="poption" style={{ marginTop: 14 }}>
-            <span className="poption-label">Масштаб блока</span>
+          <SettingsField
+            className="settings-keyboard-option-row"
+            label={t('settings.cards.keyboard.panelZoom')}
+            hint={t('settings.cards.keyboard.panelZoomHint')}
+          >
             <div className="poption-row">
               <NumberInput
                 value={settings.keyboardPanelZoom}
@@ -105,24 +110,24 @@ export function SettingsKeyboardCard({
                 step={1}
                 emptyValue={100}
                 className="w96"
-                ariaLabel="Масштаб блока клавиатуры и рук"
+                ariaLabel={t('settings.cards.keyboard.panelZoom')}
                 onChange={(next) => saveSetting('keyboardPanelZoom', Math.round(next))}
               />
               <span className="poption-hint">%</span>
             </div>
-            <span className="poption-hint">100% — стандартный размер, от 10% до 300%.</span>
-          </div>
+          </SettingsField>
 
-          <div className="settings-keyboard-actions">
-            <button
-              className={`btn-secondary btn-sm${keyboardPreviewActive ? ' active' : ''}`}
+          <ActionRow className="settings-keyboard-actions">
+            <Button
+              size="sm"
+              className={keyboardPreviewActive ? 'active' : undefined}
               onClick={() => setKeyboardPreviewActive(!keyboardPreviewActive)}
             >
-              {keyboardPreviewActive ? 'Скрыть предпросмотр' : 'Предпросмотр клавиатуры'}
-            </button>
-          </div>
+              {keyboardPreviewActive ? t('settings.cards.keyboard.previewClose') : t('settings.cards.keyboard.previewOpen')}
+            </Button>
+          </ActionRow>
         </>
       )}
-    </div>
+    </SettingsCard>
   );
 }

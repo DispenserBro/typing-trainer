@@ -73,6 +73,7 @@ export function validateAddonManifest(raw: unknown): AddonValidationResult {
     id: m.id as string,
     name: m.name as string,
     version: m.version as string,
+    icon: typeof m.icon === 'string' ? m.icon : undefined,
     description: m.description as string | undefined,
     author: m.author as string | undefined,
     minAppVersion: m.minAppVersion as string | undefined,

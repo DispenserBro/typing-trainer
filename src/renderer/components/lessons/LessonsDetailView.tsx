@@ -1,5 +1,9 @@
 import { ArrowLeft, ArrowRight, Check, Play } from 'lucide-react';
 import { EXERCISE_COUNT } from '../../../core/engine';
+import { useI18n } from '../../contexts/I18nContext';
+import { ActionRow } from '../ui/ActionRow';
+import { Button } from '../ui/Button';
+import { PageHeader } from '../ui/PageHeader';
 
 type LessonsDetailViewProps = {
   title: string;
@@ -36,16 +40,17 @@ export function LessonsDetailView({
   onOpenNextLesson,
   onBack,
 }: LessonsDetailViewProps) {
+  const { t } = useI18n();
   return (
     <section className="mode-panel active">
-      <div className="panel-header"><h1>Уроки</h1></div>
+      <PageHeader title={t('lessons.title')} />
       <h3 className="lesson-active-title">{title}</h3>
       <p className="lesson-active-subtitle">{subtitle}</p>
       {sectionTitle && sectionCount > 0 && (
         <div className="lesson-section-progress">
           <span className="lesson-section-progress__label">{sectionTitle}</span>
           <span className="lesson-section-progress__value">
-            Урок {sectionPosition + 1} из {sectionCount}
+            {t('lessons.lessonOf', { current: sectionPosition + 1, total: sectionCount })}
           </span>
         </div>
       )}
@@ -60,30 +65,30 @@ export function LessonsDetailView({
               onClick={() => status !== 'locked' && onOpenExercise(i)}
             >
               <div className="exercise-info">
-                <span className="exercise-name">{exerciseNames?.[i] ?? `Упражнение ${i + 1}`}</span>
+                <span className="exercise-name">{exerciseNames?.[i] ?? t('lessons.exerciseFallback', { index: i + 1 })}</span>
                 {status === 'done' && <span className="exercise-check"><Check size={16} /></span>}
                 {status === 'current' && <span className="exercise-play"><Play size={16} /></span>}
               </div>
               <div className="exercise-progress-bar">
-                {Array.from({ length: EXERCISE_COUNT }, (_, j) => (
-                  <div key={j} className={`progress-segment ${j < done ? 'filled' : ''}`} />
-                ))}
+                <div
+                  className={`progress-segment${status === 'done' ? ' filled' : ''}${status === 'current' ? ' current' : ''}`}
+                />
               </div>
             </div>
           );
         })}
       </div>
-      <div className="lesson-section-nav">
-        <button className="btn-secondary" onClick={onOpenPrevLesson} disabled={!hasPrevLesson}>
-          <ArrowLeft size={14} style={{ verticalAlign: 'middle' }} /> Предыдущий урок
-        </button>
-        <button className="btn-secondary" onClick={onOpenNextLesson} disabled={!hasNextLesson}>
-          {nextLessonTargetLabel} <ArrowRight size={14} style={{ verticalAlign: 'middle' }} />
-        </button>
-      </div>
-      <button className="btn-secondary mt-12" onClick={onBack}>
-        <ArrowLeft size={14} style={{ verticalAlign: 'middle' }} /> Назад
-      </button>
+      <ActionRow className="lesson-section-nav">
+        <Button onClick={onOpenPrevLesson} disabled={!hasPrevLesson}>
+          <ArrowLeft size={14} className="ui-inline-icon" /> {t('lessons.previousLesson')}
+        </Button>
+        <Button onClick={onOpenNextLesson} disabled={!hasNextLesson}>
+          {nextLessonTargetLabel} <ArrowRight size={14} className="ui-inline-icon" />
+        </Button>
+      </ActionRow>
+      <Button className="mt-12" onClick={onBack}>
+        <ArrowLeft size={14} className="ui-inline-icon" /> {t('lessons.back')}
+      </Button>
     </section>
   );
 }

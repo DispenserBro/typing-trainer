@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
-import { useApp } from '../contexts/AppContext';
-import { Target, Clock, BookOpen, BarChart3, Settings, Keyboard, Gamepad2, Puzzle, Box, Shield, AlertTriangle } from 'lucide-react';
+import { useAppNavigation } from '../contexts/AppContext';
+import { useI18n } from '../contexts/I18nContext';
+import { Target, Clock, BookOpen, BarChart3, Settings, Keyboard, Gamepad2, Puzzle, Box, Shield } from 'lucide-react';
 import type { ReactElement } from 'react';
 
 interface SidebarMode {
@@ -10,47 +11,49 @@ interface SidebarMode {
   icon: ReactElement;
 }
 
-const MODES: SidebarMode[] = [
-  {
-    id: 'practice', label: 'Практика', group: 'top',
-    icon: <Target size={20} />,
-  },
-  {
-    id: 'test', label: 'Спринт', group: 'top',
-    icon: <Clock size={20} />,
-  },
-  {
-    id: 'survival', label: 'Выживание', group: 'top',
-    icon: <Shield size={20} />,
-  },
-  {
-    id: 'flawless', label: 'Без ошибок', group: 'top',
-    icon: <AlertTriangle size={20} />,
-  },
-  {
-    id: 'lessons', label: 'Уроки', group: 'top',
-    icon: <BookOpen size={20} />,
-  },
-  {
-    id: 'game', label: 'Игра', group: 'top',
-    icon: <Gamepad2 size={20} />,
-  },
-  {
-    id: 'stats', label: 'Статистика', group: 'bottom',
-    icon: <BarChart3 size={20} />,
-  },
-  {
-    id: 'addons', label: 'Аддоны', group: 'bottom',
-    icon: <Puzzle size={20} />,
-  },
-  {
-    id: 'settings', label: 'Настройки', group: 'bottom',
-    icon: <Settings size={20} />,
-  },
-];
-
 export function Sidebar() {
-  const { currentMode, switchMode, disabledSections, modModes } = useApp();
+  const { currentMode, switchMode, disabledSections, modModes } = useAppNavigation();
+  const { t } = useI18n();
+  const isModeActive = (modeId: string) => (
+    modeId === 'survival'
+      ? currentMode === 'survival' || currentMode === 'flawless'
+      : currentMode === modeId
+  );
+
+  const builtInModes = useMemo<SidebarMode[]>(() => [
+    {
+      id: 'practice', label: t('app.sidebar.modes.practice'), group: 'top',
+      icon: <Target size={20} />,
+    },
+    {
+      id: 'test', label: t('app.sidebar.modes.sprint'), group: 'top',
+      icon: <Clock size={20} />,
+    },
+    {
+      id: 'survival', label: t('app.sidebar.modes.survival'), group: 'top',
+      icon: <Shield size={20} />,
+    },
+    {
+      id: 'lessons', label: t('app.sidebar.modes.lessons'), group: 'top',
+      icon: <BookOpen size={20} />,
+    },
+    {
+      id: 'game', label: t('app.sidebar.modes.game'), group: 'top',
+      icon: <Gamepad2 size={20} />,
+    },
+    {
+      id: 'stats', label: t('app.sidebar.modes.stats'), group: 'bottom',
+      icon: <BarChart3 size={20} />,
+    },
+    {
+      id: 'addons', label: t('app.sidebar.modes.extensions'), group: 'bottom',
+      icon: <Puzzle size={20} />,
+    },
+    {
+      id: 'settings', label: t('app.sidebar.modes.settings'), group: 'bottom',
+      icon: <Settings size={20} />,
+    },
+  ], [t]);
 
   const allModes = useMemo(() => {
     const modEntries: SidebarMode[] = modModes.map(m => ({
@@ -59,8 +62,8 @@ export function Sidebar() {
       group: m.group,
       icon: <Box size={20} />,
     }));
-    return [...MODES, ...modEntries];
-  }, [modModes]);
+    return [...builtInModes, ...modEntries];
+  }, [builtInModes, modModes]);
 
   const visible = allModes.filter(m => !disabledSections.includes(m.id));
   const top = visible.filter(m => m.group === 'top');
@@ -73,16 +76,16 @@ export function Sidebar() {
         <button
           type="button"
           className={`sidebar-logo sidebar-home-btn${homeActive ? ' active' : ''}`}
-          title="Главное меню"
+          title={t('app.sidebar.home')}
           onClick={() => switchMode('home')}
         >
           <Keyboard size={28} />
         </button>
-        <span className="sidebar-label">режим</span>
+        <span className="sidebar-label">{t('app.sidebar.section')}</span>
         {top.map(m => (
           <button
             key={m.id}
-            className={`sidebar-btn${currentMode === m.id ? ' active' : ''}`}
+            className={`sidebar-btn${isModeActive(m.id) ? ' active' : ''}`}
             data-mode={m.id}
             title={m.label}
             onClick={() => switchMode(m.id)}
@@ -96,7 +99,7 @@ export function Sidebar() {
         {bottom.map(m => (
           <button
             key={m.id}
-            className={`sidebar-btn${currentMode === m.id ? ' active' : ''}`}
+            className={`sidebar-btn${isModeActive(m.id) ? ' active' : ''}`}
             data-mode={m.id}
             title={m.label}
             onClick={() => switchMode(m.id)}

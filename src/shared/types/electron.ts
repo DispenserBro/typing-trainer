@@ -3,6 +3,15 @@ import type { Progress } from './progress';
 import type { PracticeContentPack } from './practice';
 import type { CustomThemes } from './settings';
 import type { InstalledAddon, InstalledMod } from './addon';
+import type { InstalledTheme, ThemeInstallResult } from './theme';
+import type {
+  ExtensionCatalogEntry,
+  ExtensionCatalogInstallResult,
+  ExtensionSourceInput,
+  ExtensionSourceInstallResult,
+  ExtensionSourceSyncResult,
+  InstalledExtensionSource,
+} from './extensionSource';
 
 export interface ImportedFile {
   name: string;
@@ -27,6 +36,7 @@ export interface ExportPayload {
   modePracticeSettings?: Progress['modePracticeSettings'];
   customPresets?: Progress['customPresets'];
   customPracticePacks?: Progress['customPracticePacks'];
+  importedInterfaceLocales?: Progress['importedInterfaceLocales'];
 }
 
 export interface AddonInstallResult {
@@ -39,6 +49,13 @@ export interface ModInstallResult {
   ok: boolean;
   error?: string;
   mod?: InstalledMod;
+}
+
+export interface ModLocaleResourceFile {
+  name: string;
+  relativePath: string;
+  extension: 'json' | 'po';
+  content: string;
 }
 
 export interface ElectronAPI {
@@ -66,6 +83,22 @@ export interface ElectronAPI {
   removeMod(modId: string): Promise<boolean>;
   toggleMod(modId: string, enabled: boolean): Promise<boolean>;
   readModScript(modId: string): Promise<string | null>;
+  readModLocaleResources(modId: string): Promise<ModLocaleResourceFile[]>;
+
+  /* Themes — style manifests */
+  scanThemes(): Promise<InstalledTheme[]>;
+  installTheme(): Promise<ThemeInstallResult>;
+  removeTheme(themeId: string): Promise<boolean>;
+
+  /* Extension sources */
+  scanExtensionSources(): Promise<InstalledExtensionSource[]>;
+  installExtensionSource(input: ExtensionSourceInput): Promise<ExtensionSourceInstallResult>;
+  updateExtensionSource(sourceId: string, input: ExtensionSourceInput): Promise<ExtensionSourceInstallResult>;
+  removeExtensionSource(sourceId: string): Promise<boolean>;
+  toggleExtensionSource(sourceId: string, enabled: boolean): Promise<boolean>;
+  syncExtensionSource(sourceId: string): Promise<ExtensionSourceSyncResult>;
+  scanExtensionCatalog(): Promise<ExtensionCatalogEntry[]>;
+  installExtensionCatalogEntry(sourceId: string, kind: 'addons' | 'mods' | 'themes', entryId: string): Promise<ExtensionCatalogInstallResult>;
 
   /* Window */
   winMinimize(): void;

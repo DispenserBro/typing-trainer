@@ -1,8 +1,6 @@
-import type { Dispatch, SetStateAction } from 'react';
 import type {
   LayoutPracticeInsights,
   PracticeRhythmSessionEntry,
-  Progress,
 } from '../../shared/types';
 import {
   normalizeLayoutPracticeInsights,
@@ -10,45 +8,53 @@ import {
   resolvePracticeInsights,
   resolvePracticeRhythmHistory,
 } from './appResolvers';
-
-type PersistProgress = (next: Progress) => void;
+import type { ProgressUpdater } from './progressUpdate';
 
 type PracticeActionsArgs = {
-  setProgress: Dispatch<SetStateAction<Progress>>;
-  persistProgress: PersistProgress;
+  commitProgress: (updater: ProgressUpdater) => void;
   currentLayout: string;
 };
 
 export function createPracticeActions({
-  setProgress,
-  persistProgress,
+  commitProgress,
   currentLayout,
 }: PracticeActionsArgs) {
   const savePracticeInsights = (insights: LayoutPracticeInsights) => {
-    setProgress(prev => {
-      const next = { ...prev };
-      if (!next.practiceInsights) {
-        next.practiceInsights = resolvePracticeInsights(prev);
-      }
-      next.practiceInsights.byLayout[currentLayout] = normalizeLayoutPracticeInsights(insights);
-      persistProgress(next);
-      return { ...next };
+    const normalizedInsights = normalizeLayoutPracticeInsights(insights);
+    commitProgress(prev => {
+      const currentInsights = prev.practiceInsights ?? resolvePracticeInsights(prev);
+      const currentLayoutInsights = currentInsights.byLayout[currentLayout];
+      if (currentLayoutInsights === normalizedInsights) return prev;
+
+      return {
+        ...prev,
+        practiceInsights: {
+          ...currentInsights,
+          byLayout: {
+            ...currentInsights.byLayout,
+            [currentLayout]: normalizedInsights,
+          },
+        },
+      };
     });
   };
 
   const savePracticeRhythmSession = (
     entry: Omit<PracticeRhythmSessionEntry, 'id' | 'date'> & { id?: string; date?: string },
   ) => {
-    setProgress(prev => {
-      const next = { ...prev };
-      if (!next.practiceRhythmHistory) {
-        next.practiceRhythmHistory = resolvePracticeRhythmHistory(prev);
-      }
-      const normalized = normalizePracticeRhythmSessionEntry(entry);
-      const current = next.practiceRhythmHistory[currentLayout] ?? [];
-      next.practiceRhythmHistory[currentLayout] = [...current, normalized].slice(-30);
-      persistProgress(next);
-      return { ...next };
+    const normalizedEntry = normalizePracticeRhythmSessionEntry(entry);
+    commitProgress(prev => {
+      const currentHistory = prev.practiceRhythmHistory ?? resolvePracticeRhythmHistory(prev);
+      const currentLayoutHistory = currentHistory[currentLayout] ?? [];
+      const nextLayoutHistory = [...currentLayoutHistory, normalizedEntry].slice(-30);
+
+      return {
+        ...prev,
+        practiceRhythmHistory: {
+          ...currentHistory,
+          [currentLayout]: nextLayoutHistory,
+        },
+      };
     });
   };
 

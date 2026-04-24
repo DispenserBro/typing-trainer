@@ -5,7 +5,11 @@ import type {
   GameRunEventState,
 } from '../../../shared/types';
 import { getGameItemById, getGameItemIcon, getGameItemRarityStars } from '../../../core/game/items';
-import { getEventKindLabel } from '../../../core/game/runUtils';
+import { useI18n } from '../../contexts/I18nContext';
+import { ActionRow } from '../ui/ActionRow';
+import { Button } from '../ui/Button';
+import { GameRewardChoiceCard } from './GameRewardChoiceCard';
+import { getGameEventKindLabel } from './gameText';
 
 type GameEventModalProps = {
   pendingEvent: GameRunEventState;
@@ -37,6 +41,7 @@ export function GameEventModal({
   onContinue,
   onSkip,
 }: GameEventModalProps) {
+  const { t } = useI18n();
   const EventIcon = getEventIcon(pendingEvent.kind);
   const handleChoicePointerDown = (event: React.PointerEvent<HTMLButtonElement>, choice: GameRunEventChoice) => {
     if (event.button !== 0) return;
@@ -57,7 +62,7 @@ export function GameEventModal({
       <div className="game-modal-head">
         <span className="game-modal-icon"><EventIcon size={18} /></span>
         <div>
-          <div className="game-modal-kicker">{getEventKindLabel(pendingEvent.kind)}</div>
+          <div className="game-modal-kicker">{getGameEventKindLabel(pendingEvent.kind, t)}</div>
           <h3>{pendingEvent.title}</h3>
         </div>
       </div>
@@ -71,83 +76,66 @@ export function GameEventModal({
             const ChoiceIcon = choiceItem ? getGameItemIcon(choiceItem.icon) : null;
             const effectDescriptions = [
               choice.effect.lifeDelta
-                ? `${choice.effect.lifeDelta > 0 ? '+' : ''}${choice.effect.lifeDelta} HP`
+                ? `${choice.effect.lifeDelta > 0 ? '+' : ''}${choice.effect.lifeDelta} ${t('game.hud.hpShort')}`
                 : null,
               choice.effect.repairEquippedBy
-                ? `Ремонт +${choice.effect.repairEquippedBy}`
+                ? t('game.event.repairBonus', { count: choice.effect.repairEquippedBy })
                 : null,
               choice.effect.modifier?.description ?? null,
             ].filter((entry): entry is string => Boolean(entry));
 
             return (
-              <div
+              <GameRewardChoiceCard
                 key={choice.id}
-                className={`game-reward-card${choiceItem ? ` rarity-${choiceItem.rarity}` : ''}${choice.disabled ? ' disabled' : ''}`}
-              >
-                <div className="game-reward-card-head">
-                  <div className={`game-item-badge${choiceItem ? '' : ' letter'}`}>
-                    {choiceItem
-                      ? (ChoiceIcon && <ChoiceIcon size={18} />)
-                      : choice.title.slice(0, 1).toUpperCase()}
-                  </div>
-                  <div className="game-reward-copy">
-                    <div className={`game-reward-rarity${choiceItem ? '' : ' special'}`}>
-                      {choiceItem ? getGameItemRarityStars(choiceItem.rarity) : getEventKindLabel(pendingEvent.kind)}
-                    </div>
-                    <div className="game-reward-name">{choice.title}</div>
-                    <div className="game-reward-kind">{choice.flavor}</div>
-                  </div>
-                </div>
-                <div className="game-reward-body">
-                  <div className="game-slot-desc">{choice.description}</div>
-                  {choiceItem?.maxDurability != null && (
-                    <div className="game-durability risky">
-                      Прочность: <b>{choiceItem.maxDurability}</b> / {choiceItem.maxDurability}
-                    </div>
-                  )}
-                  {(effectDescriptions.length > 0 || choiceItem) && (
-                    <div className="game-item-effects">
-                      {choiceItem?.effects.map(effect => (
-                        <span key={`${choice.id}-${effect.description}`} className="game-item-effect-chip">
-                          {effect.description}
-                        </span>
-                      ))}
-                      {effectDescriptions.map(effect => (
-                        <span key={`${choice.id}-${effect}`} className="game-item-effect-chip">
-                          {effect}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <button
+                cardClassName={`${choiceItem ? `rarity-${choiceItem.rarity}` : ''}${choice.disabled ? ' disabled' : ''}`.trim()}
+                special={!choiceItem}
+                badge={choiceItem
+                  ? (ChoiceIcon && <ChoiceIcon size={18} />)
+                  : choice.title.slice(0, 1).toUpperCase()}
+                rarity={choiceItem ? getGameItemRarityStars(choiceItem.rarity) : getGameEventKindLabel(pendingEvent.kind, t)}
+                name={choice.title}
+                kind={choice.flavor}
+                description={choice.description}
+                durability={choiceItem?.maxDurability != null ? {
+                  current: choiceItem.maxDurability,
+                  label: t('game.inventory.durability'),
+                  max: choiceItem.maxDurability,
+                } : null}
+                effects={[
+                  ...(choiceItem?.effects.map(effect => effect.description) ?? []),
+                  ...effectDescriptions,
+                ]}
+                body={null}
+                action={(
+                  <Button
                   ref={node => { eventChoiceRefs.current[index] = node; }}
-                  className="btn-accent"
+                  variant="accent"
                   disabled={choice.disabled}
                   onPointerDown={(event) => handleChoicePointerDown(event, choice)}
                   onKeyDown={(event) => handleChoiceKeyDown(event, choice)}
                   onClick={(event) => event.preventDefault()}
                 >
-                  Выбрать
-                </button>
-              </div>
+                  {t('game.event.selectChoice')}
+                </Button>
+                )}
+              />
             );
           })}
           </div>
-          <div className="game-actions game-event-skip-row">
-            <button className="btn-secondary btn-sm" onClick={onSkip}>
-              Пропустить
-            </button>
-          </div>
+          <ActionRow align="center" className="game-actions game-event-skip-row">
+            <Button size="sm" onClick={onSkip}>
+              {t('game.event.skip')}
+            </Button>
+          </ActionRow>
         </>
       ) : (
         <>
           <div className="game-reward-picked">{pendingEvent.resultText}</div>
-          <div className="game-actions">
-            <button ref={resultActionRef} className="btn-accent" onClick={onContinue}>
-              Продолжить путь
-            </button>
-          </div>
+          <ActionRow align="center" className="game-actions">
+            <Button ref={resultActionRef} variant="accent" onClick={onContinue}>
+              {t('game.event.continuePath')}
+            </Button>
+          </ActionRow>
         </>
       )}
     </div>

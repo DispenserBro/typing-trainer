@@ -10,12 +10,15 @@ import {
 import { KeyboardHeatmapControls } from './KeyboardHeatmapControls';
 import { KeyboardHeatmapGrid } from './KeyboardHeatmapGrid';
 import { KeyboardHeatmapLegend } from './KeyboardHeatmapLegend';
+import { EmptyStateNotice } from '../ui/EmptyStateNotice';
+import { SectionHeader } from '../ui/SectionHeader';
 
 export function KeyboardHeatmap({
   layoutId,
   keyStats,
-  title = 'Heatmap клавиатуры',
-  description = 'Цвет показывает, где чаще ошибаешься или теряешь темп.',
+  labels,
+  title,
+  description,
   showControls = true,
   initialMode = 'errors',
   className = '',
@@ -26,11 +29,13 @@ export function KeyboardHeatmap({
   const heatmapWrapRef = useRef<HTMLDivElement | null>(null);
   const rows = useMemo(() => getKeyboardRows(layoutId), [layoutId]);
   const heatmapRows = useMemo(
-    () => buildHeatmapKeys(rows, keyStats, mode),
-    [rows, keyStats, mode],
+    () => buildHeatmapKeys(rows, keyStats, mode, labels),
+    [rows, keyStats, mode, labels],
   );
-  const rowSummaries = useMemo(() => buildRowSummaries(heatmapRows), [heatmapRows]);
+  const rowSummaries = useMemo(() => buildRowSummaries(heatmapRows, labels), [heatmapRows, labels]);
   const hasAnyData = heatmapRows.some(row => row.some(key => key.hasData));
+  const resolvedTitle = title ?? labels.title;
+  const resolvedDescription = description ?? labels.description;
   const responsiveStyle = useKeyboardHeatmapLayout({
     responsive,
     rows,
@@ -41,17 +46,14 @@ export function KeyboardHeatmap({
   return (
     <div ref={cardRef} className={`keyboard-heatmap-card ${className}`.trim()}>
       <div className="keyboard-heatmap-head">
-        <div>
-          <h4>{title}</h4>
-          <p className="card-desc">{description}</p>
-        </div>
-        {showControls && <KeyboardHeatmapControls mode={mode} onChange={setMode} />}
+        <SectionHeader titleTag="h4" title={resolvedTitle} description={resolvedDescription} />
+        {showControls && (
+          <KeyboardHeatmapControls labels={labels.controls} mode={mode} onChange={setMode} />
+        )}
       </div>
 
       {!hasAnyData ? (
-        <p className="keyboard-heatmap-empty">
-          Пока недостаточно данных. Заверши несколько практик, чтобы увидеть раскладку по проблемным клавишам.
-        </p>
+        <EmptyStateNotice className="keyboard-heatmap-empty" text={labels.empty} />
       ) : (
         <>
           <KeyboardHeatmapGrid
@@ -62,7 +64,7 @@ export function KeyboardHeatmap({
             heatmapRows={heatmapRows}
             mode={mode}
           />
-          <KeyboardHeatmapLegend mode={mode} rowSummaries={rowSummaries} />
+          <KeyboardHeatmapLegend labels={labels.legend} mode={mode} rowSummaries={rowSummaries} />
         </>
       )}
     </div>

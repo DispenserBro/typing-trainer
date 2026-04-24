@@ -1,67 +1,55 @@
+import { useI18n } from '../../contexts/I18nContext';
+import type { SettingsResetTarget } from '../../hooks/useSettingsPageState';
+import { ActionRow } from '../ui/ActionRow';
+import { Button } from '../ui/Button';
+import { ModalLayout } from '../ui/ModalLayout';
+import { UiNotice } from '../ui/UiNotice';
+
 type SettingsResetModalsProps = {
-  showResetGameModal: boolean;
-  showResetModal: boolean;
-  onCloseResetGame: () => void;
-  onCloseResetAll: () => void;
-  onConfirmResetGame: () => void;
-  onConfirmResetAll: () => void;
+  resetTarget: SettingsResetTarget | null;
+  onCloseReset: () => void;
+  onConfirmReset: () => void;
 };
 
 export function SettingsResetModals({
-  showResetGameModal,
-  showResetModal,
-  onCloseResetGame,
-  onCloseResetAll,
-  onConfirmResetGame,
-  onConfirmResetAll,
+  resetTarget,
+  onCloseReset,
+  onConfirmReset,
 }: SettingsResetModalsProps) {
+  const { t } = useI18n();
+  if (!resetTarget) return null;
+
+  const itemKeys: Record<SettingsResetTarget, string[]> = {
+    game: ['gameItem1', 'gameItem2', 'gameItem3'],
+    lessons: ['lessonsItem1', 'lessonsItem2', 'lessonsItem3'],
+    mastery: ['masteryItem1', 'masteryItem2', 'masteryItem3'],
+    all: ['fullItem1', 'fullItem2', 'fullItem3', 'fullItem4'],
+  };
+
+  const prefix = `settings.cards.resetModal.${resetTarget}`;
+  const title = t(`${prefix}.title`);
+  const description = t(`${prefix}.description`);
+  const willReset = t(`${prefix}.willReset`);
+
   return (
-    <>
-      {showResetGameModal && (
-        <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) onCloseResetGame(); }}>
-          <div className="modal">
-            <h3>Сброс игрового прогресса</h3>
-            <p className="card-desc">
-              Это действие необратимо. После подтверждения приложение очистит только прогресс игрового режима.
-            </p>
-            <div className="reset-progress-note">
-              Будет сброшено:
-              <ul className="reset-progress-list">
-                <li>текущий забег и достигнутый уровень</li>
-                <li>все достижения игрового режима</li>
-                <li>все собранные предметы и экипировка</li>
-              </ul>
-            </div>
-            <div className="modal-actions">
-              <button className="btn-danger" onClick={onConfirmResetGame}>Сбросить</button>
-              <button className="btn-secondary" onClick={onCloseResetGame}>Отмена</button>
-            </div>
-          </div>
-        </div>
+    <ModalLayout
+      onClose={onCloseReset}
+      title={title}
+      description={description}
+      footer={(
+        <ActionRow stretch className="modal-actions">
+          <Button variant="danger" onClick={onConfirmReset}>{t('settings.cards.resetModal.confirm')}</Button>
+          <Button onClick={onCloseReset}>{t('settings.cards.resetModal.cancel')}</Button>
+        </ActionRow>
       )}
-      {showResetModal && (
-        <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) onCloseResetAll(); }}>
-          <div className="modal">
-            <h3>Сброс прогресса</h3>
-            <p className="card-desc">
-              Это действие необратимо. После подтверждения приложение очистит весь накопленный прогресс, но сохранит ваши текущие настройки.
-            </p>
-            <div className="reset-progress-note">
-              Будет сброшено:
-              <ul className="reset-progress-list">
-                <li>статистика по клавишам и история результатов</li>
-                <li>прогресс уроков и практики</li>
-                <li>открытые буквы и прогресс открытия</li>
-                <li>весь игровой прогресс, предметы и текущий забег</li>
-              </ul>
-            </div>
-            <div className="modal-actions">
-              <button className="btn-danger" onClick={onConfirmResetAll}>Сбросить</button>
-              <button className="btn-secondary" onClick={onCloseResetAll}>Отмена</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+    >
+      <UiNotice className="reset-progress-note" tone="danger" title={willReset}>
+        <ul className="reset-progress-list">
+          {itemKeys[resetTarget].map(itemKey => (
+            <li key={itemKey}>{t(`${prefix}.${itemKey}`)}</li>
+          ))}
+        </ul>
+      </UiNotice>
+    </ModalLayout>
   );
 }

@@ -1,160 +1,118 @@
+import { i18n } from '../i18n';
 import type { GameAchievementDefinition } from '../../shared/types';
 
-export const GAME_ACHIEVEMENT_CATALOG: GameAchievementDefinition[] = [
-  {
-    id: 'first-level',
-    name: 'Первый шаг',
-    description: 'Пройти первый уровень игрового режима.',
+type AchievementDefinitionBase = Omit<GameAchievementDefinition, 'id' | 'name' | 'description'>;
+
+function t(key: string): string {
+  return i18n.t(key);
+}
+
+function createAchievementDefinition(
+  id: string,
+  base: AchievementDefinitionBase,
+): GameAchievementDefinition {
+  return {
+    ...base,
+    id,
+    get name() {
+      return t(`achievements.catalog.${id}.name`);
+    },
+    get description() {
+      return t(`achievements.catalog.${id}.description`);
+    },
+  };
+}
+
+const GAME_ACHIEVEMENT_BASES: Record<string, AchievementDefinitionBase> = {
+  'first-level': {
     category: 'game',
     conditions: [{ type: 'game.levelReached', level: 1 }],
   },
-  {
-    id: 'first-boss',
-    name: 'Разбитая корона',
-    description: 'Победить первого босса на 5 уровне.',
+  'first-boss': {
     category: 'game',
     conditions: [{ type: 'game.bossDefeated', level: 5 }],
   },
-  {
-    id: 'unlock-letter',
-    name: 'Пробуждение знака',
-    description: 'Открыть новую букву во время забега.',
+  'unlock-letter': {
     category: 'game',
     conditions: [{ type: 'game.levelReached', level: 1 }],
   },
-  {
-    id: 'collect-item',
-    name: 'Первая находка',
-    description: 'Получить любой предмет после победы над боссом.',
+  'collect-item': {
     category: 'game',
     conditions: [{ type: 'game.itemCollected' }],
   },
-  {
-    id: 'collect-durable-item',
-    name: 'Хрупкая сила',
-    description: 'Получить предмет с прочностью.',
+  'collect-durable-item': {
     category: 'game',
     conditions: [{ type: 'game.durableItemCollected' }],
   },
-  {
-    id: 'collect-top-rarity-item',
-    name: 'Свет реликвии',
-    description: 'Получить предмет максимальной редкости.',
+  'collect-top-rarity-item': {
     category: 'game',
     conditions: [{ type: 'game.topRarityItemCollected' }],
   },
-  {
-    id: 'equip-item',
-    name: 'Во всеоружии',
-    description: 'Экипировать любой предмет.',
+  'equip-item': {
     category: 'game',
     conditions: [{ type: 'game.itemEquipped' }],
   },
-  {
-    id: 'full-top-rarity-loadout',
-    name: 'Трон коллекционера',
-    description: 'Заполнить все 3 слота предметами максимальной редкости.',
+  'full-top-rarity-loadout': {
     category: 'game',
     conditions: [{ type: 'game.fullTopRarityLoadout' }],
   },
-  {
-    id: 'boss-25',
-    name: 'Страж четверти пути',
-    description: 'Победить босса 25 уровня.',
+  'boss-25': {
     category: 'game',
     conditions: [{ type: 'game.bossDefeated', level: 25 }],
   },
-  {
-    id: 'boss-50',
-    name: 'Сердце бури',
-    description: 'Победить босса 50 уровня.',
+  'boss-50': {
     category: 'game',
     conditions: [{ type: 'game.bossDefeated', level: 50 }],
   },
-  {
-    id: 'boss-75',
-    name: 'На краю выносливости',
-    description: 'Победить босса 75 уровня.',
+  'boss-75': {
     category: 'game',
     conditions: [{ type: 'game.bossDefeated', level: 75 }],
   },
-  {
-    id: 'game-complete',
-    name: 'Повелитель ритма',
-    description: 'Пройти все 100 уровней игрового режима.',
+  'game-complete': {
     category: 'game',
     conditions: [{ type: 'game.completed' }],
   },
-
-  // ── Практика ──────────────────────────────────────────
-  {
-    id: 'practice-first-session',
-    name: 'Разминка',
-    description: 'Завершить первую сессию практики.',
+  'practice-first-session': {
     category: 'practice',
     conditions: [{ type: 'practice.sessionCompleted' }],
   },
-  {
-    id: 'practice-unlock-letter',
-    name: 'Новый горизонт',
-    description: 'Открыть новую букву в практике.',
+  'practice-unlock-letter': {
     category: 'practice',
     conditions: [{ type: 'practice.letterUnlocked' }],
   },
-  {
-    id: 'practice-10-sessions',
-    name: 'Постоянство',
-    description: 'Завершить 10 сессий практики.',
+  'practice-10-sessions': {
     category: 'practice',
     conditions: [{ type: 'practice.sessionCompleted', totalSessions: { operator: '>=', value: 10 } }],
   },
-
-  // ── Уроки ─────────────────────────────────────────────
-  {
-    id: 'lessons-first-complete',
-    name: 'Ученик',
-    description: 'Завершить первый урок.',
+  'lessons-first-complete': {
     category: 'lessons',
     conditions: [{ type: 'lessons.lessonCompleted' }],
   },
-  {
-    id: 'lessons-section-complete',
-    name: 'Глава закрыта',
-    description: 'Завершить все уроки одной секции.',
+  'lessons-section-complete': {
     category: 'lessons',
     conditions: [{ type: 'lessons.sectionCompleted' }],
   },
-  {
-    id: 'lessons-all-complete',
-    name: 'Выпускник',
-    description: 'Завершить все уроки текущей раскладки.',
+  'lessons-all-complete': {
     category: 'lessons',
     conditions: [{ type: 'lessons.allCompleted' }],
   },
-
-  // ── Спринт ────────────────────────────────────────────
-  {
-    id: 'test-first-complete',
-    name: 'Проверка связи',
-    description: 'Завершить первый спринт.',
+  'test-first-complete': {
     category: 'test',
     conditions: [{ type: 'test.completed' }],
   },
-  {
-    id: 'test-high-accuracy',
-    name: 'Снайпер',
-    description: 'Завершить спринт с точностью 98% или выше.',
+  'test-high-accuracy': {
     category: 'test',
     conditions: [{ type: 'test.completed', accuracy: { operator: '>=', value: 98 } }],
   },
-  {
-    id: 'test-speed-60',
-    name: 'Скоростной режим',
-    description: 'Набрать 60 WPM или выше в спринте.',
+  'test-speed-60': {
     category: 'test',
     conditions: [{ type: 'test.completed', wpm: { operator: '>=', value: 60 } }],
   },
-];
+};
+
+export const GAME_ACHIEVEMENT_CATALOG: GameAchievementDefinition[] = Object.entries(
+  GAME_ACHIEVEMENT_BASES,
+).map(([id, base]) => createAchievementDefinition(id, base));
 
 export const GAME_ACHIEVEMENT_MAP = Object.fromEntries(
   GAME_ACHIEVEMENT_CATALOG.map(achievement => [achievement.id, achievement]),

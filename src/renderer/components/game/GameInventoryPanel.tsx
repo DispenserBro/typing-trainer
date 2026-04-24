@@ -7,12 +7,16 @@ import type {
   GameEquipmentSlot,
 } from '../../../shared/types';
 import {
-  GAME_EQUIPMENT_SLOTS,
   getGameItemIcon,
-  getGameItemRarityStars,
 } from '../../../core/game/items';
-import { formatGameItemMeta } from '../../../core/game/runUtils';
 import type { EquippedEntry, InventoryEntry } from '../../../core/game/viewTypes';
+import { useI18n } from '../../contexts/I18nContext';
+import {
+  formatGameItemMetaText,
+  getGameEquipmentSlotLabel,
+} from './gameText';
+import { GameEffectChips } from './GameEffectChips';
+import { EmptyStateNotice } from '../ui/EmptyStateNotice';
 
 type DragPayload = {
   itemId: string;
@@ -32,6 +36,7 @@ export const GameInventoryPanel = memo(function GameInventoryPanel({
   onEquip,
   onUnequip,
 }: GameInventoryPanelProps) {
+  const { t } = useI18n();
   const [dragPayload, setDragPayload] = useState<DragPayload | null>(null);
   const [hoveredSlot, setHoveredSlot] = useState<GameEquipmentSlot | null>(null);
   const [inventoryDropActive, setInventoryDropActive] = useState(false);
@@ -78,11 +83,11 @@ export const GameInventoryPanel = memo(function GameInventoryPanel({
     <>
       <details className={`card game-items-card${inventoryDropActive ? ' drag-target' : ''}`} open>
         <summary className="game-items-summary">
-          <span>Инвентарь</span>
-          <small>{visibleInventoryItems.length} предметов</small>
+          <span>{t('game.inventory.title')}</span>
+          <small>{t('game.inventory.itemsCount', { count: visibleInventoryItems.length })}</small>
         </summary>
         <p className="card-desc">
-          Реликвии добываются только после побед над боссами. Перетащи предмет в слот, чтобы экипировать его, и обратно в инвентарь, чтобы снять.
+          {t('game.inventory.description')}
         </p>
         <div
           className={`game-inventory-dropzone${inventoryDropActive ? ' drop-active' : ''}`}
@@ -118,35 +123,30 @@ export const GameInventoryPanel = memo(function GameInventoryPanel({
                     </div>
                     <div>
                       <div className="game-slot-name">{item.meta.name}</div>
-                      <div className="game-item-meta">{formatGameItemMeta(item.meta, false)}</div>
+                      <div className="game-item-meta">{formatGameItemMetaText(item.meta, false, t)}</div>
                     </div>
                   </div>
                   <div className="game-slot-desc">{item.meta.description}</div>
                   {item.maxDurability != null && item.durability != null && (
                     <div className={`game-durability${item.broken ? ' broken' : ''}`}>
-                      Прочность: <b>{item.durability}</b> / {item.maxDurability}
+                      {t('game.inventory.durability')}: <b>{item.durability}</b> / {item.maxDurability}
                     </div>
                   )}
-                  <div className="game-item-effects">
-                    {item.meta.effects.map(effect => (
-                      <span key={`${item.id}-${effect.kind}-${effect.description}`} className="game-item-effect-chip">
-                        {effect.description}
-                      </span>
-                    ))}
-                  </div>
+                  <GameEffectChips effects={item.meta.effects.map(effect => effect.description)} />
                   <div className="game-item-actions game-item-actions--hint">
-                    <span className="game-drag-hint">Перетащи в слот экипировки</span>
+                    <span className="game-drag-hint">{t('game.inventory.dragHint')}</span>
                   </div>
                 </div>
               );
               })}
             </div>
           ) : (
-            <div className="game-items-empty">
-              {equippedItems.some(entry => entry.inventoryItem)
-                ? 'Все найденные предметы сейчас экипированы. Перетащи реликвию из слота сюда, чтобы снять ее.'
-                : 'После боссов здесь будут появляться реликвии и артефакты для текущего забега.'}
-            </div>
+            <EmptyStateNotice
+              className="game-items-empty"
+              text={equippedItems.some(entry => entry.inventoryItem)
+                ? t('game.inventory.empty.allEquipped')
+                : t('game.inventory.empty.afterBoss')}
+            />
           )}
         </div>
       </details>
@@ -176,7 +176,7 @@ export const GameInventoryPanel = memo(function GameInventoryPanel({
                   endDrag();
                 }}
               >
-                <div className="game-inline-slot-label">{entry.slot.label}</div>
+                <div className="game-inline-slot-label">{getGameEquipmentSlotLabel(entry.slot.key, t)}</div>
                 {entry.meta && entry.inventoryItem ? (
                   <div
                     className={`game-inline-slot-body rarity-${entry.meta.rarity}${dragPayload?.itemId === entry.inventoryItem.id ? ' dragging' : ''}`}
@@ -190,18 +190,17 @@ export const GameInventoryPanel = memo(function GameInventoryPanel({
                     <div className="game-inline-slot-text">
                       <strong>{entry.meta.shortName}</strong>
                       <small>
-                        {getGameItemRarityStars(entry.meta.rarity)}
+                        {formatGameItemMetaText(entry.meta, true, t)}
                         {' · '}
                         {entry.inventoryItem.maxDurability != null && entry.inventoryItem.durability != null
                           ? `${entry.inventoryItem.durability}/${entry.inventoryItem.maxDurability}`
-                          : 'без износа'}
-                        {entry.meta.bossOnly ? ' · боссы' : ''}
+                          : t('game.inventory.meta.noDurability')}
                       </small>
                     </div>
                   </div>
                 ) : (
                   <div className="game-inline-slot-empty">
-                    {isDropTarget ? 'Отпусти предмет сюда' : 'Пусто'}
+                    {isDropTarget ? t('game.inventory.dropHere') : t('game.inventory.emptySlot')}
                   </div>
                 )}
               </div>

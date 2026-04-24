@@ -1,4 +1,6 @@
 import { NumberInput } from '../NumberInput';
+import { useI18n } from '../../contexts/I18nContext';
+import { usePracticeContentModeLabels } from '../../hooks/practice/usePracticeContentModeLabels';
 import type {
   DailyGoalType,
   PracticeAdaptationFocus,
@@ -10,6 +12,20 @@ import type {
   PracticeContentMode,
   PracticeTrainingMode,
 } from '../../../shared/types';
+import {
+  getPackFitMessage,
+  getPackNotes,
+  getPackRecommendedModeLabel,
+  getPackRecommendationReason,
+  getPackRepetitionRiskLabel,
+} from './contentPackSummaryI18n';
+import { ContentPackPreflightNotice } from './ContentPackPreflightNotice';
+import { Button } from '../ui/Button';
+import { SectionHeader } from '../ui/SectionHeader';
+import { SelectInput } from '../ui/SelectInput';
+import { SegmentedControl } from '../ui/SegmentedControl';
+import { SettingsField } from '../ui/SettingsField';
+import { SettingsToggle } from '../ui/SettingsToggle';
 
 type PracticeSettingsModalProps = {
   open: boolean;
@@ -48,27 +64,6 @@ type PracticeSettingsModalProps = {
   onNoStepBackChange: (value: boolean) => void;
 };
 
-const adaptationStrengthLabel = {
-  low: 'Мягкая',
-  medium: 'Сбалансированная',
-  high: 'Жесткая',
-} satisfies Record<PracticeAdaptationStrength, string>;
-
-const adaptationFocusLabel = {
-  balanced: 'Баланс',
-  chars: 'Буквы',
-  bigrams: 'Сочетания',
-  rhythm: 'Ритм',
-} satisfies Record<PracticeAdaptationFocus, string>;
-
-const contentModeLabel = {
-  'adaptive-words': 'Слова',
-  syllables: 'Слоги',
-  'pseudo-words': 'Псевдослова',
-  sentences: 'Предложения',
-  custom: 'Мой набор',
-} satisfies Record<PracticeContentMode, string>;
-
 export function PracticeSettingsModal({
   open,
   onClose,
@@ -105,46 +100,101 @@ export function PracticeSettingsModal({
   noStepBack,
   onNoStepBackChange,
 }: PracticeSettingsModalProps) {
+  const { t } = useI18n();
+  const adaptationStrengthLabel: Record<PracticeAdaptationStrength, string> = {
+    low: t('practice.settings.adaptationStrengthLabels.low'),
+    medium: t('practice.settings.adaptationStrengthLabels.medium'),
+    high: t('practice.settings.adaptationStrengthLabels.high'),
+  };
+  const adaptationFocusLabel: Record<PracticeAdaptationFocus, string> = {
+    balanced: t('practice.settings.adaptationFocusLabels.balanced'),
+    chars: t('practice.settings.adaptationFocusLabels.chars'),
+    bigrams: t('practice.settings.adaptationFocusLabels.bigrams'),
+    rhythm: t('practice.settings.adaptationFocusLabels.rhythm'),
+  };
+  const contentModeLabel = usePracticeContentModeLabels();
+  const trainingModeOptions: { value: PracticeTrainingMode; label: string }[] = [
+    { value: 'normal', label: t('practice.settings.normal') },
+    { value: 'rhythm', label: t('practice.settings.rhythm') },
+  ];
+  const contentModeOptions: { value: PracticeContentMode; label: string }[] = ([
+    'adaptive-words',
+    'syllables',
+    'pseudo-words',
+    'sentences',
+    'custom',
+  ] as PracticeContentMode[]).map(value => ({
+    value,
+    label: value === 'custom' ? t('practice.contentModes.customPackShort') : contentModeLabel[value],
+  }));
+  const adaptationStrengthOptions: { value: PracticeAdaptationStrength; label: string; disabled: boolean }[] = ([
+    'low',
+    'medium',
+    'high',
+  ] as PracticeAdaptationStrength[]).map(value => ({
+    value,
+    label: adaptationStrengthLabel[value],
+    disabled: !smartAdaptationEnabled,
+  }));
+  const adaptationFocusOptions: { value: PracticeAdaptationFocus; label: string; disabled: boolean }[] = ([
+    'balanced',
+    'chars',
+    'bigrams',
+    'rhythm',
+  ] as PracticeAdaptationFocus[]).map(value => ({
+    value,
+    label: adaptationFocusLabel[value],
+    disabled: !smartAdaptationEnabled,
+  }));
+  const repetitionRiskLabel = contentPackSummary && selectedContentPack
+    ? getPackRepetitionRiskLabel(t, contentPackSummary.repetitionRisk).toLowerCase()
+    : null;
+  const recommendedModeLabel = contentPackSummary && selectedContentPack
+    ? getPackRecommendedModeLabel(t, selectedContentPack, contentPackSummary)
+    : null;
+  const fitMessage = contentPackSummary
+    ? getPackFitMessage(t, contentPackSummary)
+    : null;
+  const recommendationReason = contentPackSummary && selectedContentPack
+    ? getPackRecommendationReason(t, selectedContentPack, contentPackSummary)
+    : null;
+  const packNotes = contentPackSummary && selectedContentPack
+    ? getPackNotes(t, selectedContentPack, contentPackSummary)
+    : [];
   if (!open) return null;
 
   return (
     <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="modal practice-settings-modal" onClick={e => e.stopPropagation()}>
         <div className="practice-settings-modal-head">
-          <div>
-            <h3>Настройки практики</h3>
-            <p className="card-desc">Длина, темп и характер тренировки.</p>
-          </div>
-          <button className="btn-secondary btn-sm" onClick={onClose}>
-            Закрыть
-          </button>
+          <SectionHeader title={t('practice.settings.title')} description={t('practice.settings.description')} />
+          <Button size="sm" onClick={onClose}>
+            {t('common.close')}
+          </Button>
         </div>
 
         <div className="practice-settings-grid">
-          <div className="poption">
-            <span className="poption-label">Цель на день</span>
+          <SettingsField label={t('practice.settings.dailyGoal')}>
             <div className="poption-row">
-              <select
-                className="select-minimal"
+              <SelectInput
                 value={dailyGoalType}
                 onChange={e => onDailyGoalTypeChange(e.target.value as DailyGoalType)}
               >
-                <option value="minutes">Минуты</option>
-                <option value="sessions">Кол-во практик</option>
-              </select>
+                <option value="minutes">{t('practice.settings.minutes')}</option>
+                <option value="sessions">{t('practice.settings.sessionsCount')}</option>
+              </SelectInput>
               <NumberInput
                 value={dailyGoalValue}
                 min={1}
                 max={999}
                 className="w84"
-                ariaLabel="Цель на день"
+                ariaLabel={t('practice.settings.dailyGoal')}
                 onChange={(next) => onDailyGoalValueChange(Math.max(1, Math.round(next) || 15))}
               />
             </div>
-          </div>
+          </SettingsField>
 
-          <div className="poption">
-            <span className="poption-label">Целевая скорость</span>
+          <SettingsField label={t('practice.settings.goalSpeed')}>
             <div className="poption-row">
               <NumberInput
                 value={goalDisplay}
@@ -152,198 +202,173 @@ export function PracticeSettingsModal({
                 max={9999}
                 step={unit === 'cps' ? 0.1 : 1}
                 className="w96"
-                ariaLabel="Целевая скорость практики"
+                ariaLabel={t('practice.settings.goalSpeedAria')}
                 onChange={(next) => onGoalSpeedChange(Math.max(1, next || 0))}
               />
               <span className="poption-hint">{spdLabel}</span>
             </div>
-          </div>
+          </SettingsField>
 
-          <div className="poption">
-            <span className="poption-label">Режим практики</span>
-            <div className="seg-group">
-              <button
-                className={`seg-btn${trainingMode === 'normal' ? ' active' : ''}`}
-                onClick={() => onTrainingModeChange('normal')}
-              >
-                Обычная
-              </button>
-              <button
-                className={`seg-btn${trainingMode === 'rhythm' ? ' active' : ''}`}
-                onClick={() => onTrainingModeChange('rhythm')}
-              >
-                Ритм
-              </button>
-            </div>
-            <span className="poption-hint">
-              {trainingMode === 'rhythm' ? 'Короткий текст и ровный темп.' : 'Базовый режим на скорость и точность.'}
-            </span>
-          </div>
+          <SettingsField
+            label={t('practice.settings.trainingMode')}
+            hint={trainingMode === 'rhythm' ? t('practice.settings.rhythmHint') : t('practice.settings.normalHint')}
+          >
+            <SegmentedControl
+              ariaLabel={t('practice.settings.trainingMode')}
+              value={trainingMode}
+              onChange={onTrainingModeChange}
+              options={trainingModeOptions}
+            />
+          </SettingsField>
 
-          <div className="poption practice-settings-wide">
-            <span className="poption-label">Тренировочный материал</span>
-            <div className="seg-group practice-focus-group">
-              {(['adaptive-words', 'syllables', 'pseudo-words', 'sentences', 'custom'] as PracticeContentMode[]).map((value) => (
-                <button
-                  key={value}
-                  className={`seg-btn${contentMode === value ? ' active' : ''}`}
-                  onClick={() => onContentModeChange(value)}
-                >
-                  {value === 'custom' ? 'Набор' : contentModeLabel[value]}
-                </button>
-              ))}
-            </div>
-            <span className="poption-hint">
-              {contentMode === 'adaptive-words' && 'Адаптивные словари с учётом слабых мест.'}
-              {contentMode === 'syllables' && 'Короткие слоги и фонетические связки.'}
-              {contentMode === 'pseudo-words' && 'Синтетические слова из доступных букв.'}
-              {contentMode === 'sentences' && 'Короткие предложения и связный набор текста.'}
-              {contentMode === 'custom' && 'Встроенные, аддонные и пользовательские наборы контента.'}
-            </span>
-          </div>
+          <SettingsField
+            className="practice-settings-wide"
+            label={t('practice.settings.contentMode')}
+            hint={(
+              <>
+                {contentMode === 'adaptive-words' && t('practice.settings.contentModeHints.adaptive-words')}
+                {contentMode === 'syllables' && t('practice.settings.contentModeHints.syllables')}
+                {contentMode === 'pseudo-words' && t('practice.settings.contentModeHints.pseudo-words')}
+                {contentMode === 'sentences' && t('practice.settings.contentModeHints.sentences')}
+                {contentMode === 'custom' && t('practice.settings.contentModeHints.custom')}
+              </>
+            )}
+          >
+            <SegmentedControl
+              ariaLabel={t('practice.settings.contentMode')}
+              className="practice-focus-group"
+              value={contentMode}
+              onChange={onContentModeChange}
+              options={contentModeOptions}
+            />
+          </SettingsField>
 
-          <div className="poption practice-settings-wide">
-            <span className="poption-label">Наборы контента</span>
+          <SettingsField
+            className="practice-settings-wide"
+            label={t('practice.settings.contentPacks')}
+            hint={importStatus
+              ? importStatus
+              : availableContentPacks.length > 0
+                ? t('practice.settings.packsAvailable')
+                : t('practice.settings.noPacks')}
+          >
             <div className="poption-row">
-              <select
-                className="select-minimal"
+              <SelectInput
                 value={selectedContentPackId}
                 onChange={e => onSelectedContentPackIdChange(e.target.value)}
                 disabled={availableContentPacks.length === 0}
               >
-                <option value="">Выберите набор…</option>
+                <option value="">{t('practice.settings.selectPack')}</option>
                 {availableContentPacks.map((pack) => (
                   <option key={pack.id} value={pack.id}>
                     {pack.name} · {pack.items.length}
                   </option>
                 ))}
-              </select>
-              <button className="btn-secondary btn-sm" onClick={onImportCustomContent}>
-                Импорт TXT/JSON
-              </button>
-              <button
-                className="btn-ghost btn-sm"
+              </SelectInput>
+              <Button size="sm" onClick={onImportCustomContent}>
+                {t('practice.settings.importPack')}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => onDeleteCustomContent(selectedContentPackId)}
                 disabled={!selectedContentPackId || availableContentPacks.find(pack => pack.id === selectedContentPackId)?.origin !== 'custom'}
               >
-                Удалить
-              </button>
+                {t('practice.settings.deletePack')}
+              </Button>
             </div>
-            <span className="poption-hint">
-              {importStatus
-                ? importStatus
-                : availableContentPacks.length > 0
-                  ? 'Базовые, аддонные и импортированные наборы доступны в одном списке.'
-                  : 'Пока нет доступных наборов контента.'}
-            </span>
             {contentMode === 'custom' && selectedContentPack && contentPackSummary && (
-              <div className="poption-hint" style={{ marginTop: 8 }}>
+              <div className="poption-hint practice-pack-details">
                 <div>
-                  Пул: <b>{contentPackSummary.itemCount}</b> эл. · Тип: <b>{selectedContentPack.kind}</b> ·
-                  Сейчас для <b>{contentScenarioLabel.toLowerCase()}</b> ожидается около <b>{contentPackSummary.estimatedWordsPerText}</b> слов.
+                  {t('practice.settings.packPool', {
+                    count: contentPackSummary.itemCount,
+                    kind: selectedContentPack.kind,
+                    scenario: contentScenarioLabel.toLowerCase(),
+                    words: contentPackSummary.estimatedWordsPerText,
+                  })}
                 </div>
                 <div>
-                  Риск повторов: <b>{contentPackSummary.repetitionRiskLabel.toLowerCase()}</b>. Лучше всего подходит: <b>{contentPackSummary.recommendedModeLabel}</b>.
+                  {t('practice.settings.packRisk', {
+                    risk: repetitionRiskLabel,
+                    mode: recommendedModeLabel,
+                  })}
                 </div>
-                <div>{contentPackSummary.fitMessage}</div>
-                <div>{contentPackSummary.recommendationReason}</div>
-                {contentPackSummary.notes.map((note) => (
+                <div>{fitMessage}</div>
+                <div>{recommendationReason}</div>
+                {packNotes.map((note) => (
                   <div key={note}>{note}</div>
                 ))}
                 {contentPackPreflight && (
                   <>
-                    <div style={{ marginTop: 8 }}>
-                      <b>{contentPackPreflight.title}.</b> {contentPackPreflight.detail}
-                    </div>
-                    {contentPackPreflight.actions.length > 0 && (
-                      <div className="game-actions" style={{ marginTop: 8 }}>
-                        {contentPackPreflight.actions.map((action) => (
-                          <button
-                            key={action.id}
-                            type="button"
-                            className="btn-secondary btn-sm"
-                            disabled={contentPackActionsDisabled}
-                            title={action.description}
-                            onClick={() => onContentPackAction(action)}
-                          >
-                            {action.label}
-                          </button>
-                        ))}
-                      </div>
-                    )}
+                    <ContentPackPreflightNotice
+                      preflight={contentPackPreflight}
+                      actionsDisabled={contentPackActionsDisabled}
+                      onContentPackAction={onContentPackAction}
+                    />
                   </>
                 )}
               </div>
             )}
-          </div>
+          </SettingsField>
 
           <div className="poption practice-settings-wide">
-            <label className="poption-toggle">
-              <input
-                type="checkbox"
-                checked={smartAdaptationEnabled}
-                onChange={e => onSmartAdaptationEnabledChange(e.target.checked)}
-              />
-              <span className="toggle-switch" />
+            <SettingsToggle
+              checked={smartAdaptationEnabled}
+              onChange={onSmartAdaptationEnabledChange}
+            >
               <span className="poption-toggle-text">
-                <span className="poption-label">Умная адаптация</span>
-                <span className="poption-hint">Подбирает текст под слабые места.</span>
+                <span className="poption-label">{t('practice.settings.smartAdaptation')}</span>
+                <span className="poption-hint">{t('practice.settings.smartAdaptationHint')}</span>
               </span>
-            </label>
+            </SettingsToggle>
           </div>
 
-          <div className="poption practice-settings-wide">
-            <span className="poption-label">Сила адаптации</span>
-            <div className="seg-group">
-              {(['low', 'medium', 'high'] as PracticeAdaptationStrength[]).map((value) => (
-                <button
-                  key={value}
-                  className={`seg-btn${smartAdaptationStrength === value ? ' active' : ''}`}
-                  onClick={() => onSmartAdaptationStrengthChange(value)}
-                  disabled={!smartAdaptationEnabled}
-                >
-                  {adaptationStrengthLabel[value]}
-                </button>
-              ))}
-            </div>
-            <span className="poption-hint">
-              {smartAdaptationEnabled
-                ? 'Выше сила — больше акцент на слабых местах.'
-                : 'Включите адаптацию, чтобы менять ее силу.'}
-            </span>
-          </div>
+          <SettingsField
+            className="practice-settings-wide"
+            label={t('practice.settings.adaptationStrength')}
+            hint={smartAdaptationEnabled
+              ? t('practice.settings.adaptationStrengthHint')
+              : t('practice.settings.adaptationStrengthDisabled')}
+          >
+            <SegmentedControl
+              ariaLabel={t('practice.settings.adaptationStrength')}
+              value={smartAdaptationStrength}
+              onChange={onSmartAdaptationStrengthChange}
+              options={adaptationStrengthOptions}
+            />
+          </SettingsField>
+
+          <SettingsField
+            className="practice-settings-wide"
+            label={t('practice.settings.adaptationFocus')}
+            hint={(
+              <>
+                {smartAdaptationFocus === 'balanced' && t('practice.settings.adaptationFocusHints.balanced')}
+                {smartAdaptationFocus === 'chars' && t('practice.settings.adaptationFocusHints.chars')}
+                {smartAdaptationFocus === 'bigrams' && t('practice.settings.adaptationFocusHints.bigrams')}
+                {smartAdaptationFocus === 'rhythm' && t('practice.settings.adaptationFocusHints.rhythm')}
+              </>
+            )}
+          >
+            <SegmentedControl
+              ariaLabel={t('practice.settings.adaptationFocus')}
+              className="practice-focus-group"
+              value={smartAdaptationFocus}
+              onChange={onSmartAdaptationFocusChange}
+              options={adaptationFocusOptions}
+            />
+          </SettingsField>
 
           <div className="poption practice-settings-wide">
-            <span className="poption-label">Главный акцент</span>
-            <div className="seg-group practice-focus-group">
-              {(['balanced', 'chars', 'bigrams', 'rhythm'] as PracticeAdaptationFocus[]).map((value) => (
-                <button
-                  key={value}
-                  className={`seg-btn${smartAdaptationFocus === value ? ' active' : ''}`}
-                  onClick={() => onSmartAdaptationFocusChange(value)}
-                  disabled={!smartAdaptationEnabled}
-                >
-                  {adaptationFocusLabel[value]}
-                </button>
-              ))}
-            </div>
-            <span className="poption-hint">
-              {smartAdaptationFocus === 'balanced' && 'Баланс букв, сочетаний и темпа.'}
-              {smartAdaptationFocus === 'chars' && 'Больше внимания отдельным буквам.'}
-              {smartAdaptationFocus === 'bigrams' && 'Больше внимания переходам между буквами.'}
-              {smartAdaptationFocus === 'rhythm' && 'Больше внимания ровности темпа.'}
-            </span>
-          </div>
-
-          <div className="poption practice-settings-wide">
-            <label className="poption-toggle">
-              <input type="checkbox" checked={noStepBack} onChange={e => onNoStepBackChange(e.target.checked)} />
-              <span className="toggle-switch" />
+            <SettingsToggle
+              checked={noStepBack}
+              onChange={onNoStepBackChange}
+            >
               <span className="poption-toggle-text">
-                <span className="poption-label">Ни шагу назад</span>
-                <span className="poption-hint">Backspace отключен.</span>
+                <span className="poption-label">{t('practice.settings.noStepBack')}</span>
+                <span className="poption-hint">{t('practice.settings.noStepBackHint')}</span>
               </span>
-            </label>
+            </SettingsToggle>
           </div>
         </div>
       </div>

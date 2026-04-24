@@ -4,6 +4,8 @@ import type {
   HistoryEntry,
   Lesson,
 } from '../../shared/types';
+import type { TranslationParams } from '../../shared/types';
+import { i18n } from '../i18n';
 
 export interface HomeHistorySummary {
   lastSession: HistoryEntry | null;
@@ -22,6 +24,11 @@ export interface HomeDailyRunSummary {
   todayDailyRun: GameDailyRunResult | null;
   dailyRunCompleted: boolean;
 }
+
+type TranslateFn = (key: string, params?: TranslationParams) => string;
+
+const translateWithI18n: TranslateFn = (key, params) =>
+  i18n.t(key, params ?? {}) as string;
 
 function isBetterHistoryEntry(candidate: HistoryEntry, current: HistoryEntry | null) {
   if (!current) return true;
@@ -121,15 +128,18 @@ export function summarizeDailyRunState(
 
 export function getReplayModeFromHistory(entry: HistoryEntry | null) {
   if (entry?.contentScenarioId === 'survival') return 'survival';
-  if (entry?.contentScenarioId === 'flawless') return 'flawless';
+  if (entry?.contentScenarioId === 'flawless') return 'survival';
   if (entry?.mode === 'test') return 'test';
   return 'practice';
 }
 
-export function getReplayTitleFromHistory(entry: HistoryEntry | null) {
-  if (!entry) return 'Открыть практику';
-  if (entry.mode === 'test') return 'Повторить спринт';
-  if (entry.contentScenarioId === 'survival') return 'Повторить выживание';
-  if (entry.contentScenarioId === 'flawless') return 'Повторить flawless';
-  return 'Вернуться в практику';
+export function getReplayTitleFromHistory(
+  entry: HistoryEntry | null,
+  t: TranslateFn = translateWithI18n,
+) {
+  if (!entry) return t('home.summary.replay.openPractice');
+  if (entry.mode === 'test') return t('home.summary.replay.retrySprint');
+  if (entry.contentScenarioId === 'survival') return t('home.summary.replay.retrySurvival');
+  if (entry.contentScenarioId === 'flawless') return t('home.summary.replay.retryFlawless');
+  return t('home.summary.replay.backToPractice');
 }

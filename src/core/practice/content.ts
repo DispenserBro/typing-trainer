@@ -1,5 +1,12 @@
-import type { CustomPracticePack, CustomPracticePackKind, LayoutPracticeInsights, PracticeContentPack } from '../../shared/types';
+import type {
+  CustomPracticePack,
+  CustomPracticePackKind,
+  LayoutPracticeInsights,
+  PracticeContentPack,
+  TranslationParams,
+} from '../../shared/types';
 import type { NgramModel, PracticeBuildOptions } from '../text/ngramUtils';
+import { i18n } from '../i18n';
 import { buildNgramModel, filterByChars, generateNgramWord, generateSeededNgramWord, pick } from '../text/ngramUtils';
 
 const EN_VOWELS = new Set(['a', 'e', 'i', 'o', 'u', 'y']);
@@ -37,6 +44,11 @@ export interface PracticeContentPackQualityMetrics {
   estimatedWordsPerText: number;
   repetitionPressure: number;
 }
+
+type TranslateFn = (key: string, params?: TranslationParams) => string;
+
+const translateWithI18n: TranslateFn = (key, params) =>
+  i18n.t(key, params ?? {}) as string;
 
 function countCharOccurrences(value: string, char: string) {
   return [...value].filter((token) => token === char).length;
@@ -120,14 +132,15 @@ function inferPackKind(items: string[]): CustomPracticePackKind {
   return 'mixed';
 }
 
-function titleFromFileName(name: string) {
-  return name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').trim() || 'Импортированный набор';
+function titleFromFileName(name: string, t: TranslateFn = translateWithI18n) {
+  return name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').trim()
+    || t('practice.importedPackTitle');
 }
 
 export function createCustomPracticePackFromFile(file: {
   name: string;
   content: string;
-}): CustomPracticePack {
+}, t: TranslateFn = translateWithI18n): CustomPracticePack {
   const fileName = file.name.toLowerCase();
   const importedAt = new Date().toISOString();
 
@@ -149,7 +162,7 @@ export function createCustomPracticePackFromFile(file: {
       : raw.items ?? raw.entries ?? raw.texts ?? [];
     const items = normalizePackItems(Array.isArray(itemsSource) ? itemsSource : []);
     if (items.length === 0) {
-      throw new Error('В файле нет упражнений или текстов для импорта.');
+      throw new Error(t('practice.importErrors.noExercises'));
     }
 
     const kind = Array.isArray(raw)
@@ -158,7 +171,9 @@ export function createCustomPracticePackFromFile(file: {
 
     return {
       id: `pack-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
-      name: Array.isArray(raw) ? titleFromFileName(file.name) : normalizeWhitespace(raw.name ?? '') || titleFromFileName(file.name),
+      name: Array.isArray(raw)
+        ? titleFromFileName(file.name, t)
+        : normalizeWhitespace(raw.name ?? '') || titleFromFileName(file.name, t),
       description: Array.isArray(raw) ? undefined : normalizeWhitespace(raw.description ?? '') || undefined,
       kind,
       language: Array.isArray(raw) ? 'any' : normalizeWhitespace(raw.language ?? '') || 'any',
@@ -171,7 +186,7 @@ export function createCustomPracticePackFromFile(file: {
 
   const normalizedText = file.content.replace(/\r\n/g, '\n').trim();
   if (!normalizedText) {
-    throw new Error('Текстовый файл пустой.');
+    throw new Error(t('practice.importErrors.emptyText'));
   }
 
   const lineItems = normalizedText
@@ -188,12 +203,12 @@ export function createCustomPracticePackFromFile(file: {
   );
 
   if (items.length === 0) {
-    throw new Error('Не удалось извлечь тексты из файла.');
+    throw new Error(t('practice.importErrors.noTexts'));
   }
 
   return {
     id: `pack-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
-    name: titleFromFileName(file.name),
+    name: titleFromFileName(file.name, t),
     kind: inferPackKind(items),
     language: 'any',
     origin: 'custom',

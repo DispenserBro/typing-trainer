@@ -1,41 +1,56 @@
-import type { Dispatch, SetStateAction } from 'react';
 import type {
   CharStat,
   PracticeContentMode,
   PracticeContentScenarioId,
   PracticeTrainingMode,
-  Progress,
 } from '../../shared/types';
-
-type PersistProgress = (next: Progress) => void;
+import type { ProgressUpdater } from './progressUpdate';
 
 type StatsActionsArgs = {
-  setProgress: Dispatch<SetStateAction<Progress>>;
-  persistProgress: PersistProgress;
+  commitProgress: (updater: ProgressUpdater) => void;
   currentLayout: string;
 };
 
 export function createStatsActions({
-  setProgress,
-  persistProgress,
+  commitProgress,
   currentLayout,
 }: StatsActionsArgs) {
   const saveCharStats = (charStats: Record<string, CharStat>) => {
-    setProgress(prev => {
-      const next = { ...prev };
-      if (!next.keyStats) next.keyStats = {};
-      if (!next.keyStats[currentLayout]) next.keyStats[currentLayout] = {};
+    const entries = Object.entries(charStats);
+    if (entries.length === 0) return;
 
-      const layoutStats = next.keyStats[currentLayout];
-      for (const [char, data] of Object.entries(charStats)) {
-        if (!layoutStats[char]) layoutStats[char] = { hits: 0, misses: 0, totalTime: 0 };
-        layoutStats[char].hits += data.hits;
-        layoutStats[char].misses += data.misses;
-        layoutStats[char].totalTime += data.totalTime;
+    commitProgress(prev => {
+      const currentKeyStats = prev.keyStats ?? {};
+      const currentLayoutStats = currentKeyStats[currentLayout] ?? {};
+      const nextLayoutStats = { ...currentLayoutStats };
+      let changed = false;
+
+      for (const [char, data] of entries) {
+        const current = nextLayoutStats[char] ?? { hits: 0, misses: 0, totalTime: 0 };
+        const updated = {
+          hits: current.hits + data.hits,
+          misses: current.misses + data.misses,
+          totalTime: current.totalTime + data.totalTime,
+        };
+        if (
+          updated.hits !== current.hits
+          || updated.misses !== current.misses
+          || updated.totalTime !== current.totalTime
+        ) {
+          nextLayoutStats[char] = updated;
+          changed = true;
+        }
       }
 
-      persistProgress(next);
-      return { ...next };
+      if (!changed) return prev;
+
+      return {
+        ...prev,
+        keyStats: {
+          ...currentKeyStats,
+          [currentLayout]: nextLayoutStats,
+        },
+      };
     });
   };
 
@@ -56,12 +71,10 @@ export function createStatsActions({
       charStats?: Record<string, CharStat>;
     },
   ) => {
-    setProgress(prev => {
-      const next = { ...prev };
-      if (!next.history) next.history = {};
-      if (!next.history[currentLayout]) next.history[currentLayout] = [];
-
-      next.history[currentLayout].push({
+    commitProgress(prev => {
+      const currentHistory = prev.history ?? {};
+      const currentLayoutHistory = currentHistory[currentLayout] ?? [];
+      const nextEntry = {
         date: new Date().toISOString(),
         mode,
         wpm: Math.round(wpm),
@@ -89,14 +102,16 @@ export function createStatsActions({
             ]),
           )
           : undefined,
-      });
+      };
+      const nextLayoutHistory = [...currentLayoutHistory, nextEntry].slice(-500);
 
-      if (next.history[currentLayout].length > 500) {
-        next.history[currentLayout] = next.history[currentLayout].slice(-500);
-      }
-
-      persistProgress(next);
-      return { ...next };
+      return {
+        ...prev,
+        history: {
+          ...currentHistory,
+          [currentLayout]: nextLayoutHistory,
+        },
+      };
     });
   };
 

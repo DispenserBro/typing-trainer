@@ -10,12 +10,15 @@ import {
   Skull,
 } from 'lucide-react';
 import type { GameRunMapNode, GameRunMapState } from '../../../shared/types';
-import { getMapKindLabel } from '../../../core/game/routes';
+import { useI18n } from '../../contexts/I18nContext';
+import { getGameMapKindLabel } from './gameText';
 
 type GameRunMapProps = {
   map: GameRunMapState;
   onSelectNode: (nodeId: string) => void;
 };
+
+const MAP_MIN_GRAPH_HEIGHT = 420;
 
 function getMapNodeIcon(kind: GameRunMapNode['kind']) {
   if (kind === 'boss') return Crown;
@@ -29,11 +32,16 @@ function getMapNodeIcon(kind: GameRunMapNode['kind']) {
 }
 
 export const GameRunMap = memo(function GameRunMap({ map, onSelectNode }: GameRunMapProps) {
-  const columnWidth = 148;
+  const { t } = useI18n();
+  const columnWidth = 164;
+  const shellRef = useRef<HTMLDivElement | null>(null);
+  const titleRowRef = useRef<HTMLDivElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const graphRef = useRef<HTMLDivElement | null>(null);
+  const legendRef = useRef<HTMLDivElement | null>(null);
   const nodeRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [graphSize, setGraphSize] = useState({ width: 1, height: 1 });
+  const [graphHeight, setGraphHeight] = useState(MAP_MIN_GRAPH_HEIGHT);
   const [lineCoords, setLineCoords] = useState<Array<{
     key: string;
     x1: number;
@@ -49,6 +57,7 @@ export const GameRunMap = memo(function GameRunMap({ map, onSelectNode }: GameRu
   const selectableNodeIds = new Set(map.selectableNodeIds);
   const visitedNodeIds = new Set(map.visitedNodeIds);
   const currentNode = map.nodes.find(node => node.id === map.currentNodeId) ?? null;
+  const lanes = useMemo(() => Array.from({ length: 5 }, (_, index) => index), []);
 
   useEffect(() => {
     const targetId = map.selectableNodeIds[0] ?? map.currentNodeId;
@@ -58,14 +67,25 @@ export const GameRunMap = memo(function GameRunMap({ map, onSelectNode }: GameRu
   }, [map.currentNodeId, map.selectableNodeIds]);
 
   useLayoutEffect(() => {
+    const shell = shellRef.current;
+    const scroll = scrollRef.current;
+    const titleRow = titleRowRef.current;
     const graph = graphRef.current;
-    if (!graph) return;
+    const legend = legendRef.current;
+    if (!shell || !scroll || !titleRow || !graph || !legend) return;
 
     const measure = () => {
+      const scrollStyles = window.getComputedStyle(scroll);
+      const paddingTop = parseFloat(scrollStyles.paddingTop) || 0;
+      const paddingBottom = parseFloat(scrollStyles.paddingBottom) || 0;
+      const availableHeight = scroll.clientHeight - paddingTop - paddingBottom;
+      const nextGraphHeight = Math.max(MAP_MIN_GRAPH_HEIGHT, availableHeight);
+      setGraphHeight(prev => (prev === nextGraphHeight ? prev : nextGraphHeight));
+
       const graphRect = graph.getBoundingClientRect();
       setGraphSize({
         width: Math.max(1, graph.scrollWidth),
-        height: Math.max(1, graph.scrollHeight),
+        height: Math.max(1, nextGraphHeight),
       });
       const selectableNodeIds = new Set(map.selectableNodeIds);
       const visitedNodeIds = new Set(map.visitedNodeIds);
@@ -91,31 +111,48 @@ export const GameRunMap = memo(function GameRunMap({ map, onSelectNode }: GameRu
     };
 
     measure();
+    const rafPrimary = requestAnimationFrame(() => measure());
+    const rafSecondary = requestAnimationFrame(() => {
+      requestAnimationFrame(() => measure());
+    });
     const resizeObserver = new ResizeObserver(() => measure());
+    resizeObserver.observe(shell);
+    resizeObserver.observe(titleRow);
     resizeObserver.observe(graph);
+    resizeObserver.observe(legend);
     Object.values(nodeRefs.current).forEach(node => {
       if (node) resizeObserver.observe(node);
     });
     window.addEventListener('resize', measure);
     return () => {
+      cancelAnimationFrame(rafPrimary);
+      cancelAnimationFrame(rafSecondary);
       resizeObserver.disconnect();
       window.removeEventListener('resize', measure);
     };
   }, [map.links, map.selectableNodeIds, map.visitedNodeIds, map.nodes]);
 
   return (
-    <div className="game-map-shell">
-      <div className="game-map-title-row">
+    <div ref={shellRef} className="game-map-shell">
+      <div ref={titleRowRef} className="game-map-title-row">
         <div>
-          <div className="game-map-title">Карта забега</div>
+          <div className="game-map-title">{t('game.map.title')}</div>
           <div className="game-map-subtitle">
-            Выбирай следующую точку на графе. Бои и комнаты открываются поверх карты, а путь остается перед глазами.
+            {t('game.map.subtitle')}
           </div>
         </div>
       </div>
 
       <div ref={scrollRef} className="game-map-scroll">
-        <div ref={graphRef} className="game-map-graph" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(${columnWidth}px, ${columnWidth}px))` }}>
+        <div
+          ref={graphRef}
+          className="game-map-graph"
+          style={{
+            gridTemplateColumns: `repeat(${columns.length}, minmax(${columnWidth}px, ${columnWidth}px))`,
+            height: `${graphHeight}px`,
+            minHeight: `${graphHeight}px`,
+          }}
+        >
           <svg
             className="game-map-lines"
             width={graphSize.width}
@@ -137,33 +174,39 @@ export const GameRunMap = memo(function GameRunMap({ map, onSelectNode }: GameRu
 
           {columns.map(column => {
             const nodes = map.nodes.filter(node => node.column === column).sort((a, b) => a.lane - b.lane);
+            const nodesByLane = new Map(nodes.map(node => [node.lane, node]));
             return (
               <div key={`map-column-${column}`} className="game-map-column">
-                {nodes.map(node => {
+                {lanes.map(lane => {
+                  const node = nodesByLane.get(lane);
+                  if (!node) {
+                    return <div key={`map-slot-${column}-${lane}`} className="game-map-slot" />;
+                  }
+
                   const Icon = getMapNodeIcon(node.kind);
                   const selectable = selectableNodeIds.has(node.id);
                   const current = currentNode?.id === node.id;
                   const visited = visitedNodeIds.has(node.id);
 
                   return (
-                    <button
-                      key={node.id}
-                      ref={element => { nodeRefs.current[node.id] = element; }}
-                      className={`game-map-node kind-${node.kind}${selectable ? ' selectable' : ''}${current ? ' current' : ''}${visited ? ' visited' : ''}`}
-                      style={{ gridRow: `${node.lane + 1}` }}
-                      disabled={!selectable}
-                      onClick={() => onSelectNode(node.id)}
-                      title={`${node.title} — ${node.description}`}
-                    >
-                      <span className="game-map-node-icon">
-                        <Icon size={18} />
-                      </span>
-                      <span className="game-map-node-copy">
-                        <span className="game-map-node-kind">{getMapKindLabel(node.kind)}</span>
-                        <span className="game-map-node-title">{node.title}</span>
-                        <span className="game-map-node-flavor">{node.flavor}</span>
-                      </span>
-                    </button>
+                    <div key={node.id} className="game-map-slot">
+                      <button
+                        ref={element => { nodeRefs.current[node.id] = element; }}
+                        className={`game-map-node kind-${node.kind}${selectable ? ' selectable' : ''}${current ? ' current' : ''}${visited ? ' visited' : ''}`}
+                        disabled={!selectable}
+                        onClick={() => onSelectNode(node.id)}
+                        title={`${node.title} — ${node.description}`}
+                      >
+                        <span className="game-map-node-icon">
+                          <Icon size={18} />
+                        </span>
+                        <span className="game-map-node-copy">
+                          <span className="game-map-node-kind">{getGameMapKindLabel(node.kind, t)}</span>
+                          <span className="game-map-node-title">{node.title}</span>
+                          <span className="game-map-node-flavor">{node.flavor}</span>
+                        </span>
+                      </button>
+                    </div>
                   );
                 })}
               </div>
@@ -172,15 +215,15 @@ export const GameRunMap = memo(function GameRunMap({ map, onSelectNode }: GameRu
         </div>
       </div>
 
-      <div className="game-map-legend">
-        <span><Swords size={14} /> Бой</span>
-        <span><Crown size={14} /> Босс</span>
-        <span><Heart size={14} /> Передышка</span>
-        <span><Gift size={14} /> Тайник</span>
-        <span><ShoppingBag size={14} /> Лавка</span>
-        <span><TriangleAlert size={14} /> Риск</span>
-        <span><Flame size={14} /> Элита</span>
-        <span><Skull size={14} /> Мини-босс</span>
+      <div ref={legendRef} className="game-map-legend">
+        <span><Swords size={14} /> {t('game.map.legend.battle')}</span>
+        <span><Crown size={14} /> {t('game.map.legend.boss')}</span>
+        <span><Heart size={14} /> {t('game.map.legend.rest')}</span>
+        <span><Gift size={14} /> {t('game.map.legend.treasure')}</span>
+        <span><ShoppingBag size={14} /> {t('game.map.legend.shop')}</span>
+        <span><TriangleAlert size={14} /> {t('game.map.legend.risk')}</span>
+        <span><Flame size={14} /> {t('game.map.legend.elite')}</span>
+        <span><Skull size={14} /> {t('game.map.legend.miniboss')}</span>
       </div>
     </div>
   );

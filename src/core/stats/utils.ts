@@ -6,24 +6,9 @@ import type {
   PracticeInsightAggregate,
   PracticeContentScenarioId,
   PracticeRhythmSessionEntry,
+  TranslationParams,
 } from '../../shared/types';
-
-export const FINGER_LABELS: Record<FingerName, string> = {
-  index_left: 'Левый указательный',
-  index_right: 'Правый указательный',
-  middle_left: 'Левый средний',
-  middle_right: 'Правый средний',
-  ring_left: 'Левый безымянный',
-  ring_right: 'Правый безымянный',
-  pinky_left: 'Левый мизинец',
-  pinky_right: 'Правый мизинец',
-};
-
-export const ROW_LABELS = {
-  top: 'Верхний ряд',
-  middle: 'Средний ряд',
-  bottom: 'Нижний ряд',
-} as const;
+import { formatLocaleDateTime } from '../i18n';
 
 export type TrendTone = 'up' | 'down' | 'flat' | 'neutral';
 export type StatsPeriod = 'all' | 'day' | 'week' | 'month';
@@ -33,33 +18,11 @@ export type ScopedHistoryEntry = { id: string; layoutId: string; entry: HistoryE
 export type ScopedRhythmSession = { layoutId: string; session: PracticeRhythmSessionEntry };
 export type SessionHistoryItem = ScopedHistoryEntry & { rhythm: ScopedRhythmSession | null };
 
-export const PERIOD_OPTIONS: Array<{ value: StatsPeriod; label: string }> = [
-  { value: 'all', label: 'Все' },
-  { value: 'day', label: 'День' },
-  { value: 'week', label: 'Неделя' },
-  { value: 'month', label: 'Месяц' },
-];
+export const PERIOD_OPTIONS: StatsPeriod[] = ['all', 'day', 'week', 'month'];
+export const MODE_OPTIONS: StatsModeFilter[] = ['all', 'practice', 'game', 'lesson', 'test'];
+export const LAYOUT_SCOPE_OPTIONS: StatsLayoutScope[] = ['current', 'all'];
 
-export const MODE_OPTIONS: Array<{ value: StatsModeFilter; label: string }> = [
-  { value: 'all', label: 'Все' },
-  { value: 'practice', label: 'Практика' },
-  { value: 'game', label: 'Игра' },
-  { value: 'lesson', label: 'Уроки' },
-  { value: 'test', label: 'Спринт' },
-];
-
-export const LAYOUT_SCOPE_OPTIONS: Array<{ value: StatsLayoutScope; label: string }> = [
-  { value: 'current', label: 'Текущая раскладка' },
-  { value: 'all', label: 'Все раскладки' },
-];
-
-const SCENARIO_LABELS: Record<PracticeContentScenarioId, string> = {
-  'practice-normal': 'Обычная практика',
-  'practice-rhythm': 'Ритм-практика',
-  sprint: 'Спринт',
-  survival: 'Выживание',
-  flawless: 'Безошибочный режим',
-};
+type Translate = (key: string, params?: TranslationParams) => string;
 
 export function formatAggregateMeta(entry: PracticeInsightAggregate) {
   const attempts = entry.hits + entry.misses;
@@ -75,30 +38,42 @@ export function formatBigramMeta(entry: PracticeBigramInsight) {
   return { attempts, avgMs, errorRate };
 }
 
-export function formatSessionTimestamp(date: string) {
-  try {
-    return new Intl.DateTimeFormat('ru-RU', {
-      day: '2-digit',
-      month: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(new Date(date));
-  } catch {
-    return date;
-  }
+export function getFingerLabel(finger: FingerName, t: Translate) {
+  return t(`stats.fingers.${finger}`);
 }
 
-export function formatSessionTooltipTimestamp(date: string) {
-  try {
-    return new Intl.DateTimeFormat('ru-RU', {
-      day: '2-digit',
-      month: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(new Date(date));
-  } catch {
-    return date;
-  }
+export function getRowLabel(row: 'top' | 'middle' | 'bottom', t: Translate) {
+  return t(`stats.rows.${row}`);
+}
+
+export function getStatsPeriodLabel(period: StatsPeriod, t: Translate) {
+  return t(`stats.filters.periodOptions.${period}`);
+}
+
+export function getStatsModeLabel(mode: StatsModeFilter, t: Translate) {
+  return t(`stats.filters.modeOptions.${mode}`);
+}
+
+export function getStatsLayoutScopeLabel(scope: StatsLayoutScope, t: Translate) {
+  return t(`stats.filters.layoutOptions.${scope}`);
+}
+
+export function formatSessionTimestamp(date: string, locale: string) {
+  return formatLocaleDateTime(date, locale, {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }, date);
+}
+
+export function formatSessionTooltipTimestamp(date: string, locale: string) {
+  return formatLocaleDateTime(date, locale, {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }, date);
 }
 
 export function getBestStableRun(session: PracticeRhythmSessionEntry) {
@@ -125,11 +100,11 @@ export function formatDelta(delta: number, digits = 0) {
   return `${delta > 0 ? '+' : delta < 0 ? '-' : ''}${fixed}`;
 }
 
-export function getTrendSummary(values: number[], threshold: number, digits = 0) {
+export function getTrendSummary(values: number[], threshold: number, digits = 0, t: Translate) {
   if (values.length < 4) {
     return {
       tone: 'neutral' as TrendTone,
-      label: 'Недостаточно данных',
+      label: t('stats.trend.notEnoughData'),
       delta: 0,
       formattedDelta: '0',
     };
@@ -141,7 +116,7 @@ export function getTrendSummary(values: number[], threshold: number, digits = 0)
   if (!previous.length || !recent.length) {
     return {
       tone: 'neutral' as TrendTone,
-      label: 'Недостаточно данных',
+      label: t('stats.trend.notEnoughData'),
       delta: 0,
       formattedDelta: '0',
     };
@@ -154,7 +129,7 @@ export function getTrendSummary(values: number[], threshold: number, digits = 0)
   if (Math.abs(delta) < threshold) {
     return {
       tone: 'flat' as TrendTone,
-      label: 'Стабильно',
+      label: t('stats.trend.stable'),
       delta,
       formattedDelta: formatDelta(delta, digits),
     };
@@ -162,7 +137,7 @@ export function getTrendSummary(values: number[], threshold: number, digits = 0)
 
   return {
     tone: delta > 0 ? ('up' as TrendTone) : ('down' as TrendTone),
-    label: delta > 0 ? 'Растет' : 'Падает',
+    label: delta > 0 ? t('stats.trend.growing') : t('stats.trend.falling'),
     delta,
     formattedDelta: formatDelta(delta, digits),
   };
@@ -197,25 +172,25 @@ export function aggregateCharStats(entries: HistoryEntry[]) {
   return aggregated;
 }
 
-export function formatModeLabel(mode: HistoryEntry['mode']) {
+export function formatModeLabel(mode: HistoryEntry['mode'], t: Translate) {
   switch (mode) {
-    case 'practice': return 'Практика';
-    case 'game': return 'Игра';
-    case 'lesson': return 'Урок';
-    case 'test': return 'Спринт';
+    case 'practice': return t('stats.modes.practice');
+    case 'game': return t('stats.modes.game');
+    case 'lesson': return t('stats.modes.lesson');
+    case 'test': return t('stats.modes.test');
     default: return mode;
   }
 }
 
-export function formatScenarioLabel(scenarioId?: PracticeContentScenarioId) {
+export function formatScenarioLabel(scenarioId: PracticeContentScenarioId | undefined, t: Translate) {
   if (!scenarioId) return '';
-  return SCENARIO_LABELS[scenarioId] ?? scenarioId;
+  return t(`stats.scenarios.${scenarioId}`);
 }
 
-export function formatEntryModeLabel(entry: HistoryEntry) {
-  const scenarioLabel = formatScenarioLabel(entry.contentScenarioId);
-  if (!scenarioLabel || scenarioLabel === 'Обычная практика') {
-    return formatModeLabel(entry.mode);
+export function formatEntryModeLabel(entry: HistoryEntry, t: Translate) {
+  const scenarioLabel = formatScenarioLabel(entry.contentScenarioId, t);
+  if (!scenarioLabel || scenarioLabel === t('stats.scenarios.practice-normal')) {
+    return formatModeLabel(entry.mode, t);
   }
   if (entry.mode === 'practice' && entry.contentScenarioId === 'practice-rhythm') {
     return scenarioLabel;

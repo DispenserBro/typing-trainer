@@ -5,6 +5,7 @@
  * Sets are lightweight: each item can optionally belong to one set,
  * and synergy activates when 2+ items from that set are equipped.
  */
+import { i18n, sanitizeTranslationParams } from '../i18n';
 
 export type GameItemSetId = 'tempo' | 'fortress' | 'chrono' | 'gambler';
 
@@ -23,6 +24,10 @@ export interface GameItemSetDefinition {
   name: string;
   description: string;
   bonuses: GameItemSetBonus[];
+}
+
+function t(key: string, params?: Record<string, string | number>) {
+  return i18n.t(key, sanitizeTranslationParams(params)) as string;
 }
 
 export const GAME_ITEM_SETS: Record<GameItemSetId, GameItemSetDefinition> = {
@@ -159,7 +164,18 @@ export function computeSetBonuses(equippedItemIds: string[]): {
     const activeBonus = matchingBonuses[0];
     if (!activeBonus) continue;
 
-    activeSets.push({ set: setDef, activeBonus, count });
+    const localizedSet: GameItemSetDefinition = {
+      ...setDef,
+      name: t(`game.core.itemSets.${setDef.id}.name`),
+      description: t(`game.core.itemSets.${setDef.id}.description`),
+      bonuses: setDef.bonuses,
+    };
+    const localizedBonus: GameItemSetBonus = {
+      ...activeBonus,
+      description: t(`game.core.itemSets.${setDef.id}.bonus${activeBonus.count}`),
+    };
+
+    activeSets.push({ set: localizedSet, activeBonus: localizedBonus, count });
     totalSpeedReduction += activeBonus.speedRequirementReductionPercent ?? 0;
     totalAccuracyReduction += activeBonus.accuracyRequirementReduction ?? 0;
     totalBossTimerBonus += activeBonus.bossTimerBonusSeconds ?? 0;

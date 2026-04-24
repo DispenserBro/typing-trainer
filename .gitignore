@@ -38,4 +38,5 @@ data/progress.json
 data/custom-themes.json
 data/addon-registry.json
 data/mod-registry.json
-
+data/extension-sources.json
+data/local-extension-sources/

@@ -2,21 +2,17 @@ import type {
   CharStat,
   FingerName,
   LayoutPracticeInsights,
+  TranslationParams,
 } from '../../shared/types';
+import { i18n } from '../i18n';
 import { getRhythmScore } from './insights';
 
 export const PRACTICES_PER_UNLOCK = 3;
 
-const FINGER_LABELS: Record<FingerName, string> = {
-  index_left: 'Левый указательный',
-  index_right: 'Правый указательный',
-  middle_left: 'Левый средний',
-  middle_right: 'Правый средний',
-  ring_left: 'Левый безымянный',
-  ring_right: 'Правый безымянный',
-  pinky_left: 'Левый мизинец',
-  pinky_right: 'Правый мизинец',
-};
+type TranslateFn = (key: string, params?: TranslationParams) => string;
+
+const translateWithI18n: TranslateFn = (key, params) =>
+  i18n.t(key, params ?? {}) as string;
 
 export type PracticeFeedback = {
   weakestChar: string | null;
@@ -55,16 +51,21 @@ function pickWeakestEntry<T extends { weakness: number; hits: number; misses: nu
   return filtered[0]?.[0] ?? null;
 }
 
-function getRhythmLabel(score: number) {
-  if (score >= 92) return 'Ровный темп';
-  if (score >= 82) return 'Хороший темп';
-  if (score >= 72) return 'Темп плавает';
-  return 'Ритм проседает';
+function getFingerLabel(finger: FingerName, t: TranslateFn) {
+  return t(`stats.fingers.${finger}`);
+}
+
+function getRhythmLabel(score: number, t: TranslateFn) {
+  if (score >= 92) return t('practice.feedback.rhythmLabels.even');
+  if (score >= 82) return t('practice.feedback.rhythmLabels.good');
+  if (score >= 72) return t('practice.feedback.rhythmLabels.unstable');
+  return t('practice.feedback.rhythmLabels.dropping');
 }
 
 export function buildPracticeFeedback(
   insights: LayoutPracticeInsights,
   fallbackWorstChar: string | null,
+  t: TranslateFn = translateWithI18n,
 ): PracticeFeedback {
   const weakestChar = pickWeakestEntry(Object.entries(insights.chars), 4) ?? fallbackWorstChar;
   const weakestBigram = pickWeakestEntry(
@@ -85,8 +86,8 @@ export function buildPracticeFeedback(
   return {
     weakestChar,
     weakestBigram,
-    weakestFinger: weakestFingerKey ? FINGER_LABELS[weakestFingerKey] : null,
+    weakestFinger: weakestFingerKey ? getFingerLabel(weakestFingerKey, t) : null,
     rhythmScore,
-    rhythmLabel: getRhythmLabel(rhythmScore),
+    rhythmLabel: getRhythmLabel(rhythmScore, t),
   };
 }

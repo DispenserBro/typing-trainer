@@ -1,12 +1,14 @@
 import { useEffect, useRef } from 'react';
 import { Chart } from 'chart.js';
 import { getChartThemeColors } from './chartTheme';
+import { EmptyStateNotice } from '../ui/EmptyStateNotice';
 
 type ProgressChartProps = {
   title: string;
   values: number[];
   timestamps: string[];
   color: string;
+  emptyText: string;
   valueLabel: string;
   minValue?: number;
   maxValue?: number;
@@ -17,6 +19,7 @@ export function ProgressChart({
   values,
   timestamps,
   color,
+  emptyText,
   valueLabel,
   minValue,
   maxValue,
@@ -141,7 +144,7 @@ export function ProgressChart({
       <h4>{title}</h4>
       <div className="stats-chart-wrap">
         {values.length === 0 ? (
-          <p className="smart-stats-empty">Недостаточно данных для графика.</p>
+          <EmptyStateNotice className="smart-stats-empty" text={emptyText} />
         ) : (
           <canvas ref={canvasRef} />
         )}

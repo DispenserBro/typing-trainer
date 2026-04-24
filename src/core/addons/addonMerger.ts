@@ -8,13 +8,32 @@ import type {
   GameItemDefinition, GameAchievementDefinition,
   CustomThemes, CustomThemeColors,
   PracticeContentPack,
+  InterfaceLocaleDefinition,
 } from '../../shared/types';
-import type { InstalledAddon, AddonResources } from '../../shared/types/addon';
+import type {
+  AddonInterfaceLocaleDefinition,
+  InstalledAddon,
+  InstalledMod,
+  AddonResources,
+} from '../../shared/types/addon';
+import {
+  mergeTranslationDictionaries,
+  normalizeExternalInterfaceLocaleDefinitions,
+} from '../i18n/resources';
 
 /** Returns AddonResources if the addon is enabled */
 function enabledResources(addon: InstalledAddon): AddonResources | undefined {
   if (!addon.enabled) return undefined;
   return addon.manifest.resources;
+}
+
+function getAddonInterfaceLocaleInputs(addon: InstalledAddon): AddonInterfaceLocaleDefinition[] {
+  const res = enabledResources(addon);
+  return [
+    ...(res?.interfaceLocales?.locales ?? []),
+    ...(res?.locales ?? []),
+    ...(addon.manifest.locales ?? []),
+  ];
 }
 
 /* ── Merge words ────────────────────────────────────────── */
@@ -193,6 +212,55 @@ export function mergeAddonPracticePacks(
   }
 
   return merged;
+}
+
+/* ── Collect addon interface locales ───────────────────── */
+
+export function collectAddonInterfaceLocales(
+  addons: InstalledAddon[],
+): InterfaceLocaleDefinition[] {
+  const merged = new Map<string, InterfaceLocaleDefinition>();
+
+  for (const addon of addons) {
+    if (!addon.enabled) continue;
+    const localeInputs = getAddonInterfaceLocaleInputs(addon);
+    if (!localeInputs.length) continue;
+
+    const normalizedLocales = normalizeExternalInterfaceLocaleDefinitions(
+      localeInputs.map((locale) => ({
+        ...locale,
+        sourceName: addon.manifest.name,
+      })),
+      'addon',
+    );
+
+    for (const locale of normalizedLocales) {
+      const existing = merged.get(locale.id);
+      if (!existing) {
+        merged.set(locale.id, locale);
+        continue;
+      }
+
+      merged.set(locale.id, {
+        ...existing,
+        label: existing.label || locale.label,
+        nativeLabel: existing.nativeLabel || locale.nativeLabel,
+        dictionary: mergeTranslationDictionaries(existing.dictionary, locale.dictionary),
+      });
+    }
+  }
+
+  return Array.from(merged.values());
+}
+
+/* ── Collect mod interface locales ─────────────────────── */
+
+export function collectModInterfaceLocales(
+  _mods: InstalledMod[],
+): InterfaceLocaleDefinition[] {
+  // Mods register interface locales at runtime through api.i18n or declarative
+  // locales/*.json and locales/*.po files. Manifest-level mod locales are ignored.
+  return [];
 }
 
 /* ── Collect extra words for addon languages ────────────── */

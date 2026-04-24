@@ -7,11 +7,24 @@ import {
   installAddonFromJSON,
   removeAddon,
   toggleAddon,
+  scanExtensionSources,
+  scanExtensionCatalog,
+  installExtensionSource,
+  installExtensionCatalogEntry,
+  updateExtensionSource,
+  removeExtensionSource,
+  toggleExtensionSource,
+  syncExtensionSource,
+  syncAllExtensionSources,
   scanMods,
   installModFromFolder,
   removeMod,
   toggleMod,
   readModScript,
+  readModLocaleResources,
+  scanThemes,
+  installThemeFromFile,
+  removeTheme,
 } from '../core/addons';
 
 /* ── User data paths ─────────────────────────────────────── */
@@ -23,6 +36,7 @@ const progressFile: string = path.join(userDataPath, 'progress.json');
 const customThemesFile: string = path.join(userDataPath, 'custom-themes.json');
 const addonsDir: string = path.join(userDataPath, 'addons');
 const modsDir: string = path.join(userDataPath, 'mods');
+const themesDir: string = path.join(userDataPath, 'themes');
 
 function loadJSON<T>(filePath: string, fallback: T): T {
   try {
@@ -120,6 +134,55 @@ ipcMain.handle('toggle-addon', (_e: Electron.IpcMainInvokeEvent, addonId: string
   toggleAddon(addonsDir, addonId, enabled),
 );
 
+/* ── Theme IPC handlers (style manifests) ───────────────── */
+ipcMain.handle('scan-themes', () => scanThemes(themesDir));
+
+ipcMain.handle('install-theme', async () => {
+  const result = await dialog.showOpenDialog({
+    title: 'Установить тему',
+    filters: [
+      { name: 'Тема (JSON)', extensions: ['json'] },
+      { name: 'Все файлы', extensions: ['*'] },
+    ],
+    properties: ['openFile'],
+  });
+  if (result.canceled || result.filePaths.length === 0) return { ok: false, error: 'Отменено.' };
+
+  return installThemeFromFile(themesDir, result.filePaths[0]);
+});
+
+ipcMain.handle('remove-theme', (_e: Electron.IpcMainInvokeEvent, themeId: string) =>
+  removeTheme(themesDir, themeId),
+);
+
+/* ── Extension source IPC handlers ──────────────────────── */
+ipcMain.handle('scan-extension-sources', () => scanExtensionSources(userDataPath));
+ipcMain.handle('scan-extension-catalog', () => scanExtensionCatalog(userDataPath, addonsDir, modsDir, themesDir));
+
+ipcMain.handle('install-extension-source', (_e: Electron.IpcMainInvokeEvent, input) =>
+  installExtensionSource(userDataPath, input),
+);
+
+ipcMain.handle('install-extension-catalog-entry', (_e: Electron.IpcMainInvokeEvent, sourceId: string, kind: 'addons' | 'mods' | 'themes', entryId: string) =>
+  installExtensionCatalogEntry(userDataPath, addonsDir, modsDir, themesDir, sourceId, kind, entryId),
+);
+
+ipcMain.handle('update-extension-source', (_e: Electron.IpcMainInvokeEvent, sourceId: string, input) =>
+  updateExtensionSource(userDataPath, sourceId, input),
+);
+
+ipcMain.handle('remove-extension-source', (_e: Electron.IpcMainInvokeEvent, sourceId: string) =>
+  removeExtensionSource(userDataPath, sourceId),
+);
+
+ipcMain.handle('toggle-extension-source', (_e: Electron.IpcMainInvokeEvent, sourceId: string, enabled: boolean) =>
+  toggleExtensionSource(userDataPath, sourceId, enabled),
+);
+
+ipcMain.handle('sync-extension-source', (_e: Electron.IpcMainInvokeEvent, sourceId: string) =>
+  syncExtensionSource(userDataPath, sourceId),
+);
+
 /* ── Mod IPC handlers (script folders) ──────────────────── */
 ipcMain.handle('scan-mods', () => scanMods(modsDir));
 
@@ -149,6 +212,10 @@ ipcMain.handle('read-mod-script', (_e: Electron.IpcMainInvokeEvent, modId: strin
   readModScript(modsDir, modId),
 );
 
+ipcMain.handle('read-mod-locale-resources', (_e: Electron.IpcMainInvokeEvent, modId: string) =>
+  readModLocaleResources(modsDir, modId),
+);
+
 /* ── Window control IPC ──────────────────────────────────── */
 ipcMain.on('win-minimize', () => win?.minimize());
 ipcMain.on('win-maximize', () => {
@@ -159,6 +226,7 @@ ipcMain.on('win-close', () => win?.close());
 
 /* ── Window ──────────────────────────────────────────────── */
 let win: BrowserWindow | null = null;
+const APP_USER_MODEL_ID = app.isPackaged ? 'com.typing-trainer.app' : 'com.typing-trainer.app.dev';
 
 function createWindow(): void {
   const iconPath = path.join(__dirname, '..', '..', 'data', 'app-icon.png');
@@ -179,12 +247,18 @@ function createWindow(): void {
     backgroundColor: '#181818',
     icon: appIcon.isEmpty() ? undefined : appIcon,
   });
+  if (!appIcon.isEmpty()) {
+    win.setIcon(appIcon);
+  }
   win.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
   // win.webContents.openDevTools();
 }
 
 app.whenReady().then(() => {
-  app.setAppUserModelId('com.typing-trainer.app');
+  app.setAppUserModelId(APP_USER_MODEL_ID);
+  void syncAllExtensionSources(userDataPath).catch((error) => {
+    console.error('[ExtensionSources] Startup sync failed:', error);
+  });
   createWindow();
 });
 app.on('window-all-closed', () => {

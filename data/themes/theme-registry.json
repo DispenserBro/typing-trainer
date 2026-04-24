@@ -1,0 +1,19 @@
+{
+  "themes": [
+    {
+      "id": "aurora-cascade-theme-pack",
+      "fileName": "aurora-cascade-theme-pack.json",
+      "installedAt": "2026-04-24T13:39:22.426Z"
+    },
+    {
+      "id": "gruvbox-theme-pack",
+      "fileName": "gruvbox-theme-pack.json",
+      "installedAt": "2026-04-24T13:39:23.664Z"
+    },
+    {
+      "id": "solarized-atelier-theme-pack",
+      "fileName": "solarized-atelier-theme-pack.json",
+      "installedAt": "2026-04-24T13:39:24.467Z"
+    }
+  ]
+}

@@ -1,111 +1,65 @@
-import { ChevronDown, ChevronRight } from 'lucide-react';
-import {
-  type SessionHistoryItem,
-  type ScopedRhythmSession,
-} from '../../../core/stats/utils';
+import type {
+  StatsSessionsViewModel,
+} from '../../../core/stats/viewModel';
+import { EmptyStateNotice } from '../ui/EmptyStateNotice';
+import { ExpandableSectionCard } from '../ui/ExpandableSectionCard';
+import { SectionHeader } from '../ui/SectionHeader';
 import { StatsSessionDetail } from './StatsSessionDetail';
 import { StatsSessionHistoryList } from './StatsSessionHistoryList';
 import { StatsSessionRhythmPanel } from './StatsSessionRhythmPanel';
-import type { WorstKey } from './statsSessionTypes';
 
 type StatsSessionsSectionProps = {
   expanded: boolean;
   onToggle: () => void;
-  unit: 'wpm' | 'cpm' | 'cps';
-  filteredSessionHistory: SessionHistoryItem[];
-  selectedHistorySession: SessionHistoryItem | null;
-  selectedHistoryRhythm: ScopedRhythmSession | null;
-  displayedRhythmSession: ScopedRhythmSession | null;
-  rhythmLabels: number[];
-  rhythmData: number[];
-  rhythmAverageLine: number[];
-  rhythmWorstPoint: number;
-  rhythmStableRun: number;
-  selectedHistoryWorstKeys: WorstKey[];
+  sessions: StatsSessionsViewModel;
   onSelectSession: (id: string) => void;
-  getLayoutLabel: (layoutId: string) => string;
 };
 
 export function StatsSessionsSection({
   expanded,
   onToggle,
-  unit,
-  filteredSessionHistory,
-  selectedHistorySession,
-  selectedHistoryRhythm,
-  displayedRhythmSession,
-  rhythmLabels,
-  rhythmData,
-  rhythmAverageLine,
-  rhythmWorstPoint,
-  rhythmStableRun,
-  selectedHistoryWorstKeys,
+  sessions,
   onSelectSession,
-  getLayoutLabel,
 }: StatsSessionsSectionProps) {
   return (
-    <div className="card stats-section-card mt-16">
-      <button
-        type="button"
-        className={`stats-section-toggle${expanded ? ' expanded' : ''}`}
-        onClick={onToggle}
-      >
-        <div>
-          <h4>Сессии</h4>
-          <p className="card-desc">Ритм последней сессии и история попыток с локальным разбором.</p>
-        </div>
-        {expanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
-      </button>
-
-      {expanded && (
-        <>
+    <ExpandableSectionCard
+      title={sessions.title}
+      description={sessions.description}
+      expanded={expanded}
+      onToggle={onToggle}
+    >
           <StatsSessionRhythmPanel
-            displayedRhythmSession={displayedRhythmSession}
-            rhythmLabels={rhythmLabels}
-            rhythmData={rhythmData}
-            rhythmAverageLine={rhythmAverageLine}
-            rhythmWorstPoint={rhythmWorstPoint}
-            rhythmStableRun={rhythmStableRun}
+            rhythmPanel={sessions.rhythmPanel}
           />
 
           <div className="stats-section-divider" />
 
           <div>
-            <div className="stats-session-head">
-              <div>
-                <h4>История сессий</h4>
-                <p className="card-desc">
-                  Выбери конкретную попытку, чтобы посмотреть ее локальные проблемы и быстрый разбор.
-                </p>
-              </div>
-            </div>
+            <SectionHeader
+              className="stats-session-head"
+              title={sessions.historyTitle}
+              description={sessions.historyDescription}
+              titleTag="h4"
+            />
 
-            {!filteredSessionHistory.length ? (
-              <p style={{ opacity: 0.5 }}>По текущим фильтрам пока нет подходящих сессий.</p>
+            {!sessions.hasHistory ? (
+              <EmptyStateNotice text={sessions.emptyLabel} />
             ) : (
               <div className="stats-session-grid">
                 <StatsSessionHistoryList
-                  unit={unit}
-                  filteredSessionHistory={filteredSessionHistory}
-                  selectedHistorySessionId={selectedHistorySession?.id ?? ''}
+                  items={sessions.historyItems}
+                  emptyLabel={sessions.emptyLabel}
+                  selectedHistorySessionId={sessions.selectedHistorySessionId}
                   onSelectSession={onSelectSession}
-                  getLayoutLabel={getLayoutLabel}
                 />
 
                 <StatsSessionDetail
-                  unit={unit}
-                  selectedHistorySession={selectedHistorySession}
-                  selectedHistoryRhythm={selectedHistoryRhythm}
-                  displayedRhythmSession={displayedRhythmSession}
-                  selectedHistoryWorstKeys={selectedHistoryWorstKeys}
-                  getLayoutLabel={getLayoutLabel}
+                  detail={sessions.detail}
                 />
               </div>
             )}
           </div>
-        </>
-      )}
-    </div>
+    </ExpandableSectionCard>
   );
 }
 

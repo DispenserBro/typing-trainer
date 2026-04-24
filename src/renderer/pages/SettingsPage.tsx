@@ -1,41 +1,81 @@
-import { useApp, useAppUi } from '../contexts/AppContext';
+import {
+  useAppGame,
+  useAppNavigation,
+  useAppPractice,
+  useAppSettings,
+  useAppUi,
+} from '../contexts/AppContext';
 import { SettingsGrid } from '../components/settings/SettingsGrid';
 import { SettingsOverlays } from '../components/settings/SettingsOverlays';
+import { PageHeader } from '../components/ui/PageHeader';
 import { useSettingsPageState } from '../hooks/useSettingsPageState';
+import { useI18n } from '../contexts/I18nContext';
 
 export function SettingsPage() {
+  const { t } = useI18n();
   const {
-    layouts, currentLayout, setCurrentLayout,
+    progress, saveProgress,
+  } = useAppPractice();
+  const { resetGameProgress } = useAppGame();
+  const { currentMode } = useAppNavigation();
+  const {
+    importedInterfaceLocales,
+    currentLayout, setCurrentLayout,
     currentLanguage, setCurrentLanguage,
     languages, layoutsForLanguage,
     settings, saveSetting,
-    progress, saveProgress, resetGameProgress,
-    customThemes, applyTheme,
+    customThemes, availableThemes, applyTheme, installTheme,
     customPresets, applyPreset, saveCurrentAsPreset, deletePreset,
-    exportConfig, importConfig,
-    currentMode, modeProfiles, saveModeProfile, clearModeProfile,
-  } = useApp();
+    exportConfig, importConfig, importInterfaceLocale, removeImportedInterfaceLocale,
+    modeProfiles, saveModeProfile, clearModeProfile,
+  } = useAppSettings();
   const { keyboardPreviewActive, setKeyboardPreviewActive } = useAppUi();
 
-  const handleResetProgress = () => {
-    const empty = { settings: progress.settings, practiceSettings: progress.practiceSettings };
+  const handleResetAllProgress = () => {
+    const empty = {
+      settings: progress.settings,
+      practiceSettings: progress.practiceSettings,
+      modePracticeSettings: progress.modePracticeSettings,
+      customPresets: progress.customPresets,
+      modeProfiles: progress.modeProfiles,
+      customPracticePacks: progress.customPracticePacks,
+      importedInterfaceLocales: progress.importedInterfaceLocales,
+    };
     saveProgress(empty);
+  };
+
+  const handleResetLessonsProgress = () => {
+    saveProgress({
+      ...progress,
+      lessons: undefined,
+    });
+  };
+
+  const handleResetMasteryProgress = () => {
+    saveProgress({
+      ...progress,
+      layoutProgress: undefined,
+      practice: undefined,
+      motivation: undefined,
+    });
   };
 
   const {
     showThemeModal,
     setShowThemeModal,
-    showResetModal,
-    setShowResetModal,
-    showResetGameModal,
-    setShowResetGameModal,
-    handleResetAll,
-    handleResetGame,
-  } = useSettingsPageState(handleResetProgress, resetGameProgress);
+    resetTarget,
+    setResetTarget,
+    handleResetConfirm,
+  } = useSettingsPageState({
+    game: resetGameProgress,
+    lessons: handleResetLessonsProgress,
+    mastery: handleResetMasteryProgress,
+    all: handleResetAllProgress,
+  });
 
   return (
-    <section className="mode-panel active">
-      <div className="panel-header"><h1>Настройки</h1></div>
+    <section className="mode-panel active settings-page">
+      <PageHeader title={t('settings.title')} />
 
       <SettingsGrid
         currentLanguage={currentLanguage}
@@ -43,11 +83,16 @@ export function SettingsPage() {
         setCurrentLanguage={setCurrentLanguage}
         settings={settings}
         saveSetting={saveSetting}
+        importedInterfaceLocales={importedInterfaceLocales}
+        importInterfaceLocale={importInterfaceLocale}
+        removeImportedInterfaceLocale={removeImportedInterfaceLocale}
         currentLayout={currentLayout}
         layoutsForLanguage={layoutsForLanguage}
         setCurrentLayout={setCurrentLayout}
         customThemes={customThemes}
+        availableThemes={availableThemes}
         applyTheme={applyTheme}
+        installTheme={installTheme}
         onOpenThemeEditor={() => setShowThemeModal(true)}
         keyboardPreviewActive={keyboardPreviewActive}
         setKeyboardPreviewActive={setKeyboardPreviewActive}
@@ -61,19 +106,15 @@ export function SettingsPage() {
         modeProfiles={modeProfiles}
         saveModeProfile={saveModeProfile}
         clearModeProfile={clearModeProfile}
-        onResetGame={() => setShowResetGameModal(true)}
-        onResetAll={() => setShowResetModal(true)}
+        onResetProgress={setResetTarget}
       />
 
       <SettingsOverlays
         showThemeModal={showThemeModal}
         onCloseThemeModal={() => setShowThemeModal(false)}
-        showResetGameModal={showResetGameModal}
-        showResetModal={showResetModal}
-        onCloseResetGame={() => setShowResetGameModal(false)}
-        onCloseResetAll={() => setShowResetModal(false)}
-        onConfirmResetGame={handleResetGame}
-        onConfirmResetAll={handleResetAll}
+        resetTarget={resetTarget}
+        onCloseReset={() => setResetTarget(null)}
+        onConfirmReset={handleResetConfirm}
       />
     </section>
   );

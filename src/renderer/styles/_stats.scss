@@ -175,6 +175,9 @@
   height: 100% !important;
   display: block;
 }
+.stats-chart-error {
+  opacity: 0.6;
+}
 .stats-chart-wrap.simple {
   display: flex;
   align-items: stretch;

@@ -1,16 +1,17 @@
 import { memo, useState, useMemo } from 'react';
 import { Medal } from 'lucide-react';
 import type { AchievementCategory, GameAchievementDefinition } from '../../shared/types';
+import { useI18n } from '../contexts/I18nContext';
+import { ActionRow } from './ui/ActionRow';
+import { Button } from './ui/Button';
+import { EmptyStateNotice } from './ui/EmptyStateNotice';
+import { ModalLayout } from './ui/ModalLayout';
+import { SelectInput } from './ui/SelectInput';
 
-const CATEGORY_LABELS: Record<string, string> = {
-  game: 'Игра',
-  practice: 'Практика',
-  lessons: 'Уроки',
-  test: 'Спринт',
-};
-
-function getCategoryLabel(category: string): string {
-  return CATEGORY_LABELS[category] ?? category;
+function getCategoryLabel(category: string, t: (key: string) => string): string {
+  const key = `achievements.categories.${category}`;
+  const translated = t(key);
+  return translated === key ? category : translated;
 }
 
 type AchievementsModalProps = {
@@ -32,6 +33,7 @@ export const AchievementsModal = memo(function AchievementsModal({
   categoryFilter,
   onClose,
 }: AchievementsModalProps) {
+  const { t } = useI18n();
   // Диагностика: логируем каталог и разблокированные достижения
   useMemo(() => {
     if (open) {
@@ -70,29 +72,39 @@ export const AchievementsModal = memo(function AchievementsModal({
   if (!open) return null;
 
   return (
-    <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="modal game-achievements-modal">
-        <h3>Достижения</h3>
-        <p className="card-desc">
-          Открыто <b>{unlockedCount}</b> из {filtered.length}
-          {categoryFilter ? ` (${getCategoryLabel(categoryFilter)})` : ''}.
-        </p>
-
+    <ModalLayout
+      className="game-achievements-modal home-achievements-modal"
+      onClose={onClose}
+      size="full"
+      title={t('achievements.title')}
+      description={(
+        <>
+          {t('achievements.opened', { count: unlockedCount, total: filtered.length })}{' '}
+          <b>{unlockedCount}</b> {t('achievements.of')} {filtered.length}
+          {categoryFilter ? ` (${getCategoryLabel(categoryFilter, t)})` : ''}.
+        </>
+      )}
+      footer={(
+        <ActionRow stretch className="modal-actions">
+          <Button onClick={onClose}>{t('common.close')}</Button>
+        </ActionRow>
+      )}
+    >
         {/* Выпадающий список категорий — только когда categoryFilter не задан */}
         {!categoryFilter && categories.length > 0 && (
           <div className="achievements-filter">
-            <select
+            <SelectInput
               className="achievements-category-select"
               value={activeTab === null ? '' : activeTab}
               onChange={(e) => setActiveTab(e.target.value === '' ? null : e.target.value)}
             >
-              <option value="">Все достижения</option>
+              <option value="">{t('achievements.all')}</option>
               {categories.map(cat => (
                 <option key={cat} value={cat}>
-                  {getCategoryLabel(cat)}
+                  {getCategoryLabel(cat, t)}
                 </option>
               ))}
-            </select>
+            </SelectInput>
           </div>
         )}
 
@@ -108,21 +120,14 @@ export const AchievementsModal = memo(function AchievementsModal({
                   <div className="game-achievement-name">{achievement.name}</div>
                   <div className="game-achievement-description">{achievement.description}</div>
                 </div>
-                <div className="game-achievement-state">{unlocked ? 'Открыто' : 'Закрыто'}</div>
+                <div className="game-achievement-state">{unlocked ? t('achievements.state.open') : t('achievements.state.closed')}</div>
               </div>
             );
           })}
           {filtered.length === 0 && (
-            <p className="card-desc" style={{ padding: '1rem 0' }}>
-              Нет достижений в этой категории.
-            </p>
+            <EmptyStateNotice className="achievements-empty-copy" text={t('achievements.empty')} />
           )}
         </div>
-
-        <div className="modal-actions">
-          <button className="btn-secondary" onClick={onClose}>Закрыть</button>
-        </div>
-      </div>
-    </div>
+    </ModalLayout>
   );
 });

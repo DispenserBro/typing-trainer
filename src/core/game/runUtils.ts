@@ -6,9 +6,14 @@ import type {
 } from '../../shared/types';
 import { getGameItemRarityStars, pickRandomGameItem } from './items';
 import { getBossArchetype, type BossArchetypeConfig } from './bossArchetypes';
+import { i18n, sanitizeTranslationParams } from '../i18n';
 
 function randomFromArray<T>(items: T[]): T {
   return items[Math.floor(Math.random() * items.length)] ?? items[0];
+}
+
+function t(key: string, params?: Record<string, string | number>) {
+  return i18n.t(key, sanitizeTranslationParams(params)) as string;
 }
 
 export const TOTAL_GAME_LEVELS = 100;
@@ -41,22 +46,22 @@ export function formatSpeedFromCpm(cpm: number, unit: 'wpm' | 'cpm' | 'cps') {
 }
 
 export function formatGameItemMeta(item: GameItemDefinition, equipped = false) {
-  return `${getGameItemRarityStars(item.rarity)} · ${item.bossOnly ? 'только на боссах' : 'работает всегда'}${equipped ? ' · экипирован' : ''}`;
+  return `${getGameItemRarityStars(item.rarity)} · ${item.bossOnly ? t('game.inventory.meta.bossOnly') : t('game.inventory.meta.alwaysActive')}${equipped ? ` · ${t('game.inventory.meta.equipped')}` : ''}`;
 }
 
 export function getRewardKindLabel(choice: GameRunRewardChoice) {
-  if (choice.kind === 'simple') return 'Тихая реликвия';
-  if (choice.kind === 'durable') return 'Нестабильный артефакт';
-  if (choice.kind === 'event') return 'Событие';
-  return 'Печать мастера';
+  if (choice.kind === 'simple') return t('game.reward.kind.simple');
+  if (choice.kind === 'durable') return t('game.reward.kind.durable');
+  if (choice.kind === 'event') return t('game.reward.kind.event');
+  return t('game.reward.kind.letter');
 }
 
 export function getEventKindLabel(kind: GameRunEventState['kind']) {
-  if (kind === 'rest') return 'Передышка';
-  if (kind === 'cache') return 'Тайник';
-  if (kind === 'shop') return 'Лавка';
-  if (kind === 'curse') return 'Проклятие';
-  return 'Риск';
+  if (kind === 'rest') return t('game.event.kind.rest');
+  if (kind === 'cache') return t('game.event.kind.cache');
+  if (kind === 'shop') return t('game.event.kind.shop');
+  if (kind === 'curse') return t('game.event.kind.curse');
+  return t('game.event.kind.risk');
 }
 
 /**
@@ -73,7 +78,7 @@ export function buildBossRewardChoices(nextLetter: string | null, level: number)
     pool.push({
       id: `reward-simple-${simpleItem.id}`,
       kind: 'simple',
-      title: 'Тихая реликвия',
+      title: t('game.core.rewards.simple.title'),
       flavor: simpleItem.name,
       description: simpleItem.description,
       itemId: simpleItem.id,
@@ -84,9 +89,9 @@ export function buildBossRewardChoices(nextLetter: string | null, level: number)
     pool.push({
       id: `reward-durable-${durableItem.id}`,
       kind: 'durable',
-      title: 'Нестабильный артефакт',
+      title: t('game.core.rewards.durable.title'),
       flavor: durableItem.name,
-      description: `${durableItem.description} Придется следить за прочностью.`,
+      description: `${durableItem.description} ${t('game.core.rewards.durable.watchDurability')}`,
       itemId: durableItem.id,
     });
   }
@@ -96,7 +101,7 @@ export function buildBossRewardChoices(nextLetter: string | null, level: number)
     pool.push({
       id: `reward-simple2-${simpleItem2.id}`,
       kind: 'simple',
-      title: 'Тихая реликвия',
+      title: t('game.core.rewards.simple.title'),
       flavor: simpleItem2.name,
       description: simpleItem2.description,
       itemId: simpleItem2.id,
@@ -108,9 +113,9 @@ export function buildBossRewardChoices(nextLetter: string | null, level: number)
     pool.push({
       id: 'reward-letter',
       kind: 'letter',
-      title: 'Печать мастера',
-      flavor: `Пробуждает символ «${nextLetter.toUpperCase()}»`,
-      description: 'Навсегда открывает следующую букву для практики и игры.',
+      title: t('game.core.rewards.letter.title'),
+      flavor: t('game.core.rewards.letter.flavor', { letter: nextLetter.toUpperCase() }),
+      description: t('game.core.rewards.letter.description'),
       letter: nextLetter,
     });
   }
@@ -119,14 +124,14 @@ export function buildBossRewardChoices(nextLetter: string | null, level: number)
   pool.push({
     id: 'reward-buff-speed',
     kind: 'event',
-    title: 'Ускоритель темпа',
-    flavor: 'Бонус к скорости на несколько уровней',
-    description: 'На 3 уровня снижает требования к скорости на 6%.',
+    title: t('game.core.rewards.buffSpeed.title'),
+    flavor: t('game.core.rewards.buffSpeed.flavor'),
+    description: t('game.core.rewards.buffSpeed.description'),
     effect: {
       modifier: {
         id: 'boss-buff-speed',
-        name: 'Ускоритель темпа',
-        description: '-6% к требуемой скорости на 3 уровня',
+        name: t('game.core.rewards.buffSpeed.modifierTitle'),
+        description: t('game.core.rewards.buffSpeed.modifierDescription'),
         remainingLevels: 3,
         speedRequirementReductionPercent: 6,
       },
@@ -136,14 +141,14 @@ export function buildBossRewardChoices(nextLetter: string | null, level: number)
   pool.push({
     id: 'reward-buff-defense',
     kind: 'event',
-    title: 'Щит рассвета',
-    flavor: 'Снижает атаку врагов',
-    description: 'На 4 уровня снижает атаку врагов на 3.',
+    title: t('game.core.rewards.buffDefense.title'),
+    flavor: t('game.core.rewards.buffDefense.flavor'),
+    description: t('game.core.rewards.buffDefense.description'),
     effect: {
       modifier: {
         id: 'boss-buff-defense',
-        name: 'Щит рассвета',
-        description: '-3 к атаке врагов на 4 уровня',
+        name: t('game.core.rewards.buffDefense.modifierTitle'),
+        description: t('game.core.rewards.buffDefense.modifierDescription'),
         remainingLevels: 4,
         enemyAttackReduction: 3,
       },
@@ -154,9 +159,9 @@ export function buildBossRewardChoices(nextLetter: string | null, level: number)
   pool.push({
     id: 'reward-extra-life',
     kind: 'event',
-    title: 'Запасное сердце',
-    flavor: '+10 к максимальному здоровью',
-    description: 'Увеличивает максимальный запас HP на 10 и полностью восстанавливает его.',
+    title: t('game.core.rewards.extraLife.title'),
+    flavor: t('game.core.rewards.extraLife.flavor'),
+    description: t('game.core.rewards.extraLife.description'),
     effect: { maxLifeDelta: 10, fullHeal: true },
   });
 
@@ -165,15 +170,15 @@ export function buildBossRewardChoices(nextLetter: string | null, level: number)
     pool.push({
       id: 'reward-curse-speed',
       kind: 'event',
-      title: 'Печать скорости',
-      flavor: 'Проклятие: требования к скорости растут',
-      description: 'На 3 уровня требования к скорости повышаются на 5%, но мгновенно восстанавливает 20 HP.',
+      title: t('game.core.rewards.curseSpeed.title'),
+      flavor: t('game.core.rewards.curseSpeed.flavor'),
+      description: t('game.core.rewards.curseSpeed.description'),
       effect: {
         lifeDelta: 20,
         modifier: {
           id: 'curse-speed',
-          name: 'Печать скорости',
-          description: '+5% к требуемой скорости на 3 уровня',
+          name: t('game.core.rewards.curseSpeed.modifierTitle'),
+          description: t('game.core.rewards.curseSpeed.modifierDescription'),
           remainingLevels: 3,
           speedRequirementReductionPercent: -5,
         },
@@ -183,15 +188,15 @@ export function buildBossRewardChoices(nextLetter: string | null, level: number)
     pool.push({
       id: 'reward-curse-defense',
       kind: 'event',
-      title: 'Печать уязвимости',
-      flavor: 'Проклятие: враги бьют точнее',
-      description: 'На 4 уровня атака врагов +4, но получаете регенерацию на 4 боя.',
+      title: t('game.core.rewards.curseDefense.title'),
+      flavor: t('game.core.rewards.curseDefense.flavor'),
+      description: t('game.core.rewards.curseDefense.description'),
       effect: {
         regenTurns: 4,
         modifier: {
           id: 'curse-defense',
-          name: 'Печать уязвимости',
-          description: '+4 к атаке врагов на 4 уровня',
+          name: t('game.core.rewards.curseDefense.modifierTitle'),
+          description: t('game.core.rewards.curseDefense.modifierDescription'),
           remainingLevels: 4,
           enemyAttackReduction: -4,
         },

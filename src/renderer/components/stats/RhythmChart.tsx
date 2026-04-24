@@ -1,13 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { Chart } from 'chart.js';
 import { getChartThemeColors } from './chartTheme';
+import { EmptyStateNotice } from '../ui/EmptyStateNotice';
 
 type RhythmChartProps = {
   title?: string;
   labels: number[];
   data: number[];
   averageLine: number[];
-  emptyText?: string;
+  averageLineLabel: string;
+  emptyText: string;
+  intervalLabel: string;
+  unavailableText: string;
 };
 
 export function RhythmChart({
@@ -15,7 +19,10 @@ export function RhythmChart({
   labels,
   data,
   averageLine,
-  emptyText = 'Недостаточно данных для графика.',
+  averageLineLabel,
+  emptyText,
+  intervalLabel,
+  unavailableText,
 }: RhythmChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
@@ -50,7 +57,7 @@ export function RhythmChart({
             labels,
             datasets: [
               {
-                label: 'Интервал',
+                label: intervalLabel,
                 data,
                 borderColor: accent,
                 backgroundColor: accent,
@@ -61,7 +68,7 @@ export function RhythmChart({
                 borderWidth: 2,
               },
               {
-                label: 'Средний интервал',
+                label: averageLineLabel,
                 data: averageLine,
                 borderColor: subtext,
                 backgroundColor: subtext,
@@ -101,13 +108,15 @@ export function RhythmChart({
       chartRef.current?.destroy();
       chartRef.current = null;
     };
-  }, [averageLine, data, labels, title]);
+  }, [averageLine, averageLineLabel, data, intervalLabel, labels, title]);
 
   useEffect(() => {
     if (!chartRef.current) return;
     try {
       chartRef.current.data.labels = labels;
+      chartRef.current.data.datasets[0].label = intervalLabel;
       chartRef.current.data.datasets[0].data = data;
+      chartRef.current.data.datasets[1].label = averageLineLabel;
       chartRef.current.data.datasets[1].data = averageLine;
       chartRef.current.update('none');
     } catch (err) {
@@ -116,14 +125,14 @@ export function RhythmChart({
       chartRef.current = null;
       setError(true);
     }
-  }, [averageLine, data, labels, title]);
+  }, [averageLine, averageLineLabel, data, intervalLabel, labels, title]);
 
   return (
     <div className="stats-chart-wrap rhythm">
       {!data.length ? (
-        <p className="smart-stats-empty">{emptyText}</p>
+        <EmptyStateNotice className="smart-stats-empty" text={emptyText} />
       ) : error ? (
-        <p style={{ opacity: 0.6 }}>График ритма временно недоступен. Остальная статистика сохранена.</p>
+        <EmptyStateNotice className="stats-chart-error" text={unavailableText} />
       ) : (
         <canvas ref={canvasRef} />
       )}

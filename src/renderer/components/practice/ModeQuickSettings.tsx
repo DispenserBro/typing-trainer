@@ -6,14 +6,16 @@ import type {
   PracticeContentPackQualitySummary,
   PracticeContentPackQuickAction,
 } from '../../../shared/types';
-
-const CONTENT_MODE_LABELS: Record<PracticeContentMode, string> = {
-  'adaptive-words': 'Слова',
-  syllables: 'Слоги',
-  'pseudo-words': 'Псевдослова',
-  sentences: 'Предложения',
-  custom: 'Набор',
-};
+import { useI18n } from '../../contexts/I18nContext';
+import { usePracticeContentModeLabels } from '../../hooks/practice/usePracticeContentModeLabels';
+import { SelectInput } from '../ui/SelectInput';
+import {
+  getPackFitMessage,
+  getPackRecommendedModeLabel,
+  getPackRecommendationReason,
+  getPackRepetitionRiskLabel,
+} from './contentPackSummaryI18n';
+import { ContentPackPreflightNotice } from './ContentPackPreflightNotice';
 
 type ModeQuickSettingsProps = {
   contentMode: PracticeContentMode;
@@ -42,33 +44,46 @@ export function ModeQuickSettings({
   actionsDisabled = false,
   extraControls,
 }: ModeQuickSettingsProps) {
+  const { t } = useI18n();
+  const contentModeLabels = usePracticeContentModeLabels({ customLabel: 'short' });
+  const repetitionRiskLabel = contentPackSummary && selectedContentPack
+    ? getPackRepetitionRiskLabel(t, contentPackSummary.repetitionRisk).toLowerCase()
+    : null;
+  const recommendedModeLabel = contentPackSummary && selectedContentPack
+    ? getPackRecommendedModeLabel(t, selectedContentPack, contentPackSummary)
+    : null;
+  const fitMessage = contentPackSummary
+    ? getPackFitMessage(t, contentPackSummary)
+    : null;
+  const recommendationReason = contentPackSummary && selectedContentPack
+    ? getPackRecommendationReason(t, selectedContentPack, contentPackSummary)
+    : null;
+
   return (
     <>
       <div className="practice-stats-row">
         <div className="pstat daily-goal-row">
-          <span className="daily-goal-label">Материал</span>
-          <select
-            className="select-minimal"
+          <span className="daily-goal-label">{t('practice.quickSettings.material')}</span>
+          <SelectInput
             value={contentMode}
             onChange={(event) => onContentModeChange(event.target.value as PracticeContentMode)}
           >
-            {Object.entries(CONTENT_MODE_LABELS).map(([value, label]) => (
+            {Object.entries(contentModeLabels).map(([value, label]) => (
               <option key={value} value={value}>{label}</option>
             ))}
-          </select>
+          </SelectInput>
         </div>
         {contentMode === 'custom' && (
           <div className="pstat daily-goal-row">
-            <span className="daily-goal-label">Набор</span>
-            <select
-              className="select-minimal"
+            <span className="daily-goal-label">{t('practice.quickSettings.pack')}</span>
+            <SelectInput
               value={selectedContentPackId}
               onChange={(event) => onSelectedContentPackIdChange(event.target.value)}
             >
               {availableContentPacks.map((pack) => (
                 <option key={pack.id} value={pack.id}>{pack.name}</option>
               ))}
-            </select>
+            </SelectInput>
           </div>
         )}
         {extraControls}
@@ -77,43 +92,27 @@ export function ModeQuickSettings({
         <div className="practice-stats-row">
           <div className="pstat daily-goal-row">
             <span className="daily-goal-label">
-              {selectedContentPack.kind} · {contentPackSummary.itemCount} эл. · ~{contentPackSummary.estimatedWordsPerText} слов
+              {selectedContentPack.kind} · {contentPackSummary.itemCount} {t('practice.quickSettings.itemsShort')} · ~{contentPackSummary.estimatedWordsPerText} {t('practice.quickSettings.wordsShort')}
             </span>
           </div>
           <div className="pstat daily-goal-row">
             <span className="daily-goal-label">
-              Повторы: {contentPackSummary.repetitionRiskLabel.toLowerCase()} · Лучше: {contentPackSummary.recommendedModeLabel}
+              {t('practice.quickSettings.repetition')}: {repetitionRiskLabel} · {t('practice.quickSettings.bestFor')}: {recommendedModeLabel}
             </span>
           </div>
         </div>
       )}
       {contentMode === 'custom' && contentPackSummary && (
-        <p className="card-desc" style={{ marginTop: 8 }}>
-          {contentPackSummary.fitMessage} {contentPackSummary.recommendationReason}
+        <p className="card-desc practice-pack-fit-summary">
+          {fitMessage} {recommendationReason}
         </p>
       )}
       {contentMode === 'custom' && contentPackPreflight && (
-        <div style={{ marginTop: 10 }}>
-          <p className="card-desc">
-            <b>{contentPackPreflight.title}.</b> {contentPackPreflight.detail}
-          </p>
-          {onContentPackAction && contentPackPreflight.actions.length > 0 && (
-            <div className="game-actions" style={{ marginTop: 8 }}>
-              {contentPackPreflight.actions.map((action) => (
-                <button
-                  key={action.id}
-                  type="button"
-                  className="btn-secondary btn-sm"
-                  disabled={actionsDisabled}
-                  title={action.description}
-                  onClick={() => onContentPackAction(action)}
-                >
-                  {action.label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        <ContentPackPreflightNotice
+          preflight={contentPackPreflight}
+          actionsDisabled={actionsDisabled}
+          onContentPackAction={onContentPackAction}
+        />
       )}
     </>
   );

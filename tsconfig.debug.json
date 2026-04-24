@@ -23,6 +23,7 @@
     "src/core/practice/engine.ts",
     "src/core/lessons/engine.ts",
     "src/core/lessons/utils.ts",
+    "src/core/addons/**/*",
     "src/core/game/gameEvents.ts",
     "src/core/game/items/**/*",
     "src/shared/**/*"

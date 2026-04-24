@@ -9,6 +9,7 @@ import {
   Target,
 } from 'lucide-react';
 import type { LanguageInfo, Layout, LayoutsData } from '../../shared/types';
+import { Button } from './ui/Button';
 
 type OnboardingWizardProps = {
   layouts: LayoutsData;
@@ -191,24 +192,23 @@ export function OnboardingWizard({
 
         <div className="onboarding-actions">
           {stepIndex > 0 && step !== 'done' && (
-            <button type="button" className="btn-secondary" onClick={goBack}>
+            <Button onClick={goBack}>
               Назад
-            </button>
+            </Button>
           )}
           <div className="onboarding-actions-spacer" />
           {step !== 'done' ? (
-            <button
-              type="button"
-              className="btn-accent"
+            <Button
+              variant="accent"
               disabled={!canProceed}
               onClick={goNext}
             >
               Далее <ArrowRight size={16} />
-            </button>
+            </Button>
           ) : (
-            <button type="button" className="btn-accent" onClick={handleFinish}>
+            <Button variant="accent" onClick={handleFinish}>
               Начать тренировку <ArrowRight size={16} />
-            </button>
+            </Button>
           )}
         </div>
       </div>

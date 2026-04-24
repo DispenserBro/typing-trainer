@@ -3,16 +3,21 @@ import {
   type CSSProperties,
 } from 'react';
 import type { FingerName } from '../../../shared/types';
-import { useApp, useAppUi } from '../../contexts/AppContext';
+import {
+  useAppNavigation,
+  useAppPractice,
+  useAppSettings,
+  useAppUi,
+} from '../../contexts/AppContext';
 import { KeyboardHands } from './KeyboardHands';
 import { getKeyboardRows } from '../../../core/keyboard/layout';
 import { useKeyboardPanel } from '../../hooks/keyboard/useKeyboardPanel';
 import { computeHandsStyle, FINGER_COLORS, getActiveHand, getKeyboardActivePose } from '../../../core/keyboard/scene';
 
 export function Keyboard() {
-  const {
-    currentLayout, layouts, currentMode, settings, saveSetting,
-  } = useApp();
+  const { currentMode } = useAppNavigation();
+  const { layouts } = useAppPractice();
+  const { currentLayout, settings, saveSetting } = useAppSettings();
   const { activeChar, keyboardPreviewActive } = useAppUi();
   const layout = layouts.layouts[currentLayout];
   const stageRef = useRef<HTMLDivElement | null>(null);
@@ -54,26 +59,36 @@ export function Keyboard() {
 
   const measureHandsFrame = useCallback(() => {
     const stage = stageRef.current;
-    const keyboard = keyboardRef.current;
-    if (!stage || !keyboard || rows.length < 2 || !showStage) return;
+    if (!stage || rows.length < 2 || !showStage || hidden) return;
+
+    const keyRects = rows
+      .flatMap(row => row)
+      .map(key => keyRefs.current[key])
+      .filter((el): el is HTMLSpanElement => Boolean(el))
+      .map(el => el.getBoundingClientRect());
+
+    const spaceKey = keyRefs.current[' '];
+    if (spaceKey) {
+      keyRects.push(spaceKey.getBoundingClientRect());
+    }
 
     const middleRowKeys = rows[1]
       .map(key => keyRefs.current[key])
       .filter((el): el is HTMLSpanElement => Boolean(el));
 
-    if (!middleRowKeys.length) return;
+    if (!middleRowKeys.length || !keyRects.length) return;
 
     const nextHandsStyle = computeHandsStyle(
       stage.getBoundingClientRect(),
-      keyboard.getBoundingClientRect(),
+      keyRects,
       middleRowKeys.map(el => el.getBoundingClientRect()),
     );
 
     setHandsStyle(nextHandsStyle);
-  }, [rows, showStage, keyboardScale]);
+  }, [rows, showStage, keyboardScale, hidden]);
 
   useLayoutEffect(() => {
-    if (!showStage) {
+    if (!showStage || hidden) {
       setHandsStyle(undefined);
       return undefined;
     }
@@ -83,6 +98,31 @@ export function Keyboard() {
     const stage = stageRef.current;
     const keyboard = keyboardRef.current;
     if (!stage || !keyboard) return undefined;
+
+    const frameIds: number[] = [];
+    const timeoutIds: number[] = [];
+
+    const scheduleMeasure = (delayMs?: number) => {
+      if (typeof delayMs === 'number') {
+        const timeoutId = window.setTimeout(() => measureHandsFrame(), delayMs);
+        timeoutIds.push(timeoutId);
+        return;
+      }
+
+      const frameId = window.requestAnimationFrame(() => measureHandsFrame());
+      frameIds.push(frameId);
+    };
+
+    // A few late passes make the hand layer robust against first-paint layout shifts,
+    // responsive CSS variable application, and late font metrics settling.
+    scheduleMeasure();
+    const secondFrameId = window.requestAnimationFrame(() => {
+      measureHandsFrame();
+      const nestedFrameId = window.requestAnimationFrame(() => measureHandsFrame());
+      frameIds.push(nestedFrameId);
+    });
+    frameIds.push(secondFrameId);
+    scheduleMeasure(80);
 
     const onResize = () => measureHandsFrame();
     window.addEventListener('resize', onResize);
@@ -97,11 +137,20 @@ export function Keyboard() {
       });
     }
 
+    const fonts = 'fonts' in document ? document.fonts : null;
+    fonts?.ready.then(() => {
+      measureHandsFrame();
+    }).catch(() => {
+      // Ignore font readiness failures; fallback passes above already cover layout recovery.
+    });
+
     return () => {
       window.removeEventListener('resize', onResize);
       observer?.disconnect();
+      frameIds.forEach(id => window.cancelAnimationFrame(id));
+      timeoutIds.forEach(id => window.clearTimeout(id));
     };
-  }, [measureHandsFrame, currentLayout, showStage, keyboardScale]);
+  }, [measureHandsFrame, currentLayout, showStage, keyboardScale, hidden]);
 
   if (hidden) return null;
 
@@ -166,4 +215,3 @@ export function Keyboard() {
     </div>
   );
 }
-

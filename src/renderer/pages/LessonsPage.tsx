@@ -1,26 +1,35 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Medal } from 'lucide-react';
-import { useApp } from '../contexts/AppContext';
+import { useAppPractice, useAppSettings } from '../contexts/AppContext';
+import { useI18n } from '../contexts/I18nContext';
 import { useTypingSession } from '../hooks/useTypingSession';
 import {
   generateLessonExerciseText,
-  getExerciseNamesForLesson,
   EXERCISE_COUNT,
 } from '../../core/engine';
 import type { Lesson } from '../../shared/types';
 import { LessonsDetailView } from '../components/lessons/LessonsDetailView';
 import { LessonsExerciseView } from '../components/lessons/LessonsExerciseView';
 import { LessonsListView } from '../components/lessons/LessonsListView';
-import { getLessonFocusLabel, keysLabel, resolveLesson, sectionLabel } from '../../core/lessons/utils';
+import { resolveLesson } from '../../core/lessons/utils';
 import { AchievementsModal } from '../components/AchievementsModal';
 import { GameAchievementToastStack } from '../components/game/GameAchievementToastStack';
+import { AchievementCounterButton } from '../components/ui/AchievementCounterButton';
 import type { GameAchievementDefinition } from '../../shared/types';
 import { checkAchievements, type AchievementEvent } from '../../core/achievements/achievementEngine';
+import {
+  formatLessonKeys,
+  getLessonsSectionLabel,
+  getLocalizedExerciseNamesForLesson,
+  getLocalizedLessonFocusLabel,
+} from '../components/lessons/lessonText';
 
 /* ═══════════════════════════════════════════════════════ */
 export function LessonsPage() {
-  const { layouts, currentLayout, ngramModel, settings, progress, fmtSpeed, spdLabel,
-    saveHistory, saveProgress, currentLanguage, gameAchievementCatalog, unlockedAchievementIds, unlockAchievements } = useApp();
+  const { t } = useI18n();
+  const { layouts, ngramModel, progress, fmtSpeed, spdLabel,
+    saveHistory, saveProgress, gameAchievementCatalog, unlockedAchievementIds, unlockAchievements } = useAppPractice();
+  const { currentLayout, currentLanguage, settings } = useAppSettings();
 
   const [showAchievements, setShowAchievements] = useState(false);
   const [achievementToasts, setAchievementToasts] = useState<GameAchievementDefinition[]>([]);
@@ -58,16 +67,16 @@ export function LessonsPage() {
   const lessonsBySection = useMemo(() => {
     const groups = new Map<string, number[]>();
     lessons.forEach((lesson, index) => {
-      const section = sectionLabel(lesson.section);
+      const section = getLessonsSectionLabel(lesson.section, t);
       const current = groups.get(section) ?? [];
       current.push(index);
       groups.set(section, current);
     });
     return groups;
-  }, [lessons]);
+  }, [lessons, t]);
   const lessonSections = useMemo(
-    () => Array.from(new Set(lessons.map(lesson => sectionLabel(lesson.section)))),
-    [lessons],
+    () => Array.from(new Set(lessons.map(lesson => getLessonsSectionLabel(lesson.section, t)))),
+    [lessons, t],
   );
 
   /* lesson progress: number of completed exercises per lesson (0..5) */
@@ -82,13 +91,13 @@ export function LessonsPage() {
   }, [progress, currentLayout]);
   const getSectionUnlockState = useCallback((lessonIndex: number) => {
     const lesson = lessons[lessonIndex];
-    const section = sectionLabel(lesson?.section);
+    const section = getLessonsSectionLabel(lesson?.section, t);
     const sectionIndexes = lessonsBySection.get(section) ?? [];
     const sectionPosition = sectionIndexes.indexOf(lessonIndex);
     if (sectionPosition <= 0) return true;
     const previousLessonIndex = sectionIndexes[sectionPosition - 1];
     return (lessonsDone[previousLessonIndex] ?? 0) >= EXERCISE_COUNT;
-  }, [lessons, lessonsBySection, lessonsDone]);
+  }, [lessons, lessonsBySection, lessonsDone, t]);
 
   /* ─── State: which lesson & exercise are open ────── */
   const [activeLesson, setActiveLesson] = useState<number | null>(null);
@@ -128,7 +137,7 @@ export function LessonsPage() {
          // check if current section is fully completed
          const lesson = lessons[activeLesson];
          if (lesson) {
-           const section = sectionLabel(lesson.section);
+           const section = getLessonsSectionLabel(lesson.section, t);
            const sectionIndexes = lessonsBySection.get(section) ?? [];
            const sectionDone = sectionIndexes.every(idx => {
              if (idx === activeLesson) return true; // just completed
@@ -153,7 +162,7 @@ export function LessonsPage() {
     }
     saveHistory('lesson', wpm, acc, { charStats: ses?.charStats });
     setResult({ wpm, acc, passed });
-  }, [activeLesson, activeExercise, currentLayout, progress, saveProgress, saveHistory, handleAchievementEvent, lessons, lessonsBySection]);
+  }, [activeLesson, activeExercise, currentLayout, progress, saveProgress, saveHistory, handleAchievementEvent, lessons, lessonsBySection, t]);
 
   const { session, start, stop, handleKey, wpm, acc, waitingForSpace } = useTypingSession({
     mode: 'lesson', onFinish,
@@ -246,11 +255,23 @@ export function LessonsPage() {
 
   /* ─── Keyboard ────────────────────────────────────── */
   useEffect(() => {
-    if (!session.active) return;
-    const handler = (e: KeyboardEvent) => handleKey(e);
+    const handler = (event: KeyboardEvent) => {
+      const isPrintable = event.key.length === 1 && !event.ctrlKey && !event.altKey && !event.metaKey;
+      const isBackspace = event.key === 'Backspace';
+
+      if (!session.active && showOverlay && activeLesson !== null && activeExercise !== null && exerciseText && isPrintable) {
+        event.preventDefault();
+        startExercise();
+        return;
+      }
+
+      if (!session.active) return;
+      if (isPrintable || isBackspace) handleKey(event);
+    };
+
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [session.active, handleKey]);
+  }, [activeExercise, activeLesson, exerciseText, handleKey, session.active, showOverlay, startExercise]);
 
   // live tick
   const [, setTick] = useState(0);
@@ -275,8 +296,8 @@ export function LessonsPage() {
     ? (resolveCurrentLesson(lessons[activeLesson])?.keys ?? [])
     : [];
   const activeLessonData = activeLesson !== null ? resolveCurrentLesson(lessons[activeLesson]) : null;
-  const activeLessonExerciseNames = activeLessonData ? getExerciseNamesForLesson(activeLessonData) : null;
-  const activeLessonSection = activeLessonData ? sectionLabel(activeLessonData.section) : null;
+  const activeLessonExerciseNames = activeLessonData ? getLocalizedExerciseNamesForLesson(activeLessonData, t) : null;
+  const activeLessonSection = activeLessonData ? getLessonsSectionLabel(activeLessonData.section, t) : null;
   const activeSectionLessonIndexes = useMemo(
     () => (activeLessonSection ? (lessonsBySection.get(activeLessonSection) ?? []) : []),
     [activeLessonSection, lessonsBySection],
@@ -300,11 +321,13 @@ export function LessonsPage() {
     return nextSectionLessons[0] ?? null;
   }, [activeSectionIndex, lessonSections, lessonsBySection]);
   const nextLessonTarget = nextLessonInSection ?? nextSectionFirstLesson;
+  const canOpenPrevLesson = prevLessonInSection !== null && getSectionUnlockState(prevLessonInSection);
+  const canOpenNextLesson = nextLessonTarget !== null && getSectionUnlockState(nextLessonTarget);
   const nextLessonTargetLabel = nextLessonInSection !== null
-    ? 'Следующий урок'
+    ? t('lessons.nextLesson')
     : nextSectionFirstLesson !== null
-      ? 'Следующая секция'
-      : 'Готово';
+      ? t('lessons.nextSection')
+      : t('lessons.done');
 
   /* ═══════════════════════════════════════════════════
      VIEW: Active exercise (typing)
@@ -313,10 +336,11 @@ export function LessonsPage() {
     if (activeLesson !== null && activeExercise !== null) {
       return (
         <LessonsExerciseView
-          title={`${activeLessonData?.name ?? keysLabel(lessonKeys)} — ${activeLessonExerciseNames?.[activeExercise] ?? ''}`}
+          title={`${activeLessonData?.name ?? formatLessonKeys(lessonKeys, t)} — ${activeLessonExerciseNames?.[activeExercise] ?? ''}`}
           subtitle={activeLessonData?.description ?? null}
-          focusLabel={getLessonFocusLabel(activeLessonData, lessonKeys)}
+          focusLabel={getLocalizedLessonFocusLabel(activeLessonData, lessonKeys, t)}
           currentSpeed={fmtSpeed(wpm)}
+          resultSpeed={result ? fmtSpeed(result.wpm) : fmtSpeed(wpm)}
           speedUnit={spdLabel}
           currentAccuracy={acc}
           sessionActive={session.active}
@@ -344,17 +368,17 @@ export function LessonsPage() {
       const done = lessonsDone[activeLesson] ?? 0;
       return (
         <LessonsDetailView
-          title={activeLessonData?.name ?? keysLabel(lessonKeys)}
-          subtitle={activeLessonData?.description ?? sectionLabel(activeLessonData?.section)}
+          title={activeLessonData?.name ?? formatLessonKeys(lessonKeys, t)}
+          subtitle={activeLessonData?.description ?? getLessonsSectionLabel(activeLessonData?.section, t)}
           sectionTitle={activeLessonSection}
           sectionPosition={activeSectionPosition}
           sectionCount={activeSectionLessonIndexes.length}
-          focusLabel={getLessonFocusLabel(activeLessonData, lessonKeys)}
+          focusLabel={getLocalizedLessonFocusLabel(activeLessonData, lessonKeys, t)}
           exerciseNames={activeLessonExerciseNames}
           done={done}
           nextLessonTargetLabel={nextLessonTargetLabel}
-          hasPrevLesson={prevLessonInSection !== null}
-          hasNextLesson={nextLessonTarget !== null}
+          hasPrevLesson={canOpenPrevLesson}
+          hasNextLesson={canOpenNextLesson}
           onOpenExercise={openExercise}
           onOpenPrevLesson={() => openSiblingLesson(prevLessonInSection)}
           onOpenNextLesson={() => openSiblingLesson(nextLessonTarget)}
@@ -370,21 +394,20 @@ export function LessonsPage() {
         collapsedSections={collapsedSections}
         onToggleSection={toggleSection}
         onOpenLesson={openLesson}
-        sectionLabel={sectionLabel}
-        lessonFocusLabel={getLessonFocusLabel}
+        sectionLabel={(section) => getLessonsSectionLabel(section, t)}
+        lessonFocusLabel={(lesson, fallbackKeys) => getLocalizedLessonFocusLabel(lesson, fallbackKeys, t)}
         resolveLessonAtIndex={(index) => resolveCurrentLesson(lessons[index])}
         getSectionUnlockState={getSectionUnlockState}
         exerciseCount={EXERCISE_COUNT}
         headerRight={
-          <button
-            type="button"
-            className="btn-secondary btn-sm game-achievements-button"
+          <AchievementCounterButton
+            icon={<Medal size={14} />}
             onClick={() => setShowAchievements(true)}
+            total={lessonsAchievementCatalog.length}
+            unlocked={lessonsUnlockedCount}
           >
-            <Medal size={14} />
-            Достижения
-            <span className="game-achievements-count">{lessonsUnlockedCount}/{lessonsAchievementCatalog.length}</span>
-          </button>
+            {t('lessons.achievements')}
+          </AchievementCounterButton>
         }
       />
     );
@@ -404,5 +427,3 @@ export function LessonsPage() {
     </>
   );
 }
-
-

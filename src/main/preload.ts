@@ -6,8 +6,16 @@ import type {
   ElectronAPI,
   InstalledAddon,
   InstalledMod,
+  InstalledTheme,
+  ExtensionCatalogEntry,
+  ExtensionCatalogInstallResult,
+  ExtensionSourceInput,
+  ExtensionSourceInstallResult,
+  ExtensionSourceSyncResult,
+  InstalledExtensionSource,
   AddonInstallResult,
   ModInstallResult,
+  ThemeInstallResult,
   ImportFileOptions,
   ImportedFile,
 } from '../shared/types';
@@ -50,6 +58,34 @@ const api: ElectronAPI = {
     ipcRenderer.invoke('toggle-mod', modId, enabled) as Promise<boolean>,
   readModScript: (modId: string) =>
     ipcRenderer.invoke('read-mod-script', modId) as Promise<string | null>,
+  readModLocaleResources: (modId: string) =>
+    ipcRenderer.invoke('read-mod-locale-resources', modId) as Promise<import('../shared/types').ModLocaleResourceFile[]>,
+
+  /* Themes — style manifests */
+  scanThemes: () =>
+    ipcRenderer.invoke('scan-themes') as Promise<InstalledTheme[]>,
+  installTheme: () =>
+    ipcRenderer.invoke('install-theme') as Promise<ThemeInstallResult>,
+  removeTheme: (themeId: string) =>
+    ipcRenderer.invoke('remove-theme', themeId) as Promise<boolean>,
+
+  /* Extension sources */
+  scanExtensionSources: () =>
+    ipcRenderer.invoke('scan-extension-sources') as Promise<InstalledExtensionSource[]>,
+  scanExtensionCatalog: () =>
+    ipcRenderer.invoke('scan-extension-catalog') as Promise<ExtensionCatalogEntry[]>,
+  installExtensionSource: (input: ExtensionSourceInput) =>
+    ipcRenderer.invoke('install-extension-source', input) as Promise<ExtensionSourceInstallResult>,
+  installExtensionCatalogEntry: (sourceId: string, kind: 'addons' | 'mods' | 'themes', entryId: string) =>
+    ipcRenderer.invoke('install-extension-catalog-entry', sourceId, kind, entryId) as Promise<ExtensionCatalogInstallResult>,
+  updateExtensionSource: (sourceId: string, input: ExtensionSourceInput) =>
+    ipcRenderer.invoke('update-extension-source', sourceId, input) as Promise<ExtensionSourceInstallResult>,
+  removeExtensionSource: (sourceId: string) =>
+    ipcRenderer.invoke('remove-extension-source', sourceId) as Promise<boolean>,
+  toggleExtensionSource: (sourceId: string, enabled: boolean) =>
+    ipcRenderer.invoke('toggle-extension-source', sourceId, enabled) as Promise<boolean>,
+  syncExtensionSource: (sourceId: string) =>
+    ipcRenderer.invoke('sync-extension-source', sourceId) as Promise<ExtensionSourceSyncResult>,
 
   /* Window */
   winMinimize: () => ipcRenderer.send('win-minimize'),

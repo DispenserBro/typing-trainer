@@ -1,5 +1,5 @@
 import { useRef, useEffect, useMemo, type CSSProperties, type ReactNode } from 'react';
-import { useApp } from '../contexts/AppContext';
+import { useAppSettings } from '../contexts/AppContext';
 
 interface Props {
   text: string;
@@ -17,7 +17,7 @@ interface Props {
 export function TextDisplay({
   text, pos, errPositions, running, overlay, onOverlayClick, waitingForSpace, fontSizeRem, overlayCover, overlayContent,
 }: Props) {
-  const { settings } = useApp();
+  const { settings } = useAppSettings();
   const textRef = useRef<HTMLDivElement>(null);
   const parentRef = useRef<HTMLDivElement>(null);
 

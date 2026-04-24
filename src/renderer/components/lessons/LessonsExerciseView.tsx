@@ -1,5 +1,11 @@
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { TextDisplay } from '../TextDisplay';
+import { useI18n } from '../../contexts/I18nContext';
+import { ActionRow } from '../ui/ActionRow';
+import { Button } from '../ui/Button';
+import { InlineStatsBar } from '../ui/InlineStatsBar';
+import { PageHeader } from '../ui/PageHeader';
+import { ResultCardLayout } from '../ui/ResultCardLayout';
 
 type ExerciseResult = {
   wpm: number;
@@ -12,6 +18,7 @@ type LessonsExerciseViewProps = {
   subtitle?: string | null;
   focusLabel: string;
   currentSpeed: string | number;
+  resultSpeed: string | number;
   speedUnit: string;
   currentAccuracy: number;
   sessionActive: boolean;
@@ -38,6 +45,7 @@ export function LessonsExerciseView({
   subtitle,
   focusLabel,
   currentSpeed,
+  resultSpeed,
   speedUnit,
   currentAccuracy,
   sessionActive,
@@ -58,57 +66,64 @@ export function LessonsExerciseView({
   onDone,
   onBack,
 }: LessonsExerciseViewProps) {
+  const { t } = useI18n();
+  const displayedSpeed = result ? resultSpeed : currentSpeed;
+  const displayedAccuracy = result ? result.acc : currentAccuracy;
+
   return (
     <section className="mode-panel active">
-      <div className="panel-header"><h1>Уроки</h1></div>
+      <PageHeader title={t('lessons.title')} />
       <h3 className="lesson-active-title">{title}</h3>
       {subtitle && <p className="lesson-active-subtitle">{subtitle}</p>}
       <p className="lesson-active-keys">{focusLabel}</p>
-      <div className="stats-bar">
-        <div className="metric"><b>{currentSpeed}</b> <small className="speed-unit">{speedUnit}</small></div>
-        <div className="metric"><b>{Math.round(currentAccuracy)}</b>%</div>
-      </div>
+      <InlineStatsBar
+        items={[
+          { id: 'speed', content: <><b>{displayedSpeed}</b> <small className="speed-unit">{speedUnit}</small></> },
+          { id: 'accuracy', content: <><b>{Math.round(displayedAccuracy)}</b>%</> },
+        ]}
+      />
       <TextDisplay
         text={sessionActive ? sessionText : exerciseText}
         pos={sessionActive ? sessionPos : 0}
         errPositions={sessionActive ? sessionErrPositions : new Set()}
         waitingForSpace={waitingForSpace}
-        overlay={showOverlay && !sessionActive && !result ? 'Нажмите здесь, чтобы начать' : null}
+        overlay={showOverlay && !sessionActive && !result ? t('lessons.overlay') : null}
         onOverlayClick={onOverlayClick}
       />
       {result && (
-        <div className="result-card">
-          <h3>Упражнение завершено!</h3>
-          <div className="result-big">{currentSpeed} {speedUnit}</div>
-          <p>Точность: <b>{Math.round(result.acc)}%</b></p>
+        <ResultCardLayout
+          title={t('lessons.exerciseCompleted')}
+          headline={<>{resultSpeed} {speedUnit}</>}
+          summary={<>{t('common.accuracy')}: <b>{Math.round(result.acc)}%</b></>}
+        >
           <p>{result.passed
-            ? <span style={{ color: 'var(--green)' }}><Check size={16} style={{ verticalAlign: 'middle' }} /> Пройдено!</span>
-            : 'Нужна точность ≥ 80%'}
+            ? <span className="text-success"><Check size={16} className="ui-inline-icon" /> {t('lessons.passed')}</span>
+            : t('lessons.needAccuracy')}
           </p>
-          <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-            <button className="btn-secondary" onClick={onRetry}>Повторить</button>
+          <ActionRow align="center" className="result-actions game-actions lesson-result-actions">
+            <Button onClick={onRetry}>{t('lessons.retry')}</Button>
             {result.passed && hasNextExercise && (
-              <button className="btn-accent" onClick={onNextExercise}>
-                Далее <ArrowRight size={14} style={{ verticalAlign: 'middle' }} />
-              </button>
+              <Button variant="accent" onClick={onNextExercise}>
+                {t('lessons.next')} <ArrowRight size={14} className="ui-inline-icon" />
+              </Button>
             )}
             {result.passed && !hasNextExercise && (
               hasNextLessonTarget ? (
-                <button className="btn-accent" onClick={onOpenNextLesson}>
-                  {nextLessonTargetLabel} <ArrowRight size={14} style={{ verticalAlign: 'middle' }} />
-                </button>
+                <Button variant="accent" onClick={onOpenNextLesson}>
+                  {nextLessonTargetLabel} <ArrowRight size={14} className="ui-inline-icon" />
+                </Button>
               ) : (
-                <button className="btn-accent" onClick={onDone}>
-                  Готово <Check size={14} style={{ verticalAlign: 'middle' }} />
-                </button>
+                <Button variant="accent" onClick={onDone}>
+                  {t('lessons.done')} <Check size={14} className="ui-inline-icon" />
+                </Button>
               )
             )}
-          </div>
-        </div>
+          </ActionRow>
+        </ResultCardLayout>
       )}
-      <button className="btn-secondary mt-12" onClick={onBack}>
-        <ArrowLeft size={14} style={{ verticalAlign: 'middle' }} /> Назад
-      </button>
+      <Button className="mt-12" onClick={onBack}>
+        <ArrowLeft size={14} className="ui-inline-icon" /> {t('lessons.back')}
+      </Button>
     </section>
   );
 }

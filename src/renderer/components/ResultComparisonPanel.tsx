@@ -1,4 +1,7 @@
 import type { ResultComparisonSummary } from '../../core/motivation/records';
+import { useI18n } from '../contexts/I18nContext';
+import { ResultMetricStrip } from './ResultMetricStrip';
+import type { ResultMetricTone } from './ResultMetricStrip';
 
 type ResultComparisonPanelProps = {
   comparison: ResultComparisonSummary;
@@ -6,19 +9,10 @@ type ResultComparisonPanelProps = {
   speedLabel: string;
 };
 
-function formatShortDate(value: string) {
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return 'нет даты';
-  return parsed.toLocaleDateString('ru-RU', {
-    day: '2-digit',
-    month: 'short',
-  });
-}
-
-function getToneClass(tone: 'up' | 'down' | 'flat') {
-  if (tone === 'up') return ' good';
-  if (tone === 'down') return ' bad';
-  return '';
+function getMetricTone(tone: 'up' | 'down' | 'flat'): ResultMetricTone | undefined {
+  if (tone === 'up') return 'good';
+  if (tone === 'down') return 'bad';
+  return undefined;
 }
 
 export function ResultComparisonPanel({
@@ -26,54 +20,52 @@ export function ResultComparisonPanel({
   formatSpeed,
   speedLabel,
 }: ResultComparisonPanelProps) {
+  const { t, formatDate } = useI18n();
   if (!comparison.previousAttempt && !comparison.recentBest) return null;
 
+  const formatShortDate = (date: string) => formatDate(date, {
+    day: '2-digit',
+    month: 'short',
+  }, t('home.common.noDate'));
+
   return (
-    <div className="result-metrics" style={{ marginTop: 12 }}>
-      {comparison.previousAttempt && (
-        <div className="result-metric">
-          <span className="result-metric-value">
-            {formatSpeed(comparison.previousAttempt.entry.wpm)} {speedLabel}
-          </span>
-          <span className="result-metric-label">
-            {comparison.previousAttempt.label}
-          </span>
-          <span className="result-metric-label">
-            {Math.round(comparison.previousAttempt.entry.acc)}% · {comparison.previousAttempt.contextLabel} · {formatShortDate(comparison.previousAttempt.entry.date)}
-          </span>
-        </div>
-      )}
-      {comparison.previousDelta && (
-        <div className="result-metric">
-          <span className={`result-metric-value${getToneClass(comparison.previousDelta.tone)}`}>
-            {comparison.previousDelta.formattedSpeedDelta} {speedLabel}
-          </span>
-          <span className="result-metric-label">{comparison.previousDelta.label}</span>
-          <span className="result-metric-label">Точность {comparison.previousDelta.formattedAccuracyDelta}%</span>
-        </div>
-      )}
-      {comparison.recentBest && (
-        <div className="result-metric">
-          <span className="result-metric-value">
-            {formatSpeed(comparison.recentBest.entry.wpm)} {speedLabel}
-          </span>
-          <span className="result-metric-label">
-            {comparison.recentBest.label}
-          </span>
-          <span className="result-metric-label">
-            {Math.round(comparison.recentBest.entry.acc)}% · {comparison.recentBest.contextLabel} · {formatShortDate(comparison.recentBest.entry.date)}
-          </span>
-        </div>
-      )}
-      {comparison.recentBestDelta && (
-        <div className="result-metric">
-          <span className={`result-metric-value${getToneClass(comparison.recentBestDelta.tone)}`}>
-            {comparison.recentBestDelta.formattedSpeedDelta} {speedLabel}
-          </span>
-          <span className="result-metric-label">{comparison.recentBestDelta.label}</span>
-          <span className="result-metric-label">Точность {comparison.recentBestDelta.formattedAccuracyDelta}%</span>
-        </div>
-      )}
-    </div>
+    <ResultMetricStrip
+      metrics={[
+        ...(comparison.previousAttempt ? [{
+          id: 'previous-attempt',
+          label: comparison.previousAttempt.label,
+          value: `${formatSpeed(comparison.previousAttempt.entry.wpm)} ${speedLabel}`,
+          details: [
+            `${Math.round(comparison.previousAttempt.entry.acc)}% · ${comparison.previousAttempt.contextLabel} · ${formatShortDate(comparison.previousAttempt.entry.date)}`,
+          ],
+        }] : []),
+        ...(comparison.previousDelta ? [{
+          id: 'previous-delta',
+          label: comparison.previousDelta.label,
+          value: `${comparison.previousDelta.formattedSpeedDelta} ${speedLabel}`,
+          tone: getMetricTone(comparison.previousDelta.tone),
+          details: [
+            t('resultComparison.accuracyDelta', { value: comparison.previousDelta.formattedAccuracyDelta }),
+          ],
+        }] : []),
+        ...(comparison.recentBest ? [{
+          id: 'recent-best',
+          label: comparison.recentBest.label,
+          value: `${formatSpeed(comparison.recentBest.entry.wpm)} ${speedLabel}`,
+          details: [
+            `${Math.round(comparison.recentBest.entry.acc)}% · ${comparison.recentBest.contextLabel} · ${formatShortDate(comparison.recentBest.entry.date)}`,
+          ],
+        }] : []),
+        ...(comparison.recentBestDelta ? [{
+          id: 'recent-best-delta',
+          label: comparison.recentBestDelta.label,
+          value: `${comparison.recentBestDelta.formattedSpeedDelta} ${speedLabel}`,
+          tone: getMetricTone(comparison.recentBestDelta.tone),
+          details: [
+            t('resultComparison.accuracyDelta', { value: comparison.recentBestDelta.formattedAccuracyDelta }),
+          ],
+        }] : []),
+      ]}
+    />
   );
 }
