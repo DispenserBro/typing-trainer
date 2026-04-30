@@ -10,6 +10,7 @@ import type {
   GameRunModifier,
   GameRunRewardChoice,
   GameRunResult,
+  HistoryEntry,
   BossArchetypeId,
   BattleState,
 } from '../../shared/types';
@@ -107,6 +108,8 @@ import { buildGameResultViewModel, buildGameTerminalSummaryViewModel } from '../
 
 type BossRewardChoice = GameRunRewardChoice;
 type LevelResult = GameRunResult;
+
+const EMPTY_HISTORY: HistoryEntry[] = [];
 
 function isInventoryEntryEqual(left: InventoryEntry, right: InventoryEntry) {
   return left.id === right.id
@@ -1109,7 +1112,7 @@ export function GamePage() {
     && selectableMapNodeIds.length === 0
     && Boolean(currentMapNode?.battleLevel)
     && Boolean(levelText);
-  const historyEntries = progress.history?.[currentLayout] ?? [];
+  const historyEntries = progress.history?.[currentLayout] ?? EMPTY_HISTORY;
   const gameResultViewModel = useMemo(
     () => buildGameResultViewModel({
       currentLayout,

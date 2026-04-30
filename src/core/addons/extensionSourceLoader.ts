@@ -6,8 +6,13 @@ import { installThemeFromJSON, scanThemes, validateThemeManifest } from './theme
 import type { AddonManifest, ModManifest } from '../../shared/types/addon';
 import type {
   ExtensionCatalogEntry,
+  ExtensionCatalogCompatibility,
+  ExtensionCatalogIssue,
+  ExtensionCatalogIssueFallback,
+  ExtensionCatalogIssueStage,
   ExtensionCatalogInstallResult,
   ExtensionCatalogKind,
+  ExtensionCatalogPreflightResult,
   ExtensionSourceCachedLists,
   ExtensionSourceInput,
   ExtensionSourceInstallResult,
@@ -45,9 +50,42 @@ type SyncedSourcePayload = {
   resolvedManifestUri: string;
   manifest: ExtensionSourceManifest;
   lists: ExtensionSourceCachedLists;
+  sourceCardIssue?: ExtensionCatalogIssue;
   sourceCardUri?: string;
   sourceCardMarkdown?: string;
 };
+
+class UriReadError extends Error {
+  readonly code?: string;
+  readonly status?: number;
+  readonly uri: string;
+
+  constructor(uri: string, message: string, options?: { code?: string; status?: number }) {
+    super(message);
+    this.name = 'UriReadError';
+    this.uri = uri;
+    this.code = options?.code;
+    this.status = options?.status;
+  }
+}
+
+class ExtensionSourceStageError extends Error {
+  readonly fallback?: ExtensionCatalogIssueFallback;
+  readonly stage: ExtensionCatalogIssueStage;
+  readonly target?: string;
+
+  constructor(
+    stage: ExtensionCatalogIssueStage,
+    message: string,
+    options?: { fallback?: ExtensionCatalogIssueFallback; target?: string },
+  ) {
+    super(message);
+    this.name = 'ExtensionSourceStageError';
+    this.stage = stage;
+    this.target = options?.target;
+    this.fallback = options?.fallback;
+  }
+}
 
 function normalizeKebabId(value: unknown) {
   return typeof value === 'string' ? value.trim() : '';
@@ -105,16 +143,74 @@ function readJsonArrayOfStrings(content: string, label: string) {
   return parsed.map(entry => entry.trim()).filter(Boolean);
 }
 
+function formatUriReadError(error: unknown, uri: string) {
+  if (error instanceof UriReadError) {
+    return error.message;
+  }
+
+  if (error instanceof Error && error.message.trim()) {
+    return `${uri}: ${error.message}`;
+  }
+
+  return `${uri}: Unknown read error.`;
+}
+
+function isMissingUriReadError(error: unknown) {
+  if (error instanceof UriReadError) {
+    return error.code === 'ENOENT' || error.code === 'ENOTDIR' || error.status === 404;
+  }
+  return false;
+}
+
+function createCatalogIssue(
+  stage: ExtensionCatalogIssueStage,
+  severity: 'warning' | 'error',
+  message: string,
+  options?: {
+    code?: string;
+    fallback?: ExtensionCatalogIssueFallback;
+    params?: Record<string, string | number>;
+    target?: string;
+  },
+): ExtensionCatalogIssue {
+  return {
+    stage,
+    severity,
+    message,
+    code: options?.code,
+    params: options?.params,
+    target: options?.target,
+    fallback: options?.fallback,
+  };
+}
+
+function normalizeErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error && error.message.trim() ? error.message : fallback;
+}
+
 async function readRemoteText(url: string) {
   const response = await fetch(url);
   if (!response.ok) {
-    throw new Error(`Request failed: ${response.status} ${response.statusText}`);
+    throw new UriReadError(
+      url,
+      `${url}: Request failed: ${response.status} ${response.statusText}`,
+      { status: response.status },
+    );
   }
   return response.text();
 }
 
 function readLocalText(filePath: string) {
-  return fs.readFileSync(filePath, 'utf-8');
+  try {
+    return fs.readFileSync(filePath, 'utf-8');
+  } catch (error) {
+    if (error && typeof error === 'object' && 'code' in error) {
+      const code = String((error as { code?: unknown }).code ?? '');
+      const message = error instanceof Error ? error.message : `Failed to read ${filePath}.`;
+      throw new UriReadError(filePath, `${filePath}: ${message}`, { code });
+    }
+    throw error;
+  }
 }
 
 async function readTextByUri(uri: string) {
@@ -313,18 +409,35 @@ async function readTextFromSource(input: ExtensionSourceInput, uri: string) {
 
 async function syncSourceInput(input: ExtensionSourceInput): Promise<SyncedSourcePayload> {
   const resolvedManifestUri = getResolvedManifestUri(input);
-  const manifestText = await readTextFromSource(input, resolvedManifestUri);
+  let manifestText: string;
+  try {
+    manifestText = await readTextFromSource(input, resolvedManifestUri);
+  } catch (error) {
+    throw new ExtensionSourceStageError(
+      'manifest',
+      `Source manifest could not be read. ${formatUriReadError(error, resolvedManifestUri)}`,
+      { target: resolvedManifestUri },
+    );
+  }
 
   let rawManifest: unknown;
   try {
     rawManifest = JSON.parse(manifestText);
   } catch {
-    throw new Error('Source manifest is not valid JSON.');
+    throw new ExtensionSourceStageError(
+      'manifest',
+      `Source manifest is not valid JSON: ${resolvedManifestUri}`,
+      { target: resolvedManifestUri },
+    );
   }
 
   const validation = validateExtensionSourceManifest(rawManifest);
   if (!validation.ok || !validation.manifest) {
-    throw new Error(validation.errors.join(' '));
+    throw new ExtensionSourceStageError(
+      'manifest',
+      validation.errors.join(' '),
+      { target: resolvedManifestUri },
+    );
   }
 
   const manifest = validation.manifest;
@@ -334,22 +447,71 @@ async function syncSourceInput(input: ExtensionSourceInput): Promise<SyncedSourc
     const ref = manifest.lists[key];
     if (!ref) continue;
     const resolvedRef = resolveSourceRef(input, resolvedManifestUri, manifest, ref);
-    const content = await readTextFromSource(input, resolvedRef);
+    let content: string;
+    try {
+      content = await readTextFromSource(input, resolvedRef);
+    } catch (error) {
+      throw new ExtensionSourceStageError(
+        'list',
+        `${key} list could not be read. ${formatUriReadError(error, resolvedRef)}`,
+        { target: key },
+      );
+    }
+
+    let entries: string[];
+    try {
+      entries = readJsonArrayOfStrings(content, `${key} list`);
+    } catch (error) {
+      throw new ExtensionSourceStageError(
+        'list',
+        normalizeErrorMessage(error, `${key} list is invalid.`),
+        { target: key },
+      );
+    }
+
     lists[key] = {
       ref: resolvedRef,
-      entries: readJsonArrayOfStrings(content, `${key} list`),
+      entries,
     };
   }
 
+  let sourceCardIssue: ExtensionCatalogIssue | undefined;
   let sourceCardMarkdown: string | undefined;
   let sourceCardUri: string | undefined;
   if (manifest.cards?.source && isMarkdownFileRef(manifest.cards.source)) {
     const resolvedCardRef = resolveSourceRef(input, resolvedManifestUri, manifest, manifest.cards.source);
-    const rawSourceCardMarkdown = await readTextFromSource(input, resolvedCardRef);
-    const nextSourceCardMarkdown = normalizeMarkdownCardContent(rawSourceCardMarkdown);
-    if (nextSourceCardMarkdown) {
-      sourceCardUri = resolvedCardRef;
-      sourceCardMarkdown = nextSourceCardMarkdown;
+    try {
+      const rawSourceCardMarkdown = await readTextFromSource(input, resolvedCardRef);
+      const nextSourceCardMarkdown = normalizeMarkdownCardContent(rawSourceCardMarkdown);
+      if (nextSourceCardMarkdown) {
+        sourceCardUri = resolvedCardRef;
+        sourceCardMarkdown = nextSourceCardMarkdown;
+      } else {
+        sourceCardIssue = createCatalogIssue(
+          'card',
+          'warning',
+          `Source card is empty and was skipped: ${resolvedCardRef}`,
+          {
+            code: 'addons.catalog.issue.sourceCardEmpty',
+            fallback: 'skipped-card',
+            params: { target: resolvedCardRef },
+            target: resolvedCardRef,
+          },
+        );
+      }
+    } catch (error) {
+      const details = formatUriReadError(error, resolvedCardRef);
+      sourceCardIssue = createCatalogIssue(
+        'card',
+        'warning',
+        `Source card could not be read. ${details}`,
+        {
+          code: 'addons.catalog.issue.sourceCardReadFailed',
+          fallback: 'skipped-card',
+          params: { details },
+          target: resolvedCardRef,
+        },
+      );
     }
   }
 
@@ -357,6 +519,7 @@ async function syncSourceInput(input: ExtensionSourceInput): Promise<SyncedSourc
     resolvedManifestUri,
     manifest,
     lists,
+    sourceCardIssue,
     sourceCardUri,
     sourceCardMarkdown,
   };
@@ -377,6 +540,7 @@ function withSuccessSyncState(
       resolvedManifestUri: synced.resolvedManifestUri,
       manifest: synced.manifest,
       lists: synced.lists,
+      sourceCardIssue: synced.sourceCardIssue,
       sourceCardUri: synced.sourceCardUri,
       sourceCardMarkdown: synced.sourceCardMarkdown,
     },
@@ -386,6 +550,11 @@ function withSuccessSyncState(
 function withErrorSyncState(
   entry: InstalledExtensionSource,
   error: string,
+  options?: {
+    fallback?: ExtensionCatalogIssueFallback;
+    stage?: Extract<ExtensionCatalogIssueStage, 'manifest' | 'list' | 'card'>;
+    target?: string;
+  },
 ): InstalledExtensionSource {
   return {
     ...entry,
@@ -394,6 +563,9 @@ function withErrorSyncState(
       status: 'error',
       lastCheckedAt: new Date().toISOString(),
       lastError: error,
+      lastErrorStage: options?.stage,
+      lastErrorTarget: options?.target,
+      lastErrorFallback: options?.fallback === 'stale-cache' ? 'stale-cache' : undefined,
     },
   };
 }
@@ -535,6 +707,7 @@ type ResolvedCatalogEntryPayload = {
   dependencies: string[];
   entryId: string;
   icon?: string;
+  issues: ExtensionCatalogIssue[];
   kind: ExtensionCatalogKind;
   manifestAuthor?: string;
   manifestDescription?: string;
@@ -550,6 +723,86 @@ type ResolvedCatalogEntryPayload = {
   manifestText: string;
 };
 
+function buildCatalogCompatibility(
+  minAppVersion: string | undefined,
+  appVersion: string | undefined,
+): ExtensionCatalogCompatibility | undefined {
+  const normalizedMinVersion = typeof minAppVersion === 'string' ? minAppVersion.trim() : '';
+  const normalizedAppVersion = typeof appVersion === 'string' ? appVersion.trim() : '';
+  if (!normalizedMinVersion || !normalizedAppVersion) return undefined;
+
+  return {
+    appVersion: normalizedAppVersion,
+    minAppVersion: normalizedMinVersion,
+    compatible: compareVersionStrings(normalizedAppVersion, normalizedMinVersion) >= 0,
+  };
+}
+
+function buildCatalogPreflightIssues(
+  resolved: ResolvedCatalogEntryPayload,
+  installedDependencyIds: Set<string>,
+  compatibility?: ExtensionCatalogCompatibility,
+): ExtensionCatalogIssue[] {
+  const issues: ExtensionCatalogIssue[] = [];
+
+  if (compatibility && !compatibility.compatible) {
+    issues.push(createCatalogIssue(
+      'manifest',
+      'error',
+      `Requires app version ${compatibility.minAppVersion} or newer. Current version is ${compatibility.appVersion}.`,
+      {
+        code: 'addons.catalog.incompatibleWithApp',
+        fallback: 'blocked-install',
+        params: {
+          appVersion: compatibility.appVersion,
+          minVersion: compatibility.minAppVersion ?? '',
+        },
+        target: resolved.resolvedManifestUri,
+      },
+    ));
+  }
+
+  const missingDependencies = resolved.dependencies.filter(dependencyId => !installedDependencyIds.has(dependencyId));
+  if (missingDependencies.length > 0) {
+    const blocksInstall = resolved.kind === 'mods';
+    issues.push(createCatalogIssue(
+      'manifest',
+      blocksInstall ? 'error' : 'warning',
+      `Missing dependencies before install: ${missingDependencies.join(', ')}.`,
+      {
+        code: blocksInstall
+          ? 'addons.catalog.issue.missingRuntimeDependencies'
+          : 'addons.catalog.issue.missingDependencies',
+        params: { ids: missingDependencies.join(', ') },
+        target: resolved.resolvedManifestUri,
+        ...(blocksInstall ? { fallback: 'blocked-install' as const } : {}),
+      },
+    ));
+  }
+
+  return issues;
+}
+
+function buildSourceCatalogIssues(source: InstalledExtensionSource): ExtensionCatalogIssue[] {
+  if (source.syncState.status !== 'error' || !source.syncState.lastError) return [];
+
+  return [
+    createCatalogIssue(
+      source.syncState.lastErrorStage ?? 'manifest',
+      'error',
+      source.syncState.lastError,
+      {
+        target: source.syncState.lastErrorTarget,
+        fallback: source.syncState.lastErrorFallback,
+      },
+    ),
+  ];
+}
+
+function getFirstErrorIssue(issues: ExtensionCatalogIssue[]) {
+  return issues.find(issue => issue.severity === 'error');
+}
+
 async function resolveCatalogEntryPayload(
   source: InstalledExtensionSource,
   kind: ExtensionCatalogKind,
@@ -561,13 +814,26 @@ async function resolveCatalogEntryPayload(
   }
 
   const resolvedManifestUri = resolveCatalogEntryManifestUri(listRef, entryId);
-  const manifestText = await readTextByUri(resolvedManifestUri);
+  let manifestText: string;
+  try {
+    manifestText = await readTextByUri(resolvedManifestUri);
+  } catch (error) {
+    throw new ExtensionSourceStageError(
+      'manifest',
+      `Extension manifest could not be read. ${formatUriReadError(error, resolvedManifestUri)}`,
+      { target: resolvedManifestUri },
+    );
+  }
 
   let rawManifest: unknown;
   try {
     rawManifest = JSON.parse(manifestText);
   } catch {
-    throw new Error('Extension manifest is not valid JSON.');
+    throw new ExtensionSourceStageError(
+      'manifest',
+      `Extension manifest is not valid JSON: ${resolvedManifestUri}`,
+      { target: resolvedManifestUri },
+    );
   }
 
   const themeSidecars = kind === 'themes'
@@ -584,27 +850,77 @@ async function resolveCatalogEntryPayload(
       : validateAddonManifest(rawManifest);
 
   if (!validation.ok || !validation.manifest) {
-    throw new Error(validation.errors.join(' '));
+    throw new ExtensionSourceStageError(
+      'manifest',
+      validation.errors.join(' '),
+      { target: resolvedManifestUri },
+    );
   }
 
   let resolvedCardUri: string | undefined;
   let cardMarkdown: string | undefined;
+  const issues: ExtensionCatalogIssue[] = [];
 
   for (const candidate of resolveCatalogEntryCardCandidates(resolvedManifestUri)) {
     if (!isMarkdownFileRef(candidate)) continue;
-    const nextMarkdown = normalizeMarkdownCardContent(await readOptionalTextByUri(candidate));
-    if (!nextMarkdown) continue;
-    resolvedCardUri = candidate;
-    cardMarkdown = nextMarkdown;
-    break;
+    try {
+      const nextMarkdown = normalizeMarkdownCardContent(await readTextByUri(candidate));
+      if (!nextMarkdown) {
+        issues.push(createCatalogIssue(
+          'card',
+          'warning',
+          `Markdown card is empty and was skipped: ${candidate}`,
+          {
+            code: 'addons.catalog.issue.cardEmpty',
+            fallback: 'skipped-card',
+            params: { target: candidate },
+            target: candidate,
+          },
+        ));
+        continue;
+      }
+
+      resolvedCardUri = candidate;
+      cardMarkdown = nextMarkdown;
+      break;
+    } catch (error) {
+      if (isMissingUriReadError(error)) continue;
+      const details = formatUriReadError(error, candidate);
+
+      issues.push(createCatalogIssue(
+        'card',
+        'warning',
+        `Markdown card could not be read. ${details}`,
+        {
+          code: 'addons.catalog.issue.cardReadFailed',
+          fallback: 'skipped-card',
+          params: { details },
+          target: candidate,
+        },
+      ));
+    }
   }
 
   if (kind === 'mods') {
     const manifest = validation.manifest as ModManifest;
+    if (source.input.type !== 'local' && (!manifest.files || manifest.files.length === 0)) {
+      issues.push(createCatalogIssue(
+        'package',
+        'warning',
+        'Remote mod package does not declare manifest.files, so the entry stays manual-only.',
+        {
+          code: 'addons.catalog.issue.remoteModManualOnly',
+          fallback: 'manual-only',
+          target: resolvedManifestUri,
+        },
+      ));
+    }
+
     return {
       kind,
       entryId: normalizeCatalogEntryId(entryId),
       icon: manifest.icon,
+      issues,
       manifestId: manifest.id,
       manifestName: manifest.name,
       manifestVersion: manifest.version,
@@ -628,6 +944,7 @@ async function resolveCatalogEntryPayload(
       kind,
       entryId: normalizeCatalogEntryId(entryId),
       icon: manifest.icon,
+      issues,
       manifestId: manifest.id,
       manifestName: manifest.name,
       manifestVersion: manifest.version,
@@ -650,6 +967,7 @@ async function resolveCatalogEntryPayload(
     kind,
     entryId: normalizeCatalogEntryId(entryId),
     icon: manifest.icon,
+    issues,
     manifestId: manifest.id,
     manifestName: manifest.name,
     manifestVersion: manifest.version,
@@ -672,6 +990,7 @@ function buildCatalogEntryStatus(
   kind: ExtensionCatalogKind,
   manifestId: string | undefined,
   manifestVersion: string | undefined,
+  compatibility: ExtensionCatalogCompatibility | undefined,
   installedAddonVersions: Map<string, string>,
   installedModVersions: Map<string, string>,
   installedThemeVersions: Map<string, string>,
@@ -692,6 +1011,10 @@ function buildCatalogEntryStatus(
       : installedAddonVersions.get(manifestId);
 
   if (!installedVersion) {
+    if (compatibility && !compatibility.compatible) {
+      return { status: 'incompatible' };
+    }
+
     return { status: 'available' };
   }
 
@@ -700,6 +1023,146 @@ function buildCatalogEntryStatus(
   }
 
   return { installedVersion, status: 'installed' };
+}
+
+function isCatalogEntryBlocked(entry: ExtensionCatalogEntry) {
+  return entry.status === 'invalid'
+    || entry.status === 'source-disabled'
+    || entry.status === 'source-error'
+    || entry.status === 'incompatible'
+    || entry.installSupport !== 'direct'
+    || entry.issues.some(issue => issue.fallback === 'blocked-install');
+}
+
+function getCatalogEntryBlockReason(entry: ExtensionCatalogEntry) {
+  const blockingIssue = entry.issues.find(issue => issue.fallback === 'blocked-install' || issue.severity === 'error');
+  if (blockingIssue) return blockingIssue.message;
+
+  if (entry.status === 'invalid') return entry.lastError ?? 'Catalog entry is invalid.';
+  if (entry.status === 'source-disabled') return 'Extension source is disabled.';
+  if (entry.status === 'source-error') return entry.lastError ?? 'Extension source is not synchronized.';
+  if (entry.status === 'incompatible') return 'Catalog entry is not compatible with this app version.';
+  if (entry.installSupport !== 'direct') return 'Catalog entry requires manual installation.';
+  return undefined;
+}
+
+function compareCatalogEntryVersions(left: ExtensionCatalogEntry, right: ExtensionCatalogEntry) {
+  return compareVersionStrings(left.manifestVersion, right.manifestVersion);
+}
+
+function applyDuplicateRecommendations(group: ExtensionCatalogEntry[]) {
+  const sortedByVersion = [...group].sort((left, right) => compareCatalogEntryVersions(right, left));
+  const newestEntry = sortedByVersion[0];
+  const preferredInstallableEntry = sortedByVersion.find(entry => !isCatalogEntryBlocked(entry));
+  if (!newestEntry || !preferredInstallableEntry) return;
+
+  for (const entry of group) {
+    if (newestEntry.id !== preferredInstallableEntry.id && isCatalogEntryBlocked(newestEntry)) {
+      entry.duplicatePreferredSourceName = preferredInstallableEntry.sourceName;
+      entry.duplicatePreferredVersion = preferredInstallableEntry.manifestVersion;
+      entry.duplicateRecommendationReason = 'newest-blocked';
+      continue;
+    }
+
+    if (
+      entry.id !== preferredInstallableEntry.id
+      && compareCatalogEntryVersions(preferredInstallableEntry, entry) > 0
+    ) {
+      entry.duplicatePreferredSourceName = preferredInstallableEntry.sourceName;
+      entry.duplicatePreferredVersion = preferredInstallableEntry.manifestVersion;
+      entry.duplicateRecommendationReason = 'newer-available';
+    }
+  }
+}
+
+type ExtensionCatalogEntryPreflight = {
+  compatibility?: ExtensionCatalogCompatibility;
+  entry: ExtensionCatalogEntry;
+  resolved: ResolvedCatalogEntryPayload;
+  source: InstalledExtensionSource;
+};
+
+async function resolveExtensionCatalogEntryPreflight(
+  dataDir: string,
+  addonsDir: string,
+  modsDir: string,
+  themesDir: string,
+  sourceId: string,
+  kind: ExtensionCatalogKind,
+  entryId: string,
+  appVersion?: string,
+): Promise<ExtensionCatalogEntryPreflight> {
+  const source = scanExtensionSources(dataDir).find(entry => entry.id === sourceId);
+  if (!source) {
+    throw new Error('Extension source not found.');
+  }
+
+  const resolved = await resolveCatalogEntryPayload(source, kind, entryId);
+  const compatibility = buildCatalogCompatibility(resolved.minAppVersion, appVersion);
+  const installedAddons = scanAddons(addonsDir);
+  const installedMods = scanMods(modsDir);
+  const installedThemes = scanThemes(themesDir);
+  const installedAddonVersions = new Map(installedAddons.map(addon => [addon.id, addon.manifest.version]));
+  const installedModVersions = new Map(installedMods.map(mod => [mod.id, mod.manifest.version]));
+  const installedThemeVersions = new Map(installedThemes.map(theme => [theme.id, theme.manifest.version]));
+  const installedDependencyIds = new Set([
+    ...installedAddons.filter(addon => addon.enabled).map(addon => addon.id),
+    ...installedMods.filter(mod => mod.enabled).map(mod => mod.id),
+    ...installedThemes.map(theme => theme.id),
+  ]);
+  const sourceName = source.syncState.manifest?.name ?? source.id;
+  const sourceIssues = buildSourceCatalogIssues(source);
+  const sourceErrorIssue = getFirstErrorIssue(sourceIssues);
+  const status = buildCatalogEntryStatus(
+    source,
+    kind,
+    resolved.manifestId,
+    resolved.manifestVersion,
+    compatibility,
+    installedAddonVersions,
+    installedModVersions,
+    installedThemeVersions,
+  );
+  const installSupport = canDirectInstallCatalogEntry(source, resolved) ? 'direct' : 'manual';
+  const preflightIssues = buildCatalogPreflightIssues(resolved, installedDependencyIds, compatibility);
+
+  return {
+    source,
+    resolved,
+    compatibility,
+    entry: {
+      id: createCatalogEntryKey(source.id, kind, resolved.entryId),
+      sourceId: source.id,
+      sourceName,
+      sourceEnabled: source.enabled,
+      kind,
+      entryId: resolved.entryId,
+      manifestId: resolved.manifestId,
+      manifestName: resolved.manifestName,
+      manifestVersion: resolved.manifestVersion,
+      icon: resolved.icon,
+      manifestDescription: resolved.manifestDescription,
+      manifestAuthor: resolved.manifestAuthor,
+      manifestType: resolved.manifestType,
+      minAppVersion: resolved.minAppVersion,
+      compatibility,
+      installedVersion: status.installedVersion,
+      status: status.status,
+      installSupport,
+      dependencies: resolved.dependencies,
+      packageFiles: resolved.packageFiles,
+      permissions: resolved.permissions,
+      issues: [...sourceIssues, ...resolved.issues, ...preflightIssues],
+      duplicateSourceIds: [],
+      duplicateSourceNames: [],
+      resolvedManifestUri: resolved.resolvedManifestUri,
+      resolvedCardUri: resolved.resolvedCardUri,
+      cardMarkdown: resolved.cardMarkdown,
+      ...(sourceErrorIssue ? {
+        lastError: sourceErrorIssue.message,
+      } : {}),
+    },
+  };
 }
 
 export function scanExtensionSources(dataDir: string): InstalledExtensionSource[] {
@@ -712,22 +1175,26 @@ export async function scanExtensionCatalog(
   addonsDir: string,
   modsDir: string,
   themesDir: string,
+  appVersion?: string,
 ): Promise<ExtensionCatalogEntry[]> {
   const sources = scanExtensionSources(dataDir);
-  const installedAddonVersions = new Map(
-    scanAddons(addonsDir).map(addon => [addon.id, addon.manifest.version]),
-  );
-  const installedModVersions = new Map(
-    scanMods(modsDir).map(mod => [mod.id, mod.manifest.version]),
-  );
-  const installedThemeVersions = new Map(
-    scanThemes(themesDir).map(theme => [theme.id, theme.manifest.version]),
-  );
+  const installedAddons = scanAddons(addonsDir);
+  const installedMods = scanMods(modsDir);
+  const installedThemes = scanThemes(themesDir);
+  const installedAddonVersions = new Map(installedAddons.map(addon => [addon.id, addon.manifest.version]));
+  const installedModVersions = new Map(installedMods.map(mod => [mod.id, mod.manifest.version]));
+  const installedThemeVersions = new Map(installedThemes.map(theme => [theme.id, theme.manifest.version]));
+  const installedDependencyIds = new Set([
+    ...installedAddons.filter(addon => addon.enabled).map(addon => addon.id),
+    ...installedMods.filter(mod => mod.enabled).map(mod => mod.id),
+    ...installedThemes.map(theme => theme.id),
+  ]);
 
   const entries: ExtensionCatalogEntry[] = [];
 
   for (const source of sources) {
     const sourceName = source.syncState.manifest?.name ?? source.id;
+    const sourceIssues = buildSourceCatalogIssues(source);
 
     for (const kind of ['addons', 'mods', 'themes'] as const) {
       const cachedEntries = source.syncState.lists?.[kind]?.entries ?? [];
@@ -737,11 +1204,15 @@ export async function scanExtensionCatalog(
 
         try {
           const resolved = await resolveCatalogEntryPayload(source, kind, entryId);
+          const compatibility = buildCatalogCompatibility(resolved.minAppVersion, appVersion);
+          const preflightIssues = buildCatalogPreflightIssues(resolved, installedDependencyIds, compatibility);
+          const sourceErrorIssue = getFirstErrorIssue(sourceIssues);
           const status = buildCatalogEntryStatus(
             source,
             kind,
             resolved.manifestId,
             resolved.manifestVersion,
+            compatibility,
             installedAddonVersions,
             installedModVersions,
             installedThemeVersions,
@@ -762,19 +1233,35 @@ export async function scanExtensionCatalog(
             manifestAuthor: resolved.manifestAuthor,
             manifestType: resolved.manifestType,
             minAppVersion: resolved.minAppVersion,
+            compatibility,
             installedVersion: status.installedVersion,
             status: status.status,
             installSupport: canDirectInstallCatalogEntry(source, resolved) ? 'direct' : 'manual',
             dependencies: resolved.dependencies,
             packageFiles: resolved.packageFiles,
             permissions: resolved.permissions,
+            issues: [...sourceIssues, ...resolved.issues, ...preflightIssues],
             duplicateSourceIds: [],
             duplicateSourceNames: [],
             resolvedManifestUri: resolved.resolvedManifestUri,
             resolvedCardUri: resolved.resolvedCardUri,
             cardMarkdown: resolved.cardMarkdown,
+            ...(sourceErrorIssue ? {
+              lastError: sourceErrorIssue.message,
+            } : {}),
           });
         } catch (error) {
+          const issue = error instanceof ExtensionSourceStageError
+            ? createCatalogIssue(error.stage, 'error', error.message, {
+                target: error.target,
+                fallback: error.fallback,
+              })
+            : createCatalogIssue(
+              'manifest',
+              'error',
+              normalizeErrorMessage(error, 'Failed to resolve the catalog entry.'),
+            );
+
           entries.push({
             id: createCatalogEntryKey(source.id, kind, entryId),
             sourceId: source.id,
@@ -787,9 +1274,10 @@ export async function scanExtensionCatalog(
             dependencies: [],
             packageFiles: [],
             permissions: [],
+            issues: [...sourceIssues, issue],
             duplicateSourceIds: [],
             duplicateSourceNames: [],
-            lastError: error instanceof Error ? error.message : 'Failed to resolve the catalog entry.',
+            lastError: issue.message,
           });
         }
       }
@@ -817,6 +1305,8 @@ export async function scanExtensionCatalog(
       entry.duplicateSourceIds = duplicates.map(candidate => candidate.sourceId);
       entry.duplicateSourceNames = Array.from(new Set(duplicates.map(candidate => candidate.sourceName)));
     }
+
+    applyDuplicateRecommendations(group);
   }
 
   return entries.sort((left, right) => {
@@ -838,7 +1328,7 @@ export async function installExtensionSource(
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : 'Failed to read the extension source.',
+      error: normalizeErrorMessage(error, 'Failed to read the extension source.'),
     };
   }
 
@@ -879,7 +1369,7 @@ export async function updateExtensionSource(
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : 'Failed to update the extension source.',
+      error: normalizeErrorMessage(error, 'Failed to update the extension source.'),
     };
   }
 
@@ -942,9 +1432,18 @@ export async function syncExtensionSource(
     saveRegistry(dataDir, registry);
     return { ok: true, source: nextEntry };
   } catch (error) {
+    const normalizedError = normalizeErrorMessage(error, 'Failed to sync the extension source.');
+    const fallback = previous.syncState.status === 'ready' ? 'stale-cache' : undefined;
     const nextEntry = withErrorSyncState(
       previous,
-      error instanceof Error ? error.message : 'Failed to sync the extension source.',
+      normalizedError,
+      error instanceof ExtensionSourceStageError ? {
+        fallback,
+        stage: error.stage === 'package' ? 'manifest' : error.stage,
+        target: error.target,
+      } : {
+        fallback,
+      },
     );
     registry.sources[sourceIndex] = nextEntry;
     saveRegistry(dataDir, registry);
@@ -964,6 +1463,46 @@ export async function syncAllExtensionSources(dataDir: string): Promise<Extensio
   return results;
 }
 
+export async function validateExtensionCatalogEntry(
+  dataDir: string,
+  addonsDir: string,
+  modsDir: string,
+  themesDir: string,
+  sourceId: string,
+  kind: ExtensionCatalogKind,
+  entryId: string,
+  appVersion?: string,
+): Promise<ExtensionCatalogPreflightResult> {
+  try {
+    const preflight = await resolveExtensionCatalogEntryPreflight(
+      dataDir,
+      addonsDir,
+      modsDir,
+      themesDir,
+      sourceId,
+      kind,
+      entryId,
+      appVersion,
+    );
+    const blockReason = getCatalogEntryBlockReason(preflight.entry);
+
+    return {
+      ok: !blockReason,
+      blocked: Boolean(blockReason),
+      error: blockReason,
+      entry: preflight.entry,
+      issues: preflight.entry.issues,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      blocked: true,
+      error: normalizeErrorMessage(error, 'Failed to validate the catalog entry.'),
+      issues: [],
+    };
+  }
+}
+
 export async function installExtensionCatalogEntry(
   dataDir: string,
   addonsDir: string,
@@ -972,18 +1511,26 @@ export async function installExtensionCatalogEntry(
   sourceId: string,
   kind: 'addons' | 'mods' | 'themes',
   entryId: string,
+  appVersion?: string,
 ): Promise<ExtensionCatalogInstallResult> {
-  const source = scanExtensionSources(dataDir).find(entry => entry.id === sourceId);
-  if (!source) {
-    return { ok: false, error: 'Extension source not found.' };
-  }
-
   try {
-    const resolved = await resolveCatalogEntryPayload(source, kind, entryId);
-    if (!canDirectInstallCatalogEntry(source, resolved)) {
+    const preflight = await resolveExtensionCatalogEntryPreflight(
+      dataDir,
+      addonsDir,
+      modsDir,
+      themesDir,
+      sourceId,
+      kind,
+      entryId,
+      appVersion,
+    );
+    const { entry, resolved, source, compatibility } = preflight;
+    const blockReason = getCatalogEntryBlockReason(entry);
+    if (blockReason) {
       return {
         ok: false,
-        error: 'This catalog entry requires manual installation because the package file list is missing.',
+        error: blockReason,
+        entry,
       };
     }
 
@@ -994,10 +1541,22 @@ export async function installExtensionCatalogEntry(
           }
 
           const packageFiles = await Promise.all(
-            resolved.packageFiles.map(async (relativePath) => ({
-              relativePath,
-              content: await readTextByUri(resolveCatalogPackageFileUri(resolved.resolvedManifestUri, relativePath)),
-            })),
+            resolved.packageFiles.map(async (relativePath) => {
+              const packageUri = resolveCatalogPackageFileUri(resolved.resolvedManifestUri, relativePath);
+
+              try {
+                return {
+                  relativePath,
+                  content: await readTextByUri(packageUri),
+                };
+              } catch (error) {
+                throw new ExtensionSourceStageError(
+                  'package',
+                  `Package file could not be read. ${formatUriReadError(error, packageUri)}`,
+                  { target: packageUri },
+                );
+              }
+            }),
           );
           return installModFromPackage(modsDir, resolved.manifestText, packageFiles);
         })()
@@ -1008,37 +1567,17 @@ export async function installExtensionCatalogEntry(
     return {
       ...result,
       entry: {
-        id: createCatalogEntryKey(source.id, kind, resolved.entryId),
-        sourceId: source.id,
-        sourceName: source.syncState.manifest?.name ?? source.id,
-        sourceEnabled: source.enabled,
-        kind,
-        entryId: resolved.entryId,
-        manifestId: resolved.manifestId,
-        manifestName: resolved.manifestName,
-        manifestVersion: resolved.manifestVersion,
-        icon: resolved.icon,
-        manifestDescription: resolved.manifestDescription,
-        manifestAuthor: resolved.manifestAuthor,
-        manifestType: resolved.manifestType,
-        minAppVersion: resolved.minAppVersion,
-        status: result.ok ? 'installed' : 'available',
-        installSupport: canDirectInstallCatalogEntry(source, resolved) ? 'direct' : 'manual',
-        dependencies: resolved.dependencies,
-        packageFiles: resolved.packageFiles,
-        permissions: resolved.permissions,
-        duplicateSourceIds: [],
-        duplicateSourceNames: [],
-        resolvedManifestUri: resolved.resolvedManifestUri,
-        resolvedCardUri: resolved.resolvedCardUri,
-        cardMarkdown: resolved.cardMarkdown,
+        ...entry,
+        compatibility,
+        status: result.ok ? 'installed' : entry.status,
         ...(result.error ? { lastError: result.error } : {}),
       },
     };
   } catch (error) {
+    const message = normalizeErrorMessage(error, 'Failed to install the catalog entry.');
     return {
       ok: false,
-      error: error instanceof Error ? error.message : 'Failed to install the catalog entry.',
+      error: message,
     };
   }
 }

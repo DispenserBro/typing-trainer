@@ -1,7 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain, nativeImage } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
-import type { Progress, CustomThemes } from '../shared/types';
+import type { CustomThemeColors, CustomThemes, Progress } from '../shared/types';
 import {
   scanAddons,
   installAddonFromJSON,
@@ -9,6 +9,7 @@ import {
   toggleAddon,
   scanExtensionSources,
   scanExtensionCatalog,
+  validateExtensionCatalogEntry,
   installExtensionSource,
   installExtensionCatalogEntry,
   updateExtensionSource,
@@ -34,9 +35,74 @@ const userDataPath: string = app.isPackaged
   : path.join(app.getAppPath(), 'data');
 const progressFile: string = path.join(userDataPath, 'progress.json');
 const customThemesFile: string = path.join(userDataPath, 'custom-themes.json');
+const installerThemeFile: string = path.join(userDataPath, 'installer-theme.ini');
+const setupPreferencesFile: string = path.join(userDataPath, 'setup-preferences.json');
 const addonsDir: string = path.join(userDataPath, 'addons');
 const modsDir: string = path.join(userDataPath, 'mods');
 const themesDir: string = path.join(userDataPath, 'themes');
+
+type SetupPreferences = {
+  settings?: Partial<NonNullable<Progress['settings']>>;
+  extensionSources?: string[];
+};
+
+type InstallerThemeColors = {
+  bg: string;
+  surface: string;
+  surface2: string;
+  surface3: string;
+  text: string;
+  subtext: string;
+  accent: string;
+};
+
+const BUILT_IN_INSTALLER_THEMES: Record<string, InstallerThemeColors> = {
+  'dark-orange': {
+    bg: '181818',
+    surface: '1F1F1F',
+    surface2: '2A2A2A',
+    surface3: '333333',
+    text: 'F4F4F4',
+    subtext: 'B8B8B8',
+    accent: 'E8751A',
+  },
+  catppuccin: {
+    bg: '1E1E2E',
+    surface: '2A2A3C',
+    surface2: '35354A',
+    surface3: '3E3E56',
+    text: 'CDD6F4',
+    subtext: 'A6ADC8',
+    accent: '89B4FA',
+  },
+  nord: {
+    bg: '2E3440',
+    surface: '3B4252',
+    surface2: '434C5E',
+    surface3: '4C566A',
+    text: 'ECEFF4',
+    subtext: 'D8DEE9',
+    accent: '88C0D0',
+  },
+  monokai: {
+    bg: '272822',
+    surface: '3E3D32',
+    surface2: '49483E',
+    surface3: '5A5947',
+    text: 'F8F8F2',
+    subtext: 'CFCFC2',
+    accent: 'F92672',
+  },
+  light: {
+    bg: 'F5F5F5',
+    surface: 'FFFFFF',
+    surface2: 'EEEEEE',
+    surface3: 'DDDDDD',
+    text: '222222',
+    subtext: '666666',
+    accent: 'E8751A',
+  },
+};
 
 function loadJSON<T>(filePath: string, fallback: T): T {
   try {
@@ -47,11 +113,122 @@ function loadJSON<T>(filePath: string, fallback: T): T {
 }
 
 function saveJSON(filePath: string, data: unknown): void {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+}
+
+function normalizeInstallerColor(value?: string): string | null {
+  const normalized = value?.trim().replace(/^#/, '').toUpperCase();
+  return normalized && /^[0-9A-F]{6}$/.test(normalized) ? normalized : null;
+}
+
+function toInstallerThemeColors(colors?: Partial<CustomThemeColors>): InstallerThemeColors | null {
+  const bg = normalizeInstallerColor(colors?.bg);
+  const surface = normalizeInstallerColor(colors?.surface);
+  const surface2 = normalizeInstallerColor(colors?.surface2);
+  const surface3 = normalizeInstallerColor(colors?.surface3) ?? surface2;
+  const text = normalizeInstallerColor(colors?.text);
+  const subtext = normalizeInstallerColor(colors?.textDim) ?? normalizeInstallerColor(colors?.subtext);
+  const accent = normalizeInstallerColor(colors?.accent);
+
+  if (!bg || !surface || !surface2 || !surface3 || !text || !subtext || !accent) {
+    return null;
+  }
+
+  return { bg, surface, surface2, surface3, text, subtext, accent };
+}
+
+function resolveInstallerThemeColors(themeId: string): InstallerThemeColors {
+  const builtIn = BUILT_IN_INSTALLER_THEMES[themeId];
+  if (builtIn) return builtIn;
+
+  const customThemes = loadJSON<CustomThemes>(customThemesFile, {});
+  const customTheme = toInstallerThemeColors(customThemes[themeId]);
+  if (customTheme) return customTheme;
+
+  const installedTheme = scanThemes(themesDir).find(theme => theme.id === themeId);
+  const installedThemeColors = toInstallerThemeColors(
+    installedTheme?.manifest.style.colors ?? installedTheme?.manifest.preview,
+  );
+
+  return installedThemeColors ?? BUILT_IN_INSTALLER_THEMES['dark-orange'];
+}
+
+function saveInstallerThemeSnapshot(progress: { settings?: { theme?: string } }): void {
+  const themeId = progress.settings?.theme ?? 'dark-orange';
+  const colors = resolveInstallerThemeColors(themeId);
+  const lines = [
+    '[Theme]',
+    `id=${themeId}`,
+    `bg=${colors.bg}`,
+    `surface=${colors.surface}`,
+    `surface2=${colors.surface2}`,
+    `surface3=${colors.surface3}`,
+    `text=${colors.text}`,
+    `subtext=${colors.subtext}`,
+    `accent=${colors.accent}`,
+    '',
+  ];
+
+  fs.mkdirSync(path.dirname(installerThemeFile), { recursive: true });
+  fs.writeFileSync(installerThemeFile, lines.join('\n'), 'utf-8');
 }
 
 function loadDataFile(rel: string): unknown {
   return JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', rel), 'utf-8'));
+}
+
+function resolveBundledExtensionSourceManifest(relativePath: string): string | null {
+  const normalized = relativePath.replace(/\\/g, '/').replace(/^\/+/, '');
+  if (!normalized.startsWith('data/local-extension-sources/')) return null;
+  if (normalized.split('/').some(part => part === '..')) return null;
+  return path.join(app.getAppPath(), ...normalized.split('/'));
+}
+
+async function applyPendingSetupPreferences(): Promise<void> {
+  if (!fs.existsSync(setupPreferencesFile)) return;
+
+  const setupPreferences = loadJSON<SetupPreferences | null>(setupPreferencesFile, null);
+  if (!setupPreferences || typeof setupPreferences !== 'object') {
+    fs.rmSync(setupPreferencesFile, { force: true });
+    return;
+  }
+
+  const progress = loadJSON<Progress>(progressFile, {});
+  const nextProgress = setupPreferences.settings && typeof setupPreferences.settings === 'object'
+    ? {
+        ...progress,
+        settings: {
+          ...(progress.settings ?? {}),
+          ...setupPreferences.settings,
+        },
+      }
+    : progress;
+
+  if (nextProgress !== progress) {
+    saveJSON(progressFile, nextProgress);
+    saveInstallerThemeSnapshot(nextProgress);
+  }
+
+  for (const sourceRef of setupPreferences.extensionSources ?? []) {
+    if (typeof sourceRef !== 'string') continue;
+    const manifestPath = resolveBundledExtensionSourceManifest(sourceRef);
+    if (!manifestPath) continue;
+
+    try {
+      const result = await installExtensionSource(userDataPath, {
+        type: 'local',
+        manifestPath,
+      });
+      if (!result.ok) {
+        console.warn(`[SetupPreferences] Failed to add extension source ${sourceRef}: ${result.error}`);
+      }
+    } catch (error) {
+      console.warn(`[SetupPreferences] Failed to add extension source ${sourceRef}:`, error);
+    }
+  }
+
+  fs.rmSync(setupPreferencesFile, { force: true });
 }
 
 /* ── IPC handlers ────────────────────────────────────────── */
@@ -66,6 +243,7 @@ ipcMain.handle('get-lesson-bigrams', (_e: Electron.IpcMainInvokeEvent, lang: str
 ipcMain.handle('get-progress', () => loadJSON<Progress>(progressFile, {}));
 ipcMain.handle('save-progress', (_e: Electron.IpcMainInvokeEvent, data: Progress) => {
   saveJSON(progressFile, data);
+  saveInstallerThemeSnapshot(data);
   return true;
 });
 ipcMain.handle('get-custom-themes', () => loadJSON<CustomThemes>(customThemesFile, {}));
@@ -157,14 +335,17 @@ ipcMain.handle('remove-theme', (_e: Electron.IpcMainInvokeEvent, themeId: string
 
 /* ── Extension source IPC handlers ──────────────────────── */
 ipcMain.handle('scan-extension-sources', () => scanExtensionSources(userDataPath));
-ipcMain.handle('scan-extension-catalog', () => scanExtensionCatalog(userDataPath, addonsDir, modsDir, themesDir));
+ipcMain.handle('scan-extension-catalog', () => scanExtensionCatalog(userDataPath, addonsDir, modsDir, themesDir, app.getVersion()));
+ipcMain.handle('validate-extension-catalog-entry', (_e: Electron.IpcMainInvokeEvent, sourceId: string, kind: 'addons' | 'mods' | 'themes', entryId: string) =>
+  validateExtensionCatalogEntry(userDataPath, addonsDir, modsDir, themesDir, sourceId, kind, entryId, app.getVersion()),
+);
 
 ipcMain.handle('install-extension-source', (_e: Electron.IpcMainInvokeEvent, input) =>
   installExtensionSource(userDataPath, input),
 );
 
 ipcMain.handle('install-extension-catalog-entry', (_e: Electron.IpcMainInvokeEvent, sourceId: string, kind: 'addons' | 'mods' | 'themes', entryId: string) =>
-  installExtensionCatalogEntry(userDataPath, addonsDir, modsDir, themesDir, sourceId, kind, entryId),
+  installExtensionCatalogEntry(userDataPath, addonsDir, modsDir, themesDir, sourceId, kind, entryId, app.getVersion()),
 );
 
 ipcMain.handle('update-extension-source', (_e: Electron.IpcMainInvokeEvent, sourceId: string, input) =>
@@ -254,8 +435,9 @@ function createWindow(): void {
   // win.webContents.openDevTools();
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   app.setAppUserModelId(APP_USER_MODEL_ID);
+  await applyPendingSetupPreferences();
   void syncAllExtensionSources(userDataPath).catch((error) => {
     console.error('[ExtensionSources] Startup sync failed:', error);
   });

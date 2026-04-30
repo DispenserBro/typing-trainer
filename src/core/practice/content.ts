@@ -50,6 +50,17 @@ type TranslateFn = (key: string, params?: TranslationParams) => string;
 const translateWithI18n: TranslateFn = (key, params) =>
   i18n.t(key, params ?? {}) as string;
 
+function estimateItemsForWordBudget(
+  targetWordCount: number,
+  averageWordsPerItem: number,
+  minimumItems: number,
+): number {
+  return Math.max(
+    minimumItems,
+    Math.ceil(targetWordCount / Math.max(1, averageWordsPerItem)),
+  );
+}
+
 function countCharOccurrences(value: string, char: string) {
   return [...value].filter((token) => token === char).length;
 }
@@ -111,6 +122,17 @@ export function getPracticeContentPackQualityMetrics(
       estimatedItemsPerText: minimumItems,
       estimatedWordsPerText,
       repetitionPressure: itemCount > 0 ? minimumItems / itemCount : 0,
+    };
+  }
+
+  if (pack.kind === 'mixed') {
+    const estimatedItemsPerText = estimateItemsForWordBudget(targetWordCount, averageWordsPerItem, 3);
+    return {
+      itemCount,
+      averageWordsPerItem,
+      estimatedItemsPerText,
+      estimatedWordsPerText: Math.max(targetWordCount, Math.round(estimatedItemsPerText * averageWordsPerItem)),
+      repetitionPressure: itemCount > 0 ? estimatedItemsPerText / itemCount : 0,
     };
   }
 
@@ -404,6 +426,35 @@ export function generateContentPackText(
       result.push(item);
       wordsUsed += countWords(item);
       index += 1;
+    }
+
+    return result.join(' ');
+  }
+
+  if (pack.kind === 'mixed') {
+    const averageWordsPerItem = sourceItems.reduce((sum, item) => sum + countWords(item), 0) / Math.max(1, sourceItems.length);
+    const minimumItems = estimateItemsForWordBudget(count, averageWordsPerItem, 3);
+    const maxItems = Math.max(
+      sourceItems.length * 4,
+      minimumItems + sourceItems.length,
+    );
+    const result: string[] = [];
+    const recentWindowSize = sourceItems.length <= 8 ? 3 : 1;
+    let wordsUsed = 0;
+    let cursor = 0;
+
+    while ((wordsUsed < count || result.length < minimumItems) && result.length < maxItems) {
+      let candidate = pickRotated(sourceItems, itemOffset, itemStep, cursor) ?? sourceItems[0];
+      let safety = 0;
+      while (candidate && hasRecentDuplicate(result.slice(-recentWindowSize), candidate) && safety < sourceItems.length) {
+        cursor += 1;
+        candidate = pickRotated(sourceItems, itemOffset, itemStep, cursor) ?? sourceItems[0];
+        safety += 1;
+      }
+      const selected = candidate ?? sourceItems[0];
+      result.push(selected);
+      wordsUsed += countWords(selected);
+      cursor += 1;
     }
 
     return result.join(' ');

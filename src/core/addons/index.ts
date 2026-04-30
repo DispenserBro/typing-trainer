@@ -15,6 +15,7 @@ export {
   validateExtensionSourceManifest,
   scanExtensionSources,
   scanExtensionCatalog,
+  validateExtensionCatalogEntry,
   installExtensionSource,
   installExtensionCatalogEntry,
   updateExtensionSource,

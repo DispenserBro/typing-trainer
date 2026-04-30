@@ -1,4 +1,5 @@
-import { ResultMetricStrip } from './ResultMetricStrip';
+import { buildResultProgressMetricStripViewModel } from '../../core/result/metricStrip';
+import { MetricStrip } from './ui/MetricStrip';
 import type { ResultMetricTone } from './ResultMetricStrip';
 
 type ResultProgressMetric = {
@@ -13,14 +14,12 @@ type ResultProgressMetricsProps = {
 };
 
 export function ResultProgressMetrics({ metrics }: ResultProgressMetricsProps) {
+  const viewModel = buildResultProgressMetricStripViewModel(metrics);
+
   return (
-    <ResultMetricStrip
-      metrics={metrics.map((metric) => ({
-        id: metric.id,
-        label: metric.title,
-        value: metric.value,
-        tone: metric.tone,
-      }))}
+    <MetricStrip
+      metrics={viewModel.metrics}
+      viewModel={viewModel}
     />
   );
 }

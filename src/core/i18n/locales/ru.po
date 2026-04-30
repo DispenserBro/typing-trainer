@@ -657,6 +657,9 @@ msgstr "У этой записи каталога нет описания."
 msgid "addons.catalog.filters.all"
 msgstr "Все"
 
+msgid "addons.catalog.filters.attention"
+msgstr "Требует внимания {{count}}"
+
 msgid "addons.installed.filters.all"
 msgstr "Все"
 
@@ -696,6 +699,9 @@ msgstr "Источник отключён"
 msgid "addons.catalog.status.sourceError"
 msgstr "Источник недоступен"
 
+msgid "addons.catalog.status.incompatible"
+msgstr "Несовместимо"
+
 msgid "addons.catalog.status.invalid"
 msgstr "Битый manifest"
 
@@ -728,6 +734,66 @@ msgstr "Разрешения: {{permissions}}"
 
 msgid "addons.catalog.duplicateSources"
 msgstr "Этот же пакет есть и в других источниках: {{sources}}"
+
+msgid "addons.catalog.duplicateSourcesCompact"
+msgstr "Этот же пакет есть и в других источниках: {{sources}} и ещё {{count}}"
+
+msgid "addons.catalog.duplicateRecommendation.newerAvailable"
+msgstr "Предпочтительный источник: {{source}} с более новой версией v{{version}}."
+
+msgid "addons.catalog.duplicateRecommendation.newestBlocked"
+msgstr "Самая новая версия заблокирована. Предпочтительный доступный источник: {{source}} v{{version}}."
+
+msgid "addons.catalog.compatibleWithApp"
+msgstr "Совместимо с приложением v{{version}}"
+
+msgid "addons.catalog.incompatibleWithApp"
+msgstr "Нужна версия приложения {{minVersion}} или новее. Сейчас v{{appVersion}}"
+
+msgid "addons.catalog.fallback.staleCache"
+msgstr "Используется последний валидный кэш."
+
+msgid "addons.catalog.issue.cardEmpty"
+msgstr "Markdown-карточка пустая и пропущена: {{target}}"
+
+msgid "addons.catalog.issue.cardProblem"
+msgstr "Проблема карточки: {{details}}"
+
+msgid "addons.catalog.issue.cardReadFailed"
+msgstr "Markdown-карточку не удалось прочитать: {{details}}"
+
+msgid "addons.catalog.issue.listProblem"
+msgstr "Проблема списка: {{details}}"
+
+msgid "addons.catalog.issue.manifestProblem"
+msgstr "Проблема manifest: {{details}}"
+
+msgid "addons.catalog.issue.missingDependencies"
+msgstr "Перед установкой не хватает зависимостей: {{ids}}"
+
+msgid "addons.catalog.issue.missingRuntimeDependencies"
+msgstr "Для установки мода не хватает обязательных runtime-зависимостей: {{ids}}"
+
+msgid "addons.catalog.issue.packageProblem"
+msgstr "Проблема пакета: {{details}}"
+
+msgid "addons.catalog.issue.remoteModManualOnly"
+msgstr "Удалённый мод не объявляет manifest.files, поэтому доступна только ручная установка."
+
+msgid "addons.catalog.issue.sourceCardEmpty"
+msgstr "Карточка источника пустая и пропущена: {{target}}"
+
+msgid "addons.catalog.issue.sourceCardReadFailed"
+msgstr "Карточку источника не удалось прочитать: {{details}}"
+
+msgid "addons.catalog.issueSections.attention"
+msgstr "Требует внимания"
+
+msgid "addons.catalog.issueSections.limitations"
+msgstr "Ограничения установки"
+
+msgid "addons.catalog.issueSections.diagnostics"
+msgstr "Диагностика источника"
 
 msgid "addons.markdown.author"
 msgstr "Автор: {{author}}"

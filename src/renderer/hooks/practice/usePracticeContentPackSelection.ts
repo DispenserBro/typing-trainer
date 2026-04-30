@@ -9,6 +9,7 @@ import type {
 import {
   buildPracticeContentPackPreflightSummary,
   buildPracticeContentPackQualitySummary,
+  resolvePracticeContentPackSelection,
 } from '../../../core/engine';
 
 type TranslateFn = (key: string, params?: TranslationParams) => string;
@@ -32,24 +33,20 @@ export function usePracticeContentPackSelection({
   selectedContentPackId,
   t,
 }: UsePracticeContentPackSelectionArgs) {
-  const customPackList = useMemo(
-    () => Object.values(customPracticePacks ?? {}).sort((left, right) => right.importedAt.localeCompare(left.importedAt)),
-    [customPracticePacks],
+  const {
+    availableContentPacks,
+    effectiveContentMode,
+    selectedContentPack,
+  } = useMemo(
+    () => resolvePracticeContentPackSelection({
+      contentMode,
+      currentLanguage,
+      customPracticePacks,
+      practiceContentPacks,
+      selectedContentPackId,
+    }),
+    [contentMode, currentLanguage, customPracticePacks, practiceContentPacks, selectedContentPackId],
   );
-
-  const availableContentPacks = useMemo<PracticeContentPack[]>(() => {
-    const builtInAndAddon = practiceContentPacks.filter(pack => pack.language === 'any' || pack.language === currentLanguage);
-    return [...builtInAndAddon, ...customPackList];
-  }, [practiceContentPacks, customPackList, currentLanguage]);
-
-  const selectedContentPack = useMemo<PracticeContentPack | null>(() => {
-    const selected = availableContentPacks.find(pack => pack.id === selectedContentPackId);
-    return selected ?? availableContentPacks[0] ?? null;
-  }, [availableContentPacks, selectedContentPackId]);
-
-  const effectiveContentMode = contentMode === 'custom' && !selectedContentPack
-    ? 'adaptive-words'
-    : contentMode;
 
   const selectedContentPackSummary = useMemo(
     () => selectedContentPack

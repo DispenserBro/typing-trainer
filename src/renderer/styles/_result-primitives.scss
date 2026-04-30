@@ -1,0 +1,171 @@
+/* ── Shared result primitives ───────────────────────────── */
+.result-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 28px 32px;
+  text-align: center;
+  animation: resultSlideIn 0.35s ease both;
+}
+
+@keyframes resultSlideIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+
+.result-card h3 {
+  color: var(--accent);
+  margin-bottom: 8px;
+  font-size: 1.1rem;
+  letter-spacing: 0.02em;
+}
+
+.result-card .result-big {
+  font-size: 2.6rem;
+  font-weight: 700;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  line-height: 1.1;
+  margin-bottom: 6px;
+}
+
+.result-card .result-metrics {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin: 14px 0 4px;
+  padding: 12px 0;
+  border-top: 1px solid var(--surface2);
+  border-bottom: 1px solid var(--surface2);
+  flex-wrap: wrap;
+}
+
+.result-card .result-metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.result-card .result-metric-value {
+  font-size: 1.2rem;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  color: var(--text);
+}
+
+.result-card .result-metric-label {
+  font-size: 0.72rem;
+  color: var(--subtext);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.result-card .result-metric-value.good { color: var(--green); }
+.result-card .result-metric-value.warn { color: var(--yellow); }
+.result-card .result-metric-value.bad { color: var(--red); }
+
+.result-card .result-metric-detail {
+  font-size: 0.68rem;
+  color: var(--subtext);
+}
+
+.result-card .result-metrics--secondary {
+  margin: 8px auto 0;
+  padding: 0;
+  border: 0;
+  gap: 8px;
+}
+
+.result-card .result-metrics--secondary .result-metric {
+  min-width: 0;
+  max-width: 220px;
+  padding: 6px 10px;
+  border: 1px solid color-mix(in srgb, var(--surface2) 72%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface2) 34%, transparent);
+  gap: 0;
+}
+
+.result-card .result-metrics--secondary .result-metric-value {
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.result-card .result-metrics--secondary .result-metric-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.64rem;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.result-card .result-metrics--secondary .result-metric-detail {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.62rem;
+  color: var(--subtext);
+}
+
+.result-card .result-comparison-metrics {
+  margin-top: 10px;
+}
+
+.result-card .result-comparison-metrics .result-metric {
+  max-width: 260px;
+  border-radius: 12px;
+}
+
+.result-card .result-mastery-block { margin-top: 12px; }
+.result-card .practice-result-next-hint { margin-top: 10px; }
+.result-card p { margin: 4px 0; font-size: 0.9rem; color: var(--text-dim); }
+.result-card .btn-accent { margin-top: 16px; }
+
+.result-guidance-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--surface3));
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  color: var(--text-dim);
+  line-height: 1.45;
+}
+
+.result-guidance-card .result-guidance-title {
+  color: var(--text);
+}
+
+.result-guidance-card .result-guidance-detail {
+  color: var(--text-dim);
+}
+
+.practice-feedback-primary.result-guidance-card {
+  justify-content: flex-start;
+  margin-top: 0;
+}
+
+.practice-feedback-primary .practice-feedback-label {
+  min-width: max-content;
+}
+
+.practice-feedback-primary .practice-feedback-value {
+  color: var(--accent);
+}
+
+@media (max-width: 700px) {
+  .result-card {
+    padding: 20px;
+  }
+
+  .result-card .result-big {
+    font-size: 1.8rem;
+  }
+}

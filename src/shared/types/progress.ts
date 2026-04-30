@@ -22,12 +22,19 @@ import type { ImportedInterfaceLocaleDefinition } from './i18n';
 /** Переопределения настроек для конкретного режима */
 export type ModeProfiles = Partial<Record<string, Partial<PresetSettings>>>;
 
+export type ModeGuideStatus = 'completed' | 'skipped';
+
+export interface OnboardingProgress {
+  modeGuides?: Record<string, ModeGuideStatus>;
+}
+
 export interface Progress {
   settings?: UserSettings;
   practiceSettings?: PracticeSettings;
   modePracticeSettings?: Partial<Record<ModePracticeSettingsId, ModePracticeSettings>>;
   customPresets?: CustomPresets;
   modeProfiles?: ModeProfiles;
+  onboarding?: OnboardingProgress;
   keyStats?: Record<string, Record<string, CharStat>>;
   practiceInsights?: PracticeInsightsState;
   practiceRhythmHistory?: Record<string, PracticeRhythmSessionEntry[]>;

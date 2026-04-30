@@ -5,6 +5,7 @@ import {
   filterYoWords,
   getPracticeContentScenario,
   getPracticeContentScenarioForTrainingMode,
+  resolvePracticeContentPackSelection,
   type NgramModel,
 } from '../core/engine';
 import type {
@@ -192,12 +193,12 @@ function resolveContentPack(
   languageId: string,
   packId?: string,
 ): PracticeContentPack | null {
-  const matchingPacks = packs.filter(pack => pack.language === 'any' || pack.language === languageId);
-  if (!matchingPacks.length) return null;
-  if (packId) {
-    return matchingPacks.find(pack => pack.id === packId) ?? null;
-  }
-  return matchingPacks[0] ?? null;
+  return resolvePracticeContentPackSelection({
+    contentMode: 'custom',
+    currentLanguage: languageId,
+    practiceContentPacks: packs,
+    selectedContentPackId: packId,
+  }).selectedContentPack;
 }
 
 function getMinimumAverageWordLength(report: Omit<PracticeDiagnosticsReport, 'warnings'>): number {

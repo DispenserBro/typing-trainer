@@ -1,110 +1,117 @@
 import { useMemo } from 'react';
 import { useAppNavigation } from '../contexts/AppContext';
 import { useI18n } from '../contexts/I18nContext';
+import * as LucideIcons from 'lucide-react';
 import { Target, Clock, BookOpen, BarChart3, Settings, Keyboard, Gamepad2, Puzzle, Box, Shield } from 'lucide-react';
 import type { ReactElement } from 'react';
+import type { LucideIcon } from 'lucide-react';
+import {
+  buildSidebarViewModel,
+  getSidebarModeActive,
+  type SidebarModeDescriptor,
+} from '../../core/navigation/sidebar';
 
-interface SidebarMode {
-  id: string;
-  label: string;
-  group: 'top' | 'bottom';
-  icon: ReactElement;
+const SIDEBAR_ICONS: Record<string, ReactElement> = {
+  'bar-chart-3': <BarChart3 size={20} />,
+  'book-open': <BookOpen size={20} />,
+  box: <Box size={20} />,
+  clock: <Clock size={20} />,
+  'gamepad-2': <Gamepad2 size={20} />,
+  puzzle: <Puzzle size={20} />,
+  settings: <Settings size={20} />,
+  shield: <Shield size={20} />,
+  target: <Target size={20} />,
+};
+
+function getSidebarIcon(mode: SidebarModeDescriptor) {
+  const builtInIcon = SIDEBAR_ICONS[mode.icon];
+  if (builtInIcon) return builtInIcon;
+
+  const IconComponent = resolveLucideIcon(mode.icon);
+  return IconComponent ? <IconComponent size={20} /> : SIDEBAR_ICONS.box;
+}
+
+function toLucideIconKey(value: string) {
+  return value
+    .trim()
+    .replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '')
+    .split(/[^a-zA-Z0-9]+/)
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join('');
+}
+
+function resolveLucideIcon(iconName?: string): LucideIcon | null {
+  if (!iconName?.trim()) return null;
+
+  const directMatch = (LucideIcons as Record<string, unknown>)[iconName.trim()];
+  if (directMatch && (typeof directMatch === 'function' || typeof directMatch === 'object')) {
+    return directMatch as LucideIcon;
+  }
+
+  const normalizedKey = toLucideIconKey(iconName);
+  const normalizedMatch = (LucideIcons as Record<string, unknown>)[normalizedKey];
+  if (normalizedMatch && (typeof normalizedMatch === 'function' || typeof normalizedMatch === 'object')) {
+    return normalizedMatch as LucideIcon;
+  }
+
+  return null;
 }
 
 export function Sidebar() {
   const { currentMode, switchMode, disabledSections, modModes } = useAppNavigation();
   const { t } = useI18n();
-  const isModeActive = (modeId: string) => (
-    modeId === 'survival'
-      ? currentMode === 'survival' || currentMode === 'flawless'
-      : currentMode === modeId
-  );
-
-  const builtInModes = useMemo<SidebarMode[]>(() => [
-    {
-      id: 'practice', label: t('app.sidebar.modes.practice'), group: 'top',
-      icon: <Target size={20} />,
+  const sidebar = useMemo(() => buildSidebarViewModel({
+    builtInLabels: {
+      addons: t('app.sidebar.modes.extensions'),
+      game: t('app.sidebar.modes.game'),
+      lessons: t('app.sidebar.modes.lessons'),
+      practice: t('app.sidebar.modes.practice'),
+      settings: t('app.sidebar.modes.settings'),
+      stats: t('app.sidebar.modes.stats'),
+      survival: t('app.sidebar.modes.survival'),
+      test: t('app.sidebar.modes.sprint'),
     },
-    {
-      id: 'test', label: t('app.sidebar.modes.sprint'), group: 'top',
-      icon: <Clock size={20} />,
-    },
-    {
-      id: 'survival', label: t('app.sidebar.modes.survival'), group: 'top',
-      icon: <Shield size={20} />,
-    },
-    {
-      id: 'lessons', label: t('app.sidebar.modes.lessons'), group: 'top',
-      icon: <BookOpen size={20} />,
-    },
-    {
-      id: 'game', label: t('app.sidebar.modes.game'), group: 'top',
-      icon: <Gamepad2 size={20} />,
-    },
-    {
-      id: 'stats', label: t('app.sidebar.modes.stats'), group: 'bottom',
-      icon: <BarChart3 size={20} />,
-    },
-    {
-      id: 'addons', label: t('app.sidebar.modes.extensions'), group: 'bottom',
-      icon: <Puzzle size={20} />,
-    },
-    {
-      id: 'settings', label: t('app.sidebar.modes.settings'), group: 'bottom',
-      icon: <Settings size={20} />,
-    },
-  ], [t]);
-
-  const allModes = useMemo(() => {
-    const modEntries: SidebarMode[] = modModes.map(m => ({
-      id: `mod:${m.id}`,
-      label: m.label,
-      group: m.group,
-      icon: <Box size={20} />,
-    }));
-    return [...builtInModes, ...modEntries];
-  }, [builtInModes, modModes]);
-
-  const visible = allModes.filter(m => !disabledSections.includes(m.id));
-  const top = visible.filter(m => m.group === 'top');
-  const bottom = visible.filter(m => m.group === 'bottom');
-  const homeActive = currentMode === 'home';
+    currentMode,
+    disabledSections,
+    modModes,
+  }), [currentMode, disabledSections, modModes, t]);
 
   return (
     <aside id="sidebar">
       <div className="sidebar-top">
         <button
           type="button"
-          className={`sidebar-logo sidebar-home-btn${homeActive ? ' active' : ''}`}
+          className={`sidebar-logo sidebar-home-btn${sidebar.homeActive ? ' active' : ''}`}
           title={t('app.sidebar.home')}
           onClick={() => switchMode('home')}
         >
           <Keyboard size={28} />
         </button>
         <span className="sidebar-label">{t('app.sidebar.section')}</span>
-        {top.map(m => (
+        {sidebar.top.map(m => (
           <button
             key={m.id}
-            className={`sidebar-btn${isModeActive(m.id) ? ' active' : ''}`}
+            className={`sidebar-btn${getSidebarModeActive(currentMode, m.id) ? ' active' : ''}`}
             data-mode={m.id}
             title={m.label}
             onClick={() => switchMode(m.id)}
           >
-            {m.icon}
+            {getSidebarIcon(m)}
             <span className="sidebar-btn-label">{m.label}</span>
           </button>
         ))}
       </div>
       <div className="sidebar-bottom">
-        {bottom.map(m => (
+        {sidebar.bottom.map(m => (
           <button
             key={m.id}
-            className={`sidebar-btn${isModeActive(m.id) ? ' active' : ''}`}
+            className={`sidebar-btn${getSidebarModeActive(currentMode, m.id) ? ' active' : ''}`}
             data-mode={m.id}
             title={m.label}
             onClick={() => switchMode(m.id)}
           >
-            {m.icon}
+            {getSidebarIcon(m)}
             <span className="sidebar-btn-label">{m.label}</span>
           </button>
         ))}

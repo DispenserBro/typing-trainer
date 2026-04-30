@@ -477,6 +477,15 @@
   min-width: min(640px, calc(100vw - 32px));
   padding: 26px 26px 22px;
 }
+.modal.practice-settings-modal .card-desc {
+  max-width: 34ch;
+}
+.modal.practice-settings-modal .practice-settings-grid {
+  padding-inline: 2px;
+}
+.modal.practice-settings-modal .practice-settings-grid .poption-hint {
+  max-width: 24ch;
+}
 .modal h3 { color: var(--accent); margin-bottom: 16px; }
 .modal-label { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 0.88rem; }
 .modal-label .input-minimal { flex: 1; }
@@ -746,6 +755,98 @@
     left: 0;
     right: auto;
     width: min(100%, calc(100vw - 48px));
+  }
+}
+
+@media (max-width: 900px) {
+  .practice-settings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .practice-settings-modal-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .settings-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .practice-settings-modal {
+    width: min(96vw, 760px);
+    max-width: 760px;
+    padding: 24px 22px 22px;
+  }
+
+  .modal.practice-settings-modal {
+    min-width: min(600px, calc(100vw - 32px));
+    padding: 24px 22px 22px;
+  }
+
+  .color-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .practice-settings-trigger,
+  .practice-header-actions {
+    width: 100%;
+  }
+
+  .practice-settings-trigger {
+    justify-content: center;
+  }
+
+  .radio-group {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .practice-settings-modal {
+    width: calc(100% - 24px);
+    max-width: 400px;
+    padding: 18px 16px 16px;
+  }
+
+  .modal.practice-settings-modal {
+    min-width: unset;
+    padding: 18px 16px 16px;
+  }
+
+  .color-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-actions {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .settings-row label {
+    font-size: 0.8rem;
+  }
+
+  .poption-toggle {
+    gap: 8px;
+  }
+
+  .toggle-switch {
+    width: 36px;
+    height: 20px;
+  }
+
+  .toggle-switch::after {
+    width: 14px;
+    height: 14px;
+  }
+
+  .poption-toggle input:checked + .toggle-switch::after,
+  .toggle-label input:checked + .toggle-switch::after {
+    transform: translateX(16px);
   }
 }
 .modal-actions { display: flex; gap: 8px; margin-top: 16px; }

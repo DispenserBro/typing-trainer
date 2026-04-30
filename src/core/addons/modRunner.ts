@@ -20,7 +20,7 @@ import type {
   UserSettings,
   Lesson,
 } from '../../shared/types';
-import { parseInterfaceLocaleDefinitionFromPo } from '../i18n';
+import { parseInterfaceLocaleDefinitionFromPo } from '../i18n/po';
 import { normalizeExternalInterfaceLocaleDefinitions } from '../i18n/resources';
 
 export interface ModRunnerResult {

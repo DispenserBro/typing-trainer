@@ -3,19 +3,11 @@ import type {
   GameItemDefinition,
   GameMapNodeKind,
   GameRunEventState,
-  GameRunRewardChoice,
 } from '../../../shared/types';
 import { getGameItemRarityStars } from '../../../core/game/items';
 import type { TranslationParams } from '../../../shared/types';
 
 type Translate = (key: string, params?: TranslationParams) => string;
-
-export function getGameRewardKindLabel(kind: GameRunRewardChoice['kind'], t: Translate) {
-  if (kind === 'simple') return t('game.reward.kind.simple');
-  if (kind === 'durable') return t('game.reward.kind.durable');
-  if (kind === 'event') return t('game.reward.kind.event');
-  return t('game.reward.kind.letter');
-}
 
 export function getGameEventKindLabel(kind: GameRunEventState['kind'], t: Translate) {
   if (kind === 'rest') return t('game.event.kind.rest');

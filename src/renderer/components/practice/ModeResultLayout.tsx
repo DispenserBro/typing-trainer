@@ -1,10 +1,7 @@
 import type { ReactNode } from 'react';
-import { ResultComparisonPanel } from '../ResultComparisonPanel';
 import { ResultCallout } from '../ResultCallout';
 import { ResultFollowupActions } from '../ResultFollowupActions';
-import { ResultMetricStrip } from '../ResultMetricStrip';
-import { ResultProgressMetrics } from '../ResultProgressMetrics';
-import { ResultCardLayout } from '../ui/ResultCardLayout';
+import { ResultSummaryPanel } from '../ResultSummaryPanel';
 import type { ResultComparisonSummary, ModeFollowupRecommendation } from '../../../core/motivation/records';
 import type { MotivationGoalSnapshot, MotivationStreakSnapshot } from '../../../core/motivation/progress';
 
@@ -55,36 +52,17 @@ export function ModeResultLayout({
   toPracticeLabel,
 }: ModeResultLayoutProps) {
   return (
-    <ResultCardLayout
+    <ResultSummaryPanel
       title={title}
       headline={<>{headline} {speedLabel}</>}
       summary={summaryLine}
+      metrics={primaryMetrics}
+      goals={goals}
+      streaks={streaks}
+      comparison={comparison}
+      formatSpeed={formatSpeed}
+      speedLabel={speedLabel}
     >
-      <ResultMetricStrip metrics={primaryMetrics} />
-      <ResultProgressMetrics
-        metrics={[
-          ...goals.map((goal) => ({
-            id: goal.definition.id,
-            title: goal.definition.title,
-            value: goal.nextTarget != null
-              ? `${Math.round(goal.current)} / ${goal.nextTarget}`
-              : `${Math.round(goal.current)}`,
-          })),
-          ...streaks.map((streak) => ({
-            id: streak.definition.id,
-            title: streak.definition.title,
-            value: streak.current,
-            tone: streak.current > 0 ? 'good' as const : 'neutral' as const,
-          })),
-        ]}
-      />
-      {comparison ? (
-        <ResultComparisonPanel
-          comparison={comparison}
-          formatSpeed={formatSpeed}
-          speedLabel={speedLabel}
-        />
-      ) : null}
       {callout ? <ResultCallout title={callout.title} detail={callout.detail} /> : null}
       <ResultFollowupActions
         retryLabel={retryLabel}
@@ -95,6 +73,6 @@ export function ModeResultLayout({
         onToPractice={onToPractice}
         toPracticeLabel={toPracticeLabel}
       />
-    </ResultCardLayout>
+    </ResultSummaryPanel>
   );
 }

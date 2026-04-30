@@ -19,7 +19,7 @@ import { useI18n } from '../contexts/I18nContext';
 import { getReplayModeFromHistory, getReplayTitleFromHistory } from '../../core/home/summary';
 
 export function HomePage() {
-  const { locale, t, formatDate } = useI18n();
+  const { locale, t } = useI18n();
   const {
     layouts,
     progress,
@@ -97,7 +97,6 @@ export function HomePage() {
       <HomeDetailModal
         activeDetailModal={activeDetailModal}
         detailMeta={activeDetailMeta}
-        formatDate={(value, options, fallback) => value == null ? (fallback ?? '') : formatDate(value, options, fallback)}
         formatSpeed={fmtSpeed}
         homeViewModel={homeViewModel}
         onClose={() => setActiveDetailModal(null)}

@@ -10,6 +10,10 @@ import { Titlebar } from './components/Titlebar';
 import { Sidebar } from './components/Sidebar';
 import { Keyboard } from './components/keyboard/Keyboard';
 import { OnboardingWizard } from './components/OnboardingWizard';
+import {
+  isModeGuideMode,
+  ModeWelcomeGuide,
+} from './components/onboarding/ModeWelcomeGuide';
 import { PracticePage } from './pages/PracticePage';
 import { SprintPage } from './pages/TestPage';
 import { LessonsPage } from './pages/LessonsPage';
@@ -40,7 +44,7 @@ function AppInner() {
     ready, currentMode,
     modCssSnippets, modPanels, modModes,
   } = useAppNavigation();
-  const { layouts } = useAppPractice();
+  const { layouts, progress, markModeGuideSeen } = useAppPractice();
   const {
     settings,
     currentLanguage,
@@ -124,6 +128,8 @@ function AppInner() {
   const bottomPanels = modPanels.filter(p => p.location === 'page-bottom');
   const overlayPanels = modPanels.filter(p => p.location === 'overlay');
   const showKeyboard = currentMode !== 'addons';
+  const modeGuideMode = isModeGuideMode(currentMode) ? currentMode : null;
+  const modeGuideStatus = modeGuideMode ? progress.onboarding?.modeGuides?.[modeGuideMode] : undefined;
 
   return (
     <>
@@ -148,6 +154,13 @@ function AppInner() {
           </div>
           {showKeyboard ? <Keyboard /> : null}
         </main>
+        {modeGuideMode && !modeGuideStatus ? (
+          <ModeWelcomeGuide
+            mode={modeGuideMode}
+            onComplete={() => markModeGuideSeen(modeGuideMode, 'completed')}
+            onSkip={() => markModeGuideSeen(modeGuideMode, 'skipped')}
+          />
+        ) : null}
         {overlayPanels.map(p => (
           <div key={p.id} className="mod-overlay">
             <ModPanelView html={p.html} />

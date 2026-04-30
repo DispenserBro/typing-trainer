@@ -1371,6 +1371,9 @@
   color: var(--subtext);
   text-align: right;
 }
+.practice-feedback-primary {
+  margin-bottom: 12px;
+}
 .practice-feedback-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -1406,6 +1409,41 @@
   font-size: 0.78rem;
   line-height: 1.45;
   color: var(--text-dim);
+}
+
+@media (min-width: 1201px) {
+  .practice-feedback-item {
+    padding: 14px 16px;
+  }
+}
+
+@media (max-width: 900px) {
+  .practice-feedback-head {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .practice-feedback-prompt {
+    text-align: left;
+  }
+
+  .practice-feedback-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .practice-feedback-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .practice-feedback-item {
+    padding: 10px 12px;
+  }
+
+  .practice-feedback-value {
+    font-size: 0.92rem;
+  }
 }
 
 /* ── Letters grid ─────────────────────────────────────── */
@@ -1599,18 +1637,7 @@
 .cursor-line { border-left: 2px solid var(--accent); }
 .cursor-smooth { transition: all 0.08s ease; }
 
-/* ── Result card ──────────────────────────────────────── */
-.result-card {
-  background: var(--surface);
-  border-radius: var(--radius);
-  padding: 28px 32px;
-  text-align: center;
-  animation: resultSlideIn 0.35s ease both;
-}
-@keyframes resultSlideIn {
-  from { opacity: 0; transform: translateY(12px) scale(0.97); }
-  to   { opacity: 1; transform: none; }
-}
+/* ── Game result overrides ────────────────────────────── */
 .game-result-card {
   position: relative;
   z-index: 4;
@@ -1684,32 +1711,23 @@
 .game-result-card .btn-secondary {
   margin-top: 0;
 }
-.result-card h3 { color: var(--accent); margin-bottom: 8px; font-size: 1.1rem; letter-spacing: 0.02em; }
-.result-card .result-big {
-  font-size: 2.6rem; font-weight: 700; color: var(--accent);
-  font-family: var(--font-mono); line-height: 1.1; margin-bottom: 6px;
+
+@media (max-width: 900px) {
+  .game-result-card {
+    padding: 16px 18px;
+  }
 }
-.result-card .result-metrics {
-  display: flex; justify-content: center; gap: 24px;
-  margin: 14px 0 4px; padding: 12px 0;
-  border-top: 1px solid var(--surface2); border-bottom: 1px solid var(--surface2);
+
+@media (max-width: 700px) {
+  .game-result-card .result-metrics {
+    gap: 10px;
+    padding: 6px 0;
+  }
+
+  .game-result-card .layout-mastery-panel {
+    padding: 12px 12px;
+  }
 }
-.result-card .result-metric {
-  display: flex; flex-direction: column; align-items: center; gap: 2px;
-}
-.result-card .result-metric-value {
-  font-size: 1.2rem; font-weight: 600; font-family: var(--font-mono); color: var(--text);
-}
-.result-card .result-metric-label {
-  font-size: 0.72rem; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.04em;
-}
-.result-card .result-metric-value.good  { color: var(--green); }
-.result-card .result-metric-value.warn  { color: var(--yellow); }
-.result-card .result-metric-value.bad   { color: var(--red); }
-.result-card .result-mastery-block { margin-top: 12px; }
-.result-card .practice-result-next-hint { margin-top: 10px; }
-.result-card p { margin: 4px 0; font-size: 0.9rem; color: var(--text-dim); }
-.result-card .btn-accent { margin-top: 16px; }
 
 /* ── Lesson grid ──────────────────────────────────────── */
 .lesson-grid {

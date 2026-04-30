@@ -3,6 +3,7 @@ import { ModeResultSummaryLine } from './ModeResultSummaryLine';
 import type { TranslationParams } from '../../../shared/types';
 import type { ResultComparisonSummary, ModeFollowupRecommendation } from '../../../core/motivation/records';
 import type { MotivationGoalSnapshot, MotivationStreakSnapshot } from '../../../core/motivation/progress';
+import { buildChallengeResultPrimaryMetrics } from '../../../core/practice/modeResultMetrics';
 
 type TranslateFn = (key: string, options?: TranslationParams) => string;
 
@@ -69,25 +70,13 @@ export function ChallengeResultFlow({
           t={t}
         />
       )}
-      primaryMetrics={[
-        {
-          id: 'lives',
-          value: result.livesLeft,
-          label: allowedErrors === 0 ? attemptReserveLabel : livesLeftLabel,
-          tone: result.passed ? 'good' : result.livesLeft > 0 ? 'warn' : 'bad',
-        },
-        {
-          id: 'errors',
-          value: result.errors,
-          label: t('common.errors'),
-          tone: result.errors === 0 ? 'good' : result.errors <= allowedErrors ? 'warn' : 'bad',
-        },
-        {
-          id: 'chars',
-          value: result.chars,
-          label: t('common.characters'),
-        },
-      ]}
+      primaryMetrics={buildChallengeResultPrimaryMetrics({
+        allowedErrors,
+        attemptReserveLabel,
+        livesLeftLabel,
+        result,
+        translate: t,
+      })}
       goals={activeGoals}
       streaks={activeStreaks}
       comparison={resultComparison}

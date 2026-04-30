@@ -1,5 +1,4 @@
 import { LayoutMasteryPanel } from '../LayoutMasteryPanel';
-import { describeHomeRecord } from '../../../core/motivation/records';
 import { buildHomePageViewModel } from '../../../core/home/viewModel';
 import type { TranslationParams } from '../../../shared/types';
 import { ActionRow } from '../ui/ActionRow';
@@ -19,7 +18,6 @@ type HomeViewModel = ReturnType<typeof buildHomePageViewModel>;
 type HomeDetailModalProps = {
   activeDetailModal: HomeDetailModalId | null;
   detailMeta: HomeDetailMeta | null;
-  formatDate: (value: string | number | Date | undefined, options?: Intl.DateTimeFormatOptions, fallback?: string) => string;
   formatSpeed: (value: number) => string;
   homeViewModel: HomeViewModel;
   onClose: () => void;
@@ -31,7 +29,6 @@ type HomeDetailModalProps = {
 export function HomeDetailModal({
   activeDetailModal,
   detailMeta,
-  formatDate,
   formatSpeed,
   homeViewModel,
   onClose,
@@ -85,28 +82,16 @@ export function HomeDetailModal({
 
           {activeDetailModal === 'mode-focus' && (
             <div className="home-summary-grid">
-              {homeViewModel.modeFocusSnapshots.map((snapshot) => (
+              {homeViewModel.modeFocusDetailCards.map((card) => (
                 <HomeSummaryCard
-                  key={snapshot.id}
-                  label={snapshot.title}
-                  value={snapshot.bestEntry
-                    ? `${formatSpeed(snapshot.bestEntry.wpm)} ${speedLabel}`
-                    : t('home.common.noAttempts')}
-                  description={snapshot.attempts > 0
-                    ? t('home.detail.modeFocus.attempts', {
-                        count: snapshot.attempts,
-                        date: snapshot.lastEntry
-                          ? formatDate(snapshot.lastEntry.date, {
-                              day: '2-digit',
-                              month: '2-digit',
-                            }, t('home.common.noDate'))
-                          : t('home.common.noDate'),
-                      })
-                    : snapshot.description}
-                  details={[snapshot.recommendation]}
+                  key={card.id}
+                  label={card.label}
+                  value={card.value}
+                  description={card.description}
+                  details={card.details}
                   onClick={() => {
                     onClose();
-                    onSwitchMode(snapshot.actionMode);
+                    onSwitchMode(card.actionMode);
                   }}
                 />
               ))}
@@ -115,16 +100,12 @@ export function HomeDetailModal({
 
           {activeDetailModal === 'records' && (
             <div className="home-summary-grid">
-              {homeViewModel.personalRecordCards.map((card) => (
+              {homeViewModel.personalRecordDetailCards.map((card) => (
                 <HomeSummaryCard
                   key={card.id}
-                  label={card.title}
-                  value={card.record
-                    ? `${formatSpeed(card.record.entry.wpm)} ${speedLabel}`
-                    : t('home.common.noData')}
-                  description={card.record
-                    ? `${Math.round(card.record.entry.acc)}% · ${describeHomeRecord(card.record, t)}`
-                    : card.subtitle}
+                  label={card.label}
+                  value={card.value}
+                  description={card.description}
                 />
               ))}
             </div>

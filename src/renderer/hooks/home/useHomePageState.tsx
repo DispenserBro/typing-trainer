@@ -50,7 +50,7 @@ export function useHomePageState({ homeViewModel, t }: UseHomePageStateArgs) {
   const progressCenterCards = useMemo(() => {
     const activeSeasonGoal = homeViewModel.seasonSnapshot.goals.find((goal: any) => !goal.completed) ?? null;
     const emptyModeCount = homeViewModel.modeFocusSnapshots.filter((snapshot: any) => snapshot.attempts === 0).length;
-    const unlockedRecordCount = homeViewModel.personalRecordCards.filter((card: any) => card.record).length;
+    const unlockedRecordCount = homeViewModel.personalRecordDetailCards.filter((card: any) => card.hasRecord).length;
     const hottestStreak = homeViewModel.homeStreaks.length > 0
       ? homeViewModel.homeStreaks.reduce((best: any, streak: any) => (
           streak.current > best.current ? streak : best
@@ -86,7 +86,7 @@ export function useHomePageState({ homeViewModel, t }: UseHomePageStateArgs) {
         title: t('home.progressCenter.records.title'),
         summary: t('home.progressCenter.records.summary', {
           count: unlockedRecordCount,
-          total: homeViewModel.personalRecordCards.length,
+          total: homeViewModel.personalRecordDetailCards.length,
         }),
         description: t('home.progressCenter.records.description'),
         icon: <Trophy size={20} />,

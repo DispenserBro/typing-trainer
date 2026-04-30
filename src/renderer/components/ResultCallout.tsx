@@ -5,8 +5,9 @@ type ResultCalloutProps = {
 
 export function ResultCallout({ detail, title }: ResultCalloutProps) {
   return (
-    <p className="result-callout-text">
-      <b>{title}.</b> {detail}
-    </p>
+    <div className="result-guidance-card result-callout-text" role="note">
+      <b className="result-guidance-title">{title}.</b>
+      <span className="result-guidance-detail">{detail}</span>
+    </div>
   );
 }

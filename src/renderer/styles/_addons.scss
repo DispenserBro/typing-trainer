@@ -553,6 +553,7 @@
 }
 
 .addon-card__tag--status-source-error,
+.addon-card__tag--status-incompatible,
 .addon-card__tag--status-invalid {
   background: rgba(232, 80, 80, .12);
   color: #e85050;
@@ -590,6 +591,73 @@
   font-size: .72rem;
   color: #e85050;
   svg { flex-shrink: 0; }
+}
+
+.addon-card__issue {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+  font-size: .72rem;
+  color: #e85050;
+  svg { flex-shrink: 0; }
+}
+
+.addon-card__issue--dependency {
+  color: #e8a832;
+}
+
+.addon-card__issue--manual {
+  color: var(--subtext);
+}
+
+.addon-card__issue--card {
+  color: var(--text-dim);
+}
+
+.addon-card__issue--compatibility,
+.addon-card__issue--error {
+  color: #e85050;
+}
+
+.addon-card__issue-sections {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.addon-card__issue-section {
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--border), transparent 25%);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface2), transparent 45%);
+}
+
+.addon-card__issue-section--attention {
+  border-color: rgba(232, 80, 80, .24);
+  background: rgba(232, 80, 80, .06);
+}
+
+.addon-card__issue-section--limitations {
+  border-color: rgba(232, 168, 50, .22);
+  background: rgba(232, 168, 50, .06);
+}
+
+.addon-card__issue-section--diagnostics {
+  border-color: color-mix(in srgb, var(--border), transparent 10%);
+  background: color-mix(in srgb, var(--surface2), transparent 35%);
+}
+
+.addon-card__issue-section-title {
+  margin-bottom: 4px;
+  color: var(--text);
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .02em;
+}
+
+.addons-markdown-modal__issues {
+  margin-bottom: 14px;
 }
 
 /* ── Actions ─────────────────────────────────────────────── */
@@ -679,7 +747,8 @@
 .addon-card--source .addon-card__desc,
 .addon-card--source .addon-card__source-meta,
 .addon-card--source .addon-card__markdown,
-.addon-card--source .addon-card__deps-warn {
+.addon-card--source .addon-card__deps-warn,
+.addon-card--source .addon-card__issue {
   max-width: none;
   width: 100%;
 }
@@ -770,6 +839,15 @@
 }
 
 @media (max-width: 820px) {
+  .addons-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .addons-tabs {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
   .addon-card--source {
     grid-template-columns: 1fr;
     grid-template-areas:
@@ -818,6 +896,34 @@
   .addon-card__source-sync {
     align-items: flex-start;
     text-align: left;
+  }
+}
+
+@media (max-width: 480px) {
+  .addons-toolbar {
+    align-items: stretch;
+  }
+
+  .addons-toolbar__right,
+  .addons-search {
+    width: 100%;
+  }
+
+  .addons-search {
+    min-width: 0;
+  }
+
+  .addon-card {
+    padding: 12px;
+  }
+
+  .addon-card__catalog-actions,
+  .addon-card__source-actions--full {
+    align-items: stretch;
+  }
+
+  .addon-card__action-btn {
+    width: 100%;
   }
 }
 

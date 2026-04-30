@@ -6,6 +6,12 @@ import type {
 } from '../../shared/types';
 import type { TranslationParams } from '../../shared/types';
 import { i18n } from '../i18n';
+import {
+  getHistoryModeBucket,
+  isFlawlessHistoryEntry,
+  isSprintHistoryEntry,
+  isSurvivalHistoryEntry,
+} from '../history/selectors';
 
 export interface HomeHistorySummary {
   lastSession: HistoryEntry | null;
@@ -38,9 +44,8 @@ function isBetterHistoryEntry(candidate: HistoryEntry, current: HistoryEntry | n
 }
 
 function getScenarioBucket(entry: HistoryEntry) {
-  if (entry.mode === 'test') return 'sprint';
-  if (entry.mode === 'practice' && entry.contentScenarioId === 'survival') return 'survival';
-  if (entry.mode === 'practice' && entry.contentScenarioId === 'flawless') return 'flawless';
+  const bucket = getHistoryModeBucket(entry);
+  if (bucket === 'sprint' || bucket === 'survival' || bucket === 'flawless') return bucket;
   return null;
 }
 
@@ -127,9 +132,9 @@ export function summarizeDailyRunState(
 }
 
 export function getReplayModeFromHistory(entry: HistoryEntry | null) {
-  if (entry?.contentScenarioId === 'survival') return 'survival';
-  if (entry?.contentScenarioId === 'flawless') return 'survival';
-  if (entry?.mode === 'test') return 'test';
+  if (entry && isSurvivalHistoryEntry(entry)) return 'survival';
+  if (entry && isFlawlessHistoryEntry(entry)) return 'survival';
+  if (entry && isSprintHistoryEntry(entry)) return 'test';
   return 'practice';
 }
 
@@ -138,8 +143,8 @@ export function getReplayTitleFromHistory(
   t: TranslateFn = translateWithI18n,
 ) {
   if (!entry) return t('home.summary.replay.openPractice');
-  if (entry.mode === 'test') return t('home.summary.replay.retrySprint');
-  if (entry.contentScenarioId === 'survival') return t('home.summary.replay.retrySurvival');
-  if (entry.contentScenarioId === 'flawless') return t('home.summary.replay.retryFlawless');
+  if (isSprintHistoryEntry(entry)) return t('home.summary.replay.retrySprint');
+  if (isSurvivalHistoryEntry(entry)) return t('home.summary.replay.retrySurvival');
+  if (isFlawlessHistoryEntry(entry)) return t('home.summary.replay.retryFlawless');
   return t('home.summary.replay.backToPractice');
 }

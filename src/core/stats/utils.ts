@@ -9,6 +9,9 @@ import type {
   TranslationParams,
 } from '../../shared/types';
 import { formatLocaleDateTime } from '../i18n';
+import {
+  isPracticeHistoryEntry,
+} from '../history/selectors';
 
 export type TrendTone = 'up' | 'down' | 'flat' | 'neutral';
 export type StatsPeriod = 'all' | 'day' | 'week' | 'month';
@@ -192,7 +195,7 @@ export function formatEntryModeLabel(entry: HistoryEntry, t: Translate) {
   if (!scenarioLabel || scenarioLabel === t('stats.scenarios.practice-normal')) {
     return formatModeLabel(entry.mode, t);
   }
-  if (entry.mode === 'practice' && entry.contentScenarioId === 'practice-rhythm') {
+  if (isPracticeHistoryEntry(entry) && entry.contentScenarioId === 'practice-rhythm') {
     return scenarioLabel;
   }
   return scenarioLabel;
@@ -216,7 +219,7 @@ export function findMatchingRhythmSession(
   historyItem: ScopedHistoryEntry,
   rhythmItems: ScopedRhythmSession[],
 ) {
-  if (historyItem.entry.mode !== 'practice') return null;
+  if (!isPracticeHistoryEntry(historyItem.entry)) return null;
   const targetTs = new Date(historyItem.entry.date).getTime();
   if (Number.isNaN(targetTs)) return null;
 

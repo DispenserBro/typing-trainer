@@ -3,8 +3,11 @@
    ═══════════════════════════════════════════════════════════ */
 
 @use './styles/base';
+@use './styles/onboarding-guides';
+@use './styles/result-primitives';
 @use './styles/game-practice-lessons';
 @use './styles/stats';
+@use './styles/settings-layout';
 @use './styles/ui-settings-keyboard';
 @use './styles/addons';
 @use './styles/utilities-responsive';

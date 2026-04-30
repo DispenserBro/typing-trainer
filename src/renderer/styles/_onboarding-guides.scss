@@ -1,0 +1,166 @@
+/* ── Mode welcome guides ───────────────────────────────── */
+.mode-guide-modal {
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--surface3));
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--accent) 14%, transparent), transparent 34%),
+    var(--surface);
+}
+
+.mode-guide-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mode-guide-title-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface2));
+  color: var(--accent);
+}
+
+.mode-guide {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.mode-guide-progress {
+  height: 7px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--surface2) 78%, var(--bg));
+}
+
+.mode-guide-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 68%, #fff));
+  transition: width 0.2s ease;
+}
+
+.mode-guide-kicker {
+  align-self: flex-start;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.mode-guide h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.15rem;
+}
+
+.mode-guide p {
+  margin: 0;
+  color: var(--text-dim);
+  line-height: 1.55;
+}
+
+.mode-guide-checklist {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+}
+
+.mode-guide-checkitem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--surface3);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--surface2) 82%, var(--bg));
+  color: var(--text-dim);
+  font-size: 0.82rem;
+}
+
+.mode-guide-checkitem svg {
+  flex-shrink: 0;
+  color: var(--green);
+}
+
+.mode-guide-interaction {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.8fr);
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--surface3));
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--surface2) 86%, var(--accent) 8%);
+}
+
+.mode-guide-interaction strong {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+
+.mode-guide-targets {
+  display: grid;
+  gap: 8px;
+}
+
+.mode-guide-target {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid var(--surface3);
+  border-radius: 999px;
+  background: var(--surface2);
+  color: var(--text-dim);
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.mode-guide-target.active {
+  border-color: var(--accent);
+  color: var(--text);
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface2));
+}
+
+.mode-guide-target.done {
+  border-color: color-mix(in srgb, var(--green) 40%, var(--surface3));
+  color: var(--green);
+}
+
+.mode-guide-target:disabled {
+  cursor: default;
+  opacity: 0.62;
+}
+
+.mode-guide-target.active:hover {
+  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--accent) 26%, var(--surface2));
+}
+
+.mode-guide-step-label {
+  color: var(--subtext);
+  font-size: 0.78rem;
+  text-align: right;
+}
+
+.mode-guide-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}

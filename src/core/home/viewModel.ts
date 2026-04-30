@@ -1,7 +1,6 @@
 import type {
   GameAchievementDefinition,
   GameState,
-  HistoryEntry,
   LayoutsData,
   MotivationProgress,
   PracticeSettings,
@@ -35,6 +34,15 @@ import {
   buildModeFocusSnapshots,
 } from '../motivation/records';
 import { formatLocaleDate } from '../i18n';
+import { buildHomeHistoryMetrics } from './historyMetrics';
+import {
+  buildHomeModeFocusDetailCards,
+  type HomeModeFocusDetailCardModel,
+} from './modeFocusDetails';
+import {
+  buildHomePersonalRecordDetailCards,
+  type HomePersonalRecordDetailCardModel,
+} from './personalRecordDetails';
 
 export type HomeActionId = 'continue-run' | 'replay-last' | 'start-practice' | 'lessons';
 export type HomeModeCardId = 'practice' | 'test' | 'survival' | 'lessons' | 'game' | 'stats' | 'settings';
@@ -82,11 +90,12 @@ export interface HomeQuickInsightModel {
   description: string;
 }
 
+export type { HomeModeFocusDetailCardModel };
+export type { HomePersonalRecordDetailCardModel };
+
 type RecommendationCandidate = HomeRecommendationModel & {
   score: number;
 };
-
-type HomeHistoryEntries = HistoryEntry[];
 
 type WeaknessHotspot = {
   kind: 'char' | 'bigram' | 'rhythm';
@@ -129,11 +138,6 @@ function formatChallengeProgress(current: number, target: number) {
   return `${displayCurrent} / ${displayTarget}`;
 }
 
-function averageMetric(entries: HomeHistoryEntries, key: 'wpm' | 'acc') {
-  if (!entries.length) return 0;
-  return entries.reduce((sum, entry) => sum + entry[key], 0) / entries.length;
-}
-
 function clampPercent(value: number) {
   return Math.max(0, Math.min(100, Math.round(value)));
 }
@@ -145,30 +149,8 @@ function pushRecommendationCandidate(
   if (candidate) candidates.push(candidate);
 }
 
-function takeRecent<T>(entries: T[], count: number) {
-  return entries.slice(-count);
-}
-
 function uniqueStrings(values: Array<string | null | undefined>) {
   return Array.from(new Set(values.filter((value): value is string => Boolean(value))));
-}
-
-function getEntryTimestamp(entry: HistoryEntry) {
-  return new Date(entry.date).getTime();
-}
-
-function countEntriesWithinDays(
-  entries: HomeHistoryEntries,
-  days: number,
-  predicate?: (entry: HistoryEntry) => boolean,
-) {
-  const now = Date.now();
-  const threshold = now - days * 24 * 60 * 60 * 1000;
-  return entries.filter(entry => {
-    const timestamp = getEntryTimestamp(entry);
-    if (Number.isNaN(timestamp) || timestamp < threshold) return false;
-    return predicate ? predicate(entry) : true;
-  }).length;
 }
 
 function buildWeaknessHotspot(
@@ -218,13 +200,6 @@ function buildWeaknessHotspot(
 
   if (!candidates.length) return null;
   return candidates.sort((left, right) => right.weakness - left.weakness)[0] ?? null;
-}
-
-function buildTrendDelta(entries: HomeHistoryEntries, key: 'wpm' | 'acc', recentCount: number, previousCount = recentCount) {
-  const recentEntries = takeRecent(entries, recentCount);
-  const previousEntries = entries.slice(Math.max(0, entries.length - recentCount - previousCount), Math.max(0, entries.length - recentCount));
-  if (!recentEntries.length || !previousEntries.length) return 0;
-  return averageMetric(recentEntries, key) - averageMetric(previousEntries, key);
 }
 
 function getCompletionPressure(percent: number, remainingDays: number) {
@@ -372,43 +347,51 @@ export function buildHomePageViewModel({
   const weaknessHotspot = buildWeaknessHotspot(layoutInsights, t);
 
   const modeFocusSnapshots = buildModeFocusSnapshots(currentHistory, t);
+  const modeFocusDetailCards = buildHomeModeFocusDetailCards({
+    formatSpeed: fmtSpeed,
+    locale,
+    modeFocusSnapshots,
+    speedLabel,
+    translate: t,
+  });
+  const personalRecordCards = buildHomePersonalRecordCards(progress, layouts, currentLayout, t);
+  const personalRecordDetailCards = buildHomePersonalRecordDetailCards({
+    formatSpeed: fmtSpeed,
+    personalRecordCards,
+    speedLabel,
+    translate: t,
+  });
   const recommendedModeFocus = modeFocusSnapshots.find(snapshot => snapshot.id !== 'practice' && snapshot.attempts === 0)
     ?? modeFocusSnapshots.find(snapshot => snapshot.id !== 'practice' && snapshot.emphasis === 'warn')
     ?? null;
   const lastModeFollowup = buildHistoryFollowupRecommendation(lastSession, t);
 
-  const recentEntries = takeRecent(currentHistory, 8);
-  const recentPracticeEntries = takeRecent(currentHistory.filter(entry => entry.mode === 'practice' && !entry.contentScenarioId?.startsWith('survival') && entry.contentScenarioId !== 'flawless'), 6);
-  const sprintEntries = currentHistory.filter(entry => entry.mode === 'test');
-  const recentSprintEntries = takeRecent(sprintEntries, 4);
-  const survivalEntries = currentHistory.filter(entry => entry.mode === 'practice' && entry.contentScenarioId === 'survival');
-  const recentSurvivalEntries = takeRecent(survivalEntries, 3);
-  const flawlessEntries = currentHistory.filter(entry => entry.mode === 'practice' && entry.contentScenarioId === 'flawless');
-
-  const recentAvgAccuracy = averageMetric(recentEntries, 'acc');
-  const recentPracticeAvgAccuracy = averageMetric(recentPracticeEntries, 'acc');
-  const recentSprintAvgAccuracy = averageMetric(recentSprintEntries, 'acc');
-  const recentSurvivalAvgAccuracy = averageMetric(recentSurvivalEntries, 'acc');
-  const recentPracticeAvgSpeed = averageMetric(recentPracticeEntries, 'wpm');
-  const recentSprintAvgSpeed = averageMetric(recentSprintEntries, 'wpm');
-  const recentSurvivalAvgSpeed = averageMetric(recentSurvivalEntries, 'wpm');
-  const survivalPassRate = survivalEntries.length > 0
-    ? survivalEntries.filter(entry => entry.passed).length / survivalEntries.length
-    : 0;
+  const historyMetrics = buildHomeHistoryMetrics(currentHistory);
+  const {
+    flawlessEntries,
+    practiceAccuracyTrend,
+    practiceSpeedTrend,
+    recentAvgAccuracy,
+    recentEntries,
+    recentFlawlessCount14d,
+    recentPracticeAvgAccuracy,
+    recentPracticeCount14d,
+    recentPracticeEntries,
+    recentSprintAvgAccuracy,
+    recentSprintCount14d,
+    recentSprintEntries,
+    recentSurvivalAvgAccuracy,
+    recentSurvivalCount14d,
+    recentSurvivalEntries,
+    sprintAccuracyTrend,
+    sprintEntries,
+    sprintSpeedTrend,
+    survivalEntries,
+    survivalPassRate,
+  } = historyMetrics;
   const weeklyCompletionPercent = weeklySnapshot.totalCount > 0
     ? clampPercent((weeklySnapshot.completedCount / weeklySnapshot.totalCount) * 100)
     : 0;
-  const practiceAccuracyTrend = buildTrendDelta(recentPracticeEntries, 'acc', 3);
-  const practiceSpeedTrend = buildTrendDelta(recentPracticeEntries, 'wpm', 3);
-  const sprintAccuracyTrend = buildTrendDelta(recentSprintEntries, 'acc', 2);
-  const sprintSpeedTrend = buildTrendDelta(recentSprintEntries, 'wpm', 2);
-  const recentPracticeCount14d = countEntriesWithinDays(currentHistory, 14, entry =>
-    entry.mode === 'practice' && entry.contentScenarioId !== 'survival' && entry.contentScenarioId !== 'flawless');
-  const recentSprintCount14d = countEntriesWithinDays(currentHistory, 14, entry => entry.mode === 'test');
-  const recentSurvivalCount14d = countEntriesWithinDays(currentHistory, 14, entry =>
-    entry.mode === 'practice' && entry.contentScenarioId === 'survival');
-  const recentFlawlessCount14d = countEntriesWithinDays(currentHistory, 14, entry =>
-    entry.mode === 'practice' && entry.contentScenarioId === 'flawless');
   const dailyProgressGap = Math.max(0, goalValue - dailyProgressValue);
 
   const recommendation: HomeRecommendationModel = (() => {
@@ -969,9 +952,11 @@ export function buildHomePageViewModel({
     layoutLabel,
     layoutMastery: buildLayoutMasterySnapshot(progress, layouts, currentLayout, t),
     modeCards,
+    modeFocusDetailCards,
     modeFocusSnapshots,
     nextLessonNumber,
-    personalRecordCards: buildHomePersonalRecordCards(progress, layouts, currentLayout, t),
+    personalRecordCards,
+    personalRecordDetailCards,
     quickInsights,
     recommendation,
     replayTitle: lastSession ? null : t('home.viewModel.replayTitle'),

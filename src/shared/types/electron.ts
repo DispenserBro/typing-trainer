@@ -6,7 +6,9 @@ import type { InstalledAddon, InstalledMod } from './addon';
 import type { InstalledTheme, ThemeInstallResult } from './theme';
 import type {
   ExtensionCatalogEntry,
+  ExtensionCatalogKind,
   ExtensionCatalogInstallResult,
+  ExtensionCatalogPreflightResult,
   ExtensionSourceInput,
   ExtensionSourceInstallResult,
   ExtensionSourceSyncResult,
@@ -98,7 +100,8 @@ export interface ElectronAPI {
   toggleExtensionSource(sourceId: string, enabled: boolean): Promise<boolean>;
   syncExtensionSource(sourceId: string): Promise<ExtensionSourceSyncResult>;
   scanExtensionCatalog(): Promise<ExtensionCatalogEntry[]>;
-  installExtensionCatalogEntry(sourceId: string, kind: 'addons' | 'mods' | 'themes', entryId: string): Promise<ExtensionCatalogInstallResult>;
+  validateExtensionCatalogEntry(sourceId: string, kind: ExtensionCatalogKind, entryId: string): Promise<ExtensionCatalogPreflightResult>;
+  installExtensionCatalogEntry(sourceId: string, kind: ExtensionCatalogKind, entryId: string): Promise<ExtensionCatalogInstallResult>;
 
   /* Window */
   winMinimize(): void;

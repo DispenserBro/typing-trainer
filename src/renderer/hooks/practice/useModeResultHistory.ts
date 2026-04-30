@@ -7,18 +7,12 @@ import type {
   TranslationParams,
 } from '../../../shared/types';
 import {
-  buildPracticeResultComparison,
-  buildSprintResultComparison,
+  buildModeResultHistoryModel,
+  type ModeResultHistoryResult,
   type ResultComparisonSummary,
-} from '../../../core/motivation/records';
+} from '../../../core/practice/resultHistory';
 
 type TranslateFn = (key: string, params?: TranslationParams) => string;
-
-type ModeResultHistoryResult = {
-  acc: number;
-  elapsed?: number;
-  wpm: number;
-} | null;
 
 type UseModeResultHistoryArgs = {
   contentMode: PracticeContentMode;
@@ -45,43 +39,14 @@ export function useModeResultHistory({
   historyEntries: HistoryEntry[];
   resultComparison: ResultComparisonSummary | null;
 } {
-  const historyEntries = useMemo(
-    () => historyByLayout?.[currentLayout] ?? [],
-    [currentLayout, historyByLayout],
-  );
-
-  const resultComparison = useMemo(() => {
-    if (!result) return null;
-
-    if (mode === 'sprint') {
-      return buildSprintResultComparison(historyEntries, t, {
-        wpm: result.wpm,
-        acc: result.acc,
-        contentScenarioId: scenarioId,
-        durationSeconds: result.elapsed,
-        contentMode,
-      });
-    }
-
-    return buildPracticeResultComparison(historyEntries, t, {
-      wpm: result.wpm,
-      acc: result.acc,
-      contentScenarioId: scenarioId,
-      trainingMode,
-      contentMode,
-    });
-  }, [contentMode, historyEntries, mode, result, scenarioId, t, trainingMode]);
-
-  const bestEntries = useMemo(
-    () => mode === 'sprint'
-      ? historyEntries.filter(entry => entry.mode === 'test')
-      : historyEntries.filter(entry => entry.mode === 'practice' && entry.contentScenarioId === scenarioId),
-    [historyEntries, mode, scenarioId],
-  );
-
-  return {
-    bestEntries,
-    historyEntries,
-    resultComparison,
-  };
+  return useMemo(() => buildModeResultHistoryModel({
+    contentMode,
+    currentLayout,
+    historyByLayout,
+    mode,
+    result,
+    scenarioId,
+    t,
+    trainingMode,
+  }), [contentMode, currentLayout, historyByLayout, mode, result, scenarioId, t, trainingMode]);
 }

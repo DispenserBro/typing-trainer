@@ -3,6 +3,7 @@ import { ModeResultSummaryLine } from './ModeResultSummaryLine';
 import type { TranslationParams } from '../../../shared/types';
 import type { ResultComparisonSummary, ModeFollowupRecommendation } from '../../../core/motivation/records';
 import type { MotivationGoalSnapshot, MotivationStreakSnapshot } from '../../../core/motivation/progress';
+import { buildSprintResultPrimaryMetrics } from '../../../core/practice/modeResultMetrics';
 
 type TranslateFn = (key: string, options?: TranslationParams) => string;
 
@@ -57,24 +58,7 @@ export function SprintResultFlow({
           t={t}
         />
       )}
-      primaryMetrics={[
-        {
-          id: 'chars',
-          value: result.chars,
-          label: t('common.characters'),
-        },
-        {
-          id: 'errors',
-          value: result.errors,
-          label: t('common.errors'),
-          tone: result.errors === 0 ? 'good' : result.errors <= 3 ? 'warn' : 'bad',
-        },
-        {
-          id: 'duration',
-          value: `${Math.max(1, Math.round(result.elapsed))} ${t('common.secondsShort')}`,
-          label: t('sprint.duration'),
-        },
-      ]}
+      primaryMetrics={buildSprintResultPrimaryMetrics(result, t)}
       goals={activeSprintGoals}
       streaks={sprintStreaks}
       comparison={sprintResultComparison}

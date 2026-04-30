@@ -1,0 +1,21 @@
+Release 3.0.0
+
+Range: v2.3.2..working tree
+
+Added
+
+- Added a full extension center stack with source management, install preflight contracts, Markdown package cards, theme packs, and dedicated extension diagnostics.
+- Added built-in interface localization infrastructure with PO resources, locale loaders, glossary and merge diagnostics, built-in locale packaging, and addon/mod locale layer support.
+- Added new shared result-flow primitives, onboarding guides, history selectors, navigation helpers, lesson and achievement view-models, and deeper Home detail surfaces.
+
+Changed
+
+- Reworked the app architecture around `src/core` helpers and narrower renderer state slices, moving heavy result, history, stats, lessons, navigation, and motivation computations out of page components.
+- Refreshed the main product surfaces across Home, Practice, Sprint, Survival, Flawless, Lessons, Game, Stats, Settings, and Addons with new layouts, responsive styling, richer summaries, and clearer follow-up actions.
+- Rebuilt the Electron packaging flow with custom clean/build scripts, locale copy steps, installer resources, before-build hooks, and a release workflow that produces Windows and Linux artifacts.
+
+Fixed
+
+- Improved compatibility and fallback behavior for extension sources, package manifests, stale caches, runtime dependencies, and broken Markdown cards before installation.
+- Strengthened history, comparison, records, and result-card handling so practice, sprint, survival, flawless, and game flows keep their data scopes and empty states predictable.
+- Expanded diagnostics coverage for core, history, i18n, extensions, practice content, and game balance to catch regressions earlier in release preparation.

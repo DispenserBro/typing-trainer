@@ -8,6 +8,33 @@ type PracticeFeedbackCardProps = {
 
 export function PracticeFeedbackCard({ feedback }: PracticeFeedbackCardProps) {
   const { t } = useI18n();
+  const primaryFocus = feedback.weakestChar
+    ? {
+        label: t('practice.feedback.weakestChar.label'),
+        value: feedback.weakestChar.toUpperCase(),
+        note: t('practice.feedback.weakestChar.note'),
+        mono: true,
+      }
+    : feedback.weakestBigram
+      ? {
+          label: t('practice.feedback.weakestBigram.label'),
+          value: feedback.weakestBigram.toUpperCase(),
+          note: t('practice.feedback.weakestBigram.note'),
+          mono: true,
+        }
+      : feedback.weakestFinger
+        ? {
+            label: t('practice.feedback.weakestFinger.label'),
+            value: feedback.weakestFinger,
+            note: t('practice.feedback.weakestFinger.note'),
+            mono: false,
+          }
+        : {
+            label: t('practice.feedback.rhythm.label'),
+            value: `${Math.round(feedback.rhythmScore)}%`,
+            note: feedback.rhythmLabel,
+            mono: false,
+          };
 
   return (
     <div className="card practice-feedback-card">
@@ -18,6 +45,13 @@ export function PracticeFeedbackCard({ feedback }: PracticeFeedbackCardProps) {
           description={t('practice.feedback.description')}
         />
         <span className="practice-feedback-prompt">{t('practice.feedback.prompt')}</span>
+      </div>
+      <div className="practice-feedback-primary result-guidance-card">
+        <span className="practice-feedback-label">{primaryFocus.label}</span>
+        <strong className={`practice-feedback-value${primaryFocus.mono ? ' mono' : ''}`}>
+          {primaryFocus.value}
+        </strong>
+        <span className="practice-feedback-note">{primaryFocus.note}</span>
       </div>
       <div className="practice-feedback-grid">
         <div className="practice-feedback-item">

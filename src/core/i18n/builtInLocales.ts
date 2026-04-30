@@ -20,8 +20,18 @@ function readBuiltInPoInNode(localeId: 'ru' | 'en') {
   const dynamicRequire = module.require.bind(module) as NodeRequire;
   const fs = dynamicRequire('node:fs') as typeof import('node:fs');
   const path = dynamicRequire('node:path') as typeof import('node:path');
-  const filePath = path.resolve(__dirname, '../../../src/core/i18n/locales', `${localeId}.po`);
-  return fs.readFileSync(filePath, 'utf8');
+  const candidatePaths = [
+    path.resolve(__dirname, 'locales', `${localeId}.po`),
+    path.resolve(__dirname, '../../../src/core/i18n/locales', `${localeId}.po`),
+  ];
+
+  for (const filePath of candidatePaths) {
+    if (fs.existsSync(filePath)) {
+      return fs.readFileSync(filePath, 'utf8');
+    }
+  }
+
+  throw new Error(`Built-in locale "${localeId}" not found in: ${candidatePaths.join(', ')}`);
 }
 
 function readBuiltInPoInRenderer(localeId: 'ru' | 'en') {

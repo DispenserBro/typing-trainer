@@ -687,3 +687,71 @@
   font-size: 0.8rem;
   color: var(--text);
 }
+
+@media (max-width: 1200px) {
+  .stats-grid {
+    gap: 10px;
+  }
+}
+
+@media (max-width: 900px) {
+  .stats-grid,
+  .stats-keys-layout,
+  .stats-keys-grid,
+  .stats-summary-grid,
+  .stats-filters-grid,
+  .stats-rhythm-grid,
+  .stats-session-grid,
+  .stats-session-summary,
+  .keyboard-heatmap-zones,
+  .smart-stats-grid,
+  .smart-stats-dual {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-rhythm-head,
+  .keyboard-heatmap-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .stats-summary-trend {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+
+  .stats-summary-trend small {
+    text-align: left;
+  }
+
+  .keyboard-heatmap {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .keyboard-heatmap-row {
+    min-width: max-content;
+  }
+}
+
+@media (max-width: 700px) {
+  .smart-stat-row {
+    padding: 8px 10px;
+  }
+
+  .smart-stat-token {
+    font-size: 0.86rem;
+  }
+
+  .smart-rhythm-score b {
+    font-size: 1.7rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-bar {
+    gap: 12px;
+    padding: 8px 12px;
+    flex-wrap: wrap;
+  }
+}

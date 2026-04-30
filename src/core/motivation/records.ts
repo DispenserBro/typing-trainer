@@ -7,6 +7,18 @@ import type {
   TranslationParams,
 } from '../../shared/types';
 import { formatDelta } from '../stats/utils';
+import {
+  isFlawlessHistoryEntry,
+  isPracticeHistoryEntry,
+  isSprintHistoryEntry,
+  isSurvivalHistoryEntry,
+  matchesPracticeScenario,
+} from '../history/selectors';
+export {
+  buildModeFocusSnapshots,
+  pickBestHistoryEntry,
+  type ModeFocusSnapshot,
+} from './modeFocus';
 
 type ScopedHistoryEntry = {
   layoutId: string;
@@ -48,18 +60,6 @@ export interface HomePersonalRecordCard {
   title: string;
   subtitle: string;
   record: ScopedHistoryEntry | null;
-}
-
-export interface ModeFocusSnapshot {
-  id: 'practice' | 'test' | 'survival';
-  title: string;
-  description: string;
-  actionMode: string;
-  attempts: number;
-  bestEntry: HistoryEntry | null;
-  lastEntry: HistoryEntry | null;
-  emphasis: 'good' | 'warn' | 'neutral';
-  recommendation: string;
 }
 
 export interface ModeFollowupRecommendation {
@@ -204,16 +204,6 @@ function pickBestEntry(entries: ScopedHistoryEntry[]) {
   return entries.reduce((best, entry) => (compareEntries(entry, best) > 0 ? entry : best));
 }
 
-export function pickBestHistoryEntry(entries: HistoryEntry[]) {
-  if (!entries.length) return null;
-  return entries.reduce<HistoryEntry | null>((best, entry) => {
-    if (!best) return entry;
-    if (entry.wpm !== best.wpm) return entry.wpm > best.wpm ? entry : best;
-    if (entry.acc !== best.acc) return entry.acc > best.acc ? entry : best;
-    return new Date(entry.date).getTime() > new Date(best.date).getTime() ? entry : best;
-  }, null);
-}
-
 function isRoundedMatch(entry: HistoryEntry, current: ResultComparisonInput) {
   return entry.wpm === Math.round(current.wpm)
     && Math.abs(entry.acc - Math.round(current.acc * 10) / 10) <= 0.1;
@@ -340,14 +330,14 @@ export function buildPracticeResultComparison(
   },
 ): ResultComparisonSummary {
   const candidates = pickComparisonGroup([
-    entries.filter(entry => entry.mode === 'practice'
-      && entry.contentScenarioId === current.contentScenarioId
+    entries.filter(entry => current.contentScenarioId
+      && matchesPracticeScenario(entry, current.contentScenarioId)
       && entry.contentMode === current.contentMode),
-    entries.filter(entry => entry.mode === 'practice'
+    entries.filter(entry => isPracticeHistoryEntry(entry)
       && entry.trainingMode === current.trainingMode
       && entry.contentMode === current.contentMode),
-    entries.filter(entry => entry.mode === 'practice' && entry.trainingMode === current.trainingMode),
-    entries.filter(entry => entry.mode === 'practice'),
+    entries.filter(entry => isPracticeHistoryEntry(entry) && entry.trainingMode === current.trainingMode),
+    entries.filter(isPracticeHistoryEntry),
   ], current);
 
   return buildComparisonSummary(candidates, current, t, entry => describePracticeContext(entry, t));
@@ -383,13 +373,13 @@ export function buildSprintResultComparison(
     ? Math.max(1, Math.round(current.durationSeconds))
     : null;
   const candidates = pickComparisonGroup([
-    entries.filter(entry => entry.mode === 'test'
+    entries.filter(entry => isSprintHistoryEntry(entry)
       && entry.contentScenarioId === current.contentScenarioId
       && entry.contentMode === current.contentMode
       && (roundedDuration == null || Math.max(1, Math.round(entry.durationSeconds ?? 0)) === roundedDuration)),
-    entries.filter(entry => entry.mode === 'test'
+    entries.filter(entry => isSprintHistoryEntry(entry)
       && (roundedDuration == null || Math.max(1, Math.round(entry.durationSeconds ?? 0)) === roundedDuration)),
-    entries.filter(entry => entry.mode === 'test'),
+    entries.filter(isSprintHistoryEntry),
   ], current);
 
   return buildComparisonSummary(candidates, current, t, entry => describeSprintContext(entry, t));
@@ -410,7 +400,7 @@ export function buildHomePersonalRecordCards(
       id: 'practice-overall',
       title: t('records.cards.practice.title'),
       subtitle: t('records.cards.practice.subtitle'),
-      record: pickBestEntry(scopedEntries.filter(entry => entry.entry.mode === 'practice')),
+      record: pickBestEntry(scopedEntries.filter(entry => isPracticeHistoryEntry(entry.entry))),
     },
     {
       id: 'game-overall',
@@ -422,7 +412,7 @@ export function buildHomePersonalRecordCards(
       id: 'sprint-overall',
       title: t('records.cards.sprint.title'),
       subtitle: t('records.cards.sprint.subtitle'),
-      record: pickBestEntry(scopedEntries.filter(entry => entry.entry.mode === 'test')),
+      record: pickBestEntry(scopedEntries.filter(entry => isSprintHistoryEntry(entry.entry))),
     },
     {
       id: 'current-layout',
@@ -441,150 +431,10 @@ export function buildHomePersonalRecordCards(
   ];
 }
 
-export function buildModeFocusSnapshots(entries: HistoryEntry[], t: TranslateFn): ModeFocusSnapshot[] {
-  const basePracticeEntries = entries.filter(entry => entry.mode === 'practice'
-    && entry.contentScenarioId !== 'survival'
-    && entry.contentScenarioId !== 'flawless');
-  const sprintEntries = entries.filter(entry => entry.mode === 'test');
-  const survivalEntries = entries.filter(entry => entry.mode === 'practice'
-    && (entry.contentScenarioId === 'survival' || entry.contentScenarioId === 'flawless'));
-  const flawlessEntries = entries.filter(entry => entry.mode === 'practice' && entry.contentScenarioId === 'flawless');
-
-  const buildSnapshot = (
-    id: ModeFocusSnapshot['id'],
-    title: string,
-    description: string,
-    actionMode: string,
-    modeEntries: HistoryEntry[],
-    recommendation: (attempts: number, best: HistoryEntry | null, last: HistoryEntry | null) => Pick<ModeFocusSnapshot, 'emphasis' | 'recommendation'>,
-  ): ModeFocusSnapshot => {
-    const attempts = modeEntries.length;
-    const bestEntry = pickBestHistoryEntry(modeEntries);
-    const lastEntry = attempts > 0 ? modeEntries[attempts - 1]! : null;
-    const feedback = recommendation(attempts, bestEntry, lastEntry);
-
-    return {
-      id,
-      title,
-      description,
-      actionMode,
-      attempts,
-      bestEntry,
-      lastEntry,
-      emphasis: feedback.emphasis,
-      recommendation: feedback.recommendation,
-    };
-  };
-
-  return [
-    buildSnapshot(
-      'practice',
-      t('records.modeFocus.practice.title'),
-      t('records.modeFocus.practice.description'),
-      'practice',
-      basePracticeEntries,
-      (attempts, best, last) => {
-        if (attempts === 0) {
-          return {
-            emphasis: 'warn',
-            recommendation: t('records.modeFocus.practice.recommendation.empty'),
-          };
-        }
-        if ((last?.acc ?? 0) < 93) {
-          return {
-            emphasis: 'warn',
-            recommendation: t('records.modeFocus.practice.recommendation.lowAccuracy'),
-          };
-        }
-        if ((best?.wpm ?? 0) >= 60 && (best?.acc ?? 0) >= 96) {
-          return {
-            emphasis: 'good',
-            recommendation: t('records.modeFocus.practice.recommendation.ready'),
-          };
-        }
-        return {
-          emphasis: 'neutral',
-          recommendation: t('records.modeFocus.practice.recommendation.building'),
-        };
-      },
-    ),
-    buildSnapshot(
-      'test',
-      t('records.modeFocus.test.title'),
-      t('records.modeFocus.test.description'),
-      'test',
-      sprintEntries,
-      (attempts, best, last) => {
-        if (attempts === 0) {
-          return {
-            emphasis: 'warn',
-            recommendation: t('records.modeFocus.test.recommendation.empty'),
-          };
-        }
-        if ((last?.acc ?? best?.acc ?? 0) < 93) {
-          return {
-            emphasis: 'warn',
-            recommendation: t('records.modeFocus.test.recommendation.lowAccuracy'),
-          };
-        }
-        if ((best?.wpm ?? 0) >= 70 && (best?.acc ?? 0) >= 95) {
-          return {
-            emphasis: 'good',
-            recommendation: t('records.modeFocus.test.recommendation.ready'),
-          };
-        }
-        return {
-          emphasis: 'neutral',
-          recommendation: t('records.modeFocus.test.recommendation.building'),
-        };
-      },
-    ),
-    buildSnapshot(
-      'survival',
-      t('records.modeFocus.survival.title'),
-      t('records.modeFocus.survival.description'),
-      'survival',
-      survivalEntries,
-      (attempts, best, last) => {
-        if (attempts === 0) {
-          return {
-            emphasis: 'warn',
-            recommendation: t('records.modeFocus.survival.recommendation.empty'),
-          };
-        }
-        if (flawlessEntries.length > 0 && (best?.acc ?? 0) >= 98) {
-          return {
-            emphasis: 'good',
-            recommendation: t('records.modeFocus.survival.recommendation.flawlessReady'),
-          };
-        }
-        if ((last?.acc ?? best?.acc ?? 0) < 94) {
-          return {
-            emphasis: 'warn',
-            recommendation: t('records.modeFocus.survival.recommendation.lowAccuracy'),
-          };
-        }
-        if ((best?.acc ?? 0) >= 96 && (best?.wpm ?? 0) >= 55) {
-          return {
-            emphasis: 'good',
-            recommendation: t('records.modeFocus.survival.recommendation.ready'),
-          };
-        }
-        return {
-          emphasis: 'neutral',
-          recommendation: flawlessEntries.length > 0
-            ? t('records.modeFocus.survival.recommendation.buildingWithFlawless')
-            : t('records.modeFocus.survival.recommendation.building'),
-        };
-      },
-    ),
-  ];
-}
-
 export function buildHistoryFollowupRecommendation(entry: HistoryEntry | null, t: TranslateFn): ModeFollowupRecommendation | null {
   if (!entry) return null;
 
-  if (entry.mode === 'test') {
+  if (isSprintHistoryEntry(entry)) {
     if (entry.acc >= 95 && entry.wpm >= 70) {
       return {
         title: t('modeFollowup.test.speedToSurvival.title'),
@@ -601,7 +451,7 @@ export function buildHistoryFollowupRecommendation(entry: HistoryEntry | null, t
     };
   }
 
-  if (entry.mode === 'practice' && entry.contentScenarioId === 'survival') {
+  if (isSurvivalHistoryEntry(entry)) {
     if (entry.passed && entry.acc >= 96) {
       return {
         title: t('modeFollowup.survival.raiseBar.title'),
@@ -618,7 +468,7 @@ export function buildHistoryFollowupRecommendation(entry: HistoryEntry | null, t
     };
   }
 
-  if (entry.mode === 'practice' && entry.contentScenarioId === 'flawless') {
+  if (isFlawlessHistoryEntry(entry)) {
     if (entry.passed) {
       return {
         title: t('modeFollowup.flawless.cleanControl.title'),
@@ -711,11 +561,11 @@ export function buildModeResultFollowupRecommendation(args: {
 
 export function describeHomeRecord(record: ScopedHistoryEntry | null, t: TranslateFn) {
   if (!record) return t('records.homeRecord.noAttempts');
-  const detail = record.entry.mode === 'practice'
+  const detail = isPracticeHistoryEntry(record.entry)
     ? describePracticeContext(record.entry, t)
     : record.entry.mode === 'game'
       ? describeGameContext(record.entry, t)
-      : record.entry.mode === 'test'
+      : isSprintHistoryEntry(record.entry)
         ? describeSprintContext(record.entry, t)
         : t('records.context.lesson');
   return `${record.layoutLabel} · ${record.languageLabel} · ${detail}`;
@@ -731,7 +581,7 @@ export function buildLayoutMasterySnapshot(
   const layout = layouts.layouts[currentLayout];
   const layoutLabel = layout?.label ?? currentLayout.toUpperCase();
   const historyEntries = options?.historyEntriesOverride ?? progress.history?.[currentLayout] ?? [];
-  const practiceEntries = historyEntries.filter(entry => entry.mode === 'practice');
+  const practiceEntries = historyEntries.filter(isPracticeHistoryEntry);
   const layoutProgress = progress.layoutProgress?.[currentLayout];
   const practiceUnlockOrder = layout?.practiceUnlockOrder ?? [];
   const totalLetters = practiceUnlockOrder.length;

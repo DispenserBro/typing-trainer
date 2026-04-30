@@ -9,7 +9,6 @@ import { SprintResultFlow } from '../components/practice/SprintResultFlow';
 import { SprintSettingsSection } from '../components/practice/SprintSettingsSection';
 import { useI18n } from '../contexts/I18nContext';
 import {
-  buildPracticeContentText,
   getPracticeContentScenario,
 } from '../../core/engine';
 import {
@@ -21,16 +20,17 @@ import { useModePreviewState } from '../hooks/practice/useModePreviewState';
 import { useModeKeyboardStart } from '../hooks/practice/useModeKeyboardStart';
 import { useModeResultFollowup } from '../hooks/practice/useModeResultFollowup';
 import { useModeBestResultLabel } from '../hooks/practice/useModeBestResultLabel';
-import { buildSprintResultCallout } from '../hooks/practice/modeResultCallouts';
+import { buildSprintResultCallout } from '../../core/practice/modeResultCallouts';
 import { buildSprintWordCount } from '../hooks/practice/modeWordCounts';
 import {
   buildPracticeBuildOptionsKey,
   usePracticeBuildOptions,
 } from '../hooks/practice/usePracticeBuildOptions';
 import { useModeContentPackSelection } from '../hooks/practice/useModeContentPackSelection';
+import { useModeContentTextBuilder } from '../hooks/practice/useModeContentTextBuilder';
 import { useModeMotivationSnapshots } from '../hooks/practice/useModeMotivationSnapshots';
 import { useModeTextInputs } from '../hooks/practice/useModeTextInputs';
-import { buildModePreviewKey } from '../hooks/practice/modePreviewKey';
+import { buildModeMaterialKey, buildModePreviewKey } from '../hooks/practice/modePreviewKey';
 import { useModeResultHistory } from '../hooks/practice/useModeResultHistory';
 import { useModeMaterialLabels } from '../hooks/practice/useModeMaterialLabels';
 import { InlineStatsBar } from '../components/ui/InlineStatsBar';
@@ -139,28 +139,18 @@ export function SprintPage() {
   const practiceBuildOptions = usePracticeBuildOptions(practiceSettings);
   const practiceBuildOptionsKey = buildPracticeBuildOptionsKey(practiceBuildOptions);
 
-  const buildSprintText = useCallback(() => buildPracticeContentText({
+  const buildSprintText = useModeContentTextBuilder({
     allWords: words,
-    unlockedChars,
-    weakChar,
+    buildOptions: practiceBuildOptions,
     contentMode: effectiveContentMode,
     contentPack: selectedContentPack,
-    scenarioId: 'sprint',
-    wordCountOverride: sprintWordCount,
-    ngramModel: ngramModel ?? undefined,
     insights: practiceInsights,
-    buildOptions: practiceBuildOptions,
-  }), [
-    words,
+    ngramModel,
+    scenarioId: 'sprint',
     unlockedChars,
     weakChar,
-    effectiveContentMode,
-    selectedContentPack,
-    sprintWordCount,
-    ngramModel,
-    practiceInsights,
-    practiceBuildOptions,
-  ]);
+    wordCountOverride: sprintWordCount,
+  });
 
   const onFinish = useCallback((wpm: number, acc: number, elapsed: number, ses: any) => {
     saveHistory('test', wpm, acc, {
@@ -220,6 +210,7 @@ export function SprintPage() {
     buildOptionsKey: practiceBuildOptionsKey,
     contentMode: effectiveContentMode,
     currentLayout,
+    materialKey: buildModeMaterialKey({ contentPack: selectedContentPack, words }),
     practiceUnlockOrder,
     selectedContentPackId: selectedContentPack?.id,
     unlockedCount: layoutProgress.unlocked,
@@ -260,8 +251,8 @@ export function SprintPage() {
 
   useModeKeyboardStart({
     handleKey,
-    onRetry: () => retrySprint(),
-    onStart: () => startSprint(),
+    onRetry: retrySprint,
+    onStart: startSprint,
     overlayVisible: showOverlay,
     previewText: sprintText,
     resultVisible: !!result,
@@ -294,13 +285,14 @@ export function SprintPage() {
     () => result ? buildSprintResultCallout(t, result, sprintResultComparison) : null,
     [result, sprintResultComparison, t],
   );
+  const sprintFollowupResult = useMemo(() => result ? {
+    mode: 'test' as const,
+    wpm: result.wpm,
+    acc: result.acc,
+    errors: result.errors,
+  } : null, [result]);
   const { followupRecommendation, handleFollowupAction } = useModeResultFollowup({
-    result: result ? {
-      mode: 'test',
-      wpm: result.wpm,
-      acc: result.acc,
-      errors: result.errors,
-    } : null,
+    result: sprintFollowupResult,
     switchMode,
     t,
   });

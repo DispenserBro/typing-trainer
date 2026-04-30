@@ -11,8 +11,30 @@ export type ExtensionCatalogEntryStatus =
   | 'update-available'
   | 'source-disabled'
   | 'source-error'
+  | 'incompatible'
   | 'invalid';
 export type ExtensionCatalogInstallSupport = 'direct' | 'manual';
+export type ExtensionCatalogIssueStage = 'manifest' | 'list' | 'card' | 'package';
+export type ExtensionCatalogIssueSeverity = 'warning' | 'error';
+export type ExtensionCatalogIssueFallback = 'stale-cache' | 'skipped-card' | 'manual-only' | 'blocked-install';
+
+export interface ExtensionCatalogIssue {
+  stage: ExtensionCatalogIssueStage;
+  severity: ExtensionCatalogIssueSeverity;
+  message: string;
+  code?: string;
+  params?: Record<string, string | number>;
+  target?: string;
+  fallback?: ExtensionCatalogIssueFallback;
+}
+
+export interface ExtensionCatalogCompatibility {
+  appVersion: string;
+  compatible: boolean;
+  minAppVersion?: string;
+}
+
+export type ExtensionCatalogDuplicateRecommendationReason = 'newer-available' | 'newest-blocked';
 
 export interface LocalExtensionSourceInput {
   type: 'local';
@@ -82,11 +104,15 @@ export interface ExtensionSourceSyncState {
   lastCheckedAt?: string;
   lastSyncAt?: string;
   lastError?: string;
+  lastErrorStage?: Extract<ExtensionCatalogIssueStage, 'manifest' | 'list' | 'card'>;
+  lastErrorTarget?: string;
+  lastErrorFallback?: Extract<ExtensionCatalogIssueFallback, 'stale-cache'>;
   resolvedManifestUri?: string;
   manifest?: ExtensionSourceManifest;
   lists?: ExtensionSourceCachedLists;
   sourceCardUri?: string;
   sourceCardMarkdown?: string;
+  sourceCardIssue?: ExtensionCatalogIssue;
 }
 
 export interface InstalledExtensionSource {
@@ -128,6 +154,7 @@ export interface ExtensionCatalogEntry {
   manifestAuthor?: string;
   manifestType?: string;
   minAppVersion?: string;
+  compatibility?: ExtensionCatalogCompatibility;
   installedVersion?: string;
   status: ExtensionCatalogEntryStatus;
   installSupport: ExtensionCatalogInstallSupport;
@@ -136,10 +163,14 @@ export interface ExtensionCatalogEntry {
   permissions: string[];
   duplicateSourceIds: string[];
   duplicateSourceNames: string[];
+  duplicatePreferredSourceName?: string;
+  duplicatePreferredVersion?: string;
+  duplicateRecommendationReason?: ExtensionCatalogDuplicateRecommendationReason;
   resolvedManifestUri?: string;
   resolvedCardUri?: string;
   cardMarkdown?: string;
   lastError?: string;
+  issues: ExtensionCatalogIssue[];
 }
 
 export interface ExtensionCatalogInstallResult {
@@ -149,4 +180,12 @@ export interface ExtensionCatalogInstallResult {
   mod?: InstalledMod;
   theme?: InstalledTheme;
   entry?: ExtensionCatalogEntry;
+}
+
+export interface ExtensionCatalogPreflightResult {
+  ok: boolean;
+  blocked: boolean;
+  error?: string;
+  entry?: ExtensionCatalogEntry;
+  issues: ExtensionCatalogIssue[];
 }

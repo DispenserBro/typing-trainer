@@ -12,6 +12,12 @@ import { LessonsDetailView } from '../components/lessons/LessonsDetailView';
 import { LessonsExerciseView } from '../components/lessons/LessonsExerciseView';
 import { LessonsListView } from '../components/lessons/LessonsListView';
 import { resolveLesson } from '../../core/lessons/utils';
+import {
+  applyLessonExerciseCompletion,
+  buildLessonNavigationModel,
+  buildLessonsSectionModel,
+  isLessonUnlocked,
+} from '../../core/lessons/viewModel';
 import { AchievementsModal } from '../components/AchievementsModal';
 import { GameAchievementToastStack } from '../components/game/GameAchievementToastStack';
 import { AchievementCounterButton } from '../components/ui/AchievementCounterButton';
@@ -64,40 +70,17 @@ export function LessonsPage() {
   const useYo = settings.useYo;
   const layout = layouts.layouts[currentLayout];
   const lessons = layout?.lessonOrder ?? [];
-  const lessonsBySection = useMemo(() => {
-    const groups = new Map<string, number[]>();
-    lessons.forEach((lesson, index) => {
-      const section = getLessonsSectionLabel(lesson.section, t);
-      const current = groups.get(section) ?? [];
-      current.push(index);
-      groups.set(section, current);
-    });
-    return groups;
-  }, [lessons, t]);
-  const lessonSections = useMemo(
-    () => Array.from(new Set(lessons.map(lesson => getLessonsSectionLabel(lesson.section, t)))),
-    [lessons, t],
+  const lessonsSectionModel = useMemo(() => buildLessonsSectionModel({
+    exerciseCount: EXERCISE_COUNT,
+    getSectionLabel: (section) => getLessonsSectionLabel(section, t),
+    lessons,
+    rawProgress: progress.lessons?.[currentLayout],
+  }), [currentLayout, lessons, progress.lessons, t]);
+  const { lessonsDone } = lessonsSectionModel;
+  const getSectionUnlockState = useCallback(
+    (lessonIndex: number) => isLessonUnlocked(lessonsSectionModel, lessonIndex),
+    [lessonsSectionModel],
   );
-
-  /* lesson progress: number of completed exercises per lesson (0..5) */
-  const lessonsDone: Record<number, number> = useMemo(() => {
-    const raw = progress.lessons?.[currentLayout] || {};
-    const out: Record<number, number> = {};
-    for (const [k, v] of Object.entries(raw)) {
-      // Back-compat: old boolean true → treat as all 5 done
-      out[Number(k)] = typeof v === 'number' ? v : (v ? EXERCISE_COUNT : 0);
-    }
-    return out;
-  }, [progress, currentLayout]);
-  const getSectionUnlockState = useCallback((lessonIndex: number) => {
-    const lesson = lessons[lessonIndex];
-    const section = getLessonsSectionLabel(lesson?.section, t);
-    const sectionIndexes = lessonsBySection.get(section) ?? [];
-    const sectionPosition = sectionIndexes.indexOf(lessonIndex);
-    if (sectionPosition <= 0) return true;
-    const previousLessonIndex = sectionIndexes[sectionPosition - 1];
-    return (lessonsDone[previousLessonIndex] ?? 0) >= EXERCISE_COUNT;
-  }, [lessons, lessonsBySection, lessonsDone, t]);
 
   /* ─── State: which lesson & exercise are open ────── */
   const [activeLesson, setActiveLesson] = useState<number | null>(null);
@@ -119,50 +102,39 @@ export function LessonsPage() {
     if (activeLesson === null || activeExercise === null) return;
     const passed = acc >= 80;
     if (passed) {
-      if (!progress.lessons) progress.lessons = {};
-      if (!progress.lessons[currentLayout]) progress.lessons[currentLayout] = {};
-      const prev = progress.lessons[currentLayout][activeLesson] ?? 0;
-      const prevNum = typeof prev === 'number' ? prev : (prev ? EXERCISE_COUNT : 0);
-      if (activeExercise + 1 > prevNum) {
-        progress.lessons[currentLayout][activeLesson] = activeExercise + 1;
+      const completion = applyLessonExerciseCompletion({
+        exerciseCount: EXERCISE_COUNT,
+        exerciseIndex: activeExercise,
+        getSectionLabel: (section) => getLessonsSectionLabel(section, t),
+        lessonIndex: activeLesson,
+        lessons,
+        rawProgress: progress.lessons?.[currentLayout],
+      });
+      if (completion.updated) {
+        saveProgress({
+          ...progress,
+          lessons: {
+            ...(progress.lessons ?? {}),
+            [currentLayout]: completion.doneByLesson,
+          },
+        });
       }
-      saveProgress(progress);
-      
+
       handleAchievementEvent({ type: 'lessons.exerciseCompleted' });
 
-      // check if lesson completed
-      if (activeExercise + 1 >= EXERCISE_COUNT && (prevNum < EXERCISE_COUNT)) {
-         handleAchievementEvent({ type: 'lessons.lessonCompleted' });
-
-         // check if current section is fully completed
-         const lesson = lessons[activeLesson];
-         if (lesson) {
-           const section = getLessonsSectionLabel(lesson.section, t);
-           const sectionIndexes = lessonsBySection.get(section) ?? [];
-           const sectionDone = sectionIndexes.every(idx => {
-             if (idx === activeLesson) return true; // just completed
-             const done = progress.lessons?.[currentLayout]?.[idx];
-             const count = typeof done === 'number' ? done : (done ? EXERCISE_COUNT : 0);
-             return count >= EXERCISE_COUNT;
-           });
-           if (sectionDone) {
-             handleAchievementEvent({ type: 'lessons.sectionCompleted' });
-           }
-         }
-         
-         // check if all lessons completed
-         const currentDoneCount = Object.values(progress.lessons[currentLayout]).filter(done => {
-           const count = typeof done === 'number' ? done : (done ? EXERCISE_COUNT : 0);
-           return count >= EXERCISE_COUNT;
-         }).length;
-         if (currentDoneCount >= lessons.length) {
-            handleAchievementEvent({ type: 'lessons.allCompleted' });
-         }
+      if (completion.lessonCompleted) {
+        handleAchievementEvent({ type: 'lessons.lessonCompleted' });
+        if (completion.sectionCompleted) {
+          handleAchievementEvent({ type: 'lessons.sectionCompleted' });
+        }
+        if (completion.allCompleted) {
+          handleAchievementEvent({ type: 'lessons.allCompleted' });
+        }
       }
     }
     saveHistory('lesson', wpm, acc, { charStats: ses?.charStats });
     setResult({ wpm, acc, passed });
-  }, [activeLesson, activeExercise, currentLayout, progress, saveProgress, saveHistory, handleAchievementEvent, lessons, lessonsBySection, t]);
+  }, [activeLesson, activeExercise, currentLayout, progress, saveProgress, saveHistory, handleAchievementEvent, lessons, t]);
 
   const { session, start, stop, handleKey, wpm, acc, waitingForSpace } = useTypingSession({
     mode: 'lesson', onFinish,
@@ -298,31 +270,21 @@ export function LessonsPage() {
   const activeLessonData = activeLesson !== null ? resolveCurrentLesson(lessons[activeLesson]) : null;
   const activeLessonExerciseNames = activeLessonData ? getLocalizedExerciseNamesForLesson(activeLessonData, t) : null;
   const activeLessonSection = activeLessonData ? getLessonsSectionLabel(activeLessonData.section, t) : null;
-  const activeSectionLessonIndexes = useMemo(
-    () => (activeLessonSection ? (lessonsBySection.get(activeLessonSection) ?? []) : []),
-    [activeLessonSection, lessonsBySection],
-  );
-  const activeSectionPosition = useMemo(
-    () => (activeLesson !== null ? activeSectionLessonIndexes.indexOf(activeLesson) : -1),
-    [activeLesson, activeSectionLessonIndexes],
-  );
-  const prevLessonInSection = activeSectionPosition > 0 ? activeSectionLessonIndexes[activeSectionPosition - 1] : null;
-  const nextLessonInSection = activeSectionPosition >= 0 && activeSectionPosition + 1 < activeSectionLessonIndexes.length
-    ? activeSectionLessonIndexes[activeSectionPosition + 1]
-    : null;
-  const activeSectionIndex = useMemo(
-    () => (activeLessonSection ? lessonSections.indexOf(activeLessonSection) : -1),
-    [activeLessonSection, lessonSections],
-  );
-  const nextSectionFirstLesson = useMemo(() => {
-    if (activeSectionIndex < 0 || activeSectionIndex + 1 >= lessonSections.length) return null;
-    const nextSection = lessonSections[activeSectionIndex + 1];
-    const nextSectionLessons = lessonsBySection.get(nextSection) ?? [];
-    return nextSectionLessons[0] ?? null;
-  }, [activeSectionIndex, lessonSections, lessonsBySection]);
-  const nextLessonTarget = nextLessonInSection ?? nextSectionFirstLesson;
-  const canOpenPrevLesson = prevLessonInSection !== null && getSectionUnlockState(prevLessonInSection);
-  const canOpenNextLesson = nextLessonTarget !== null && getSectionUnlockState(nextLessonTarget);
+  const lessonNavigation = useMemo(() => buildLessonNavigationModel({
+    activeLesson,
+    activeLessonSection,
+    model: lessonsSectionModel,
+  }), [activeLesson, activeLessonSection, lessonsSectionModel]);
+  const {
+    activeSectionLessonIndexes,
+    activeSectionPosition,
+    canOpenNextLesson,
+    canOpenPrevLesson,
+    nextLessonInSection,
+    nextLessonTarget,
+    nextSectionFirstLesson,
+    prevLessonInSection,
+  } = lessonNavigation;
   const nextLessonTargetLabel = nextLessonInSection !== null
     ? t('lessons.nextLesson')
     : nextSectionFirstLesson !== null

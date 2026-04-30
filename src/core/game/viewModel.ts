@@ -11,11 +11,7 @@ import {
   getActiveMotivationGoalSnapshots,
   getMotivationStreakSnapshots,
 } from '../motivation/progress';
-import {
-  buildGameResultComparison,
-  buildLayoutMasteryResultSummary,
-} from '../motivation/records';
-import { getGhostComparison } from './ghostRun';
+import { buildGameResultHistoryModel } from './resultHistory';
 
 type Translate = (key: string, params?: TranslationParams) => string;
 
@@ -61,23 +57,23 @@ export function buildGameResultViewModel({
   const rewardPending = Boolean(result?.passed && result.isBoss && rewardChoices && !selectedRewardMessage);
   const mapSelectionPending = Boolean(result?.passed && selectableMapNodeIdsLength > 0);
   const isTerminalDailyRun = Boolean(dailySeed) && Boolean(result && (result.victory || result.livesLeft <= 0));
+  const historyModel = buildGameResultHistoryModel({
+    currentLayout,
+    ghostRun,
+    historyEntries,
+    layoutProgressUnlocked,
+    layouts,
+    progress,
+    result,
+    translate,
+  });
 
   return {
-    comparison: result ? buildGameResultComparison(historyEntries, translate, {
-      wpm: result.wpm,
-      acc: result.acc,
-      gameLevel: result.level,
-      gameStageType: result.isBoss ? 'boss' : 'normal',
-    }) : null,
-    ghostComparison: result ? getGhostComparison(ghostRun, result.level, result.wpm) : null,
+    comparison: historyModel.comparison,
+    ghostComparison: historyModel.ghostComparison,
     isTerminalDailyRun,
     mapSelectionPending,
-    masterySummary: result ? buildLayoutMasteryResultSummary(progress, layouts, currentLayout, translate, {
-      previousHistoryEntriesOverride: historyEntries.slice(0, -1),
-      currentHistoryEntriesOverride: historyEntries,
-      previousUnlockedLettersOverride: layoutProgressUnlocked,
-      currentUnlockedLettersOverride: layoutProgressUnlocked,
-    }) : null,
+    masterySummary: historyModel.masterySummary,
     motivationGoals: getActiveMotivationGoalSnapshots(motivationProgress, translate, 1, ['game-victories']),
     motivationStreaks: getMotivationStreakSnapshots(motivationProgress, translate, ['clean-game-victories']),
     rewardPending,

@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactElement } from 'react';
+import { useEffect, useMemo, useState, type ReactElement } from 'react';
 import * as LucideIcons from 'lucide-react';
 import { useAppExtensions, useAppSettings } from '../contexts/AppContext';
 import { useI18n } from '../contexts/I18nContext';
@@ -44,7 +44,7 @@ import { SelectInput } from '../components/ui/SelectInput';
 import { TextInput } from '../components/ui/TextInput';
 
 type AddonsView = 'catalog' | 'installed';
-type CatalogFilter = 'all' | ExtensionCatalogKind;
+type CatalogFilter = 'all' | 'attention' | ExtensionCatalogKind;
 type InstalledFilter = 'all' | 'addons' | 'mods' | 'themes';
 type AddonContentKind =
   | 'words'
@@ -68,13 +68,18 @@ type SourceFormState = {
 type MarkdownPreviewState = {
   author?: string;
   baseUri?: string;
+  compatible?: boolean;
   description?: string;
   entry?: ExtensionCatalogEntry;
+  appVersion?: string;
   markdown: string;
   minAppVersion?: string;
   title: string;
   version?: string;
 };
+
+type CatalogIssue = ExtensionCatalogEntry['issues'][number];
+type CatalogIssueSectionKey = 'attention' | 'limitations' | 'diagnostics';
 
 function getInitialSourceFormState(): SourceFormState {
   return {
@@ -200,6 +205,8 @@ function getCatalogStatusLabel(entry: ExtensionCatalogEntry, t: (key: string) =>
       return t('addons.catalog.status.sourceDisabled');
     case 'source-error':
       return t('addons.catalog.status.sourceError');
+    case 'incompatible':
+      return t('addons.catalog.status.incompatible');
     case 'invalid':
       return t('addons.catalog.status.invalid');
     default:
@@ -213,6 +220,158 @@ function getCatalogInstallLabel(entry: ExtensionCatalogEntry, t: (key: string) =
   if (entry.kind === 'mods') return t('addons.catalog.actions.installMod');
   if (entry.kind === 'themes') return t('addons.catalog.actions.installTheme');
   return t('addons.catalog.actions.installAddon');
+}
+
+function getIssueText(
+  issue: CatalogIssue,
+  t: (key: string, params?: Record<string, string | number>) => string,
+) {
+  if (issue.code) {
+    return t(issue.code, issue.params);
+  }
+
+  const genericKey = issue.stage === 'list'
+    ? 'addons.catalog.issue.listProblem'
+    : issue.stage === 'card'
+      ? 'addons.catalog.issue.cardProblem'
+      : issue.stage === 'package'
+        ? 'addons.catalog.issue.packageProblem'
+        : 'addons.catalog.issue.manifestProblem';
+
+  return t(genericKey, { details: issue.message });
+}
+
+function getIssueClassName(issue: CatalogIssue) {
+  const variants = ['addon-card__issue'];
+
+  if (issue.fallback === 'blocked-install') {
+    variants.push('addon-card__issue--compatibility');
+  } else if (issue.fallback === 'manual-only') {
+    variants.push('addon-card__issue--manual');
+  } else if (issue.stage === 'card') {
+    variants.push('addon-card__issue--card');
+  } else if (issue.stage === 'manifest' && issue.severity === 'warning') {
+    variants.push('addon-card__issue--dependency');
+  } else if (issue.severity === 'error') {
+    variants.push('addon-card__issue--error');
+  }
+
+  return variants.join(' ');
+}
+
+function getVisibleIssues(entry: ExtensionCatalogEntry, severity: 'warning' | 'error') {
+  const seen = new Set<string>();
+  const issues: ExtensionCatalogEntry['issues'] = [];
+
+  for (const issue of entry.issues) {
+    if (issue.severity !== severity) continue;
+    const key = issue.code ? `${issue.code}:${JSON.stringify(issue.params ?? {})}` : issue.message;
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    issues.push(issue);
+  }
+
+  return issues;
+}
+
+function getIssueSectionKey(issue: CatalogIssue): CatalogIssueSectionKey {
+  if (issue.fallback === 'manual-only') return 'limitations';
+  if (issue.stage === 'card' || issue.stage === 'list' || issue.fallback === 'stale-cache') return 'diagnostics';
+  return 'attention';
+}
+
+function getIssueSectionTitle(section: CatalogIssueSectionKey, t: (key: string) => string) {
+  if (section === 'limitations') return t('addons.catalog.issueSections.limitations');
+  if (section === 'diagnostics') return t('addons.catalog.issueSections.diagnostics');
+  return t('addons.catalog.issueSections.attention');
+}
+
+function getGroupedIssues(entry: ExtensionCatalogEntry) {
+  const grouped: Record<CatalogIssueSectionKey, CatalogIssue[]> = {
+    attention: [],
+    limitations: [],
+    diagnostics: [],
+  };
+
+  for (const issue of [...getVisibleIssues(entry, 'error'), ...getVisibleIssues(entry, 'warning')]) {
+    grouped[getIssueSectionKey(issue)].push(issue);
+  }
+
+  return grouped;
+}
+
+function getSourceErrorMessage(source: InstalledExtensionSource, t: (key: string) => string) {
+  if (!source.syncState.lastError) return null;
+  if (source.syncState.lastErrorFallback === 'stale-cache') {
+    return `${source.syncState.lastError} ${t('addons.catalog.fallback.staleCache')}`;
+  }
+  return source.syncState.lastError;
+}
+
+function getSourceIssueMessage(source: InstalledExtensionSource, t: (key: string, params?: Record<string, string | number>) => string) {
+  const issue = source.syncState.sourceCardIssue;
+  if (!issue) return null;
+  if (issue.code) return t(issue.code, issue.params);
+  return t('addons.catalog.issue.cardProblem', { details: issue.message });
+}
+
+function CatalogIssueSections({
+  entry,
+  t,
+}: {
+  entry: ExtensionCatalogEntry;
+  t: (key: string, params?: Record<string, string | number>) => string;
+}) {
+  const groupedIssues = getGroupedIssues(entry);
+  const sections: CatalogIssueSectionKey[] = ['attention', 'limitations', 'diagnostics'];
+  const visibleSections = sections.filter(section => groupedIssues[section].length > 0);
+
+  if (visibleSections.length === 0 && !entry.lastError) return null;
+
+  return (
+    <div className="addon-card__issue-sections">
+      {visibleSections.map(section => (
+        <div key={section} className={`addon-card__issue-section addon-card__issue-section--${section}`}>
+          <div className="addon-card__issue-section-title">{getIssueSectionTitle(section, t)}</div>
+          {groupedIssues[section].map(issue => (
+            <div key={`${section}-${issue.code ?? issue.message}`} className={getIssueClassName(issue)}>
+              <AlertTriangle size={13} />
+              <span>{getIssueText(issue, t)}</span>
+            </div>
+          ))}
+        </div>
+      ))}
+      {visibleSections.length === 0 && entry.lastError ? (
+        <div className="addon-card__issue-section addon-card__issue-section--attention">
+          <div className="addon-card__issue-section-title">{getIssueSectionTitle('attention', t)}</div>
+          <div className="addon-card__issue addon-card__issue--error">
+            <AlertTriangle size={13} />
+            <span>{entry.lastError}</span>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function getDuplicateRecommendationText(
+  entry: ExtensionCatalogEntry,
+  t: (key: string, params?: Record<string, string | number>) => string,
+) {
+  if (!entry.duplicatePreferredSourceName || !entry.duplicatePreferredVersion || !entry.duplicateRecommendationReason) {
+    return null;
+  }
+
+  const params = {
+    source: entry.duplicatePreferredSourceName,
+    version: entry.duplicatePreferredVersion,
+  };
+
+  if (entry.duplicateRecommendationReason === 'newest-blocked') {
+    return t('addons.catalog.duplicateRecommendation.newestBlocked', params);
+  }
+
+  return t('addons.catalog.duplicateRecommendation.newerAvailable', params);
 }
 
 function catalogMatchesSearch(entry: ExtensionCatalogEntry, search: string) {
@@ -231,6 +390,26 @@ function catalogMatchesSearch(entry: ExtensionCatalogEntry, search: string) {
   return haystack.includes(needle);
 }
 
+function createMarkdownPreviewFromCatalogEntry(
+  entry: ExtensionCatalogEntry,
+  t: (key: string, params?: Record<string, string | number>) => string,
+): MarkdownPreviewState | null {
+  if (!entry.cardMarkdown) return null;
+
+  return {
+    author: entry.manifestAuthor,
+    baseUri: entry.resolvedCardUri,
+    title: entry.manifestName ?? entry.entryId,
+    description: `${entry.sourceName} · ${getCatalogKindLabel(entry.kind, t)}`,
+    entry,
+    appVersion: entry.compatibility?.appVersion,
+    compatible: entry.compatibility?.compatible,
+    markdown: entry.cardMarkdown,
+    minAppVersion: entry.minAppVersion,
+    version: entry.manifestVersion,
+  };
+}
+
 function catalogSupportsDirectInstall(entry: ExtensionCatalogEntry) {
   return entry.installSupport === 'direct';
 }
@@ -240,7 +419,45 @@ function catalogAllowsInstall(entry: ExtensionCatalogEntry) {
     && entry.status !== 'installed'
     && entry.status !== 'source-disabled'
     && entry.status !== 'source-error'
+    && entry.status !== 'incompatible'
+    && !entry.issues.some(issue => issue.fallback === 'blocked-install')
     && entry.status !== 'invalid';
+}
+
+function catalogHasAttention(entry: ExtensionCatalogEntry) {
+  return entry.status === 'incompatible'
+    || entry.status === 'invalid'
+    || entry.status === 'source-disabled'
+    || entry.status === 'source-error'
+    || entry.installSupport === 'manual'
+    || entry.issues.length > 0
+    || entry.duplicateRecommendationReason !== undefined
+    || entry.duplicateSourceIds.length > 0;
+}
+
+function getCatalogSortScore(entry: ExtensionCatalogEntry) {
+  if (entry.status === 'update-available' && catalogAllowsInstall(entry)) return 0;
+  if (entry.status === 'available' && catalogAllowsInstall(entry)) return 1;
+  if (entry.status === 'update-available') return 2;
+  if (entry.status === 'installed') return 3;
+  if (entry.duplicateRecommendationReason) return 4;
+  if (catalogHasAttention(entry)) return 5;
+  return 6;
+}
+
+function compareCatalogEntries(left: ExtensionCatalogEntry, right: ExtensionCatalogEntry) {
+  const scoreDiff = getCatalogSortScore(left) - getCatalogSortScore(right);
+  if (scoreDiff !== 0) return scoreDiff;
+  if (left.kind !== right.kind) return left.kind.localeCompare(right.kind);
+  return (left.manifestName ?? left.entryId).localeCompare(right.manifestName ?? right.entryId);
+}
+
+function formatDuplicateSourceNames(sourceNames: string[], t: (key: string, params?: Record<string, string | number>) => string) {
+  if (sourceNames.length <= 3) return sourceNames.join(', ');
+  return t('addons.catalog.duplicateSourcesCompact', {
+    count: sourceNames.length - 3,
+    sources: sourceNames.slice(0, 3).join(', '),
+  });
 }
 
 function themeMatchesSearch(theme: InstalledTheme, search: string) {
@@ -376,6 +593,8 @@ function SourceCard({
   const counts = getSourceCounts(source, t);
   const hasError = source.syncState.status === 'error';
   const sourceStatusClass = source.enabled ? source.syncState.status : 'disabled';
+  const sourceErrorMessage = getSourceErrorMessage(source, t);
+  const sourceCardWarning = getSourceIssueMessage(source, t);
 
   return (
     <div className={`addon-card addon-card--source${source.enabled ? '' : ' addon-card--disabled'}${hasError ? ' addon-card--blocked' : ''}`}>
@@ -431,10 +650,16 @@ function SourceCard({
           <span>{getSourceTypeLabel(source.input.type, t)}</span>
           <span>{getSourceLocationLabel(source)}</span>
         </div>
-        {hasError && source.syncState.lastError ? (
-          <div className="addon-card__deps-warn">
+        {hasError && sourceErrorMessage ? (
+          <div className="addon-card__issue addon-card__issue--error">
             <AlertTriangle size={13} />
-            <span>{source.syncState.lastError}</span>
+            <span>{sourceErrorMessage}</span>
+          </div>
+        ) : null}
+        {!hasError && sourceCardWarning ? (
+          <div className="addon-card__issue addon-card__issue--card">
+            <AlertTriangle size={13} />
+            <span>{sourceCardWarning}</span>
           </div>
         ) : null}
       </div>
@@ -494,13 +719,14 @@ function CatalogCard({
   const directInstall = catalogSupportsDirectInstall(entry);
   const canInstall = catalogAllowsInstall(entry);
   const dependencies = entry.dependencies.join(', ');
-  const duplicateSources = entry.duplicateSourceNames.join(', ');
+  const duplicateSources = formatDuplicateSourceNames(entry.duplicateSourceNames, t);
   const permissions = entry.permissions.join(', ');
   const canOpenCard = Boolean(entry.cardMarkdown?.trim());
+  const duplicateRecommendation = getDuplicateRecommendationText(entry, t);
 
   return (
     <div
-      className={`addon-card addon-card--catalog${entry.status === 'invalid' ? ' addon-card--blocked' : ''}${canOpenCard ? ' addon-card--clickable' : ''}`}
+      className={`addon-card addon-card--catalog${entry.status === 'invalid' || entry.status === 'incompatible' ? ' addon-card--blocked' : ''}${canOpenCard ? ' addon-card--clickable' : ''}`}
       onClick={() => canOpenCard && onOpenCard(entry)}
       onKeyDown={(event) => {
         if (!canOpenCard) return;
@@ -583,21 +809,34 @@ function CatalogCard({
             }] : []),
           ]}
         />
-        {entry.lastError ? (
-          <div className="addon-card__deps-warn">
-            <AlertTriangle size={13} />
-            <span>{entry.lastError}</span>
-          </div>
-        ) : null}
+        <CatalogIssueSections entry={entry} t={t} />
         {dependencies ? (
           <div className="addon-card__source-meta addon-card__source-meta--detail">
             <span>{t('addons.catalog.dependencies', { ids: dependencies })}</span>
           </div>
         ) : null}
+        {entry.compatibility ? (
+          <div className="addon-card__source-meta addon-card__source-meta--detail">
+            <span>
+              {entry.compatibility.compatible
+                ? t('addons.catalog.compatibleWithApp', { version: entry.compatibility.appVersion })
+                : t('addons.catalog.incompatibleWithApp', {
+                    appVersion: entry.compatibility.appVersion,
+                    minVersion: entry.compatibility.minAppVersion ?? entry.minAppVersion ?? '',
+                  })}
+            </span>
+          </div>
+        ) : null}
         {duplicateSources ? (
-          <div className="addon-card__deps-warn">
+          <div className="addon-card__issue addon-card__issue--dependency">
             <AlertTriangle size={13} />
             <span>{t('addons.catalog.duplicateSources', { sources: duplicateSources })}</span>
+          </div>
+        ) : null}
+        {duplicateRecommendation ? (
+          <div className="addon-card__issue addon-card__issue--manual">
+            <AlertTriangle size={13} />
+            <span>{duplicateRecommendation}</span>
           </div>
         ) : null}
         {permissions ? (
@@ -957,10 +1196,14 @@ export function AddonsPage() {
   const [markdownPreview, setMarkdownPreview] = useState<MarkdownPreviewState | null>(null);
 
   const filteredSources = extensionSources.filter(source => sourceMatchesSearch(source, search));
-  const filteredCatalogEntries = extensionCatalogEntries.filter(entry => {
-    if (catalogFilter !== 'all' && entry.kind !== catalogFilter) return false;
-    return catalogMatchesSearch(entry, search);
-  });
+  const filteredCatalogEntries = extensionCatalogEntries
+    .filter(entry => {
+      if (catalogFilter === 'attention' && !catalogHasAttention(entry)) return false;
+      if (catalogFilter !== 'all' && catalogFilter !== 'attention' && entry.kind !== catalogFilter) return false;
+      return catalogMatchesSearch(entry, search);
+    })
+    .sort(compareCatalogEntries);
+  const attentionCatalogCount = extensionCatalogEntries.filter(catalogHasAttention).length;
 
   const searchedAddons = search.trim()
     ? installedAddons.filter(a =>
@@ -986,6 +1229,15 @@ export function AddonsPage() {
   const filteredThemes = search.trim()
     ? installedThemes.filter(theme => themeMatchesSearch(theme, search))
     : installedThemes;
+
+  useEffect(() => {
+    setMarkdownPreview((current) => {
+      if (!current?.entry) return current;
+      const freshEntry = extensionCatalogEntries.find(entry => entry.id === current.entry?.id);
+      if (!freshEntry || freshEntry === current.entry) return current;
+      return createMarkdownPreviewFromCatalogEntry(freshEntry, t) ?? current;
+    });
+  }, [extensionCatalogEntries, t]);
 
   const enabledModIds = useMemo(
     () => new Set(installedMods.filter(m => m.enabled).map(m => m.id)),
@@ -1128,18 +1380,8 @@ export function AddonsPage() {
   };
 
   const handleOpenCatalogCard = (entry: ExtensionCatalogEntry) => {
-    if (!entry.cardMarkdown) return;
-
-    setMarkdownPreview({
-      author: entry.manifestAuthor,
-      baseUri: entry.resolvedCardUri,
-      title: entry.manifestName ?? entry.entryId,
-      description: `${entry.sourceName} · ${getCatalogKindLabel(entry.kind, t)}`,
-      entry,
-      markdown: entry.cardMarkdown,
-      minAppVersion: entry.minAppVersion,
-      version: entry.manifestVersion,
-    });
+    const nextPreview = createMarkdownPreviewFromCatalogEntry(entry, t);
+    if (nextPreview) setMarkdownPreview(nextPreview);
   };
 
   const handleRemoveAddon = async (id: string) => {
@@ -1238,14 +1480,18 @@ export function AddonsPage() {
                 <h2>{t('addons.catalog.title')}</h2>
               </div>
               <div className="addons-catalog-section__filters">
-                {(['all', 'addons', 'mods', 'themes'] as const).map((kind) => (
+                {(['all', 'attention', 'addons', 'mods', 'themes'] as const).map((kind) => (
                   <Button
                     key={kind}
                     variant={catalogFilter === kind ? 'accent' : 'ghost'}
                     size="sm"
                     onClick={() => setCatalogFilter(kind)}
                   >
-                    {kind === 'all' ? t('addons.catalog.filters.all') : getCatalogKindLabel(kind, t)}
+                    {kind === 'all'
+                      ? t('addons.catalog.filters.all')
+                      : kind === 'attention'
+                        ? t('addons.catalog.filters.attention', { count: attentionCatalogCount })
+                        : getCatalogKindLabel(kind, t)}
                   </Button>
                 ))}
               </div>
@@ -1502,7 +1748,19 @@ export function AddonsPage() {
                   onClick={async () => {
                     if (!markdownPreview.entry) return;
                     const ok = await handleInstallCatalogEntry(markdownPreview.entry);
-                    if (ok) setMarkdownPreview(null);
+                    if (ok) {
+                      setMarkdownPreview((current) => {
+                        if (!current?.entry) return current;
+                        return {
+                          ...current,
+                          entry: {
+                            ...current.entry,
+                            installedVersion: current.entry.manifestVersion,
+                            status: 'installed',
+                          },
+                        };
+                      });
+                    }
                   }}
                 >
                   <Download size={14} />
@@ -1519,7 +1777,7 @@ export function AddonsPage() {
           size="lg"
           title={markdownPreview.title}
         >
-          {(markdownPreview.author || markdownPreview.version || markdownPreview.minAppVersion) ? (
+          {(markdownPreview.author || markdownPreview.version || markdownPreview.minAppVersion || markdownPreview.appVersion) ? (
             <div className="addons-markdown-modal__meta">
               {markdownPreview.author ? (
                 <span className="addons-markdown-modal__meta-item">
@@ -1536,6 +1794,21 @@ export function AddonsPage() {
                   {t('addons.markdown.minAppVersion', { version: markdownPreview.minAppVersion })}
                 </span>
               ) : null}
+              {markdownPreview.appVersion && typeof markdownPreview.compatible === 'boolean' ? (
+                <span className="addons-markdown-modal__meta-item">
+                  {markdownPreview.compatible
+                    ? t('addons.catalog.compatibleWithApp', { version: markdownPreview.appVersion })
+                    : t('addons.catalog.incompatibleWithApp', {
+                        appVersion: markdownPreview.appVersion,
+                        minVersion: markdownPreview.minAppVersion ?? '',
+                      })}
+                </span>
+              ) : null}
+            </div>
+          ) : null}
+          {markdownPreview.entry ? (
+            <div className="addons-markdown-modal__issues">
+              <CatalogIssueSections entry={markdownPreview.entry} t={t} />
             </div>
           ) : null}
           <SafeMarkdown

@@ -19,9 +19,9 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            cmd: npm run build:win
+            target: win
           - os: ubuntu-latest
-            cmd: npm run build:linux
+            target: linux
 
     runs-on: ${{ matrix.os }}
 
@@ -40,34 +40,34 @@ jobs:
           sudo apt-get install -y rpm
 
       - run: npm ci
-      - run: ${{ matrix.cmd }}
+      - run: npm run build:electron -- --${{ matrix.target }}
 
       - uses: actions/upload-artifact@v6
         if: matrix.os == 'windows-latest'
         with:
           name: dist-${{ env.APP_NAME_SLUG }}-exe
-          path: dist-build/*.exe
+          path: dist-build/**/*.exe
           if-no-files-found: ignore
 
       - uses: actions/upload-artifact@v6
         if: matrix.os == 'ubuntu-latest'
         with:
           name: dist-${{ env.APP_NAME_SLUG }}-appimage
-          path: dist-build/*.AppImage
+          path: dist-build/**/*.AppImage
           if-no-files-found: ignore
 
       - uses: actions/upload-artifact@v6
         if: matrix.os == 'ubuntu-latest'
         with:
           name: dist-${{ env.APP_NAME_SLUG }}-deb
-          path: dist-build/*.deb
+          path: dist-build/**/*.deb
           if-no-files-found: ignore
 
       - uses: actions/upload-artifact@v6
         if: matrix.os == 'ubuntu-latest'
         with:
           name: dist-${{ env.APP_NAME_SLUG }}-rpm
-          path: dist-build/*.rpm
+          path: dist-build/**/*.rpm
           if-no-files-found: ignore
 
       - name: Publish GitHub Release
@@ -76,7 +76,7 @@ jobs:
         with:
           fail_on_unmatched_files: false
           files: |
-            dist-build/*.exe
-            dist-build/*.AppImage
-            dist-build/*.deb
-            dist-build/*.rpm
+            dist-build/**/*.exe
+            dist-build/**/*.AppImage
+            dist-build/**/*.deb
+            dist-build/**/*.rpm

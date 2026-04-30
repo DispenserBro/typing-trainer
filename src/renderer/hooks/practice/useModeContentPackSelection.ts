@@ -1,7 +1,10 @@
 import type {
   CustomPracticePack,
   ModePracticeSettings,
+  PracticeContentMode,
   PracticeContentPack,
+  PracticeContentPackPreflightSummary,
+  PracticeContentPackQualitySummary,
   PracticeContentScenarioId,
   PracticeSettings,
   TranslationParams,
@@ -13,12 +16,34 @@ type TranslateFn = (key: string, params?: TranslationParams) => string;
 type UseModeContentPackSelectionArgs = {
   currentLanguage: string;
   customPracticePacks?: Record<string, CustomPracticePack>;
-  modeSettings: ModePracticeSettings;
+  modeSettings?: ModePracticeSettings;
   practiceContentPacks: PracticeContentPack[];
   practiceSettings: PracticeSettings;
   scenarioId: PracticeContentScenarioId;
   t: TranslateFn;
 };
+
+export type ModeContentPackSelection = {
+  availableContentPacks: PracticeContentPack[];
+  contentMode: PracticeContentMode;
+  effectiveContentMode: PracticeContentMode;
+  selectedContentPack: PracticeContentPack | null;
+  selectedContentPackControlId: string;
+  selectedContentPackDisplayName: string | null;
+  selectedContentPackId: string;
+  selectedContentPackPreflight: PracticeContentPackPreflightSummary | null;
+  selectedContentPackSummary: PracticeContentPackQualitySummary | null;
+};
+
+export function resolveModeContentPackSettings(
+  practiceSettings: PracticeSettings,
+  modeSettings?: ModePracticeSettings,
+): Pick<ModeContentPackSelection, 'contentMode' | 'selectedContentPackId'> {
+  return {
+    contentMode: modeSettings?.contentMode ?? practiceSettings.contentMode,
+    selectedContentPackId: modeSettings?.selectedContentPackId || practiceSettings.selectedContentPackId,
+  };
+}
 
 export function useModeContentPackSelection({
   currentLanguage,
@@ -28,9 +53,11 @@ export function useModeContentPackSelection({
   practiceSettings,
   scenarioId,
   t,
-}: UseModeContentPackSelectionArgs) {
-  const contentMode = modeSettings.contentMode ?? practiceSettings.contentMode;
-  const selectedContentPackId = modeSettings.selectedContentPackId || practiceSettings.selectedContentPackId;
+}: UseModeContentPackSelectionArgs): ModeContentPackSelection {
+  const {
+    contentMode,
+    selectedContentPackId,
+  } = resolveModeContentPackSettings(practiceSettings, modeSettings);
   const selection = usePracticeContentPackSelection({
     contentMode,
     currentLanguage,

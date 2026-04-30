@@ -37,6 +37,13 @@ const appliedRuntimeThemeState: AppliedRuntimeThemeState = {
   rootClasses: [],
 };
 
+const RUNTIME_THEME_GUARD_CSS = `
+body[data-theme="custom"] .mode-panel {
+  background: transparent !important;
+  background-image: none !important;
+}
+`.trim();
+
 function isColorString(value?: string) {
   return Boolean(value && value.trim().length > 0);
 }
@@ -155,7 +162,7 @@ function applyRuntimeTheme(
   applyAttributeEntries(rootNode, theme.style.rootAttributes, appliedRuntimeThemeState.rootAttributes);
   applyAttributeEntries(bodyNode, theme.style.bodyAttributes, appliedRuntimeThemeState.bodyAttributes);
 
-  const runtimeCss = [theme.style.css, theme.style.compiledScss]
+  const runtimeCss = [theme.style.css, theme.style.compiledScss, RUNTIME_THEME_GUARD_CSS]
     .filter((chunk): chunk is string => Boolean(chunk && chunk.trim()))
     .join('\n\n');
 

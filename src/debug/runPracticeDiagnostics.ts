@@ -1,6 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 import type {
+  AddonManifest,
+  InstalledAddon,
   LayoutsData,
   PracticeAdaptationFocus,
   PracticeAdaptationStrength,
@@ -10,6 +12,7 @@ import type {
   PracticeTrainingMode,
 } from '../shared/types';
 import { getPracticeContentScenario } from '../core/engine';
+import { mergeAddonPracticePacks } from '../core/addons/addonMerger';
 import {
   buildPracticeDiagnosticsBundle,
   formatPracticeDiagnosticsReport,
@@ -29,6 +32,7 @@ type CliOptions = {
   smartAdaptationEnabled: boolean;
   smartAdaptationStrength: PracticeAdaptationStrength;
   smartAdaptationFocus: PracticeAdaptationFocus;
+  focusedPipeline: boolean;
   jsonPath?: string;
 };
 
@@ -43,6 +47,7 @@ function parseCliArgs(argv: string[]): CliOptions {
     smartAdaptationEnabled: true,
     smartAdaptationStrength: 'medium',
     smartAdaptationFocus: 'balanced',
+    focusedPipeline: false,
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -79,6 +84,8 @@ function parseCliArgs(argv: string[]): CliOptions {
     } else if (arg === '--focus' && next && (next === 'balanced' || next === 'chars' || next === 'bigrams' || next === 'rhythm')) {
       options.smartAdaptationFocus = next;
       index += 1;
+    } else if (arg === '--focused-pipeline') {
+      options.focusedPipeline = true;
     } else if (arg === '--json' && next) {
       options.jsonPath = next;
       index += 1;
@@ -90,6 +97,118 @@ function parseCliArgs(argv: string[]): CliOptions {
   }
 
   return options;
+}
+
+function createFocusedCustomPack(language: string): PracticeContentPack {
+  return {
+    id: `diagnostic-custom-${language}`,
+    name: `Diagnostic custom ${language}`,
+    description: 'Synthetic custom pack used by focused content-pipeline diagnostics.',
+    kind: 'mixed',
+    language,
+    origin: 'custom',
+    sourceLabel: 'Focused diagnostics',
+    items: [
+      'stable content pipeline',
+      'custom material fallback',
+      'preview key refresh',
+      'Mode selection keeps text generation predictable.',
+      'Shared helpers protect every practice scenario.',
+      'Diagnostics should catch drift before users do.',
+    ],
+  };
+}
+
+function createFocusedAddon(
+  manifest: AddonManifest,
+  language: string,
+): InstalledAddon {
+  const practicePacks = manifest.resources?.practicePacks?.packs ?? [];
+
+  return {
+    id: `${manifest.id}-diagnostic`,
+    enabled: true,
+    fileName: 'addon-template.json',
+    installedAt: '2026-01-01T00:00:00.000Z',
+    manifest: {
+      ...manifest,
+      id: `${manifest.id}-diagnostic`,
+      resources: {
+        ...manifest.resources,
+        practicePacks: {
+          packs: practicePacks.map((pack) => ({
+            ...pack,
+            id: `${pack.id}-diagnostic`,
+            language,
+          })),
+        },
+      },
+    },
+  };
+}
+
+function buildFocusedPracticeContentPacks(
+  basePracticeContentPacks: PracticeContentPack[],
+  language: string,
+): PracticeContentPack[] {
+  const customPack = createFocusedCustomPack(language);
+  const addonManifest = readJson<AddonManifest>('data/addon-template.json');
+  const focusedAddon = createFocusedAddon(addonManifest, language);
+
+  return mergeAddonPracticePacks([...basePracticeContentPacks, customPack], [focusedAddon]);
+}
+
+function findPackByOrigin(
+  packs: PracticeContentPack[],
+  language: string,
+  origin: PracticeContentPack['origin'],
+): PracticeContentPack {
+  const pack = packs.find(candidate =>
+    candidate.origin === origin && (candidate.language === 'any' || candidate.language === language),
+  );
+  if (!pack) {
+    throw new Error(`No ${origin} content pack is available for language '${language}'.`);
+  }
+  return pack;
+}
+
+function buildFocusedContentPipelineScenarios(
+  layouts: LayoutsData,
+  practiceContentPacks: PracticeContentPack[],
+  options: CliOptions,
+): PracticeDiagnosticsScenario[] {
+  const layoutId = options.layout ?? 'qwerty';
+  const languageId = layouts.layouts[layoutId]?.lang;
+  if (!languageId) {
+    throw new Error(`Unknown layout: ${layoutId}`);
+  }
+
+  const scenarioIds: PracticeContentScenarioId[] = options.contentScenarioId
+    ? [options.contentScenarioId]
+    : ['practice-normal', 'practice-rhythm', 'sprint', 'survival', 'flawless'];
+  const materialPacks = [
+    findPackByOrigin(practiceContentPacks, languageId, 'built-in'),
+    findPackByOrigin(practiceContentPacks, languageId, 'custom'),
+    findPackByOrigin(practiceContentPacks, languageId, 'addon'),
+  ];
+
+  return scenarioIds.flatMap((contentScenarioId) => {
+    const scenario = getPracticeContentScenario(contentScenarioId);
+
+    return materialPacks.map((pack) => ({
+      label: `${layoutId} / ${contentScenarioId} / ${pack.origin} pack / ${pack.id}`,
+      layoutId,
+      runs: options.runs,
+      unlockCount: options.unlockCount,
+      trainingMode: scenario.trainingMode,
+      contentMode: 'custom' as const,
+      contentScenarioId,
+      contentPackId: pack.id,
+      smartAdaptationEnabled: options.smartAdaptationEnabled,
+      smartAdaptationStrength: options.smartAdaptationStrength,
+      smartAdaptationFocus: options.smartAdaptationFocus,
+    }));
+  });
 }
 
 function buildScenarios(
@@ -167,9 +286,15 @@ function main() {
     ru: readJson<string[]>('data/words_ru.json'),
   };
   const practiceContentPacks = readJson<PracticeContentPack[]>('data/practice-content-packs.json');
+  const diagnosticPracticeContentPacks = options.focusedPipeline
+    ? buildFocusedPracticeContentPacks(practiceContentPacks, layouts.layouts[options.layout ?? 'qwerty']?.lang ?? 'en')
+    : practiceContentPacks;
+  const scenarios = options.focusedPipeline
+    ? buildFocusedContentPipelineScenarios(layouts, diagnosticPracticeContentPacks, options)
+    : buildScenarios(layouts, diagnosticPracticeContentPacks, options);
 
-  const reports = buildScenarios(layouts, practiceContentPacks, options).map((scenario) =>
-    runPracticeDiagnostics(layouts, wordsByLanguage, practiceContentPacks, scenario),
+  const reports = scenarios.map((scenario) =>
+    runPracticeDiagnostics(layouts, wordsByLanguage, diagnosticPracticeContentPacks, scenario),
   );
   const bundle = buildPracticeDiagnosticsBundle(reports);
 

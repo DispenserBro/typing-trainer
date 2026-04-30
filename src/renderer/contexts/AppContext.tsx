@@ -9,7 +9,8 @@ import type {
   GameEquipmentSlot, GameRunState, GameAchievementDefinition,
   PracticeInsightsState, LayoutPracticeInsights, PracticeRhythmSessionEntry, PracticeContentPack,
   MotivationProgress,
-  ModePracticeSettings, ModePracticeSettingsId, PracticeContentMode, PracticeTrainingMode, PracticeContentScenarioId, InstalledAddon, InstalledMod, InstalledExtensionSource, AddonInstallResult, ModInstallResult, ExtensionCatalogEntry, ExtensionCatalogInstallResult, ExtensionSourceInput, ExtensionSourceInstallResult, ExtensionSourceSyncResult, ImportedInterfaceLocaleDefinition,
+  ModeGuideStatus,
+  ModePracticeSettings, ModePracticeSettingsId, PracticeContentMode, PracticeTrainingMode, PracticeContentScenarioId, InstalledAddon, InstalledMod, InstalledExtensionSource, AddonInstallResult, ModInstallResult, ExtensionCatalogEntry, ExtensionCatalogInstallResult, ExtensionCatalogKind, ExtensionSourceInput, ExtensionSourceInstallResult, ExtensionSourceSyncResult, ImportedInterfaceLocaleDefinition,
   InterfaceLocaleDefinition,
   InstalledTheme, ThemeDefinitions, ThemeInstallResult,
 } from '../../shared/types';
@@ -138,6 +139,7 @@ export interface AppPracticeContextValue {
   spdLabel: string;
   switchMode: (mode: string) => void;
   saveProgress: (p: Progress) => void;
+  markModeGuideSeen: (mode: string, status: ModeGuideStatus) => void;
   updateMotivationProgress: (updater: (current: MotivationProgress) => MotivationProgress) => MotivationProgress;
   getLayoutProgress: () => LayoutProgressState;
   getPracticeState: () => PracticeState;
@@ -192,7 +194,7 @@ export interface AppExtensionsContextValue {
   extensionSources: InstalledExtensionSource[];
   extensionCatalogEntries: ExtensionCatalogEntry[];
   installExtensionSource: (input: ExtensionSourceInput) => Promise<ExtensionSourceInstallResult>;
-  installExtensionCatalogEntry: (sourceId: string, kind: 'addons' | 'mods' | 'themes', entryId: string) => Promise<ExtensionCatalogInstallResult>;
+  installExtensionCatalogEntry: (sourceId: string, kind: ExtensionCatalogKind, entryId: string) => Promise<ExtensionCatalogInstallResult>;
   updateExtensionSource: (sourceId: string, input: ExtensionSourceInput) => Promise<ExtensionSourceInstallResult>;
   removeExtensionSource: (id: string) => Promise<boolean>;
   toggleExtensionSource: (id: string, enabled: boolean) => Promise<boolean>;
@@ -614,6 +616,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const markModeGuideSeen = useCallback((mode: string, status: ModeGuideStatus) => {
+    if (!mode) return;
+    commitProgress(prev => {
+      if (prev.onboarding?.modeGuides?.[mode] === status) return prev;
+      return {
+        ...prev,
+        onboarding: {
+          ...(prev.onboarding ?? {}),
+          modeGuides: {
+            ...(prev.onboarding?.modeGuides ?? {}),
+            [mode]: status,
+          },
+        },
+      };
+    });
+  }, [commitProgress]);
+
   const {
     savePracticeInsights,
     savePracticeRhythmSession,
@@ -896,9 +915,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const installExtensionCatalogEntryCb = useCallback(async (
     sourceId: string,
-    kind: 'addons' | 'mods' | 'themes',
+    kind: ExtensionCatalogKind,
     entryId: string,
   ) => {
+    const preflight = await window.api.validateExtensionCatalogEntry(sourceId, kind, entryId);
+    if (preflight.entry) {
+      setExtensionCatalogEntries(current => current.map(entry => (
+        entry.id === preflight.entry?.id ? preflight.entry : entry
+      )));
+    }
+    if (!preflight.ok || preflight.blocked) {
+      return {
+        ok: false,
+        error: preflight.error ?? 'Catalog entry cannot be installed.',
+        entry: preflight.entry,
+      };
+    }
+
     const result = await window.api.installExtensionCatalogEntry(sourceId, kind, entryId);
     if (result.ok) {
       if (kind === 'mods') {
@@ -982,6 +1015,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     spdLabel,
     switchMode,
     saveProgress: saveProgressCb,
+    markModeGuideSeen,
     updateMotivationProgress,
     getLayoutProgress: getLayoutProgressCb,
     getPracticeState: getPracticeStateCb,
@@ -1006,6 +1040,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     spdLabel,
     switchMode,
     saveProgressCb,
+    markModeGuideSeen,
     updateMotivationProgress,
     getLayoutProgressCb,
     getPracticeStateCb,

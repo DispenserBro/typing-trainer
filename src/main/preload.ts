@@ -8,7 +8,9 @@ import type {
   InstalledMod,
   InstalledTheme,
   ExtensionCatalogEntry,
+  ExtensionCatalogKind,
   ExtensionCatalogInstallResult,
+  ExtensionCatalogPreflightResult,
   ExtensionSourceInput,
   ExtensionSourceInstallResult,
   ExtensionSourceSyncResult,
@@ -74,9 +76,11 @@ const api: ElectronAPI = {
     ipcRenderer.invoke('scan-extension-sources') as Promise<InstalledExtensionSource[]>,
   scanExtensionCatalog: () =>
     ipcRenderer.invoke('scan-extension-catalog') as Promise<ExtensionCatalogEntry[]>,
+  validateExtensionCatalogEntry: (sourceId: string, kind: ExtensionCatalogKind, entryId: string) =>
+    ipcRenderer.invoke('validate-extension-catalog-entry', sourceId, kind, entryId) as Promise<ExtensionCatalogPreflightResult>,
   installExtensionSource: (input: ExtensionSourceInput) =>
     ipcRenderer.invoke('install-extension-source', input) as Promise<ExtensionSourceInstallResult>,
-  installExtensionCatalogEntry: (sourceId: string, kind: 'addons' | 'mods' | 'themes', entryId: string) =>
+  installExtensionCatalogEntry: (sourceId: string, kind: ExtensionCatalogKind, entryId: string) =>
     ipcRenderer.invoke('install-extension-catalog-entry', sourceId, kind, entryId) as Promise<ExtensionCatalogInstallResult>,
   updateExtensionSource: (sourceId: string, input: ExtensionSourceInput) =>
     ipcRenderer.invoke('update-extension-source', sourceId, input) as Promise<ExtensionSourceInstallResult>,

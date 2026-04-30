@@ -22,6 +22,10 @@ export {
   resolvePracticeContentTargetWordCount,
 } from './practice/contentPipeline';
 export {
+  getAvailablePracticeContentPacks,
+  resolvePracticeContentPackSelection,
+} from './practice/contentPackSelection';
+export {
   generateLessonText,
   generateExerciseText,
   EXERCISE_NAMES,

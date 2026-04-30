@@ -1,13 +1,10 @@
 import { useMemo } from 'react';
-import type { HistoryEntry } from '../../../shared/types';
-import { pickBestHistoryEntry } from '../../../core/motivation/records';
+import {
+  buildModeBestResultLabelViewModel,
+  type BuildModeBestResultLabelViewModelArgs,
+} from '../../../core/practice/modeBestResult';
 
-type UseModeBestResultLabelArgs = {
-  emptyLabel: string;
-  entries: HistoryEntry[];
-  formatSpeed: (value: number) => string;
-  speedLabel: string;
-};
+type UseModeBestResultLabelArgs = BuildModeBestResultLabelViewModelArgs;
 
 export function useModeBestResultLabel({
   emptyLabel,
@@ -15,13 +12,10 @@ export function useModeBestResultLabel({
   formatSpeed,
   speedLabel,
 }: UseModeBestResultLabelArgs) {
-  return useMemo(() => {
-    const bestEntry = pickBestHistoryEntry(entries);
-    return {
-      bestEntry,
-      bestValue: bestEntry
-        ? `${formatSpeed(bestEntry.wpm)} ${speedLabel} · ${Math.round(bestEntry.acc)}%`
-        : emptyLabel,
-    };
-  }, [emptyLabel, entries, formatSpeed, speedLabel]);
+  return useMemo(() => buildModeBestResultLabelViewModel({
+    emptyLabel,
+    entries,
+    formatSpeed,
+    speedLabel,
+  }), [emptyLabel, entries, formatSpeed, speedLabel]);
 }

@@ -86,10 +86,6 @@
 .text-success {
   color: var(--green);
 }
-.result-callout-text {
-  margin-top: 10px;
-}
-
 html, body {
   height: 100%;
   font-family: var(--font-sans);
@@ -1022,6 +1018,40 @@ button.home-summary-card:hover {
   color: var(--subtext);
   font-size: 0.8rem;
   padding: 8px 2px 0;
+}
+
+@media (max-width: 1200px) {
+  .home-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .home-hero-copy h2 {
+    max-width: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .home-section-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .home-secondary-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .home-summary-grid,
+  .home-action-grid,
+  .home-mode-grid,
+  .home-mode-utility-row,
+  .home-insight-grid,
+  .home-hub-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal.home-achievements-modal .game-achievements-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 /* ── Onboarding Wizard ────────────────────────────────── */

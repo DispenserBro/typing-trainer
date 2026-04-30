@@ -657,6 +657,9 @@ msgstr "This catalog entry did not provide a description."
 msgid "addons.catalog.filters.all"
 msgstr "All"
 
+msgid "addons.catalog.filters.attention"
+msgstr "Needs attention {{count}}"
+
 msgid "addons.installed.filters.all"
 msgstr "All"
 
@@ -696,6 +699,9 @@ msgstr "Source disabled"
 msgid "addons.catalog.status.sourceError"
 msgstr "Source unavailable"
 
+msgid "addons.catalog.status.incompatible"
+msgstr "Incompatible"
+
 msgid "addons.catalog.status.invalid"
 msgstr "Broken manifest"
 
@@ -728,6 +734,66 @@ msgstr "Permissions: {{permissions}}"
 
 msgid "addons.catalog.duplicateSources"
 msgstr "This package is also provided by other sources: {{sources}}"
+
+msgid "addons.catalog.duplicateSourcesCompact"
+msgstr "This package is also provided by {{sources}} and {{count}} more"
+
+msgid "addons.catalog.duplicateRecommendation.newerAvailable"
+msgstr "Preferred source: {{source}} with newer version v{{version}}."
+
+msgid "addons.catalog.duplicateRecommendation.newestBlocked"
+msgstr "The newest version is blocked. Preferred available source: {{source}} v{{version}}."
+
+msgid "addons.catalog.compatibleWithApp"
+msgstr "Compatible with app v{{version}}"
+
+msgid "addons.catalog.incompatibleWithApp"
+msgstr "Requires app version {{minVersion}} or newer. Current version is v{{appVersion}}"
+
+msgid "addons.catalog.fallback.staleCache"
+msgstr "Using the last valid cache."
+
+msgid "addons.catalog.issue.cardEmpty"
+msgstr "Markdown card is empty and was skipped: {{target}}"
+
+msgid "addons.catalog.issue.cardProblem"
+msgstr "Card problem: {{details}}"
+
+msgid "addons.catalog.issue.cardReadFailed"
+msgstr "Markdown card could not be read: {{details}}"
+
+msgid "addons.catalog.issue.listProblem"
+msgstr "List problem: {{details}}"
+
+msgid "addons.catalog.issue.manifestProblem"
+msgstr "Manifest problem: {{details}}"
+
+msgid "addons.catalog.issue.missingDependencies"
+msgstr "Missing dependencies before install: {{ids}}"
+
+msgid "addons.catalog.issue.missingRuntimeDependencies"
+msgstr "The mod cannot be installed until required runtime dependencies are installed: {{ids}}"
+
+msgid "addons.catalog.issue.packageProblem"
+msgstr "Package problem: {{details}}"
+
+msgid "addons.catalog.issue.remoteModManualOnly"
+msgstr "Remote mod does not declare manifest.files, so only manual installation is available."
+
+msgid "addons.catalog.issue.sourceCardEmpty"
+msgstr "Source card is empty and was skipped: {{target}}"
+
+msgid "addons.catalog.issue.sourceCardReadFailed"
+msgstr "Source card could not be read: {{details}}"
+
+msgid "addons.catalog.issueSections.attention"
+msgstr "Needs attention"
+
+msgid "addons.catalog.issueSections.limitations"
+msgstr "Install limitations"
+
+msgid "addons.catalog.issueSections.diagnostics"
+msgstr "Source diagnostics"
 
 msgid "addons.markdown.author"
 msgstr "Author: {{author}}"

@@ -1,6 +1,7 @@
 import { memo, useState, useMemo } from 'react';
 import { Medal } from 'lucide-react';
 import type { AchievementCategory, GameAchievementDefinition } from '../../shared/types';
+import { buildAchievementsModalViewModel } from '../../core/achievements/viewModel';
 import { useI18n } from '../contexts/I18nContext';
 import { ActionRow } from './ui/ActionRow';
 import { Button } from './ui/Button';
@@ -34,40 +35,13 @@ export const AchievementsModal = memo(function AchievementsModal({
   onClose,
 }: AchievementsModalProps) {
   const { t } = useI18n();
-  // Диагностика: логируем каталог и разблокированные достижения
-  useMemo(() => {
-    if (open) {
-      console.log('[AchievementsModal] Open with:', {
-        catalogSize: achievementCatalog.length,
-        unlockedCount: unlockedAchievementIds.length,
-        unlockedIds: unlockedAchievementIds,
-        achievements: achievementCatalog.slice(0, 3).map(a => ({ id: a.id, category: a.category })),
-      });
-    }
-  }, [open, achievementCatalog, unlockedAchievementIds]);
-
-  // Все уникальные категории из каталога, чтобы фильтры расширялись модами динамически
-  const categories = useMemo<string[]>(() => {
-    const seen = new Set<string>();
-    for (const ach of achievementCatalog) {
-      if (ach.category) seen.add(ach.category);
-    }
-    return Array.from(seen);
-  }, [achievementCatalog]);
-
   const [activeTab, setActiveTab] = useState<string | null>(null);
-
-  // Если фильтр задан — таб-бар не нужен, всегда фильтруем по categoryFilter.
-  // Если не задан — используем activeTab (null = "Все").
-  const effectiveFilter: string | null = categoryFilter ?? activeTab;
-
-  const filtered = useMemo(() => {
-    if (!effectiveFilter) return achievementCatalog;
-    return achievementCatalog.filter(a => a.category === effectiveFilter);
-  }, [achievementCatalog, effectiveFilter]);
-
-  const unlockedSet = useMemo(() => new Set(unlockedAchievementIds), [unlockedAchievementIds]);
-  const unlockedCount = filtered.filter(a => unlockedSet.has(a.id)).length;
+  const viewModel = useMemo(() => buildAchievementsModalViewModel({
+    achievementCatalog,
+    activeCategory: activeTab,
+    categoryFilter,
+    unlockedAchievementIds,
+  }), [achievementCatalog, activeTab, categoryFilter, unlockedAchievementIds]);
 
   if (!open) return null;
 
@@ -79,8 +53,8 @@ export const AchievementsModal = memo(function AchievementsModal({
       title={t('achievements.title')}
       description={(
         <>
-          {t('achievements.opened', { count: unlockedCount, total: filtered.length })}{' '}
-          <b>{unlockedCount}</b> {t('achievements.of')} {filtered.length}
+          {t('achievements.opened', { count: viewModel.unlockedCount, total: viewModel.totalCount })}{' '}
+          <b>{viewModel.unlockedCount}</b> {t('achievements.of')} {viewModel.totalCount}
           {categoryFilter ? ` (${getCategoryLabel(categoryFilter, t)})` : ''}.
         </>
       )}
@@ -91,7 +65,7 @@ export const AchievementsModal = memo(function AchievementsModal({
       )}
     >
         {/* Выпадающий список категорий — только когда categoryFilter не задан */}
-        {!categoryFilter && categories.length > 0 && (
+        {!categoryFilter && viewModel.categories.length > 0 && (
           <div className="achievements-filter">
             <SelectInput
               className="achievements-category-select"
@@ -99,7 +73,7 @@ export const AchievementsModal = memo(function AchievementsModal({
               onChange={(e) => setActiveTab(e.target.value === '' ? null : e.target.value)}
             >
               <option value="">{t('achievements.all')}</option>
-              {categories.map(cat => (
+              {viewModel.categories.map(cat => (
                 <option key={cat} value={cat}>
                   {getCategoryLabel(cat, t)}
                 </option>
@@ -109,8 +83,7 @@ export const AchievementsModal = memo(function AchievementsModal({
         )}
 
         <div className="game-achievements-list">
-          {filtered.map(achievement => {
-            const unlocked = unlockedSet.has(achievement.id);
+          {viewModel.items.map(({ achievement, unlocked }) => {
             return (
               <div key={achievement.id} className={`game-achievement-card${unlocked ? ' unlocked' : ''}`}>
                 <div className="game-achievement-icon">
@@ -124,7 +97,7 @@ export const AchievementsModal = memo(function AchievementsModal({
               </div>
             );
           })}
-          {filtered.length === 0 && (
+          {viewModel.items.length === 0 && (
             <EmptyStateNotice className="achievements-empty-copy" text={t('achievements.empty')} />
           )}
         </div>

@@ -9,7 +9,6 @@ import { ModePageHeader } from '../components/practice/ModePageHeader';
 import { ModeSessionStage } from '../components/practice/ModeSessionStage';
 import { useI18n } from '../contexts/I18nContext';
 import {
-  buildPracticeContentText,
   getPracticeContentScenario,
 } from '../../core/engine';
 import {
@@ -21,16 +20,17 @@ import { useModeKeyboardStart } from '../hooks/practice/useModeKeyboardStart';
 import { useModePreviewState } from '../hooks/practice/useModePreviewState';
 import { useModeResultFollowup } from '../hooks/practice/useModeResultFollowup';
 import { useModeBestResultLabel } from '../hooks/practice/useModeBestResultLabel';
-import { buildChallengeResultCallout } from '../hooks/practice/modeResultCallouts';
+import { buildChallengeResultCallout } from '../../core/practice/modeResultCallouts';
 import { buildChallengeWordCount } from '../hooks/practice/modeWordCounts';
 import {
   buildPracticeBuildOptionsKey,
   usePracticeBuildOptions,
 } from '../hooks/practice/usePracticeBuildOptions';
 import { useModeContentPackSelection } from '../hooks/practice/useModeContentPackSelection';
+import { useModeContentTextBuilder } from '../hooks/practice/useModeContentTextBuilder';
 import { useModeMotivationSnapshots } from '../hooks/practice/useModeMotivationSnapshots';
 import { useModeTextInputs } from '../hooks/practice/useModeTextInputs';
-import { buildModePreviewKey } from '../hooks/practice/modePreviewKey';
+import { buildModeMaterialKey, buildModePreviewKey } from '../hooks/practice/modePreviewKey';
 import { useModeResultHistory } from '../hooks/practice/useModeResultHistory';
 import { useModeMaterialLabels } from '../hooks/practice/useModeMaterialLabels';
 import {
@@ -150,29 +150,18 @@ function ChallengeModePage({ initialFlawless = false }: { initialFlawless?: bool
   const practiceBuildOptions = usePracticeBuildOptions(practiceSettings);
   const practiceBuildOptionsKey = buildPracticeBuildOptionsKey(practiceBuildOptions);
 
-  const buildChallengeText = useCallback(() => buildPracticeContentText({
+  const buildChallengeText = useModeContentTextBuilder({
     allWords: words,
-    unlockedChars,
-    weakChar,
+    buildOptions: practiceBuildOptions,
     contentMode: effectiveContentMode,
     contentPack: selectedContentPack,
-    scenarioId: config.scenarioId,
-    wordCountOverride: challengeWordCount,
-    ngramModel: ngramModel ?? undefined,
     insights: practiceInsights,
-    buildOptions: practiceBuildOptions,
-  }), [
-    challengeWordCount,
-    config.scenarioId,
     ngramModel,
-    practiceInsights,
-    effectiveContentMode,
-    practiceBuildOptions,
-    selectedContentPack,
+    scenarioId: config.scenarioId,
     unlockedChars,
     weakChar,
-    words,
-  ]);
+    wordCountOverride: challengeWordCount,
+  });
 
   const onFinish = useCallback((wpm: number, acc: number, elapsed: number, ses: any) => {
     const passed = ses.pos >= ses.text.length;
@@ -257,6 +246,7 @@ function ChallengeModePage({ initialFlawless = false }: { initialFlawless?: bool
     buildOptionsKey: practiceBuildOptionsKey,
     contentMode: effectiveContentMode,
     currentLayout,
+    materialKey: buildModeMaterialKey({ contentPack: selectedContentPack, words }),
     practiceUnlockOrder,
     scenarioId: config.scenarioId,
     selectedContentPackId: selectedContentPack?.id,
@@ -321,15 +311,16 @@ function ChallengeModePage({ initialFlawless = false }: { initialFlawless?: bool
     () => result ? buildChallengeResultCallout(t, config.variant, result, resultComparison, totalLives) : null,
     [config.variant, result, resultComparison, t, totalLives],
   );
+  const challengeFollowupResult = useMemo(() => result ? {
+    mode: config.variant,
+    wpm: result.wpm,
+    acc: result.acc,
+    passed: result.passed,
+    errors: result.errors,
+  } : null, [config.variant, result]);
   const { followupRecommendation, handleFollowupAction } = useModeResultFollowup({
     flawlessEnabledForSurvivalAction: config.variant === 'survival' && !!(result?.passed && result.acc >= 96),
-    result: result ? {
-      mode: config.variant,
-      wpm: result.wpm,
-      acc: result.acc,
-      passed: result.passed,
-      errors: result.errors,
-    } : null,
+    result: challengeFollowupResult,
     saveModePracticeSettings,
     switchMode,
     syncFlawlessOnSurvivalAction: true,

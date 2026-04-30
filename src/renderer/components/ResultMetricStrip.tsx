@@ -1,25 +1,37 @@
 import {
+  buildResultMetricStripViewModel,
+  type ResultMetricItemViewModel,
+  type ResultMetricStripVariant,
+  type ResultMetricTone,
+} from '../../core/result/metricStrip';
+import {
   MetricStrip,
-  type MetricStripItem,
-  type MetricStripTone,
 } from './ui/MetricStrip';
 
-export type ResultMetricTone = MetricStripTone;
-export type ResultMetricItem = MetricStripItem;
+export type { ResultMetricTone };
+export type ResultMetricItem = ResultMetricItemViewModel;
 
 type ResultMetricStripProps = {
   metrics: ResultMetricItem[];
   className?: string;
+  variant?: ResultMetricStripVariant;
 };
 
-export function ResultMetricStrip({ className, metrics }: ResultMetricStripProps) {
+export function ResultMetricStrip({
+  className,
+  metrics,
+  variant = 'primary',
+}: ResultMetricStripProps) {
+  const viewModel = buildResultMetricStripViewModel({
+    className,
+    metrics,
+    variant,
+  });
+
   return (
     <MetricStrip
-      className={['result-metrics', className].filter(Boolean).join(' ')}
-      itemClassName="result-metric"
-      labelClassName="result-metric-label"
-      metrics={metrics}
-      valueClassName="result-metric-value"
+      metrics={viewModel.metrics}
+      viewModel={viewModel}
     />
   );
 }

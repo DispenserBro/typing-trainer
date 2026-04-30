@@ -2,12 +2,15 @@ import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useAppPractice, useAppSettings } from '../contexts/AppContext';
 import { useTypingSession } from '../hooks/useTypingSession';
 import { usePracticeContentPackActions } from '../hooks/practice/usePracticeContentPackActions';
-import { usePracticeContentPackSelection } from '../hooks/practice/usePracticeContentPackSelection';
+import { useModeContentPackSelection } from '../hooks/practice/useModeContentPackSelection';
 import {
   buildPracticeBuildOptionsKey,
   usePracticeBuildOptions,
 } from '../hooks/practice/usePracticeBuildOptions';
+import { buildModeMaterialKey, buildModePreviewKey } from '../hooks/practice/modePreviewKey';
+import { useModeContentTextBuilder } from '../hooks/practice/useModeContentTextBuilder';
 import { useModeAchievements } from '../hooks/practice/useModeAchievements';
+import { useModeTextInputs } from '../hooks/practice/useModeTextInputs';
 import { GameAchievementToastStack } from '../components/game/GameAchievementToastStack';
 import { PracticeContentPackStatus } from '../components/practice/PracticeContentPackStatus';
 import { PracticeHeader } from '../components/practice/PracticeHeader';
@@ -24,13 +27,11 @@ import { AchievementsModal } from '../components/AchievementsModal';
 import { useI18n } from '../contexts/I18nContext';
 import type {
   CharStat,
+  HistoryEntry,
 } from '../../shared/types';
 import {
-  buildPracticeContentText,
   getPracticeContentScenarioForTrainingMode,
   getWorstChar,
-  filterYoWords,
-  filterYoKeys,
   resolvePracticeContentTargetWordCount,
 } from '../../core/engine';
 import { buildPracticeInsightsDelta, getRhythmScore, mergeLayoutPracticeInsights, summarizeSessionRhythm } from '../../core/practice/insights';
@@ -44,6 +45,9 @@ import {
   getMotivationStreakSnapshots,
   updateMotivationAfterPractice,
 } from '../../core/motivation/progress';
+
+const EMPTY_KEY_STATS: Record<string, CharStat> = {};
+const EMPTY_HISTORY: HistoryEntry[] = [];
 
 export function PracticePage() {
   const { t } = useI18n();
@@ -79,19 +83,21 @@ export function PracticePage() {
 
   const layout = layouts.layouts[currentLayout];
   const useYo = settings.useYo;
-
-  // Filtered words and keys (ё handling)
-  const words = useMemo(() => filterYoWords(allWords, useYo), [allWords, useYo]);
-  const practiceUnlockOrder = useMemo(
-    () => filterYoKeys(layout?.practiceUnlockOrder ?? [], useYo),
-    [layout, useYo],
-  );
-
   const layoutProgress = getLayoutProgress();
+  const {
+    practiceUnlockOrder,
+    unlockedChars: unlocked,
+    weakChar: weak,
+    words,
+  } = useModeTextInputs({
+    allWords,
+    keyStats: progress.keyStats?.[currentLayout],
+    layout,
+    layoutProgress,
+    useYo,
+  });
   const practiceState = getPracticeState();
   const practiceInsights = getPracticeInsights();
-  const unlocked = practiceUnlockOrder.slice(0, layoutProgress.unlocked);
-  const weak = getWorstChar(progress.keyStats?.[currentLayout], unlocked);
   if (weak) practiceState.worstChar = weak;
   const fallbackWorstChar = weak ?? practiceState.worstChar ?? unlocked[0] ?? null;
 
@@ -123,16 +129,16 @@ export function PracticePage() {
   const {
     availableContentPacks,
     effectiveContentMode,
+    selectedContentPackControlId,
     selectedContentPack,
     selectedContentPackPreflight,
     selectedContentPackSummary,
-  } = usePracticeContentPackSelection({
-    contentMode,
+  } = useModeContentPackSelection({
     currentLanguage,
     customPracticePacks: progress.customPracticePacks,
+    practiceSettings,
     practiceContentPacks,
     scenarioId: contentScenario.id,
-    selectedContentPackId: practiceSettings.selectedContentPackId,
     t,
   });
   const practiceWordCount = useMemo(
@@ -156,31 +162,18 @@ export function PracticePage() {
   const smartAdaptationFocus = practiceSettings.smartAdaptationFocus ?? 'balanced';
   const practiceBuildOptions = usePracticeBuildOptions(practiceSettings, trainingMode);
   const practiceBuildOptionsKey = buildPracticeBuildOptionsKey(practiceBuildOptions);
-
-  const buildPracticeMaterialText = useCallback((
-    unlockedChars: string[],
-    worstChar: string | null,
-  ) => buildPracticeContentText({
+  const buildPracticeMaterialText = useModeContentTextBuilder({
     allWords: words,
-    unlockedChars,
-    weakChar: worstChar,
+    buildOptions: practiceBuildOptions,
     contentMode: effectiveContentMode,
     contentPack: selectedContentPack,
-    scenarioId: contentScenario.id,
-    wordCountOverride: practiceWordCount,
-    ngramModel: ngramModel ?? undefined,
     insights: practiceInsights,
-    buildOptions: practiceBuildOptions,
-  }), [
-    words,
-    effectiveContentMode,
-    selectedContentPack,
-    contentScenario.id,
-    practiceWordCount,
     ngramModel,
-    practiceInsights,
-    practiceBuildOptions,
-  ]);
+    scenarioId: contentScenario.id,
+    unlockedChars: unlocked,
+    weakChar: weak,
+    wordCountOverride: practiceWordCount,
+  });
 
   // Convert CPM to display unit and back
   const unit = settings.speedUnit;
@@ -195,38 +188,35 @@ export function PracticePage() {
   const goalDisplay = cpmToDisplay(goalCPM);
 
   const buildPracticePreview = useCallback(() => {
-    const currentUnlocked = practiceUnlockOrder.slice(0, layoutProgress.unlocked);
-    const worstChar = getWorstChar(progress.keyStats?.[currentLayout], currentUnlocked);
-    return buildPracticeMaterialText(currentUnlocked, worstChar);
-  }, [practiceUnlockOrder, layoutProgress.unlocked, progress.keyStats, currentLayout, buildPracticeMaterialText]);
+    return buildPracticeMaterialText();
+  }, [buildPracticeMaterialText]);
+  const practicePreviewKey = buildModePreviewKey({
+    buildOptionsKey: practiceBuildOptionsKey,
+    contentMode: effectiveContentMode,
+    currentLayout,
+    materialKey: buildModeMaterialKey({ contentPack: selectedContentPack, words }),
+    practiceUnlockOrder,
+    scenarioId: contentScenario.id,
+    selectedContentPackId: selectedContentPack?.id,
+    unlockedCount: layoutProgress.unlocked,
+    useYo,
+    wordCount: practiceWordCount,
+  });
 
   // Generate / regenerate text only when preview conditions actually change
   useEffect(() => {
     if (!layout || !words.length) return;
-    const previewKey = [
-      currentLayout,
-      layoutProgress.unlocked,
-      useYo ? 'yo' : 'no-yo',
-      trainingMode,
-      effectiveContentMode,
-      practiceWordCount,
-      practiceBuildOptionsKey,
-      words.length,
-      practiceUnlockOrder.join(''),
-      selectedContentPack?.id ?? 'no-selected-pack',
-      selectedContentPack?.items.length ?? 0,
-    ].join('|');
-    if (previewKeyRef.current === previewKey) return;
-    previewKeyRef.current = previewKey;
+    if (previewKeyRef.current === practicePreviewKey) return;
+    previewKeyRef.current = practicePreviewKey;
     setPracticeText(buildPracticePreview());
     setShowOverlay(true);
     setResult(null);
     setUnlockModalLetter(null);
   }, [
-    currentLayout, layout, words.length, useYo, practiceUnlockOrder, layoutProgress.unlocked,
-    buildPracticePreview, trainingMode, effectiveContentMode, practiceWordCount,
-    practiceBuildOptionsKey,
-    selectedContentPack,
+    layout,
+    words.length,
+    buildPracticePreview,
+    practicePreviewKey,
   ]);
 
   const {
@@ -340,7 +330,27 @@ export function PracticePage() {
       rhythmDeviation: Math.round(rhythm.averageDeviation),
       feedback,
     });
-  }, [layoutProgress, practiceUnlockOrder, practiceState, currentLayout, progress, saveProgress, saveHistory, goalCPM, unlocked, fallbackWorstChar, getPracticeInsights, savePracticeInsights, savePracticeRhythmSession, layout, trainingMode, updateMotivationProgress]);
+  }, [
+    contentScenario.id,
+    currentLayout,
+    effectiveContentMode,
+    fallbackWorstChar,
+    getPracticeInsights,
+    goalCPM,
+    handleAchievementEvent,
+    layout,
+    layoutProgress,
+    practiceState,
+    practiceUnlockOrder,
+    progress,
+    saveHistory,
+    savePracticeInsights,
+    savePracticeRhythmSession,
+    t,
+    trainingMode,
+    unlocked,
+    updateMotivationProgress,
+  ]);
 
   const { session, start, stop, handleKey, wpm, acc, renderTick, waitingForSpace } = useTypingSession({
     mode: 'practice',
@@ -424,9 +434,9 @@ export function PracticePage() {
   };
 
   // Letter grid + goal
-  const ks = progress.keyStats?.[currentLayout] || {};
+  const ks = progress.keyStats?.[currentLayout] ?? EMPTY_KEY_STATS;
 
-  const hist = progress.history?.[currentLayout] || [];
+  const hist = progress.history?.[currentLayout] ?? EMPTY_HISTORY;
   const practicePerformance = useMemo(() => buildPracticePerformanceViewModel({
     fallbackWorstChar,
     formatSpeed: fmtSpeed,
@@ -444,6 +454,7 @@ export function PracticePage() {
     layoutProgressUnlocked: layoutProgress.unlocked,
     layouts,
     motivationProgress,
+    practicesPerUnlock: PRACTICES_PER_UNLOCK,
     progress,
     result,
     translate: t,
@@ -531,13 +542,10 @@ export function PracticePage() {
 
       <PracticeResultFlow
         formatSpeed={fmtSpeed}
-        layoutProgressUnlocked={layoutProgress.unlocked}
-        practicesPerUnlock={PRACTICES_PER_UNLOCK}
         practiceResultViewModel={practiceResultViewModel}
         result={result}
         retryAndStart={retryAndStart}
         speedLabel={spdLabel}
-        trainingMode={trainingMode}
         translate={t}
       />
 
@@ -558,7 +566,7 @@ export function PracticePage() {
         onContentModeChange={(value) => savePracticeSetting('contentMode', value)}
         availableContentPacks={availableContentPacks}
         selectedContentPack={selectedContentPack}
-        selectedContentPackId={selectedContentPack?.id ?? ''}
+        selectedContentPackId={selectedContentPackControlId}
         onSelectedContentPackIdChange={(value) => savePracticeSetting('selectedContentPackId', value)}
         contentScenarioLabel={contentScenario.label}
         contentPackSummary={selectedContentPackSummary}

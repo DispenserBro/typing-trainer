@@ -1,6 +1,6 @@
 {
   "name": "typing-trainer",
-  "version": "2.3.0",
+  "version": "3.0.0",
   "description": "Клавиатурный тренажёр с поддержкой русского и английского языков",
   "author": {
     "name": "DispenserBro",
@@ -8,27 +8,36 @@
   },
   "main": "dist/main/main.js",
   "scripts": {
-    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
-    "build:main": "tsc -p tsconfig.json",
+    "postinstall": "node scripts/patch-electron-builder.mjs",
+    "clean": "node scripts/clean.mjs",
+    "build:main": "tsc -p tsconfig.json && node scripts/copy-built-in-locales.mjs dist",
     "build:debug-tools": "tsc -p tsconfig.debug.json",
     "build:renderer": "webpack --config webpack.config.js",
     "build": "npm run build:main && npm run build:renderer",
     "rebuild": "npm run clean && npm run build",
     "start": "npm run build && electron .",
     "dev": "npm run build && electron .",
+    "diagnostics:quick": "npm run diagnostics:core && npm run diagnostics:history",
+    "diagnostics:core": "npm run build:debug-tools && node dist-debug/debug/runCoreDiagnostics.js",
     "diagnostics:practice": "npm run build:debug-tools && node dist-debug/debug/runPracticeDiagnostics.js",
+    "diagnostics:content-pipeline": "npm run diagnostics:practice -- --focused-pipeline",
     "diagnostics:game-balance": "npm run build:debug-tools && node dist-debug/debug/runGameBalanceDiagnostics.js",
+    "diagnostics:history": "npm run build:debug-tools && node dist-debug/debug/runHistoryDiagnostics.js",
     "diagnostics:i18n": "npm run build:debug-tools && node dist-debug/debug/runI18nDiagnostics.js",
     "diagnostics:extensions": "npm run build:debug-tools && node dist-debug/debug/runExtensionSourceDiagnostics.js",
-    "build:win": "npm run build && electron-builder --win --publish never",
-    "build:linux": "npm run build && electron-builder --linux --publish never"
+    "build:electron": "node scripts/build-electron.mjs",
+    "build:win": "node scripts/build-electron.mjs --win",
+    "build:linux": "node scripts/build-electron.mjs --linux",
+    "build:mac": "node scripts/build-electron.mjs --mac"
   },
   "build": {
     "appId": "com.typing-trainer.app",
     "productName": "Typing Trainer",
     "icon": "data/app-icon.png",
+    "beforeBuild": "./scripts/electron-builder-before-build.cjs",
     "directories": {
-      "output": "dist-build"
+      "output": "dist-build",
+      "buildResources": "."
     },
     "files": [
       "dist/core/**",
@@ -40,6 +49,11 @@
     "win": {
       "target": "nsis",
       "icon": "data/app-icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "include": "build/installer.nsh"
     },
     "linux": {
       "target": [
@@ -75,7 +89,6 @@
   },
   "dependencies": {
     "i18next": "^26.0.5",
-    "react-i18next": "^17.0.4",
     "sass": "^1.98.0"
   }
 }

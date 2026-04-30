@@ -1,5 +1,4 @@
 import i18n, { type i18n as I18nInstance } from 'i18next';
-import { initReactI18next } from 'react-i18next';
 import type {
   InterfaceLocaleDefinition,
   PluralTranslation,
@@ -198,7 +197,6 @@ export function ensureI18nInitialized() {
   if (!initPromise) {
     const resources = buildI18nResources(activeInterfaceLocales);
     initPromise = i18n
-      .use(initReactI18next)
       .init({
         lng: DEFAULT_INTERFACE_LOCALE,
         fallbackLng: (code) => buildLocaleFallbackChain(code ?? DEFAULT_INTERFACE_LOCALE, activeLocaleMap),

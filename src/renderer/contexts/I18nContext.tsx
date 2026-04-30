@@ -1,5 +1,4 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { I18nextProvider } from 'react-i18next';
 import type { InterfaceLocaleDefinition, TranslationParams } from '../../shared/types';
 import { collectAddonInterfaceLocales } from '../../core/addons/addonMerger';
 import {
@@ -9,7 +8,6 @@ import {
   formatLocaleDateTime,
   formatLocaleNumber,
   getBuiltInInterfaceLocales,
-  i18n,
   type I18nLocaleQualitySummary,
   normalizeInterfaceLocale,
   resolveRuntimeTranslation,
@@ -96,11 +94,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     };
   }, [i18nRevision, locale, localeMap, localeQuality, locales]);
 
-  return (
-    <I18nextProvider i18n={i18n}>
-      <I18nContext.Provider value={value}>{children}</I18nContext.Provider>
-    </I18nextProvider>
-  );
+  return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
 
 export const useI18n = () => useContext(I18nContext);

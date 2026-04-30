@@ -17,6 +17,7 @@ import {
   buildLayoutMasteryResultSummary,
   buildPracticeResultComparison,
 } from '../motivation/records';
+import { isPracticeHistoryEntry } from '../history/selectors';
 
 type PracticeResultState = {
   wpm: number;
@@ -30,6 +31,13 @@ type PracticeResultState = {
   feedback: PracticeFeedback;
 } | null;
 
+export type PracticeResultPrimaryMetricViewModel = {
+  id: string;
+  value: string | number;
+  label: string;
+  tone?: 'good' | 'warn' | 'bad' | 'neutral';
+};
+
 type BuildPracticeResultViewModelArgs = {
   contentMode: PracticeContentMode;
   contentScenarioId: PracticeContentScenarioId;
@@ -38,6 +46,7 @@ type BuildPracticeResultViewModelArgs = {
   layoutProgressUnlocked: number;
   layouts: LayoutsData;
   motivationProgress: MotivationProgress;
+  practicesPerUnlock: number;
   progress: Progress;
   result: PracticeResultState;
   translate: (key: string, params?: TranslationParams) => string;
@@ -58,6 +67,71 @@ function calcCPM(stat: CharStat | null): number {
   return 60000 / (stat.totalTime / stat.hits);
 }
 
+export function buildPracticeResultPrimaryMetrics(args: {
+  layoutProgressUnlocked: number;
+  practicesPerUnlock: number;
+  result: PracticeResultState;
+  trainingMode: PracticeTrainingMode;
+  translate: (key: string, params?: TranslationParams) => string;
+}): PracticeResultPrimaryMetricViewModel[] {
+  const {
+    layoutProgressUnlocked,
+    practicesPerUnlock,
+    result,
+    trainingMode,
+    translate,
+  } = args;
+
+  if (!result) return [];
+
+  return [
+    {
+      id: 'accuracy',
+      label: translate('common.accuracy'),
+      value: `${Math.round(result.acc)}%`,
+      tone: result.acc >= 98 ? 'good' : result.acc >= 90 ? 'warn' : 'bad',
+    },
+    ...(trainingMode === 'rhythm'
+      ? [
+          {
+            id: 'rhythm',
+            label: translate('practice.rhythm'),
+            value: `${Math.round(result.rhythmScore)}%`,
+            tone: result.rhythmScore >= 80 ? 'good' as const : result.rhythmScore >= 50 ? 'warn' as const : 'bad' as const,
+          },
+          {
+            id: 'rhythm-deviation',
+            label: translate('practice.rhythmDeviation'),
+            value: `${result.rhythmDeviation} ${translate('practice.msShort')}`,
+          },
+        ]
+      : []),
+    {
+      id: 'worst-char',
+      label: translate('practice.problemChar'),
+      value: result.worstChar?.toUpperCase() ?? '—',
+      tone: result.worstChar ? 'warn' : 'neutral',
+    },
+    {
+      id: 'letters',
+      label: translate('practice.letters'),
+      value: layoutProgressUnlocked,
+    },
+    result.newLetter
+      ? {
+          id: 'new-letter',
+          label: translate('practice.newLetter'),
+          value: '+1',
+          tone: 'good' as const,
+        }
+      : {
+          id: 'until-new',
+          label: translate('practice.untilNew'),
+          value: `${result.unlockProgress}/${practicesPerUnlock}`,
+        },
+  ];
+}
+
 export function buildPracticePerformanceViewModel({
   fallbackWorstChar,
   formatSpeed,
@@ -66,7 +140,7 @@ export function buildPracticePerformanceViewModel({
   lastCharStats,
   result,
 }: BuildPracticePerformanceViewModelArgs) {
-  const practiceHistory = historyEntries.filter(entry => entry.mode === 'practice');
+  const practiceHistory = historyEntries.filter(isPracticeHistoryEntry);
   const last = practiceHistory.length ? practiceHistory[practiceHistory.length - 1] ?? null : null;
 
   let speedDelta = 0;
@@ -101,6 +175,7 @@ export function buildPracticeResultViewModel({
   layoutProgressUnlocked,
   layouts,
   motivationProgress,
+  practicesPerUnlock,
   progress,
   result,
   translate,
@@ -119,6 +194,13 @@ export function buildPracticeResultViewModel({
       previousUnlockedLettersOverride: result.newLetter ? Math.max(0, layoutProgressUnlocked - 1) : layoutProgressUnlocked,
       currentUnlockedLettersOverride: layoutProgressUnlocked,
     }) : null,
+    primaryMetrics: buildPracticeResultPrimaryMetrics({
+      layoutProgressUnlocked,
+      practicesPerUnlock,
+      result,
+      trainingMode,
+      translate,
+    }),
     practiceResultComparison: result ? buildPracticeResultComparison(historyEntries, translate, {
       wpm: result.wpm,
       acc: result.acc,
