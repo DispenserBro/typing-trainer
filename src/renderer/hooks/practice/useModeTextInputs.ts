@@ -1,10 +1,7 @@
 import { useMemo } from 'react';
 import type { CharStat, Layout, LayoutProgressState } from '../../../shared/types';
-import {
-  filterYoKeys,
-  filterYoWords,
-  getWorstChar,
-} from '../../../core/engine';
+import { filterYoKeys, filterYoWords } from '../../../core/textFilters';
+import { getWorstChar } from '../../../core/practice/engine';
 
 type UseModeTextInputsArgs = {
   allWords: string[];
@@ -22,9 +19,10 @@ export function useModeTextInputs({
   useYo,
 }: UseModeTextInputsArgs) {
   const words = useMemo(() => filterYoWords(allWords, useYo), [allWords, useYo]);
+  const rawPracticeUnlockOrder = layout?.practiceUnlockOrder;
   const practiceUnlockOrder = useMemo(
-    () => filterYoKeys(layout?.practiceUnlockOrder ?? [], useYo),
-    [layout, useYo],
+    () => filterYoKeys(rawPracticeUnlockOrder ?? [], useYo),
+    [rawPracticeUnlockOrder, useYo],
   );
   const unlockedChars = useMemo(
     () => practiceUnlockOrder.slice(0, layoutProgress.unlocked),

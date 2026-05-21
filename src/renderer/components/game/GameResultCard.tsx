@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import type { MutableRefObject, RefObject } from 'react';
 import {
   RotateCcw,
@@ -16,6 +17,7 @@ import type {
 import { buildGameResultMetricItems } from '../../../core/game/resultMetrics';
 import {
   buildGameResultCardViewModel,
+  buildGameResultSecondaryBlocksViewModel,
   type GameResultActionId,
 } from '../../../core/game/resultPresentation';
 import {
@@ -108,7 +110,18 @@ export function GameResultCard({
     selectedRewardMessage,
     translate: t,
   });
-  const rewardChoiceById = new Map((rewardChoices ?? []).map(choice => [choice.id, choice]));
+  const secondaryBlocks = buildGameResultSecondaryBlocksViewModel({
+    comparison,
+    masterySummary,
+    motivationGoals,
+    motivationStreaks,
+    result,
+    rewardBlock,
+  });
+  const rewardChoiceById = useMemo(
+    () => new Map((rewardChoices ?? []).map(choice => [choice.id, choice])),
+    [rewardChoices],
+  );
 
   const actionHandlers: Record<GameResultActionId, () => void> = {
     continue: onContinue,
@@ -155,17 +168,17 @@ export function GameResultCard({
         <p className="game-breakage-note">{t('game.result.brokenItems')}: <b>{result.brokenItems.join(', ')}</b></p>
       )}
       <p>{resultCard.summary}</p>
-      {(result.victory || result.livesLeft <= 0) && (motivationGoals.length > 0 || motivationStreaks.length > 0) && (
+      {secondaryBlocks.showMotivationProgress && (
         <ResultMotivationProgressMetrics goals={motivationGoals} streaks={motivationStreaks} />
       )}
-      {comparison && (
+      {secondaryBlocks.showComparison && comparison && (
         <ResultComparisonPanel
           comparison={comparison}
           formatSpeed={formatSpeed}
           speedLabel={speedLabel}
         />
       )}
-      {masterySummary && (
+      {secondaryBlocks.showMastery && masterySummary && (
         <div className="result-mastery-block">
           <LayoutMasteryPanel
             snapshot={masterySummary.current}
@@ -176,7 +189,7 @@ export function GameResultCard({
         </div>
       )}
 
-      {rewardBlock && (
+      {secondaryBlocks.showRewardBlock && rewardBlock && (
         <div className="game-reward-block">
           <div className="game-reward-title">{rewardBlock.title}</div>
           {!rewardBlock.selectedRewardMessage ? (

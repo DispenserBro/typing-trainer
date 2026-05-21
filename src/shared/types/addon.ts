@@ -1,11 +1,14 @@
 import type { Lesson, Layout, LanguageInfo } from './layout';
 import type { GameItemDefinition, GameAchievementDefinition } from './game';
+import type { ModPermission } from './modApi';
 import type { CustomThemeColors } from './settings';
 import type { CustomPracticePackKind } from './practice';
 import type { TranslationDictionary } from './i18n';
 
 /* ── Manifest version ───────────────────────────────────── */
 export const ADDON_MANIFEST_VERSION = 1;
+export const ADDON_MANIFEST_TYPE = 'content';
+export const MOD_MANIFEST_TYPE = 'mod';
 
 /* ═══════════════════════════════════════════════════════════
    ADDONS  — content-only packs (words, lessons, items, …)
@@ -90,7 +93,7 @@ export interface AddonManifest {
   description?: string;
   author?: string;
   minAppVersion?: string;
-  type: 'content';
+  type: typeof ADDON_MANIFEST_TYPE;
   /** IDs of mods that must be installed and enabled for this addon to work. */
   dependencies?: string[];
   resources?: AddonResources;
@@ -102,23 +105,6 @@ export interface AddonManifest {
    MODS  — JS/TS scripts that interact with the app via API
    ═══════════════════════════════════════════════════════════ */
 
-/**
- * What a mod is allowed to do — declared in manifest so the
- * user can review before enabling.
- */
-export type ModPermission =
-  | 'sections'       // hide / show sidebar sections
-  | 'settings'       // override user settings
-  | 'items'          // add / remove / replace game items
-  | 'achievements'   // add / remove / replace achievements
-  | 'rules'          // override game / practice rules
-  | 'ui'             // inject custom UI panels / CSS
-  | 'events'         // subscribe to app events (key, session, etc.)
-  | 'words'          // add / remove / replace words
-  | 'lessons'        // add / remove / replace lessons
-  | 'i18n'           // register interface translations
-  | 'modes';         // register new sidebar modes / pages
-
 export interface ModManifest {
   manifestVersion: number;
   id: string;
@@ -128,7 +114,7 @@ export interface ModManifest {
   description?: string;
   author?: string;
   minAppVersion?: string;
-  type: 'mod';
+  type: typeof MOD_MANIFEST_TYPE;
   /** Relative path to the entry JS file (e.g. "index.js") */
   entry: string;
   /** Explicit package file list for remote installation from source catalogs. */

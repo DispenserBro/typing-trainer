@@ -32,7 +32,30 @@ import type {
   InstalledMod,
   InstalledTheme,
   ModPermission,
+  TranslationParams,
 } from '../../shared/types';
+import {
+  EXTENSION_SOURCE_TYPES,
+  canInstallExtensionCatalogEntry,
+  isExtensionSourceType,
+} from '../../shared/types/extensionSource';
+import {
+  countAttentionCatalogEntries,
+  filterExtensionCatalogEntries,
+  filterExtensionSources,
+  filterInstalledAddons,
+  filterInstalledMods,
+  filterInstalledThemes,
+  getAddonContentKinds,
+  getAvailableInstalledAddonContentKinds,
+  getSourceLocationLabel,
+  type AddonContentKind,
+} from '../../core/addons/catalogSelectors';
+import {
+  buildExtensionCatalogEmptyStateViewModel,
+  buildExtensionCatalogInstallActionViewModel,
+  type ExtensionCatalogEmptyIconKind,
+} from '../../core/addons/extensionCatalogUi';
 import { Button } from '../components/ui/Button';
 import { ChipList } from '../components/ui/ChipList';
 import { CountTabButton } from '../components/ui/CountTabButton';
@@ -46,16 +69,6 @@ import { TextInput } from '../components/ui/TextInput';
 type AddonsView = 'catalog' | 'installed';
 type CatalogFilter = 'all' | 'attention' | ExtensionCatalogKind;
 type InstalledFilter = 'all' | 'addons' | 'mods' | 'themes';
-type AddonContentKind =
-  | 'words'
-  | 'lessons'
-  | 'layouts'
-  | 'languages'
-  | 'items'
-  | 'achievements'
-  | 'themes'
-  | 'practicePacks'
-  | 'interfaceLocales';
 
 type SourceFormState = {
   manifestPath: string;
@@ -92,22 +105,6 @@ function getInitialSourceFormState(): SourceFormState {
 
 /* ── Addon helpers ──────────────────────────────────────── */
 
-function getAddonContentKinds(addon: InstalledAddon): AddonContentKind[] {
-  const r = addon.manifest.resources;
-  if (!r) return [];
-  const tags: AddonContentKind[] = [];
-  if (r.words?.length) tags.push('words');
-  if (r.lessons?.length) tags.push('lessons');
-  if (r.layouts?.length) tags.push('layouts');
-  if (r.languages?.length) tags.push('languages');
-  if (r.items?.items?.length) tags.push('items');
-  if (r.achievements?.achievements?.length) tags.push('achievements');
-  if (r.themes && Object.keys(r.themes.themes).length) tags.push('themes');
-  if (r.practicePacks?.packs?.length) tags.push('practicePacks');
-  if (r.interfaceLocales?.locales?.length || r.locales?.length) tags.push('interfaceLocales');
-  return tags;
-}
-
 function getAddonContentKindLabel(kind: AddonContentKind, t: (key: string) => string) {
   return t(`addons.tags.${kind}`);
 }
@@ -128,6 +125,13 @@ function getSourceTypeIcon(type: ExtensionSourceType) {
   if (type === 'local') return <FolderOpen size={24} />;
   if (type === 'url') return <Globe size={24} />;
   return <Github size={24} />;
+}
+
+function getSourceTypeOptions(t: (key: string) => string) {
+  return EXTENSION_SOURCE_TYPES.map(type => ({
+    label: getSourceTypeLabel(type, t),
+    value: type,
+  }));
 }
 
 function toLucideIconKey(value: string) {
@@ -160,17 +164,6 @@ function resolveLucideIcon(iconName?: string): LucideIcon | null {
 function renderManifestIcon(iconName: string | undefined, fallback: ReactElement) {
   const IconComponent = resolveLucideIcon(iconName);
   return IconComponent ? <IconComponent size={24} /> : fallback;
-}
-
-function getSourceLocationLabel(source: InstalledExtensionSource) {
-  if (source.input.type === 'local') return source.input.manifestPath;
-  if (source.input.type === 'url') return source.input.manifestUrl;
-  if (source.input.manifestUrl?.trim()) return source.input.manifestUrl;
-
-  const repoLabel = `${source.input.owner}/${source.input.repo}`;
-  const branchLabel = source.input.branch?.trim() || 'main';
-  const basePath = source.input.basePath?.trim();
-  return basePath ? `${repoLabel}#${branchLabel}/${basePath}` : `${repoLabel}#${branchLabel}`;
 }
 
 function getSourceCounts(source: InstalledExtensionSource, t: (key: string, params?: Record<string, string | number>) => string) {
@@ -212,14 +205,6 @@ function getCatalogStatusLabel(entry: ExtensionCatalogEntry, t: (key: string) =>
     default:
       return t('addons.catalog.status.available');
   }
-}
-
-function getCatalogInstallLabel(entry: ExtensionCatalogEntry, t: (key: string) => string) {
-  if (entry.status === 'installed') return t('addons.catalog.actions.installed');
-  if (entry.status === 'update-available') return t('addons.catalog.actions.update');
-  if (entry.kind === 'mods') return t('addons.catalog.actions.installMod');
-  if (entry.kind === 'themes') return t('addons.catalog.actions.installTheme');
-  return t('addons.catalog.actions.installAddon');
 }
 
 function getIssueText(
@@ -374,20 +359,12 @@ function getDuplicateRecommendationText(
   return t('addons.catalog.duplicateRecommendation.newerAvailable', params);
 }
 
-function catalogMatchesSearch(entry: ExtensionCatalogEntry, search: string) {
-  const needle = search.trim().toLowerCase();
-  if (!needle) return true;
-
-  const haystack = [
-    entry.entryId,
-    entry.sourceName,
-    entry.manifestId,
-    entry.manifestName,
-    entry.manifestDescription,
-    entry.manifestAuthor,
-  ].filter(Boolean).join(' ').toLowerCase();
-
-  return haystack.includes(needle);
+function getEmptyStateIcon(kind: ExtensionCatalogEmptyIconKind): ReactElement {
+  if (kind === 'addons') return <Puzzle size={48} />;
+  if (kind === 'mods') return <Wrench size={48} />;
+  if (kind === 'sources') return <Globe size={48} />;
+  if (kind === 'themes') return <Palette size={48} />;
+  return <Package size={48} />;
 }
 
 function createMarkdownPreviewFromCatalogEntry(
@@ -410,69 +387,12 @@ function createMarkdownPreviewFromCatalogEntry(
   };
 }
 
-function catalogSupportsDirectInstall(entry: ExtensionCatalogEntry) {
-  return entry.installSupport === 'direct';
-}
-
-function catalogAllowsInstall(entry: ExtensionCatalogEntry) {
-  return catalogSupportsDirectInstall(entry)
-    && entry.status !== 'installed'
-    && entry.status !== 'source-disabled'
-    && entry.status !== 'source-error'
-    && entry.status !== 'incompatible'
-    && !entry.issues.some(issue => issue.fallback === 'blocked-install')
-    && entry.status !== 'invalid';
-}
-
-function catalogHasAttention(entry: ExtensionCatalogEntry) {
-  return entry.status === 'incompatible'
-    || entry.status === 'invalid'
-    || entry.status === 'source-disabled'
-    || entry.status === 'source-error'
-    || entry.installSupport === 'manual'
-    || entry.issues.length > 0
-    || entry.duplicateRecommendationReason !== undefined
-    || entry.duplicateSourceIds.length > 0;
-}
-
-function getCatalogSortScore(entry: ExtensionCatalogEntry) {
-  if (entry.status === 'update-available' && catalogAllowsInstall(entry)) return 0;
-  if (entry.status === 'available' && catalogAllowsInstall(entry)) return 1;
-  if (entry.status === 'update-available') return 2;
-  if (entry.status === 'installed') return 3;
-  if (entry.duplicateRecommendationReason) return 4;
-  if (catalogHasAttention(entry)) return 5;
-  return 6;
-}
-
-function compareCatalogEntries(left: ExtensionCatalogEntry, right: ExtensionCatalogEntry) {
-  const scoreDiff = getCatalogSortScore(left) - getCatalogSortScore(right);
-  if (scoreDiff !== 0) return scoreDiff;
-  if (left.kind !== right.kind) return left.kind.localeCompare(right.kind);
-  return (left.manifestName ?? left.entryId).localeCompare(right.manifestName ?? right.entryId);
-}
-
 function formatDuplicateSourceNames(sourceNames: string[], t: (key: string, params?: Record<string, string | number>) => string) {
   if (sourceNames.length <= 3) return sourceNames.join(', ');
   return t('addons.catalog.duplicateSourcesCompact', {
     count: sourceNames.length - 3,
     sources: sourceNames.slice(0, 3).join(', '),
   });
-}
-
-function themeMatchesSearch(theme: InstalledTheme, search: string) {
-  const needle = search.trim().toLowerCase();
-  if (!needle) return true;
-
-  const haystack = [
-    theme.id,
-    theme.manifest.name,
-    theme.manifest.description,
-    theme.manifest.author,
-    theme.manifest.version,
-  ].filter(Boolean).join(' ').toLowerCase();
-
-  return haystack.includes(needle);
 }
 
 function createSourceInputFromForm(form: SourceFormState): ExtensionSourceInput | null {
@@ -495,22 +415,6 @@ function createSourceInputFromForm(form: SourceFormState): ExtensionSourceInput 
     type: 'github',
     manifestUrl,
   };
-}
-
-function sourceMatchesSearch(source: InstalledExtensionSource, search: string) {
-  const needle = search.trim().toLowerCase();
-  if (!needle) return true;
-
-  const manifest = source.syncState.manifest;
-  const haystack = [
-    source.id,
-    manifest?.name,
-    manifest?.description,
-    manifest?.author,
-    getSourceLocationLabel(source),
-  ].filter(Boolean).join(' ').toLowerCase();
-
-  return haystack.includes(needle);
 }
 
 /* ── Mod helpers ────────────────────────────────────────── */
@@ -714,10 +618,9 @@ function CatalogCard({
   entry: ExtensionCatalogEntry;
   onInstall: (entry: ExtensionCatalogEntry) => void;
   onOpenCard: (entry: ExtensionCatalogEntry) => void;
-  t: (key: string, params?: Record<string, string | number>) => string;
+  t: (key: string, params?: TranslationParams) => string;
 }) {
-  const directInstall = catalogSupportsDirectInstall(entry);
-  const canInstall = catalogAllowsInstall(entry);
+  const installAction = buildExtensionCatalogInstallActionViewModel(entry, t);
   const dependencies = entry.dependencies.join(', ');
   const duplicateSources = formatDuplicateSourceNames(entry.duplicateSourceNames, t);
   const permissions = entry.permissions.join(', ');
@@ -752,31 +655,20 @@ function CatalogCard({
             {entry.manifestAuthor ? <span className="addon-card__author">{entry.manifestAuthor}</span> : null}
           </div>
           <div className="addon-card__catalog-actions">
-            {directInstall ? (
-              <Button
-                variant={canInstall ? 'accent' : 'secondary'}
-                size="sm"
-                className="addon-card__action-btn"
-                disabled={!canInstall}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  if (canInstall) onInstall(entry);
-                }}
-              >
-                <Download size={14} />
-                <span>{getCatalogInstallLabel(entry, t)}</span>
-              </Button>
-            ) : (
-              <Button
-                variant="secondary"
-                size="sm"
-                className="addon-card__action-btn"
-                disabled
-                onClick={(event) => event.stopPropagation()}
-              >
-                <span>{t('addons.catalog.actions.manualOnly')}</span>
-              </Button>
-            )}
+            <Button
+              variant={installAction.variant}
+              size="sm"
+              className="addon-card__action-btn"
+              disabled={installAction.disabled}
+              title={installAction.blockReason}
+              onClick={(event) => {
+                event.stopPropagation();
+                if (installAction.canInstall) onInstall(entry);
+              }}
+            >
+              {installAction.canInstall ? <Download size={14} /> : null}
+              <span>{installAction.label}</span>
+            </Button>
           </div>
         </div>
       </div>
@@ -1094,11 +986,14 @@ function SourceForm({
           <span>{t('addons.sources.form.type')}</span>
           <SelectInput
             value={form.sourceType}
-            onChange={(event) => onChange({ sourceType: event.target.value as ExtensionSourceType })}
+            onChange={(event) => {
+              const sourceType = event.target.value;
+              if (isExtensionSourceType(sourceType)) onChange({ sourceType });
+            }}
           >
-            <option value="local">{t('addons.sources.types.local')}</option>
-            <option value="url">{t('addons.sources.types.url')}</option>
-            <option value="github">{t('addons.sources.types.github')}</option>
+            {getSourceTypeOptions(t).map(option => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
           </SelectInput>
         </label>
 
@@ -1195,40 +1090,46 @@ export function AddonsPage() {
   const [sourceForm, setSourceForm] = useState<SourceFormState>(getInitialSourceFormState);
   const [markdownPreview, setMarkdownPreview] = useState<MarkdownPreviewState | null>(null);
 
-  const filteredSources = extensionSources.filter(source => sourceMatchesSearch(source, search));
-  const filteredCatalogEntries = extensionCatalogEntries
-    .filter(entry => {
-      if (catalogFilter === 'attention' && !catalogHasAttention(entry)) return false;
-      if (catalogFilter !== 'all' && catalogFilter !== 'attention' && entry.kind !== catalogFilter) return false;
-      return catalogMatchesSearch(entry, search);
-    })
-    .sort(compareCatalogEntries);
-  const attentionCatalogCount = extensionCatalogEntries.filter(catalogHasAttention).length;
-
-  const searchedAddons = search.trim()
-    ? installedAddons.filter(a =>
-        a.manifest.name.toLowerCase().includes(search.toLowerCase())
-        || (a.manifest.description ?? '').toLowerCase().includes(search.toLowerCase()))
-    : installedAddons;
+  const filteredSources = useMemo(
+    () => filterExtensionSources(extensionSources, search),
+    [extensionSources, search],
+  );
+  const filteredCatalogEntries = useMemo(
+    () => filterExtensionCatalogEntries({
+      entries: extensionCatalogEntries,
+      filter: catalogFilter,
+      search,
+    }),
+    [catalogFilter, extensionCatalogEntries, search],
+  );
+  const attentionCatalogCount = useMemo(
+    () => countAttentionCatalogEntries(extensionCatalogEntries),
+    [extensionCatalogEntries],
+  );
 
   const availableInstalledAddonFilters = useMemo(
-    () => Array.from(new Set(searchedAddons.flatMap(addon => getAddonContentKinds(addon)))),
-    [searchedAddons],
+    () => getAvailableInstalledAddonContentKinds(installedAddons, search),
+    [installedAddons, search],
   );
 
-  const filteredAddons = searchedAddons.filter(addon =>
-    installedAddonFilter === 'all' || getAddonContentKinds(addon).includes(installedAddonFilter),
+  const filteredAddons = useMemo(
+    () => filterInstalledAddons({
+      addons: installedAddons,
+      contentFilter: installedAddonFilter,
+      search,
+    }),
+    [installedAddonFilter, installedAddons, search],
   );
 
-  const filteredMods = search.trim()
-    ? installedMods.filter(m =>
-        m.manifest.name.toLowerCase().includes(search.toLowerCase())
-        || (m.manifest.description ?? '').toLowerCase().includes(search.toLowerCase()))
-    : installedMods;
+  const filteredMods = useMemo(
+    () => filterInstalledMods(installedMods, search),
+    [installedMods, search],
+  );
 
-  const filteredThemes = search.trim()
-    ? installedThemes.filter(theme => themeMatchesSearch(theme, search))
-    : installedThemes;
+  const filteredThemes = useMemo(
+    () => filterInstalledThemes(installedThemes, search),
+    [installedThemes, search],
+  );
 
   useEffect(() => {
     setMarkdownPreview((current) => {
@@ -1340,7 +1241,7 @@ export function AddonsPage() {
   };
 
   const handleInstallCatalogEntry = async (entry: ExtensionCatalogEntry) => {
-    if (!catalogAllowsInstall(entry)) return;
+    if (!canInstallExtensionCatalogEntry(entry)) return;
 
     const result = await installExtensionCatalogEntry(entry.sourceId, entry.kind, entry.entryId);
     if (!result.ok && result.error) {
@@ -1411,6 +1312,20 @@ export function AddonsPage() {
   const showInstalledAddons = installedFilter === 'all' || installedFilter === 'addons';
   const showInstalledMods = installedFilter === 'all' || installedFilter === 'mods';
   const showInstalledThemes = installedFilter === 'all' || installedFilter === 'themes';
+  const catalogEmptyState = buildExtensionCatalogEmptyStateViewModel({
+    search,
+    view: 'catalog',
+  }, t);
+  const installedEmptyState = buildExtensionCatalogEmptyStateViewModel({
+    filter: installedFilter,
+    hasInstalledContent,
+    search,
+    view: 'installed',
+  }, t);
+  const sourcesEmptyState = buildExtensionCatalogEmptyStateViewModel({
+    search,
+    view: 'sources',
+  }, t);
 
   return (
     <section className="mode-panel active addons-page">
@@ -1498,9 +1413,9 @@ export function AddonsPage() {
             </div>
             {filteredCatalogEntries.length === 0 ? (
               <EmptyStatePanel
-                icon={<Package size={48} />}
-                title={search ? t('addons.empty.search') : t('addons.catalog.emptyTitle')}
-                subtitle={t('addons.catalog.emptySubtitle')}
+                icon={getEmptyStateIcon(catalogEmptyState.iconKind)}
+                title={catalogEmptyState.title}
+                subtitle={catalogEmptyState.subtitle}
               />
             ) : (
               <div className="addons-grid">
@@ -1563,9 +1478,9 @@ export function AddonsPage() {
 
             {!hasInstalledContent ? (
               <EmptyStatePanel
-                icon={<Package size={48} />}
-                title={search ? t('addons.empty.search') : t('addons.empty.installedTitle')}
-                subtitle={t('addons.empty.installedSubtitle')}
+                icon={getEmptyStateIcon(installedEmptyState.iconKind)}
+                title={installedEmptyState.title}
+                subtitle={installedEmptyState.subtitle}
               />
             ) : null}
 
@@ -1593,9 +1508,9 @@ export function AddonsPage() {
               ) : (
                 installedFilter === 'addons' ? (
                   <EmptyStatePanel
-                    icon={<Puzzle size={48} />}
-                    title={search ? t('addons.empty.search') : t('addons.empty.addonsTitle')}
-                    subtitle={t('addons.empty.addonsSubtitle')}
+                    icon={getEmptyStateIcon(installedEmptyState.iconKind)}
+                    title={installedEmptyState.title}
+                    subtitle={installedEmptyState.subtitle}
                   />
                 ) : null
               )
@@ -1625,9 +1540,9 @@ export function AddonsPage() {
               ) : (
                 installedFilter === 'mods' ? (
                   <EmptyStatePanel
-                    icon={<Wrench size={48} />}
-                    title={search ? t('addons.empty.search') : t('addons.empty.modsTitle')}
-                    subtitle={t('addons.empty.modsSubtitle')}
+                    icon={getEmptyStateIcon(installedEmptyState.iconKind)}
+                    title={installedEmptyState.title}
+                    subtitle={installedEmptyState.subtitle}
                   />
                 ) : null
               )
@@ -1657,9 +1572,9 @@ export function AddonsPage() {
               ) : (
                 installedFilter === 'themes' ? (
                   <EmptyStatePanel
-                    icon={<Palette size={48} />}
-                    title={search ? t('addons.empty.search') : t('addons.empty.themesTitle')}
-                    subtitle={t('addons.empty.themesSubtitle')}
+                    icon={getEmptyStateIcon(installedEmptyState.iconKind)}
+                    title={installedEmptyState.title}
+                    subtitle={installedEmptyState.subtitle}
                   />
                 ) : null
               )
@@ -1667,8 +1582,9 @@ export function AddonsPage() {
 
             {hasInstalledContent && installedFilter === 'all' && filteredAddons.length === 0 && filteredMods.length === 0 && filteredThemes.length === 0 ? (
               <EmptyStatePanel
-                icon={<Package size={48} />}
-                title={t('addons.empty.search')}
+                icon={getEmptyStateIcon(installedEmptyState.iconKind)}
+                title={installedEmptyState.title}
+                subtitle={installedEmptyState.subtitle}
               />
             ) : null}
           </div>
@@ -1712,8 +1628,9 @@ export function AddonsPage() {
           ) : null}
           {filteredSources.length === 0 ? (
             <EmptyStatePanel
-              icon={<Globe size={48} />}
-              title={search ? t('addons.empty.search') : t('addons.empty.sourcesTitle')}
+              icon={getEmptyStateIcon(sourcesEmptyState.iconKind)}
+              title={sourcesEmptyState.title}
+              subtitle={sourcesEmptyState.subtitle}
             />
           ) : (
             <div className="addons-grid">
@@ -1734,19 +1651,25 @@ export function AddonsPage() {
         </ModalLayout>
       ) : null}
 
-      {markdownPreview ? (
+      {markdownPreview ? (() => {
+        const previewInstallAction = markdownPreview.entry
+          ? buildExtensionCatalogInstallActionViewModel(markdownPreview.entry, t)
+          : null;
+        return (
         <ModalLayout
           className="addons-markdown-modal"
           bodyClassName="addons-markdown-modal__body"
           description={markdownPreview.description}
           footer={(
             <div className="modal-actions">
-              {markdownPreview.entry ? (
+              {markdownPreview.entry && previewInstallAction ? (
                 <Button
-                  variant={catalogAllowsInstall(markdownPreview.entry) ? 'accent' : 'secondary'}
-                  disabled={!catalogAllowsInstall(markdownPreview.entry)}
+                  variant={previewInstallAction.variant}
+                  disabled={previewInstallAction.disabled}
+                  title={previewInstallAction.blockReason}
                   onClick={async () => {
                     if (!markdownPreview.entry) return;
+                    if (!previewInstallAction.canInstall) return;
                     const ok = await handleInstallCatalogEntry(markdownPreview.entry);
                     if (ok) {
                       setMarkdownPreview((current) => {
@@ -1763,8 +1686,8 @@ export function AddonsPage() {
                     }
                   }}
                 >
-                  <Download size={14} />
-                  <span>{getCatalogInstallLabel(markdownPreview.entry, t)}</span>
+                  {previewInstallAction.canInstall ? <Download size={14} /> : null}
+                  <span>{previewInstallAction.label}</span>
                 </Button>
               ) : null}
               <Button onClick={() => setMarkdownPreview(null)}>
@@ -1817,7 +1740,8 @@ export function AddonsPage() {
             markdown={markdownPreview.markdown}
           />
         </ModalLayout>
-      ) : null}
+        );
+      })() : null}
     </section>
   );
 }

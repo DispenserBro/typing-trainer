@@ -1,9 +1,11 @@
 import { useCallback } from 'react';
 import {
   buildPracticeContentText,
-  type NgramModel,
-  type PracticeBuildOptions,
-} from '../../../core/engine';
+} from '../../../core/practice/contentPipeline';
+import type {
+  NgramModel,
+  PracticeBuildOptions,
+} from '../../../core/text/ngramUtils';
 import type {
   LayoutPracticeInsights,
   PracticeContentMode,

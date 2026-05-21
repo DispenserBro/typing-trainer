@@ -1,5 +1,6 @@
 import type { GameEquipmentSlot, GameInventoryItem, GameRunState, GameState, Progress } from '../../shared/types';
-import { GAME_ITEM_MAP, isBrokenInventoryItem } from '../../core/game/items';
+import { GAME_ITEM_MAP } from '../../core/game/items/catalog';
+import { isBrokenInventoryItem } from '../../core/game/items/utils';
 import { PLAYER_BASE_HP } from '../../core/game/battleSystem';
 import { createInventoryItemId } from './appDefaults';
 import { resolveGameState } from './appResolvers';

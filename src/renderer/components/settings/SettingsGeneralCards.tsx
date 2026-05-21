@@ -12,6 +12,10 @@ import type {
   SpeedUnit,
   UserSettings,
 } from '../../../shared/types';
+import {
+  buildImportedInterfaceLocaleEntries,
+  buildSettingsThemeOptions,
+} from '../../../core/settings/viewModel';
 import { NumberInput } from '../NumberInput';
 import { useI18n } from '../../contexts/I18nContext';
 import { Button } from '../ui/Button';
@@ -52,9 +56,7 @@ export function SettingsLanguageCard({
 } & CommonHandlers) {
   const { formatDateTime, formatNumber, localeQuality, locales, t } = useI18n();
   const [importMsg, setImportMsg] = useState('');
-  const importedLocaleEntries = Object.values(importedInterfaceLocales).sort((left, right) => (
-    right.importedAt.localeCompare(left.importedAt)
-  ));
+  const importedLocaleEntries = buildImportedInterfaceLocaleEntries(importedInterfaceLocales);
 
   const handleImportPo = async () => {
     const errorKey = await importInterfaceLocale();
@@ -223,13 +225,7 @@ export function SettingsThemeCard({
   onOpenThemeEditor: () => void;
 } & CommonHandlers) {
   const { t } = useI18n();
-  const builtInThemes = ['dark-orange', 'catppuccin', 'nord', 'monokai', 'light'];
-  const allThemes = [
-    ...builtInThemes.map(themeId => ({ id: themeId, label: themeId })),
-    ...Object.values(availableThemes)
-      .filter(theme => !builtInThemes.includes(theme.id))
-      .map(theme => ({ id: theme.id, label: theme.label })),
-  ];
+  const allThemes = buildSettingsThemeOptions(availableThemes);
 
   return (
     <SettingsCard title={t('settings.cards.theme.title')}>

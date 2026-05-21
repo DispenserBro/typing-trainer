@@ -6,7 +6,7 @@ import { useTypingSession } from '../hooks/useTypingSession';
 import {
   generateLessonExerciseText,
   EXERCISE_COUNT,
-} from '../../core/engine';
+} from '../../core/lessons/engine';
 import type { Lesson } from '../../shared/types';
 import { LessonsDetailView } from '../components/lessons/LessonsDetailView';
 import { LessonsExerciseView } from '../components/lessons/LessonsExerciseView';
@@ -29,12 +29,13 @@ import {
   getLocalizedExerciseNamesForLesson,
   getLocalizedLessonFocusLabel,
 } from '../components/lessons/lessonText';
+import { isPrintableKeyboardStartEvent } from '../keyboard/startEvent';
 
 /* ═══════════════════════════════════════════════════════ */
 export function LessonsPage() {
   const { t } = useI18n();
   const { layouts, ngramModel, progress, fmtSpeed, spdLabel,
-    saveHistory, saveProgress, gameAchievementCatalog, unlockedAchievementIds, unlockAchievements } = useAppPractice();
+    saveHistory, saveProgress, gameAchievementCatalog, unlockedAchievementIds, unlockAchievements, emitModEvent } = useAppPractice();
   const { currentLayout, currentLanguage, settings } = useAppSettings();
 
   const [showAchievements, setShowAchievements] = useState(false);
@@ -124,6 +125,18 @@ export function LessonsPage() {
 
       if (completion.lessonCompleted) {
         handleAchievementEvent({ type: 'lessons.lessonCompleted' });
+        const completedLesson = lessons[activeLesson];
+        if (completedLesson) {
+          emitModEvent('lessonComplete', {
+            layoutId: currentLayout,
+            lessonId: completedLesson.id,
+            lessonName: completedLesson.name,
+            lessonIndex: activeLesson,
+            section: completedLesson.section ?? null,
+            sectionCompleted: completion.sectionCompleted,
+            allCompleted: completion.allCompleted,
+          });
+        }
         if (completion.sectionCompleted) {
           handleAchievementEvent({ type: 'lessons.sectionCompleted' });
         }
@@ -134,7 +147,7 @@ export function LessonsPage() {
     }
     saveHistory('lesson', wpm, acc, { charStats: ses?.charStats });
     setResult({ wpm, acc, passed });
-  }, [activeLesson, activeExercise, currentLayout, progress, saveProgress, saveHistory, handleAchievementEvent, lessons, t]);
+  }, [activeLesson, activeExercise, currentLayout, emitModEvent, progress, saveProgress, saveHistory, handleAchievementEvent, lessons, t]);
 
   const { session, start, stop, handleKey, wpm, acc, waitingForSpace } = useTypingSession({
     mode: 'lesson', onFinish,
@@ -173,11 +186,14 @@ export function LessonsPage() {
     setResult(null);
   }, [activeLesson, lessons, layout, ngramModel, resolveCurrentLesson]);
 
-  const startExercise = useCallback(() => {
+  const startExercise = useCallback((initialEvent?: KeyboardEvent) => {
     if (!exerciseText) return;
     setShowOverlay(false);
     start(exerciseText, activeLesson ?? -1);
-  }, [exerciseText, activeLesson, start]);
+    if (isPrintableKeyboardStartEvent(initialEvent)) {
+      handleKey(initialEvent);
+    }
+  }, [exerciseText, activeLesson, handleKey, start]);
 
   const retryExercise = useCallback(() => {
     if (activeLesson === null || activeExercise === null) return;
@@ -233,7 +249,7 @@ export function LessonsPage() {
 
       if (!session.active && showOverlay && activeLesson !== null && activeExercise !== null && exerciseText && isPrintable) {
         event.preventDefault();
-        startExercise();
+        startExercise(event);
         return;
       }
 

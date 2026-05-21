@@ -29,6 +29,8 @@ export interface OnboardingProgress {
 }
 
 export interface Progress {
+  schemaVersion?: number;
+  appVersion?: string;
   settings?: UserSettings;
   practiceSettings?: PracticeSettings;
   modePracticeSettings?: Partial<Record<ModePracticeSettingsId, ModePracticeSettings>>;

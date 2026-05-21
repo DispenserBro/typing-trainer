@@ -7,6 +7,7 @@ import { ChallengeResultFlow } from '../components/practice/ChallengeResultFlow'
 import { ChallengeSettingsSection } from '../components/practice/ChallengeSettingsSection';
 import { ModePageHeader } from '../components/practice/ModePageHeader';
 import { ModeSessionStage } from '../components/practice/ModeSessionStage';
+import { EMPTY_ERR_POSITIONS } from '../components/TextDisplay';
 import { useI18n } from '../contexts/I18nContext';
 import {
   getPracticeContentScenario,
@@ -21,7 +22,12 @@ import { useModePreviewState } from '../hooks/practice/useModePreviewState';
 import { useModeResultFollowup } from '../hooks/practice/useModeResultFollowup';
 import { useModeBestResultLabel } from '../hooks/practice/useModeBestResultLabel';
 import { buildChallengeResultCallout } from '../../core/practice/modeResultCallouts';
-import { buildChallengeWordCount } from '../hooks/practice/modeWordCounts';
+import {
+  buildChallengeWordCount,
+  getChallengeModeConfig,
+  getChallengeTotalLives,
+  resolveChallengeCompletion,
+} from '../../core/practice/modeCompletion';
 import {
   buildPracticeBuildOptionsKey,
   usePracticeBuildOptions,
@@ -33,13 +39,14 @@ import { useModeTextInputs } from '../hooks/practice/useModeTextInputs';
 import { buildModeMaterialKey, buildModePreviewKey } from '../hooks/practice/modePreviewKey';
 import { useModeResultHistory } from '../hooks/practice/useModeResultHistory';
 import { useModeMaterialLabels } from '../hooks/practice/useModeMaterialLabels';
+import { buildPracticeFamilyModeHeaderViewModel } from '../../core/practice/modePagePresentation';
 import {
   buildChallengeModeStatusLabel,
   buildChallengeModeUi,
-  getChallengeModeConfig,
-  getChallengeTotalLives,
 } from '../hooks/practice/challengeModeConfig';
 import { InlineStatsBar } from '../components/ui/InlineStatsBar';
+import type { Session } from '../../shared/types';
+import { isPrintableKeyboardStartEvent } from '../keyboard/startEvent';
 
 function ChallengeModePage({ initialFlawless = false }: { initialFlawless?: boolean }) {
   const { t } = useI18n();
@@ -77,6 +84,7 @@ function ChallengeModePage({ initialFlawless = false }: { initialFlawless?: bool
   const config = getChallengeModeConfig(flawlessEnabled);
   const scenario = getPracticeContentScenario(config.scenarioId, t);
   const challengeUi = buildChallengeModeUi(t, config.variant);
+  const challengeHeader = buildPracticeFamilyModeHeaderViewModel(config.variant, t);
   const [result, setResult] = useState<{
     passed: boolean;
     wpm: number;
@@ -164,51 +172,35 @@ function ChallengeModePage({ initialFlawless = false }: { initialFlawless?: bool
   });
 
   const onFinish = useCallback((wpm: number, acc: number, elapsed: number, ses: any) => {
-    const passed = ses.pos >= ses.text.length;
-    const livesLeft = Math.max(0, totalLives - (ses?.errors ?? 0));
-    const progressPercent = ses?.text?.length
-      ? Math.round((ses.pos / ses.text.length) * 100)
-      : 0;
     const today = new Date().toISOString().slice(0, 10);
-    if (practiceState.lastDate !== today) {
-      practiceState.sessionsToday = 0;
-      practiceState.minutesToday = 0;
-      practiceState.lastDate = today;
-    }
-    practiceState.sessionsToday += 1;
-    practiceState.sessionsTotal = (practiceState.sessionsTotal || 0) + 1;
-    practiceState.minutesToday = (practiceState.minutesToday || 0) + elapsed / 60;
+    const completion = resolveChallengeCompletion({
+      acc,
+      config,
+      contentMode: effectiveContentMode,
+      elapsedSeconds: elapsed,
+      goalSpeedCpm: practiceSettings.goalSpeedCpm || 150,
+      practiceState,
+      session: ses as Session,
+      today,
+      totalLives,
+      wpm,
+    });
 
     saveHistory('practice', wpm, acc, {
-      contentScenarioId: config.scenarioId,
-      trainingMode: 'normal',
-      contentMode: effectiveContentMode,
-      durationSeconds: elapsed,
-      passed,
-      charStats: ses?.charStats,
+      contentScenarioId: completion.historyEntry.contentScenarioId,
+      trainingMode: completion.historyEntry.trainingMode,
+      contentMode: completion.historyEntry.contentMode,
+      durationSeconds: completion.historyEntry.durationSeconds,
+      passed: completion.historyEntry.passed,
+      charStats: completion.historyEntry.charStats,
     });
-    updateMotivationProgress((current) => updateMotivationAfterPractice(current, {
-      elapsedSeconds: elapsed,
-      cpm: wpm * 5,
-      acc,
-      trainingMode: 'normal',
-      successfulSession: passed && wpm * 5 >= Math.max(1, practiceSettings.goalSpeedCpm || 150) && acc >= 95,
-      flawlessSession: passed && (ses?.errors ?? 0) === 0,
-    }));
-    setResult({
-      passed,
-      wpm,
-      acc,
-      elapsed,
-      chars: ses?.totalChars ?? 0,
-      errors: ses?.errors ?? 0,
-      livesLeft,
-      progressPercent,
-    });
+    Object.assign(practiceState, completion.nextPracticeState);
+    updateMotivationProgress(current => updateMotivationAfterPractice(current, completion.motivationEvent));
+    setResult(completion.result);
 
-    handleAchievementEvent({ type: 'practice.sessionCompleted', totalSessions: practiceState.sessionsTotal });
+    completion.achievementEvents.forEach(handleAchievementEvent);
   }, [
-    config.scenarioId,
+    config,
     effectiveContentMode,
     handleAchievementEvent,
     practiceSettings.goalSpeedCpm,
@@ -232,7 +224,7 @@ function ChallengeModePage({ initialFlawless = false }: { initialFlawless?: bool
     setShowOverlay(false);
     setResult(null);
     start(nextText);
-    if (initialEvent && initialEvent.key.length === 1) {
+    if (isPrintableKeyboardStartEvent(initialEvent)) {
       handleKey(initialEvent);
     }
   }, [buildChallengeText, handleKey, session.active, start]);
@@ -353,22 +345,22 @@ function ChallengeModePage({ initialFlawless = false }: { initialFlawless?: bool
       />
 
       <ModePageHeader
-        title={challengeUi.title}
-        description={challengeUi.description}
-        extraDescription={challengeUi.toggleDescription}
-        achievementsLabel={t('survival.achievements')}
+        title={challengeHeader.title}
+        description={challengeHeader.description ?? challengeUi.description}
+        extraDescription={challengeHeader.extraDescription ?? challengeUi.toggleDescription}
+        achievementsLabel={challengeHeader.achievementsLabel}
         achievementsUnlocked={practiceUnlockedCount}
         achievementsTotal={practiceAchievementCatalog.length}
         onOpenAchievements={() => setShowAchievements(true)}
         onStart={() => startChallenge()}
         startDisabled={session.active}
-        startLabel={challengeUi.startLabel}
+        startLabel={challengeHeader.startLabel ?? challengeUi.startLabel}
       />
 
       <ChallengeSettingsSection
         actionsDisabled={session.active}
         availableContentPacks={availableContentPacks}
-        bestLabel={t('survival.best')}
+        bestLabel={challengeHeader.bestLabel ?? t('survival.best')}
         bestValue={scenarioBestResult.bestValue}
         checked={flawlessEnabled}
         contentMode={contentMode}
@@ -388,11 +380,11 @@ function ChallengeModePage({ initialFlawless = false }: { initialFlawless?: bool
 
       {session.active && (
         <InlineStatsBar
-          items={[
-            { id: 'lives', content: <><b>{livesLeft}</b> / {totalLives}</> },
-            { id: 'speed', content: <><b>{fmtSpeed(wpm)}</b> <small className="speed-unit">{spdLabel}</small></> },
-            { id: 'accuracy', content: <><b>{Math.round(acc)}</b>%</> },
-            { id: 'progress', content: <><b>{session.text.length > 0 ? Math.round((session.pos / session.text.length) * 100) : 0}</b>%</> },
+          compactItems={[
+            { id: 'lives', value: livesLeft, label: `/ ${totalLives}` },
+            { id: 'speed', value: fmtSpeed(wpm), detail: spdLabel },
+            { id: 'accuracy', value: Math.round(acc), label: '%' },
+            { id: 'progress', value: session.text.length > 0 ? Math.round((session.pos / session.text.length) * 100) : 0, label: '%' },
           ]}
         />
       )}
@@ -400,7 +392,7 @@ function ChallengeModePage({ initialFlawless = false }: { initialFlawless?: bool
       <ModeSessionStage
         text={session.active ? session.text : challengeText}
         pos={session.active ? session.pos : 0}
-        errPositions={session.active ? session.errPositions : new Set()}
+        errPositions={session.active ? session.errPositions : EMPTY_ERR_POSITIONS}
         waitingForSpace={waitingForSpace}
         overlay={showOverlay ? t('survival.overlay', { start: challengeUi.startLabel }) : null}
         onOverlayClick={startChallenge}

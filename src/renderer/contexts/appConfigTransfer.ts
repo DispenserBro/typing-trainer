@@ -40,11 +40,11 @@ export function parseConfigImport(content: string): ParsedConfigImport {
   try {
     const payload = JSON.parse(content) as ExportPayload;
     if (!payload || payload.version !== 1) {
-      return { ok: false, error: 'Неподдерживаемый формат файла' };
+      return { ok: false, error: 'settings.cards.presets.importErrors.unsupportedFormat' };
     }
     return { ok: true, payload };
   } catch {
-    return { ok: false, error: 'Ошибка чтения файла' };
+    return { ok: false, error: 'settings.cards.presets.importErrors.readFailed' };
   }
 }
 

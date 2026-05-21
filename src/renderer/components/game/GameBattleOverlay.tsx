@@ -1,6 +1,6 @@
 import { Shield, Swords } from 'lucide-react';
 import type { BattleState } from '../../../shared/types';
-import { TextDisplay } from '../TextDisplay';
+import { EMPTY_ERR_POSITIONS, TextDisplay } from '../TextDisplay';
 import { useI18n } from '../../contexts/I18nContext';
 
 type GameBattleOverlayProps = {
@@ -83,7 +83,7 @@ export function GameBattleOverlay({
         <TextDisplay
           text={sessionActive ? sessionText : levelText}
           pos={sessionActive ? sessionPos : 0}
-          errPositions={sessionActive ? sessionErrPositions : new Set()}
+          errPositions={sessionActive ? sessionErrPositions : EMPTY_ERR_POSITIONS}
           waitingForSpace={waitingForSpace}
           overlay={overlayText ?? t('game.overlay.savedRun', { level, hp: Math.max(battleState.playerHp, 0) }).replace(/\\n/g, '\n')}
           overlayCover

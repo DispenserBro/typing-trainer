@@ -11,18 +11,19 @@ import type {
 import { formatLocaleDateTime } from '../i18n';
 import {
   isPracticeHistoryEntry,
+  type HistoryModeBucket,
 } from '../history/selectors';
 
 export type TrendTone = 'up' | 'down' | 'flat' | 'neutral';
 export type StatsPeriod = 'all' | 'day' | 'week' | 'month';
-export type StatsModeFilter = 'all' | HistoryEntry['mode'];
+export type StatsModeFilter = 'all' | Exclude<HistoryModeBucket, 'other'>;
 export type StatsLayoutScope = 'current' | 'all';
 export type ScopedHistoryEntry = { id: string; layoutId: string; entry: HistoryEntry };
 export type ScopedRhythmSession = { layoutId: string; session: PracticeRhythmSessionEntry };
 export type SessionHistoryItem = ScopedHistoryEntry & { rhythm: ScopedRhythmSession | null };
 
 export const PERIOD_OPTIONS: StatsPeriod[] = ['all', 'day', 'week', 'month'];
-export const MODE_OPTIONS: StatsModeFilter[] = ['all', 'practice', 'game', 'lesson', 'test'];
+export const MODE_OPTIONS: StatsModeFilter[] = ['all', 'practice', 'sprint', 'survival', 'flawless', 'game', 'lesson'];
 export const LAYOUT_SCOPE_OPTIONS: StatsLayoutScope[] = ['current', 'all'];
 
 type Translate = (key: string, params?: TranslationParams) => string;
@@ -195,7 +196,7 @@ export function formatEntryModeLabel(entry: HistoryEntry, t: Translate) {
   if (!scenarioLabel || scenarioLabel === t('stats.scenarios.practice-normal')) {
     return formatModeLabel(entry.mode, t);
   }
-  if (isPracticeHistoryEntry(entry) && entry.contentScenarioId === 'practice-rhythm') {
+  if (entry.mode === 'practice' && entry.contentScenarioId === 'practice-rhythm') {
     return scenarioLabel;
   }
   return scenarioLabel;
@@ -242,4 +243,68 @@ export function findMatchingRhythmSession(
   });
 
   return best;
+}
+
+export function buildRhythmSessionMatcher(rhythmItems: ScopedRhythmSession[]) {
+  const byLayout = new Map<string, Array<{ item: ScopedRhythmSession; time: number }>>();
+
+  rhythmItems.forEach((item) => {
+    const time = new Date(item.session.date).getTime();
+    if (Number.isNaN(time)) return;
+    const items = byLayout.get(item.layoutId) ?? [];
+    items.push({ item, time });
+    byLayout.set(item.layoutId, items);
+  });
+
+  byLayout.forEach(items => items.sort((left, right) => left.time - right.time));
+
+  return (historyItem: ScopedHistoryEntry) => {
+    if (!isPracticeHistoryEntry(historyItem.entry)) return null;
+    const targetTs = new Date(historyItem.entry.date).getTime();
+    if (Number.isNaN(targetTs)) return null;
+
+    const layoutItems = byLayout.get(historyItem.layoutId) ?? [];
+    let index = lowerBoundRhythmSession(layoutItems, targetTs - 60_000);
+    let best: ScopedRhythmSession | null = null;
+    let bestDiff = Infinity;
+
+    while (index < layoutItems.length) {
+      const candidate = layoutItems[index]!;
+      if (candidate.time > targetTs + 60_000) break;
+      if (historyItem.entry.trainingMode && candidate.item.session.trainingMode !== historyItem.entry.trainingMode) {
+        index += 1;
+        continue;
+      }
+      if (Math.abs(candidate.item.session.acc - historyItem.entry.acc) > 1.5) {
+        index += 1;
+        continue;
+      }
+      if (Math.abs(candidate.item.session.wpm - historyItem.entry.wpm) > 20) {
+        index += 1;
+        continue;
+      }
+      const diff = Math.abs(candidate.time - targetTs);
+      if (diff < bestDiff) {
+        best = candidate.item;
+        bestDiff = diff;
+      }
+      index += 1;
+    }
+
+    return best;
+  };
+}
+
+function lowerBoundRhythmSession(
+  items: Array<{ item: ScopedRhythmSession; time: number }>,
+  target: number,
+) {
+  let left = 0;
+  let right = items.length;
+  while (left < right) {
+    const middle = Math.floor((left + right) / 2);
+    if (items[middle]!.time < target) left = middle + 1;
+    else right = middle;
+  }
+  return left;
 }

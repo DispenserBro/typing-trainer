@@ -24,33 +24,37 @@ import {
   getPackRepetitionRiskLabel,
 } from '../components/practice/contentPackSummaryI18n';
 import { AchievementsModal } from '../components/AchievementsModal';
+import { EMPTY_ERR_POSITIONS } from '../components/TextDisplay';
 import { useI18n } from '../contexts/I18nContext';
 import type {
   CharStat,
   HistoryEntry,
+  Session,
 } from '../../shared/types';
 import {
   getPracticeContentScenarioForTrainingMode,
-  getWorstChar,
   resolvePracticeContentTargetWordCount,
-} from '../../core/engine';
-import { buildPracticeInsightsDelta, getRhythmScore, mergeLayoutPracticeInsights, summarizeSessionRhythm } from '../../core/practice/insights';
-import { buildPracticeFeedback, mergeCharStats, PRACTICES_PER_UNLOCK, type PracticeFeedback } from '../../core/practice/feedback';
+} from '../../core/practice/contentPipeline';
+import { PRACTICES_PER_UNLOCK, type PracticeFeedback } from '../../core/practice/feedback';
 import {
   buildPracticePerformanceViewModel,
   buildPracticeResultViewModel,
 } from '../../core/practice/viewModel';
+import { buildPracticeFamilyModeHeaderViewModel } from '../../core/practice/modePagePresentation';
+import { resolvePracticeSessionCompletion } from '../../core/practice/sessionCompletion';
 import {
   getActiveMotivationGoalSnapshots,
   getMotivationStreakSnapshots,
   updateMotivationAfterPractice,
 } from '../../core/motivation/progress';
+import { isPrintableKeyboardStartEvent } from '../keyboard/startEvent';
 
 const EMPTY_KEY_STATS: Record<string, CharStat> = {};
 const EMPTY_HISTORY: HistoryEntry[] = [];
 
 export function PracticePage() {
   const { t } = useI18n();
+  const practiceHeader = buildPracticeFamilyModeHeaderViewModel('practice', t);
   const app = useAppPractice();
   const { layouts, allWords, ngramModel, progress, fmtSpeed, spdLabel, switchMode,
     saveHistory, saveProgress, getLayoutProgress, getPracticeState,
@@ -237,99 +241,46 @@ export function PracticePage() {
   });
 
   const onFinish = useCallback((wpm: number, acc: number, elapsed: number, ses: any) => {
-    const goalAcc = 95;
-    const goalWpm = goalCPM / 5;
-    const rhythm = summarizeSessionRhythm(ses);
-    const rhythmScore = getRhythmScore(rhythm);
-    const enoughForProgress = wpm >= goalWpm && acc >= goalAcc && (trainingMode === 'normal' || rhythmScore >= 75);
-    let unlockedNewLetter = false;
-
-    if (layoutProgress.unlocked < practiceUnlockOrder.length) {
-      if (enoughForProgress) {
-        layoutProgress.unlockProgress += 1;
-        if (layoutProgress.unlockProgress >= PRACTICES_PER_UNLOCK) {
-          layoutProgress.unlocked++;
-          layoutProgress.unlockProgress = 0;
-          unlockedNewLetter = true;
-        }
-      }
-    } else {
-      layoutProgress.unlockProgress = 0;
-    }
-
     const today = new Date().toISOString().slice(0, 10);
-    if (practiceState.lastDate !== today) {
-      practiceState.sessionsToday = 0;
-      practiceState.minutesToday = 0;
-      practiceState.lastDate = today;
-    }
-    practiceState.sessionsToday++;
-    practiceState.sessionsTotal = (practiceState.sessionsTotal || 0) + 1;
-    practiceState.minutesToday = (practiceState.minutesToday || 0) + elapsed / 60;
-
-    handleAchievementEvent({ type: 'practice.sessionCompleted', totalSessions: practiceState.sessionsTotal });
-
-    const mergedStats = mergeCharStats(progress.keyStats?.[currentLayout], ses?.charStats);
-    const worstCharAfterFinish = getWorstChar(mergedStats, unlocked) ?? fallbackWorstChar;
-    const openedLetter = unlockedNewLetter ? (practiceUnlockOrder[layoutProgress.unlocked - 1] ?? null) : null;
-    const nextPracticeInsights = mergeLayoutPracticeInsights(
-      getPracticeInsights(),
-      buildPracticeInsightsDelta({
-        layoutId: currentLayout,
-        layoutFingers: layout.fingers,
-        session: ses,
-      }),
-    );
-    const sessionIntervals = ses?.keypresses
-      ?.filter((entry: { expected: string; interval: number }) => entry.expected && entry.expected !== ' ' && entry.interval > 0)
-      .map((entry: { interval: number }) => Math.round(entry.interval)) ?? [];
-    const feedback = buildPracticeFeedback(nextPracticeInsights, worstCharAfterFinish, t);
-    practiceState.worstChar = worstCharAfterFinish;
-    updateMotivationProgress((current) => updateMotivationAfterPractice(current, {
-      elapsedSeconds: elapsed,
-      cpm: wpm * 5,
+    const completion = resolvePracticeSessionCompletion({
       acc,
-      trainingMode,
-      successfulSession: enoughForProgress,
-      flawlessSession: (ses?.errors ?? 0) === 0,
-    }));
-    savePracticeInsights(nextPracticeInsights);
-    savePracticeRhythmSession({
-      trainingMode,
-      wpm,
-      acc,
-      textLength: ses?.text?.length ?? 0,
-      intervals: sessionIntervals,
-      averageInterval: rhythm.averageInterval,
-      averageDeviation: rhythm.averageDeviation,
-      rhythmScore,
-      worstInterval: Math.max(0, ...(sessionIntervals.length ? sessionIntervals : [0])),
-    });
-    saveHistory('practice', wpm, acc, {
-      contentScenarioId: contentScenario.id,
-      trainingMode,
+      baseCharStats: progress.keyStats?.[currentLayout],
       contentMode: effectiveContentMode,
-      durationSeconds: elapsed,
-      charStats: ses?.charStats,
-    });
-    if (ses?.charStats) setLastCharStats(ses.charStats);
-
-    if (unlockedNewLetter) {
-        handleAchievementEvent({ type: 'practice.letterUnlocked' });
-    }
-
-    if (openedLetter) setUnlockModalLetter(openedLetter);
-    setResult({
+      contentScenarioId: contentScenario.id,
+      elapsedSeconds: elapsed,
+      fallbackWorstChar,
+      goalSpeedCpm: goalCPM,
+      layoutFingers: layout.fingers,
+      layoutId: currentLayout,
+      layoutProgress,
+      practiceInsights: getPracticeInsights(),
+      practiceState,
+      practiceUnlockOrder,
+      session: ses as Session,
+      today,
+      trainingMode,
+      translate: t,
+      unlockedChars: unlocked,
       wpm,
-      acc,
-      newLetter: unlockedNewLetter,
-      openedLetter,
-      worstChar: worstCharAfterFinish,
-      unlockProgress: layoutProgress.unlockProgress,
-      rhythmScore,
-      rhythmDeviation: Math.round(rhythm.averageDeviation),
-      feedback,
     });
+
+    Object.assign(layoutProgress, completion.nextLayoutProgress);
+    Object.assign(practiceState, completion.nextPracticeState);
+    completion.achievementEvents.forEach(handleAchievementEvent);
+    updateMotivationProgress(current => updateMotivationAfterPractice(current, completion.motivationEvent));
+    savePracticeInsights(completion.nextInsights);
+    savePracticeRhythmSession(completion.rhythmSession);
+    saveHistory('practice', wpm, acc, {
+      contentScenarioId: completion.historyEntry.contentScenarioId,
+      trainingMode: completion.historyEntry.trainingMode,
+      contentMode: completion.historyEntry.contentMode,
+      durationSeconds: completion.historyEntry.durationSeconds,
+      charStats: completion.historyEntry.charStats,
+    });
+    if (completion.lastCharStats) setLastCharStats(completion.lastCharStats);
+
+    if (completion.result.openedLetter) setUnlockModalLetter(completion.result.openedLetter);
+    setResult(completion.result);
   }, [
     contentScenario.id,
     currentLayout,
@@ -359,16 +310,19 @@ export function PracticePage() {
   });
 
   // Click on text overlay to start
-  const startPractice = useCallback(() => {
+  const startPractice = useCallback((initialEvent?: KeyboardEvent) => {
     if (session.active || !practiceText) return;
     setShowOverlay(false);
     setResult(null);
     setUnlockModalLetter(null);
     start(practiceText);
-  }, [session.active, practiceText, start]);
+    if (isPrintableKeyboardStartEvent(initialEvent)) {
+      handleKey(initialEvent);
+    }
+  }, [handleKey, session.active, practiceText, start]);
 
   // Retry + immediately start (used when typing after result)
-  const retryAndStart = useCallback(() => {
+  const retryAndStart = useCallback((initialEvent?: KeyboardEvent) => {
     const text = buildPracticePreview();
     previewKeyRef.current = '';
     setPracticeText(text);
@@ -377,7 +331,10 @@ export function PracticePage() {
     setUnlockModalLetter(null);
     stop();
     start(text);
-  }, [buildPracticePreview, stop, start]);
+    if (isPrintableKeyboardStartEvent(initialEvent)) {
+      handleKey(initialEvent);
+    }
+  }, [buildPracticePreview, handleKey, stop, start]);
 
   // keydown listener
   useEffect(() => {
@@ -400,12 +357,12 @@ export function PracticePage() {
       }
       // If result is shown — start new practice on printable key
       if (!session.active && result && isPrintable) {
-        retryAndStart();
+        retryAndStart(e);
         return;
       }
       // If overlay is shown (first start) — start practice by typing
       if (!session.active && showOverlay && practiceText && isPrintable) {
-        startPractice();
+        startPractice(e);
         return;
       }
       if (!session.active) return;
@@ -486,13 +443,13 @@ export function PracticePage() {
         onClose={() => setShowAchievements(false)}
       />
       <PracticeHeader
-        achievementsLabel={t('practice.achievements')}
+        achievementsLabel={practiceHeader.achievementsLabel}
         achievementsTotal={practiceAchievementCatalog.length}
         achievementsUnlocked={practiceUnlockedCount}
         onOpenAchievements={() => setShowAchievements(true)}
         onOpenSettings={() => setShowSettingsModal(true)}
-        settingsLabel={t('practice.settings.title')}
-        title={t('practice.title')}
+        settingsLabel={practiceHeader.settingsLabel ?? t('practice.settings.title')}
+        title={practiceHeader.title}
       />
 
       <PracticeProgressPanels
@@ -530,7 +487,7 @@ export function PracticePage() {
       <PracticeSessionStage
         text={session.active ? session.text : practiceText}
         pos={session.active ? session.pos : 0}
-        errPositions={session.active ? session.errPositions : new Set()}
+        errPositions={session.active ? session.errPositions : EMPTY_ERR_POSITIONS}
         waitingForSpace={waitingForSpace}
         overlay={!session.active ? (
           result

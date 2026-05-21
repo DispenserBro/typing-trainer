@@ -1,5 +1,5 @@
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
-import { TextDisplay } from '../TextDisplay';
+import { EMPTY_ERR_POSITIONS, TextDisplay } from '../TextDisplay';
 import { useI18n } from '../../contexts/I18nContext';
 import { ActionRow } from '../ui/ActionRow';
 import { Button } from '../ui/Button';
@@ -77,15 +77,15 @@ export function LessonsExerciseView({
       {subtitle && <p className="lesson-active-subtitle">{subtitle}</p>}
       <p className="lesson-active-keys">{focusLabel}</p>
       <InlineStatsBar
-        items={[
-          { id: 'speed', content: <><b>{displayedSpeed}</b> <small className="speed-unit">{speedUnit}</small></> },
-          { id: 'accuracy', content: <><b>{Math.round(displayedAccuracy)}</b>%</> },
+        compactItems={[
+          { id: 'speed', value: displayedSpeed, detail: speedUnit },
+          { id: 'accuracy', value: Math.round(displayedAccuracy), label: '%' },
         ]}
       />
       <TextDisplay
         text={sessionActive ? sessionText : exerciseText}
         pos={sessionActive ? sessionPos : 0}
-        errPositions={sessionActive ? sessionErrPositions : new Set()}
+        errPositions={sessionActive ? sessionErrPositions : EMPTY_ERR_POSITIONS}
         waitingForSpace={waitingForSpace}
         overlay={showOverlay && !sessionActive && !result ? t('lessons.overlay') : null}
         onOverlayClick={onOverlayClick}

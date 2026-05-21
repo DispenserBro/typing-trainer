@@ -1,17 +1,13 @@
 import type {
-  PracticeContentScenarioId,
   TranslationParams,
 } from '../../../shared/types';
+import {
+  getChallengeModeConfig,
+  getChallengeTotalLives,
+  type ChallengeModeConfig,
+} from '../../../core/practice/modeCompletion';
 
 type TranslateFn = (key: string, params?: TranslationParams) => string;
-
-export type ChallengeModeConfig = {
-  modeId: 'survival';
-  variant: 'survival' | 'flawless';
-  scenarioId: PracticeContentScenarioId;
-  allowedErrors: number;
-  wordMultiplier: number;
-};
 
 export type ChallengeModeUi = {
   description: string;
@@ -22,29 +18,11 @@ export type ChallengeModeUi = {
   toggleDescription: string;
 };
 
-const SURVIVAL_CHALLENGE_CONFIG: ChallengeModeConfig = {
-  modeId: 'survival',
-  variant: 'survival',
-  scenarioId: 'survival',
-  allowedErrors: 2,
-  wordMultiplier: 2.1,
+export {
+  getChallengeModeConfig,
+  getChallengeTotalLives,
+  type ChallengeModeConfig,
 };
-
-const FLAWLESS_CHALLENGE_CONFIG: ChallengeModeConfig = {
-  modeId: 'survival',
-  variant: 'flawless',
-  scenarioId: 'flawless',
-  allowedErrors: 0,
-  wordMultiplier: 1.5,
-};
-
-export function getChallengeModeConfig(flawlessEnabled: boolean): ChallengeModeConfig {
-  return flawlessEnabled ? FLAWLESS_CHALLENGE_CONFIG : SURVIVAL_CHALLENGE_CONFIG;
-}
-
-export function getChallengeTotalLives(config: ChallengeModeConfig) {
-  return config.allowedErrors + 1;
-}
 
 export function buildChallengeModeUi(t: TranslateFn, variant: ChallengeModeConfig['variant']): ChallengeModeUi {
   if (variant === 'flawless') {

@@ -107,7 +107,7 @@ const GLOSSARY_RULES: I18nGlossaryRule[] = [
       'achievements.categories.test',
       'home.modeFocus.sprint.title',
       'records.context.sprint',
-      'stats.filters.modeOptions.test',
+      'stats.filters.modeOptions.sprint',
       'stats.modes.test',
       'sprint.title',
     ],

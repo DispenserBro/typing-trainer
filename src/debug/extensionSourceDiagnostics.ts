@@ -5,6 +5,12 @@ import path from 'node:path';
 import {
   installExtensionCatalogEntry,
   installExtensionSource,
+  installAddonFromJSON,
+  installModFromFolder,
+  installThemeFromJSON,
+  removeAddon,
+  removeMod,
+  removeTheme,
   scanAddons,
   scanExtensionCatalog,
   scanMods,
@@ -12,8 +18,13 @@ import {
   syncExtensionSource,
   toggleExtensionSource,
   validateExtensionCatalogEntry,
+  validateModManifest,
 } from '../core/addons';
-import type { ExtensionCatalogEntry, ExtensionCatalogInstallResult } from '../shared/types';
+import {
+  getExtensionCatalogEntryBlockReason,
+  type ExtensionCatalogEntry,
+  type ExtensionCatalogInstallResult,
+} from '../shared/types';
 
 const DIAGNOSTIC_APP_VERSION = '2.3.0';
 
@@ -57,11 +68,13 @@ export type ExtensionSourceDiagnosticsReport = {
   urlSourceInstallOk: boolean;
   githubSourceCatalogEntries?: number;
   githubSourceInstallOk: boolean;
+  invalidModPermissionRejected: boolean;
   brokenSourceCatalogEntries?: number;
   brokenSourceInstallOk: boolean;
   brokenSourceCardFallbackOk: boolean;
   brokenCatalogCardFallbackOk: boolean;
   brokenCatalogManualOnlyOk: boolean;
+  remoteModBlockedOk: boolean;
   disabledSourcePreflightOk: boolean;
   incompatibleCatalogEntryOk: boolean;
   duplicateRecommendationOk: boolean;
@@ -72,6 +85,7 @@ export type ExtensionSourceDiagnosticsReport = {
   missingDependencyPreflightContractOk: boolean;
   missingRuntimeDependencyBlockOk: boolean;
   missingRuntimeDependencyPreflightContractOk: boolean;
+  userDataRemovalOk: boolean;
   staleCachePreflightOk: boolean;
   warnings: string[];
 };
@@ -564,6 +578,52 @@ function findCatalogEntry(entries: ExtensionCatalogEntry[], kind: 'addons' | 'mo
   return entries.find(entry => entry.kind === kind && entry.entryId === entryId);
 }
 
+function runUserDataRemovalDiagnostics(rootDir: string, fixture: FixturePaths) {
+  const userDataDir = path.join(rootDir, 'removal-user-data');
+  const addonsDir = path.join(userDataDir, 'addons');
+  const modsDir = path.join(userDataDir, 'mods');
+  const themesDir = path.join(userDataDir, 'themes');
+
+  const addonManifest = fs.readFileSync(fixture.addonManifestPath, 'utf-8');
+  const themeManifest = fs.readFileSync(fixture.themeManifestPath, 'utf-8');
+  const addonInstall = installAddonFromJSON(addonsDir, addonManifest);
+  const modInstall = installModFromFolder(modsDir, fixture.modManifestPath);
+  const themeInstall = installThemeFromJSON(themesDir, themeManifest);
+
+  const addonFile = addonInstall.addon ? path.join(addonsDir, addonInstall.addon.fileName) : '';
+  const modDir = modInstall.mod ? path.join(modsDir, modInstall.mod.dirName) : '';
+  const themeFile = themeInstall.theme ? path.join(themesDir, themeInstall.theme.fileName) : '';
+
+  const installedOk = Boolean(
+    addonInstall.ok
+      && modInstall.ok
+      && themeInstall.ok
+      && addonFile
+      && fs.existsSync(addonFile)
+      && modDir
+      && fs.existsSync(modDir)
+      && themeFile
+      && fs.existsSync(themeFile),
+  );
+
+  const removedOk = Boolean(
+    addonInstall.addon
+      && modInstall.mod
+      && themeInstall.theme
+      && removeAddon(addonsDir, addonInstall.addon.id)
+      && removeMod(modsDir, modInstall.mod.id)
+      && removeTheme(themesDir, themeInstall.theme.id)
+      && !fs.existsSync(addonFile)
+      && !fs.existsSync(modDir)
+      && !fs.existsSync(themeFile)
+      && !scanAddons(addonsDir).some(addon => addon.id === addonInstall.addon?.id)
+      && !scanMods(modsDir).some(mod => mod.id === modInstall.mod?.id)
+      && !scanThemes(themesDir).some(theme => theme.id === themeInstall.theme?.id),
+  );
+
+  return installedOk && removedOk;
+}
+
 export async function runExtensionSourceDiagnostics(): Promise<ExtensionSourceDiagnosticsReport> {
   const rootDir = createFixtureRoot();
   const fixture = createLocalFixture(rootDir);
@@ -582,9 +642,11 @@ export async function runExtensionSourceDiagnostics(): Promise<ExtensionSourceDi
         urlSourceInstallOk: false,
         githubSourceInstallOk: false,
         brokenSourceInstallOk: false,
+        invalidModPermissionRejected: false,
         brokenSourceCardFallbackOk: false,
         brokenCatalogCardFallbackOk: false,
         brokenCatalogManualOnlyOk: false,
+        remoteModBlockedOk: false,
         disabledSourcePreflightOk: false,
         incompatibleCatalogEntryOk: false,
         duplicateRecommendationOk: false,
@@ -595,6 +657,7 @@ export async function runExtensionSourceDiagnostics(): Promise<ExtensionSourceDi
         missingDependencyPreflightContractOk: false,
         missingRuntimeDependencyBlockOk: false,
         missingRuntimeDependencyPreflightContractOk: false,
+        userDataRemovalOk: false,
         staleCachePreflightOk: false,
         sourceInstallError: sourceInstall.error ?? 'Unknown source installation error.',
         addonInstalled: false,
@@ -619,6 +682,15 @@ export async function runExtensionSourceDiagnostics(): Promise<ExtensionSourceDi
       type: 'url',
       manifestUrl: remoteFixture.urlManifestUrl,
     });
+    const invalidModPermissionRejected = !validateModManifest({
+      manifestVersion: 1,
+      id: 'invalid-permission-mod',
+      name: 'Invalid permission mod',
+      version: '1.0.0',
+      type: 'mod',
+      entry: 'index.js',
+      permissions: ['ui', 'unknown-permission'],
+    }).ok;
     const githubSourceInstall = await installExtensionSource(fixture.appDataDir, {
       type: 'github',
       manifestUrl: remoteFixture.githubManifestUrl,
@@ -690,7 +762,12 @@ export async function runExtensionSourceDiagnostics(): Promise<ExtensionSourceDi
     const brokenManualOnlyOk = Boolean(
       brokenRemoteModEntry
       && brokenRemoteModEntry.installSupport === 'manual'
-      && brokenRemoteModEntry.issues.some(issue => issue.stage === 'package' && issue.fallback === 'manual-only'),
+      && brokenRemoteModEntry.issues.some(issue => issue.stage === 'package' && issue.fallback === 'blocked-install'),
+    );
+    const remoteModBlockedOk = Boolean(
+      brokenRemoteModEntry
+      && brokenRemoteModEntry.issues.some(issue => issue.code === 'addons.catalog.issue.remoteModsTrustedOnly')
+      && getExtensionCatalogEntryBlockReason(brokenRemoteModEntry)?.includes('Remote mods are trusted code')
     );
     const manualOnlyPreflight = await validateExtensionCatalogEntry(
       fixture.appDataDir,
@@ -706,7 +783,7 @@ export async function runExtensionSourceDiagnostics(): Promise<ExtensionSourceDi
       !manualOnlyPreflight.ok
       && manualOnlyPreflight.blocked
       && manualOnlyPreflight.entry?.installSupport === 'manual'
-      && manualOnlyPreflight.entry.issues.some(issue => issue.fallback === 'manual-only'),
+      && manualOnlyPreflight.entry.issues.some(issue => issue.fallback === 'blocked-install'),
     );
     const missingManifestPreflight = await validateExtensionCatalogEntry(
       fixture.appDataDir,
@@ -775,7 +852,6 @@ export async function runExtensionSourceDiagnostics(): Promise<ExtensionSourceDi
     const missingRuntimeDependencyPreflightContractOk = Boolean(
       !dependentModPreflight.ok
       && dependentModPreflight.blocked
-      && dependentModPreflight.error?.includes('fixture-missing-runtime-mod')
       && dependentModPreflight.entry?.issues.some(issue => issue.code === 'addons.catalog.issue.missingRuntimeDependencies'),
     );
     const dependentModInstallResult = await installExtensionCatalogEntry(
@@ -791,11 +867,13 @@ export async function runExtensionSourceDiagnostics(): Promise<ExtensionSourceDi
     const missingRuntimeDependencyBlockOk = Boolean(
       dependentRemoteModEntry
       && dependentRemoteModEntry.status === 'available'
-      && dependentRemoteModEntry.installSupport === 'direct'
+      && dependentRemoteModEntry.installSupport === 'manual'
       && dependentRemoteModEntry.issues.some(issue => issue.code === 'addons.catalog.issue.missingRuntimeDependencies' && issue.fallback === 'blocked-install')
+      && dependentRemoteModEntry.issues.some(issue => issue.code === 'addons.catalog.issue.remoteModsTrustedOnly' && issue.fallback === 'blocked-install')
       && !dependentModInstallResult.ok
-      && dependentModInstallResult.error?.includes('fixture-missing-runtime-mod'),
+      && dependentModInstallResult.error?.includes('Remote mods are trusted code'),
     );
+    const userDataRemovalOk = runUserDataRemovalDiagnostics(rootDir, fixture);
 
     writeLocalFixtureUpdates(fixture);
     const updateCatalogBefore = await scanExtensionCatalog(fixture.appDataDir, fixture.addonsDir, fixture.modsDir, fixture.themesDir, DIAGNOSTIC_APP_VERSION);
@@ -906,12 +984,14 @@ export async function runExtensionSourceDiagnostics(): Promise<ExtensionSourceDi
     if (!urlSourceInstall.ok) warnings.push(`URL source installation failed: ${urlSourceInstall.error ?? 'unknown error'}.`);
     if (!githubSourceInstall.ok) warnings.push(`GitHub source installation failed: ${githubSourceInstall.error ?? 'unknown error'}.`);
     if (!brokenSourceInstall.ok) warnings.push(`Broken source installation failed: ${brokenSourceInstall.error ?? 'unknown error'}.`);
+    if (!invalidModPermissionRejected) warnings.push('Mod manifest validation accepted an unknown permission.');
     if (!brokenSourceCardFallbackOk) warnings.push('Broken source card did not keep the source ready with a card warning.');
     if (urlCatalogEntries.length < 3) warnings.push(`URL source exposed ${urlCatalogEntries.length} entries instead of at least 3.`);
     if (githubCatalogEntries.length < 1) warnings.push(`GitHub source exposed ${githubCatalogEntries.length} entries instead of at least 1.`);
     if (!brokenCardFallbackOk) warnings.push('Broken source addon did not keep the catalog entry available with a card fallback warning.');
-    if (!brokenManualOnlyOk) warnings.push('Broken remote mod did not stay manual-only with an explicit package warning.');
-    if (!manualOnlyPreflightContractOk) warnings.push('Manual-only preflight contract did not block remote mod installation.');
+    if (!brokenManualOnlyOk) warnings.push('Broken remote mod did not stay blocked with an explicit package warning.');
+    if (!remoteModBlockedOk) warnings.push('Remote mod block reason was not exposed in catalog diagnostics.');
+    if (!manualOnlyPreflightContractOk) warnings.push('Remote mod preflight contract did not block installation.');
     if (!missingManifestPreflightOk) warnings.push('Missing manifest preflight contract did not block a missing catalog entry manifest.');
     if (!disabledSourcePreflightOk) warnings.push('Disabled source preflight contract did not block catalog entry installation.');
     if (!staleCachePreflightOk) warnings.push('Stale-cache preflight contract did not expose source-error with stale-cache fallback.');
@@ -922,6 +1002,7 @@ export async function runExtensionSourceDiagnostics(): Promise<ExtensionSourceDi
     if (!missingDependencyPreflightContractOk) warnings.push('Addon preflight contract did not keep missing dependency as a non-blocking warning.');
     if (!missingRuntimeDependencyPreflightContractOk) warnings.push('Mod preflight contract did not block missing runtime dependency.');
     if (!missingRuntimeDependencyBlockOk) warnings.push('Missing runtime dependency did not block direct mod installation.');
+    if (!userDataRemovalOk) warnings.push('Install/remove user-data cycle did not remove addon, mod and theme files with their registry entries.');
     if (!updateAddonOk) warnings.push('Addon update from catalog did not move from update-available to installed v2.0.0.');
     if (!updateModOk) warnings.push('Mod update from catalog did not move from update-available to installed v2.0.0.');
     if (!updateThemeOk) warnings.push('Theme update from catalog did not move from update-available to installed v2.0.0.');
@@ -933,11 +1014,13 @@ export async function runExtensionSourceDiagnostics(): Promise<ExtensionSourceDi
       urlSourceCatalogEntries: urlCatalogEntries.length,
       githubSourceInstallOk: githubSourceInstall.ok,
       githubSourceCatalogEntries: githubCatalogEntries.length,
+      invalidModPermissionRejected,
       brokenSourceInstallOk: brokenSourceInstall.ok,
       brokenSourceCatalogEntries: brokenCatalogEntries.length,
       brokenSourceCardFallbackOk,
       brokenCatalogCardFallbackOk: brokenCardFallbackOk,
       brokenCatalogManualOnlyOk: brokenManualOnlyOk,
+      remoteModBlockedOk,
       disabledSourcePreflightOk,
       incompatibleCatalogEntryOk,
       duplicateRecommendationOk,
@@ -948,6 +1031,7 @@ export async function runExtensionSourceDiagnostics(): Promise<ExtensionSourceDi
       missingDependencyPreflightContractOk,
       missingRuntimeDependencyBlockOk,
       missingRuntimeDependencyPreflightContractOk,
+      userDataRemovalOk,
       staleCachePreflightOk,
       catalogEntriesBefore: catalogBefore.length,
       catalogEntriesAfter: catalogAfter.length,
@@ -1013,11 +1097,13 @@ export function formatExtensionSourceDiagnosticsReport(report: ExtensionSourceDi
     `Theme update: ${report.updateThemeOk ? 'ok' : 'failed'} | ${report.updateThemeCatalogStatusBefore ?? 'missing'} -> ${report.updateThemeCatalogStatusAfter ?? 'missing'} | installed=${report.updateThemeInstalledVersion ?? 'missing'}`,
     `URL source install: ${report.urlSourceInstallOk ? 'ok' : 'failed'} | entries=${report.urlSourceCatalogEntries ?? 0}`,
     `GitHub source install: ${report.githubSourceInstallOk ? 'ok' : 'failed'} | entries=${report.githubSourceCatalogEntries ?? 0}`,
+    `Invalid mod permission rejection: ${report.invalidModPermissionRejected ? 'ok' : 'failed'}`,
     `Broken source install: ${report.brokenSourceInstallOk ? 'ok' : 'failed'} | entries=${report.brokenSourceCatalogEntries ?? 0}`,
     `Broken source card fallback: ${report.brokenSourceCardFallbackOk ? 'ok' : 'failed'}`,
     `Broken card fallback: ${report.brokenCatalogCardFallbackOk ? 'ok' : 'failed'}`,
-    `Broken remote manual-only: ${report.brokenCatalogManualOnlyOk ? 'ok' : 'failed'}`,
-    `Manual-only preflight contract: ${report.manualOnlyPreflightContractOk ? 'ok' : 'failed'}`,
+    `Broken remote mod blocked: ${report.brokenCatalogManualOnlyOk ? 'ok' : 'failed'}`,
+    `Remote mod block reason: ${report.remoteModBlockedOk ? 'ok' : 'failed'}`,
+    `Remote mod preflight contract: ${report.manualOnlyPreflightContractOk ? 'ok' : 'failed'}`,
     `Missing manifest preflight contract: ${report.missingManifestPreflightOk ? 'ok' : 'failed'}`,
     `Disabled source preflight contract: ${report.disabledSourcePreflightOk ? 'ok' : 'failed'}`,
     `Stale-cache preflight contract: ${report.staleCachePreflightOk ? 'ok' : 'failed'}`,
@@ -1028,6 +1114,7 @@ export function formatExtensionSourceDiagnosticsReport(report: ExtensionSourceDi
     `Missing dependency preflight contract: ${report.missingDependencyPreflightContractOk ? 'ok' : 'failed'}`,
     `Missing runtime dependency preflight contract: ${report.missingRuntimeDependencyPreflightContractOk ? 'ok' : 'failed'}`,
     `Missing runtime dependency block: ${report.missingRuntimeDependencyBlockOk ? 'ok' : 'failed'}`,
+    `User data install/remove cycle: ${report.userDataRemovalOk ? 'ok' : 'failed'}`,
     `Catalog entries after install: ${report.catalogEntriesAfter}`,
     'Warnings:',
     ...(report.warnings.length > 0 ? report.warnings.map(warning => `- ${warning}`) : ['- none']),

@@ -1,25 +1,20 @@
 import { LayoutMasteryPanel } from '../LayoutMasteryPanel';
-import { buildHomePageViewModel } from '../../../core/home/viewModel';
+import type {
+  HomeDetailMeta,
+  HomeDetailModalId,
+  HomePageViewModel,
+} from '../../../core/home/viewModel';
 import type { TranslationParams } from '../../../shared/types';
 import { ActionRow } from '../ui/ActionRow';
 import { Button } from '../ui/Button';
 import { ModalLayout } from '../ui/ModalLayout';
 import { HomeSummaryCard } from './HomeSummaryCard';
 
-type HomeDetailModalId = 'season' | 'mode-focus' | 'records' | 'mastery' | 'goals' | 'streaks';
-
-type HomeDetailMeta = {
-  title: string;
-  description: string;
-};
-
-type HomeViewModel = ReturnType<typeof buildHomePageViewModel>;
-
 type HomeDetailModalProps = {
   activeDetailModal: HomeDetailModalId | null;
   detailMeta: HomeDetailMeta | null;
   formatSpeed: (value: number) => string;
-  homeViewModel: HomeViewModel;
+  homeViewModel: HomePageViewModel;
   onClose: () => void;
   onSwitchMode: (mode: string) => void;
   speedLabel: string;

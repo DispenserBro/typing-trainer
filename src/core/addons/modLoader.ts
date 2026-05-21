@@ -6,8 +6,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import type { ModLocaleResourceFile } from '../../shared/types/electron';
-import type { ModManifest, ModPermission, ModRegistryState, InstalledMod } from '../../shared/types/addon';
-import { ADDON_MANIFEST_VERSION } from '../../shared/types/addon';
+import type { ModManifest, ModRegistryState, InstalledMod } from '../../shared/types/addon';
+import { ADDON_MANIFEST_VERSION, MOD_MANIFEST_TYPE } from '../../shared/types/addon';
+import { isModPermission, normalizeModPermissions } from '../../shared/types/modApi';
 
 const REGISTRY_FILE = 'mod-registry.json';
 const MOD_MANIFEST_FILE = 'manifest.json';
@@ -191,8 +192,8 @@ export function validateModManifest(raw: unknown): ModValidationResult {
     errors.push('Missing or invalid "version".');
   }
 
-  if (m.type !== 'mod') {
-    errors.push('Mod "type" must be "mod". For content packs, use an addon instead.');
+  if (m.type !== MOD_MANIFEST_TYPE) {
+    errors.push(`Mod "type" must be "${MOD_MANIFEST_TYPE}". For content packs, use an addon instead.`);
   }
 
   if (typeof m.entry !== 'string' || m.entry.length === 0) {
@@ -203,6 +204,13 @@ export function validateModManifest(raw: unknown): ModValidationResult {
 
   if (!Array.isArray(m.permissions)) {
     errors.push('Mods must have a "permissions" array.');
+  } else {
+    const invalidPermissions = m.permissions.filter((permission) => (
+      !isModPermission(permission)
+    ));
+    if (invalidPermissions.length > 0) {
+      errors.push(`Mod "permissions" contains unknown values: ${invalidPermissions.join(', ')}.`);
+    }
   }
 
   if (m.files !== undefined) {
@@ -224,10 +232,10 @@ export function validateModManifest(raw: unknown): ModValidationResult {
     description: m.description as string | undefined,
     author: m.author as string | undefined,
     minAppVersion: m.minAppVersion as string | undefined,
-    type: 'mod',
+    type: MOD_MANIFEST_TYPE,
     entry: m.entry as string,
     files: normalizeManifestPackageFiles(m.files),
-    permissions: m.permissions as ModPermission[],
+    permissions: normalizeModPermissions(m.permissions),
     dependencies: Array.isArray(m.dependencies) ? m.dependencies.filter((d: unknown) => typeof d === 'string') : undefined,
   };
 

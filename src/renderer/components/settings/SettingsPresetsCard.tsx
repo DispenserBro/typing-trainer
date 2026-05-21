@@ -42,7 +42,7 @@ export function SettingsPresetsCard({
 
   const handleImport = async () => {
     const err = await importConfig();
-    if (err) { setImportMsg(err); setTimeout(() => setImportMsg(''), 3000); }
+    if (err) { setImportMsg(t(err)); setTimeout(() => setImportMsg(''), 3000); }
     else { setImportMsg(t('settings.cards.presets.imported')); setTimeout(() => setImportMsg(''), 2000); }
   };
 

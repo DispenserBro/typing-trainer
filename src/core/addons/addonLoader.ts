@@ -6,7 +6,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import type { AddonManifest, AddonRegistryState, InstalledAddon } from '../../shared/types/addon';
-import { ADDON_MANIFEST_VERSION } from '../../shared/types/addon';
+import { ADDON_MANIFEST_TYPE, ADDON_MANIFEST_VERSION } from '../../shared/types/addon';
+import { resolveSafeRegistryFilePath } from './pathSafety';
 
 const REGISTRY_FILE = 'addon-registry.json';
 
@@ -47,8 +48,8 @@ export function validateAddonManifest(raw: unknown): AddonValidationResult {
     errors.push('Missing or invalid "version".');
   }
 
-  if (m.type !== 'content') {
-    errors.push('Addon "type" must be "content". For scripts, use a mod instead.');
+  if (m.type !== ADDON_MANIFEST_TYPE) {
+    errors.push(`Addon "type" must be "${ADDON_MANIFEST_TYPE}". For scripts, use a mod instead.`);
   }
 
   if (errors.length > 0) return { ok: false, errors };
@@ -77,7 +78,7 @@ export function validateAddonManifest(raw: unknown): AddonValidationResult {
     description: m.description as string | undefined,
     author: m.author as string | undefined,
     minAppVersion: m.minAppVersion as string | undefined,
-    type: m.type as 'content',
+    type: ADDON_MANIFEST_TYPE,
     dependencies: Array.isArray(m.dependencies) ? m.dependencies.filter((d: unknown) => typeof d === 'string') : undefined,
     resources,
   };
@@ -225,8 +226,8 @@ export function removeAddon(
   if (!addon) return false;
 
   // Remove the JSON file
-  const filePath = path.join(addonsDir, addon.fileName);
-  if (fs.existsSync(filePath)) {
+  const filePath = resolveSafeRegistryFilePath(addonsDir, addon.fileName);
+  if (filePath && fs.existsSync(filePath)) {
     fs.rmSync(filePath, { force: true });
   }
 

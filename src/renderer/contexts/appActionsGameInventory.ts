@@ -5,7 +5,8 @@ import type {
   GameState,
   Progress,
 } from '../../shared/types';
-import { GAME_ITEM_MAP, isBrokenInventoryItem } from '../../core/game/items';
+import { GAME_ITEM_MAP } from '../../core/game/items/catalog';
+import { isBrokenInventoryItem } from '../../core/game/items/utils';
 import { createInventoryItemId } from './appDefaults';
 import {
   createEmptyEquippedState,

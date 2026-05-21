@@ -41,6 +41,12 @@ function readJson<T>(relativePath: string): T {
   return JSON.parse(fs.readFileSync(absolutePath, 'utf8')) as T;
 }
 
+function readSdkExampleJson<T>(relativePath: string): T {
+  const appRoot = path.resolve(__dirname, '../..');
+  const absolutePath = path.resolve(appRoot, '..', 'SDK', 'examples', relativePath);
+  return JSON.parse(fs.readFileSync(absolutePath, 'utf8')) as T;
+}
+
 function parseCliArgs(argv: string[]): CliOptions {
   const options: CliOptions = {
     runs: 250,
@@ -152,7 +158,7 @@ function buildFocusedPracticeContentPacks(
   language: string,
 ): PracticeContentPack[] {
   const customPack = createFocusedCustomPack(language);
-  const addonManifest = readJson<AddonManifest>('data/addon-template.json');
+  const addonManifest = readSdkExampleJson<AddonManifest>('addon-template.json');
   const focusedAddon = createFocusedAddon(addonManifest, language);
 
   return mergeAddonPracticePacks([...basePracticeContentPacks, customPack], [focusedAddon]);

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
+import { buildHomeProgressCenterVisibility } from '../../../core/home/viewModel';
 import { SectionHeader } from '../ui/SectionHeader';
 
 type HomeProgressCenterCard = {
@@ -31,11 +32,7 @@ export function HomeProgressCenterSection({
   sectionTitle,
 }: HomeProgressCenterSectionProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
-  const visibleCards = useMemo(
-    () => (expanded ? cards : cards.slice(0, 3)),
-    [cards, expanded],
-  );
-  const canToggle = cards.length > 3;
+  const { canToggle, visibleCards } = buildHomeProgressCenterVisibility(cards, expanded);
 
   return (
     <div className="home-section">

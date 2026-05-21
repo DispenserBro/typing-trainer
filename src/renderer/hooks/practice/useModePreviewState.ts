@@ -19,7 +19,16 @@ export function useModePreviewState({
 }: UseModePreviewStateArgs) {
   const [showOverlay, setShowOverlay] = useState(true);
   const [text, setText] = useState('');
+  const buildTextRef = useRef(buildText);
+  const onPreviewResetRef = useRef(onPreviewReset);
+  const onResultResetRef = useRef(onResultReset);
   const previewKeyRef = useRef('');
+  const sessionActiveRef = useRef(sessionActive);
+
+  buildTextRef.current = buildText;
+  onPreviewResetRef.current = onPreviewReset;
+  onResultResetRef.current = onResultReset;
+  sessionActiveRef.current = sessionActive;
 
   useEffect(() => {
     if (sessionActive) {
@@ -31,13 +40,13 @@ export function useModePreviewState({
     if (!enabled) return;
     if (previewKeyRef.current === previewKey) return;
     previewKeyRef.current = previewKey;
-    setText(buildText());
-    if (!sessionActive) {
+    setText(buildTextRef.current());
+    if (!sessionActiveRef.current) {
       setShowOverlay(true);
     }
-    onResultReset?.();
-    onPreviewReset?.();
-  }, [buildText, enabled, onPreviewReset, onResultReset, previewKey, sessionActive]);
+    onResultResetRef.current?.();
+    onPreviewResetRef.current?.();
+  }, [enabled, previewKey]);
 
   return {
     setShowOverlay,

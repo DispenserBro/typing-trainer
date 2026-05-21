@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { buildHomeModeCardGroups } from '../../../core/home/viewModel';
 import { SectionHeader } from '../ui/SectionHeader';
 
 type HomeModeCard = {
@@ -24,8 +25,7 @@ export function HomeModesSection({
   onOpenMode,
   sectionTitle,
 }: HomeModesSectionProps) {
-  const primaryCards = cards.filter(card => card.id !== 'stats' && card.id !== 'settings');
-  const utilityCards = cards.filter(card => card.id === 'stats' || card.id === 'settings');
+  const { primaryCards, utilityCards } = buildHomeModeCardGroups(cards);
 
   return (
     <div className="home-section">

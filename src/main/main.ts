@@ -27,24 +27,34 @@ import {
   installThemeFromFile,
   removeTheme,
 } from '../core/addons';
+import {
+  applySetupPreferenceSettings,
+  normalizeSetupPreferences,
+  resolveSetupPreferenceExtensionSourceManifestPaths,
+} from '../core/setup/setupPreferences';
+import { resolveAppDataPaths } from '../core/setup/appDataPaths';
+import {
+  migrateProgressData,
+  normalizeProgressForSave,
+} from '../core/progress/migrations';
 
 /* ── User data paths ─────────────────────────────────────── */
 // При упакованном приложении аддоны/моды рядом с exe, при разработке в папке проекта
-const userDataPath: string = app.isPackaged 
-  ? path.join(path.dirname(app.getPath('exe')), 'data')
-  : path.join(app.getAppPath(), 'data');
-const progressFile: string = path.join(userDataPath, 'progress.json');
-const customThemesFile: string = path.join(userDataPath, 'custom-themes.json');
-const installerThemeFile: string = path.join(userDataPath, 'installer-theme.ini');
-const setupPreferencesFile: string = path.join(userDataPath, 'setup-preferences.json');
-const addonsDir: string = path.join(userDataPath, 'addons');
-const modsDir: string = path.join(userDataPath, 'mods');
-const themesDir: string = path.join(userDataPath, 'themes');
-
-type SetupPreferences = {
-  settings?: Partial<NonNullable<Progress['settings']>>;
-  extensionSources?: string[];
-};
+const appDataPaths = resolveAppDataPaths({
+  appPath: app.getAppPath(),
+  exePath: app.getPath('exe'),
+  isPackaged: app.isPackaged,
+});
+const {
+  addonsDir,
+  customThemesFile,
+  installerThemeFile,
+  modsDir,
+  progressFile,
+  setupPreferencesFile,
+  themesDir,
+  userDataPath,
+} = appDataPaths;
 
 type InstallerThemeColors = {
   bg: string;
@@ -117,6 +127,34 @@ function saveJSON(filePath: string, data: unknown): void {
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
 }
 
+function loadProgressFile(): Progress {
+  const migration = migrateProgressData(loadJSON<unknown>(progressFile, {}), app.getVersion());
+  for (const diagnostic of migration.diagnostics) {
+    console.warn(`[ProgressMigration] ${diagnostic.message}`);
+  }
+  return migration.progress;
+}
+
+function saveProgressFile(progress: Progress): void {
+  saveJSON(progressFile, normalizeProgressForSave(progress, app.getVersion()));
+}
+
+function isPlatformSmokeRun(): boolean {
+  return process.argv.includes('--platform-smoke');
+}
+
+function runPlatformSmoke(): void {
+  const progress = loadProgressFile();
+  saveProgressFile(progress);
+  saveJSON(path.join(userDataPath, 'platform-smoke.json'), {
+    appVersion: app.getVersion(),
+    isPackaged: app.isPackaged,
+    timestamp: new Date().toISOString(),
+    userDataPath,
+  });
+  console.log(`[PlatformSmoke] Writable user data path verified: ${userDataPath}`);
+}
+
 function normalizeInstallerColor(value?: string): string | null {
   const normalized = value?.trim().replace(/^#/, '').toUpperCase();
   return normalized && /^[0-9A-F]{6}$/.test(normalized) ? normalized : null;
@@ -178,53 +216,36 @@ function loadDataFile(rel: string): unknown {
   return JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', rel), 'utf-8'));
 }
 
-function resolveBundledExtensionSourceManifest(relativePath: string): string | null {
-  const normalized = relativePath.replace(/\\/g, '/').replace(/^\/+/, '');
-  if (!normalized.startsWith('data/local-extension-sources/')) return null;
-  if (normalized.split('/').some(part => part === '..')) return null;
-  return path.join(app.getAppPath(), ...normalized.split('/'));
-}
-
 async function applyPendingSetupPreferences(): Promise<void> {
   if (!fs.existsSync(setupPreferencesFile)) return;
 
-  const setupPreferences = loadJSON<SetupPreferences | null>(setupPreferencesFile, null);
-  if (!setupPreferences || typeof setupPreferences !== 'object') {
+  const setupPreferences = normalizeSetupPreferences(loadJSON<unknown>(setupPreferencesFile, null));
+  if (!setupPreferences) {
     fs.rmSync(setupPreferencesFile, { force: true });
     return;
   }
 
-  const progress = loadJSON<Progress>(progressFile, {});
-  const nextProgress = setupPreferences.settings && typeof setupPreferences.settings === 'object'
-    ? {
-        ...progress,
-        settings: {
-          ...(progress.settings ?? {}),
-          ...setupPreferences.settings,
-        },
-      }
-    : progress;
+  const progress = loadProgressFile();
+  const nextProgress = applySetupPreferenceSettings(progress, setupPreferences);
 
   if (nextProgress !== progress) {
-    saveJSON(progressFile, nextProgress);
+    saveProgressFile(nextProgress);
     saveInstallerThemeSnapshot(nextProgress);
   }
 
-  for (const sourceRef of setupPreferences.extensionSources ?? []) {
-    if (typeof sourceRef !== 'string') continue;
-    const manifestPath = resolveBundledExtensionSourceManifest(sourceRef);
-    if (!manifestPath) continue;
+  const manifestPaths = resolveSetupPreferenceExtensionSourceManifestPaths(app.getAppPath(), setupPreferences);
 
+  for (const manifestPath of manifestPaths) {
     try {
       const result = await installExtensionSource(userDataPath, {
         type: 'local',
         manifestPath,
       });
       if (!result.ok) {
-        console.warn(`[SetupPreferences] Failed to add extension source ${sourceRef}: ${result.error}`);
+        console.warn(`[SetupPreferences] Failed to add extension source ${manifestPath}: ${result.error}`);
       }
     } catch (error) {
-      console.warn(`[SetupPreferences] Failed to add extension source ${sourceRef}:`, error);
+      console.warn(`[SetupPreferences] Failed to add extension source ${manifestPath}:`, error);
     }
   }
 
@@ -240,10 +261,11 @@ ipcMain.handle('get-practice-content-packs', () => loadDataFile('data/practice-c
 ipcMain.handle('get-lesson-bigrams', (_e: Electron.IpcMainInvokeEvent, lang: string) =>
   loadDataFile(`data/lesson_bigrams_${lang}.json`),
 );
-ipcMain.handle('get-progress', () => loadJSON<Progress>(progressFile, {}));
+ipcMain.handle('get-progress', () => loadProgressFile());
 ipcMain.handle('save-progress', (_e: Electron.IpcMainInvokeEvent, data: Progress) => {
-  saveJSON(progressFile, data);
-  saveInstallerThemeSnapshot(data);
+  const nextProgress = normalizeProgressForSave(data, app.getVersion());
+  saveProgressFile(nextProgress);
+  saveInstallerThemeSnapshot(nextProgress);
   return true;
 });
 ipcMain.handle('get-custom-themes', () => loadJSON<CustomThemes>(customThemesFile, {}));
@@ -437,6 +459,11 @@ function createWindow(): void {
 
 app.whenReady().then(async () => {
   app.setAppUserModelId(APP_USER_MODEL_ID);
+  if (isPlatformSmokeRun()) {
+    runPlatformSmoke();
+    app.quit();
+    return;
+  }
   await applyPendingSetupPreferences();
   void syncAllExtensionSources(userDataPath).catch((error) => {
     console.error('[ExtensionSources] Startup sync failed:', error);

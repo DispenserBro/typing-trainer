@@ -164,14 +164,12 @@ export function getImportedPackPresetLabel(
 }
 
 export function localizePackImportError(t: TranslateFn, message: string) {
-  if (message === 'В файле нет упражнений или текстов для импорта.') {
-    return t('practice.importErrors.noExercises');
-  }
-  if (message === 'Текстовый файл пустой.') {
-    return t('practice.importErrors.emptyText');
-  }
-  if (message === 'Не удалось извлечь тексты из файла.') {
-    return t('practice.importErrors.noTexts');
-  }
+  const knownErrorKeys = [
+    'practice.importErrors.noExercises',
+    'practice.importErrors.emptyText',
+    'practice.importErrors.noTexts',
+  ];
+  const knownErrorKey = knownErrorKeys.find(errorKey => message === t(errorKey));
+  if (knownErrorKey) return t(knownErrorKey);
   return message;
 }

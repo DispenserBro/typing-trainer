@@ -1,5 +1,6 @@
 import type {
   CharStat,
+  HistoryEntry,
   PracticeContentMode,
   PracticeContentScenarioId,
   PracticeTrainingMode,
@@ -70,39 +71,40 @@ export function createStatsActions({
       timedOut?: boolean;
       charStats?: Record<string, CharStat>;
     },
-  ) => {
+  ): HistoryEntry => {
+    const nextEntry: HistoryEntry = {
+      date: new Date().toISOString(),
+      mode,
+      wpm: Math.round(wpm),
+      acc: Math.round(acc * 10) / 10,
+      contentScenarioId: extras?.contentScenarioId,
+      trainingMode: extras?.trainingMode,
+      contentMode: extras?.contentMode,
+      durationSeconds: extras?.durationSeconds != null
+        ? Math.max(0, Math.round(extras.durationSeconds * 10) / 10)
+        : undefined,
+      gameLevel: extras?.gameLevel != null ? Math.max(1, Math.floor(extras.gameLevel)) : undefined,
+      gameStageType: extras?.gameStageType,
+      passed: extras?.passed,
+      victory: extras?.victory,
+      timedOut: extras?.timedOut,
+      charStats: extras?.charStats
+        ? Object.fromEntries(
+          Object.entries(extras.charStats).map(([char, stat]) => [
+            char,
+            {
+              hits: Math.max(0, Math.floor(stat.hits || 0)),
+              misses: Math.max(0, Math.floor(stat.misses || 0)),
+              totalTime: Math.max(0, Number(stat.totalTime || 0)),
+            },
+          ]),
+        )
+        : undefined,
+    };
+
     commitProgress(prev => {
       const currentHistory = prev.history ?? {};
       const currentLayoutHistory = currentHistory[currentLayout] ?? [];
-      const nextEntry = {
-        date: new Date().toISOString(),
-        mode,
-        wpm: Math.round(wpm),
-        acc: Math.round(acc * 10) / 10,
-        contentScenarioId: extras?.contentScenarioId,
-        trainingMode: extras?.trainingMode,
-        contentMode: extras?.contentMode,
-        durationSeconds: extras?.durationSeconds != null
-          ? Math.max(0, Math.round(extras.durationSeconds * 10) / 10)
-          : undefined,
-        gameLevel: extras?.gameLevel != null ? Math.max(1, Math.floor(extras.gameLevel)) : undefined,
-        gameStageType: extras?.gameStageType,
-        passed: extras?.passed,
-        victory: extras?.victory,
-        timedOut: extras?.timedOut,
-        charStats: extras?.charStats
-          ? Object.fromEntries(
-            Object.entries(extras.charStats).map(([char, stat]) => [
-              char,
-              {
-                hits: Math.max(0, Math.floor(stat.hits || 0)),
-                misses: Math.max(0, Math.floor(stat.misses || 0)),
-                totalTime: Math.max(0, Number(stat.totalTime || 0)),
-              },
-            ]),
-          )
-          : undefined,
-      };
       const nextLayoutHistory = [...currentLayoutHistory, nextEntry].slice(-500);
 
       return {
@@ -113,6 +115,8 @@ export function createStatsActions({
         },
       };
     });
+
+    return nextEntry;
   };
 
   return {

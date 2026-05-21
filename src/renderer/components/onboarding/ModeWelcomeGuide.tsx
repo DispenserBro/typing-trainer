@@ -11,189 +11,262 @@ import {
   Timer,
   Trophy,
 } from 'lucide-react';
+import { useI18n } from '../../contexts/I18nContext';
 import { Button } from '../ui/Button';
 import { ModalLayout } from '../ui/ModalLayout';
 
 export type ModeGuideMode = 'practice' | 'test' | 'survival' | 'flawless' | 'lessons' | 'game';
 
 type ModeGuideStep = {
-  body: string;
-  checklist: string[];
+  bodyKey: string;
+  checklistKeys: string[];
   kind?: 'interactive';
-  title: string;
+  titleKey: string;
 };
 
 type ModeGuideConfig = {
-  description: string;
-  finishLabel: string;
+  descriptionKey: string;
+  finishLabelKey: string;
   icon: LucideIcon;
-  interactivePrompt: string;
-  interactiveTargets: string[];
-  kicker: string;
+  interactivePromptKey: string;
+  interactiveTargetKeys: string[];
+  kickerKey: string;
   steps: ModeGuideStep[];
-  title: string;
+  titleKey: string;
 };
 
 const MODE_GUIDE_CONFIGS: Record<ModeGuideMode, ModeGuideConfig> = {
   practice: {
-    description: 'Короткий адаптивный режим для слабых символов, сочетаний и ритма.',
-    finishLabel: 'Перейти к практике',
+    descriptionKey: 'onboarding.modeGuide.practice.description',
+    finishLabelKey: 'onboarding.modeGuide.practice.finish',
     icon: Target,
-    interactivePrompt: 'Нажмите подсвеченные цели по порядку: фокус, темп, точность.',
-    interactiveTargets: ['Фокус', 'Темп', 'Точность'],
-    kicker: 'Быстрый старт',
-    title: 'Практика',
+    interactivePromptKey: 'onboarding.modeGuide.practice.interactivePrompt',
+    interactiveTargetKeys: [
+      'onboarding.modeGuide.practice.targets.focus',
+      'onboarding.modeGuide.practice.targets.tempo',
+      'onboarding.modeGuide.practice.targets.accuracy',
+    ],
+    kickerKey: 'onboarding.modeGuide.practice.kicker',
+    titleKey: 'onboarding.modeGuide.practice.title',
     steps: [
       {
-        title: 'Что здесь тренируется',
-        body: 'Практика подбирает материал под текущую раскладку, прогресс и слабые места.',
-        checklist: ['слабые буквы', 'адаптивные слова', 'ритм и стабильность'],
+        titleKey: 'onboarding.modeGuide.practice.steps.training.title',
+        bodyKey: 'onboarding.modeGuide.practice.steps.training.body',
+        checklistKeys: [
+          'onboarding.modeGuide.practice.steps.training.checklist.weakLetters',
+          'onboarding.modeGuide.practice.steps.training.checklist.adaptiveWords',
+          'onboarding.modeGuide.practice.steps.training.checklist.rhythm',
+        ],
       },
       {
-        title: 'Как начать',
-        body: 'Нажмите на текстовую область или начните печатать. Настройки режима можно открыть сверху.',
-        checklist: ['выбор материала', 'цель скорости', 'режим тренировки'],
+        titleKey: 'onboarding.modeGuide.practice.steps.start.title',
+        bodyKey: 'onboarding.modeGuide.practice.steps.start.body',
+        checklistKeys: [
+          'onboarding.modeGuide.practice.steps.start.checklist.material',
+          'onboarding.modeGuide.practice.steps.start.checklist.speedGoal',
+          'onboarding.modeGuide.practice.steps.start.checklist.trainingMode',
+        ],
       },
       {
         kind: 'interactive',
-        title: 'Мини-проба',
-        body: 'Перед стартом запомните базовый цикл: сосредоточиться, держать темп, не жертвовать точностью.',
-        checklist: ['пройти 3 мини-шага'],
+        titleKey: 'onboarding.modeGuide.common.miniTrial.title',
+        bodyKey: 'onboarding.modeGuide.practice.steps.trial.body',
+        checklistKeys: ['onboarding.modeGuide.common.miniTrial.checklist'],
       },
     ],
   },
   test: {
-    description: 'Спринт на время для проверки текущей скорости и точности.',
-    finishLabel: 'Перейти к спринту',
+    descriptionKey: 'onboarding.modeGuide.test.description',
+    finishLabelKey: 'onboarding.modeGuide.test.finish',
     icon: Timer,
-    interactivePrompt: 'Отметьте три опоры спринта перед первым запуском.',
-    interactiveTargets: ['Таймер', 'Ровный темп', 'Финиш'],
-    kicker: 'Режим на время',
-    title: 'Спринт',
+    interactivePromptKey: 'onboarding.modeGuide.test.interactivePrompt',
+    interactiveTargetKeys: [
+      'onboarding.modeGuide.test.targets.timer',
+      'onboarding.modeGuide.test.targets.steadyTempo',
+      'onboarding.modeGuide.common.targets.finish',
+    ],
+    kickerKey: 'onboarding.modeGuide.test.kicker',
+    titleKey: 'onboarding.modeGuide.test.title',
     steps: [
       {
-        title: 'Главная идея',
-        body: 'Спринт показывает, как вы печатаете под ограничением времени.',
-        checklist: ['15-60 секунд', 'живые метрики', 'история лучших попыток'],
+        titleKey: 'onboarding.modeGuide.test.steps.idea.title',
+        bodyKey: 'onboarding.modeGuide.test.steps.idea.body',
+        checklistKeys: [
+          'onboarding.modeGuide.test.steps.idea.checklist.duration',
+          'onboarding.modeGuide.test.steps.idea.checklist.liveMetrics',
+          'onboarding.modeGuide.test.steps.idea.checklist.bestHistory',
+        ],
       },
       {
-        title: 'Что важно',
-        body: 'Не разгоняйтесь ценой ошибок: итоговая оценка полезнее, когда скорость и точность растут вместе.',
-        checklist: ['следите за таймером', 'не паникуйте на ошибках', 'повторяйте короткими сериями'],
+        titleKey: 'onboarding.modeGuide.test.steps.focus.title',
+        bodyKey: 'onboarding.modeGuide.test.steps.focus.body',
+        checklistKeys: [
+          'onboarding.modeGuide.test.steps.focus.checklist.timer',
+          'onboarding.modeGuide.test.steps.focus.checklist.errors',
+          'onboarding.modeGuide.test.steps.focus.checklist.series',
+        ],
       },
       {
         kind: 'interactive',
-        title: 'Мини-проба',
-        body: 'Спринт легче, если заранее принять его ритм.',
-        checklist: ['пройти 3 мини-шага'],
+        titleKey: 'onboarding.modeGuide.common.miniTrial.title',
+        bodyKey: 'onboarding.modeGuide.test.steps.trial.body',
+        checklistKeys: ['onboarding.modeGuide.common.miniTrial.checklist'],
       },
     ],
   },
   survival: {
-    description: 'Длинная дистанция с запасом ошибок и проверкой стабильности.',
-    finishLabel: 'Перейти к выживанию',
+    descriptionKey: 'onboarding.modeGuide.survival.description',
+    finishLabelKey: 'onboarding.modeGuide.survival.finish',
     icon: ShieldCheck,
-    interactivePrompt: 'Соберите безопасный маршрут: запас, контроль, финиш.',
-    interactiveTargets: ['Запас', 'Контроль', 'Финиш'],
-    kicker: 'Режим на выдержку',
-    title: 'Выживание',
+    interactivePromptKey: 'onboarding.modeGuide.survival.interactivePrompt',
+    interactiveTargetKeys: [
+      'onboarding.modeGuide.survival.targets.reserve',
+      'onboarding.modeGuide.survival.targets.control',
+      'onboarding.modeGuide.common.targets.finish',
+    ],
+    kickerKey: 'onboarding.modeGuide.survival.kicker',
+    titleKey: 'onboarding.modeGuide.survival.title',
     steps: [
       {
-        title: 'Цель режима',
-        body: 'Выживание проверяет, насколько долго вы удерживаете качество печати.',
-        checklist: ['есть лимит ошибок', 'дистанция длиннее', 'важна стабильность'],
+        titleKey: 'onboarding.modeGuide.survival.steps.goal.title',
+        bodyKey: 'onboarding.modeGuide.survival.steps.goal.body',
+        checklistKeys: [
+          'onboarding.modeGuide.survival.steps.goal.checklist.errorLimit',
+          'onboarding.modeGuide.survival.steps.goal.checklist.longDistance',
+          'onboarding.modeGuide.survival.steps.goal.checklist.stability',
+        ],
       },
       {
-        title: 'Как играть',
-        body: 'Печатайте ровно, не пытайтесь отыграть ошибку резким ускорением.',
-        checklist: ['берегите попытки', 'смотрите на прогресс', 'перезапускайте короткими циклами'],
+        titleKey: 'onboarding.modeGuide.survival.steps.play.title',
+        bodyKey: 'onboarding.modeGuide.survival.steps.play.body',
+        checklistKeys: [
+          'onboarding.modeGuide.survival.steps.play.checklist.attempts',
+          'onboarding.modeGuide.survival.steps.play.checklist.progress',
+          'onboarding.modeGuide.survival.steps.play.checklist.cycles',
+        ],
       },
       {
         kind: 'interactive',
-        title: 'Мини-проба',
-        body: 'Отметьте базовые опоры выживания перед первым запуском.',
-        checklist: ['пройти 3 мини-шага'],
+        titleKey: 'onboarding.modeGuide.common.miniTrial.title',
+        bodyKey: 'onboarding.modeGuide.survival.steps.trial.body',
+        checklistKeys: ['onboarding.modeGuide.common.miniTrial.checklist'],
       },
     ],
   },
   flawless: {
-    description: 'Чистый забег без права на ошибку.',
-    finishLabel: 'Перейти к безошибочному режиму',
+    descriptionKey: 'onboarding.modeGuide.flawless.description',
+    finishLabelKey: 'onboarding.modeGuide.flawless.finish',
     icon: Sparkles,
-    interactivePrompt: 'Соберите чистый старт: взгляд, пауза, ввод.',
-    interactiveTargets: ['Взгляд', 'Пауза', 'Ввод'],
-    kicker: 'Точность прежде всего',
-    title: 'Без ошибок',
+    interactivePromptKey: 'onboarding.modeGuide.flawless.interactivePrompt',
+    interactiveTargetKeys: [
+      'onboarding.modeGuide.flawless.targets.lookAhead',
+      'onboarding.modeGuide.flawless.targets.pause',
+      'onboarding.modeGuide.flawless.targets.input',
+    ],
+    kickerKey: 'onboarding.modeGuide.flawless.kicker',
+    titleKey: 'onboarding.modeGuide.flawless.title',
     steps: [
       {
-        title: 'Чем отличается режим',
-        body: 'Здесь важнее всего контроль: одна ошибка может завершить попытку.',
-        checklist: ['нулевая терпимость к ошибкам', 'короткая концентрация', 'медленный старт допустим'],
+        titleKey: 'onboarding.modeGuide.flawless.steps.difference.title',
+        bodyKey: 'onboarding.modeGuide.flawless.steps.difference.body',
+        checklistKeys: [
+          'onboarding.modeGuide.flawless.steps.difference.checklist.zeroTolerance',
+          'onboarding.modeGuide.flawless.steps.difference.checklist.shortFocus',
+          'onboarding.modeGuide.flawless.steps.difference.checklist.slowStart',
+        ],
       },
       {
-        title: 'Полезная стратегия',
-        body: 'Сначала читайте на полслова вперед, затем ускоряйтесь только когда поймали ритм.',
-        checklist: ['не спешить на старте', 'держать взгляд впереди', 'останавливаться после сбоя'],
+        titleKey: 'onboarding.modeGuide.flawless.steps.strategy.title',
+        bodyKey: 'onboarding.modeGuide.flawless.steps.strategy.body',
+        checklistKeys: [
+          'onboarding.modeGuide.flawless.steps.strategy.checklist.startSlowly',
+          'onboarding.modeGuide.flawless.steps.strategy.checklist.lookAhead',
+          'onboarding.modeGuide.flawless.steps.strategy.checklist.stopAfterMistake',
+        ],
       },
       {
         kind: 'interactive',
-        title: 'Мини-проба',
-        body: 'Точность начинается с маленькой паузы перед первым символом.',
-        checklist: ['пройти 3 мини-шага'],
+        titleKey: 'onboarding.modeGuide.common.miniTrial.title',
+        bodyKey: 'onboarding.modeGuide.flawless.steps.trial.body',
+        checklistKeys: ['onboarding.modeGuide.common.miniTrial.checklist'],
       },
     ],
   },
   lessons: {
-    description: 'Пошаговое изучение раскладки и закрепление новых символов.',
-    finishLabel: 'Перейти к урокам',
+    descriptionKey: 'onboarding.modeGuide.lessons.description',
+    finishLabelKey: 'onboarding.modeGuide.lessons.finish',
     icon: BookOpen,
-    interactivePrompt: 'Отметьте путь урока: ряд, символ, закрепление.',
-    interactiveTargets: ['Ряд', 'Символ', 'Закрепление'],
-    kicker: 'Учебный маршрут',
-    title: 'Уроки',
+    interactivePromptKey: 'onboarding.modeGuide.lessons.interactivePrompt',
+    interactiveTargetKeys: [
+      'onboarding.modeGuide.lessons.targets.row',
+      'onboarding.modeGuide.lessons.targets.symbol',
+      'onboarding.modeGuide.lessons.targets.reinforcement',
+    ],
+    kickerKey: 'onboarding.modeGuide.lessons.kicker',
+    titleKey: 'onboarding.modeGuide.lessons.title',
     steps: [
       {
-        title: 'Зачем нужны уроки',
-        body: 'Уроки проводят по раскладке постепенно, чтобы пальцы привыкали без перегруза.',
-        checklist: ['освоение рядов', 'новые символы', 'упражнения по порядку'],
+        titleKey: 'onboarding.modeGuide.lessons.steps.purpose.title',
+        bodyKey: 'onboarding.modeGuide.lessons.steps.purpose.body',
+        checklistKeys: [
+          'onboarding.modeGuide.lessons.steps.purpose.checklist.rows',
+          'onboarding.modeGuide.lessons.steps.purpose.checklist.newSymbols',
+          'onboarding.modeGuide.lessons.steps.purpose.checklist.orderedExercises',
+        ],
       },
       {
-        title: 'Как проходить',
-        body: 'Лучше закрывать уроки короткими подходами, чем пытаться пройти всю раскладку за один раз.',
-        checklist: ['начните с доступного урока', 'повторяйте сложные символы', 'следите за точностью'],
+        titleKey: 'onboarding.modeGuide.lessons.steps.flow.title',
+        bodyKey: 'onboarding.modeGuide.lessons.steps.flow.body',
+        checklistKeys: [
+          'onboarding.modeGuide.lessons.steps.flow.checklist.availableLesson',
+          'onboarding.modeGuide.lessons.steps.flow.checklist.repeatSymbols',
+          'onboarding.modeGuide.lessons.steps.flow.checklist.accuracy',
+        ],
       },
       {
         kind: 'interactive',
-        title: 'Мини-проба',
-        body: 'Соберите три части учебного цикла.',
-        checklist: ['пройти 3 мини-шага'],
+        titleKey: 'onboarding.modeGuide.common.miniTrial.title',
+        bodyKey: 'onboarding.modeGuide.lessons.steps.trial.body',
+        checklistKeys: ['onboarding.modeGuide.common.miniTrial.checklist'],
       },
     ],
   },
   game: {
-    description: 'Рогалик-забег с картой, предметами, событиями и боссами.',
-    finishLabel: 'Перейти к игре',
+    descriptionKey: 'onboarding.modeGuide.game.description',
+    finishLabelKey: 'onboarding.modeGuide.game.finish',
     icon: Gamepad2,
-    interactivePrompt: 'Подготовьте забег: карта, бой, награда.',
-    interactiveTargets: ['Карта', 'Бой', 'Награда'],
-    kicker: 'Игровая прогрессия',
-    title: 'Игра',
+    interactivePromptKey: 'onboarding.modeGuide.game.interactivePrompt',
+    interactiveTargetKeys: [
+      'onboarding.modeGuide.game.targets.map',
+      'onboarding.modeGuide.game.targets.battle',
+      'onboarding.modeGuide.game.targets.reward',
+    ],
+    kickerKey: 'onboarding.modeGuide.game.kicker',
+    titleKey: 'onboarding.modeGuide.game.title',
     steps: [
       {
-        title: 'Что происходит',
-        body: 'Игра превращает тренировку в маршрут: вы выбираете узлы, проходите бои и собираете предметы.',
-        checklist: ['карта забега', 'обычные уровни и боссы', 'инвентарь и награды'],
+        titleKey: 'onboarding.modeGuide.game.steps.flow.title',
+        bodyKey: 'onboarding.modeGuide.game.steps.flow.body',
+        checklistKeys: [
+          'onboarding.modeGuide.game.steps.flow.checklist.runMap',
+          'onboarding.modeGuide.game.steps.flow.checklist.levelsAndBosses',
+          'onboarding.modeGuide.game.steps.flow.checklist.inventoryRewards',
+        ],
       },
       {
-        title: 'Как не потеряться',
-        body: 'Сначала выберите комфортную цель скорости, затем следите за здоровьем и эффектами предметов.',
-        checklist: ['цель скорости', 'здоровье', 'выбор наград'],
+        titleKey: 'onboarding.modeGuide.game.steps.orientation.title',
+        bodyKey: 'onboarding.modeGuide.game.steps.orientation.body',
+        checklistKeys: [
+          'onboarding.modeGuide.game.steps.orientation.checklist.speedGoal',
+          'onboarding.modeGuide.game.steps.orientation.checklist.health',
+          'onboarding.modeGuide.game.steps.orientation.checklist.rewards',
+        ],
       },
       {
         kind: 'interactive',
-        title: 'Мини-проба',
-        body: 'Отметьте три элемента, которые ведут игровой забег.',
-        checklist: ['пройти 3 мини-шага'],
+        titleKey: 'onboarding.modeGuide.common.miniTrial.title',
+        bodyKey: 'onboarding.modeGuide.game.steps.trial.body',
+        checklistKeys: ['onboarding.modeGuide.common.miniTrial.checklist'],
       },
     ],
   },
@@ -210,6 +283,7 @@ type ModeWelcomeGuideProps = {
 };
 
 export function ModeWelcomeGuide({ mode, onComplete, onSkip }: ModeWelcomeGuideProps) {
+  const { t } = useI18n();
   const config = MODE_GUIDE_CONFIGS[mode];
   const Icon = config.icon;
   const [stepIndex, setStepIndex] = useState(0);
@@ -222,9 +296,11 @@ export function ModeWelcomeGuide({ mode, onComplete, onSkip }: ModeWelcomeGuideP
 
   const step = config.steps[stepIndex] ?? config.steps[0]!;
   const isInteractiveStep = step.kind === 'interactive';
-  const interactionDone = !isInteractiveStep || hitIndex >= config.interactiveTargets.length;
+  const interactionDone = !isInteractiveStep || hitIndex >= config.interactiveTargetKeys.length;
   const isLastStep = stepIndex >= config.steps.length - 1;
   const progressPercent = Math.round(((stepIndex + 1) / config.steps.length) * 100);
+
+  const interactiveTargets = config.interactiveTargetKeys.map(targetKey => t(targetKey));
 
   const handleNext = () => {
     if (!interactionDone) return;
@@ -239,16 +315,16 @@ export function ModeWelcomeGuide({ mode, onComplete, onSkip }: ModeWelcomeGuideP
   return (
     <ModalLayout
       className="mode-guide-modal"
-      description={config.description}
+      description={t(config.descriptionKey)}
       footer={(
         <div className="mode-guide-actions">
-          <Button variant="ghost" onClick={onSkip}>Пропустить гайд</Button>
+          <Button variant="ghost" onClick={onSkip}>{t('onboarding.modeGuide.skip')}</Button>
           <Button
             variant="accent"
             disabled={!interactionDone}
             onClick={handleNext}
           >
-            {isLastStep ? config.finishLabel : 'Дальше'}
+            {isLastStep ? t(config.finishLabelKey) : t('common.actions.next')}
           </Button>
         </div>
       )}
@@ -257,7 +333,7 @@ export function ModeWelcomeGuide({ mode, onComplete, onSkip }: ModeWelcomeGuideP
       title={(
         <span className="mode-guide-title">
           <span className="mode-guide-title-icon"><Icon size={20} /></span>
-          {config.title}
+          {t(config.titleKey)}
         </span>
       )}
     >
@@ -266,15 +342,15 @@ export function ModeWelcomeGuide({ mode, onComplete, onSkip }: ModeWelcomeGuideP
           <span style={{ width: `${progressPercent}%` }} />
         </div>
 
-        <div className="mode-guide-kicker">{config.kicker}</div>
-        <h3>{step.title}</h3>
-        <p>{step.body}</p>
+        <div className="mode-guide-kicker">{t(config.kickerKey)}</div>
+        <h3>{t(step.titleKey)}</h3>
+        <p>{t(step.bodyKey)}</p>
 
         <div className="mode-guide-checklist">
-          {step.checklist.map(item => (
-            <div key={item} className="mode-guide-checkitem">
+          {step.checklistKeys.map(itemKey => (
+            <div key={itemKey} className="mode-guide-checkitem">
               <CheckCircle2 size={16} />
-              <span>{item}</span>
+              <span>{t(itemKey)}</span>
             </div>
           ))}
         </div>
@@ -282,11 +358,11 @@ export function ModeWelcomeGuide({ mode, onComplete, onSkip }: ModeWelcomeGuideP
         {isInteractiveStep ? (
           <div className="mode-guide-interaction">
             <div>
-              <strong>Интерактивный шаг</strong>
-              <p>{config.interactivePrompt}</p>
+              <strong>{t('onboarding.modeGuide.interactiveStep')}</strong>
+              <p>{t(config.interactivePromptKey)}</p>
             </div>
             <div className="mode-guide-targets">
-              {config.interactiveTargets.map((target, index) => {
+              {interactiveTargets.map((target, index) => {
                 const done = index < hitIndex;
                 const active = index === hitIndex;
                 return (
@@ -299,7 +375,7 @@ export function ModeWelcomeGuide({ mode, onComplete, onSkip }: ModeWelcomeGuideP
                       active ? 'active' : '',
                     ].filter(Boolean).join(' ')}
                     disabled={!active}
-                    onClick={() => setHitIndex(current => Math.min(current + 1, config.interactiveTargets.length))}
+                    onClick={() => setHitIndex(current => Math.min(current + 1, config.interactiveTargetKeys.length))}
                   >
                     {done ? <CheckCircle2 size={15} /> : <Keyboard size={15} />}
                     {target}
@@ -311,7 +387,7 @@ export function ModeWelcomeGuide({ mode, onComplete, onSkip }: ModeWelcomeGuideP
         ) : null}
 
         <div className="mode-guide-step-label">
-          Шаг {stepIndex + 1} из {config.steps.length}
+          {t('onboarding.modeGuide.stepProgress', { current: stepIndex + 1, total: config.steps.length })}
         </div>
       </div>
     </ModalLayout>

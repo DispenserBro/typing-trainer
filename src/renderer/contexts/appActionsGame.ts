@@ -21,6 +21,7 @@ type GameActionsArgs = {
   currentLayout: string;
   layouts: LayoutsData;
   achievementCatalog: GameAchievementDefinition[];
+  onGameStateChange?: (previousState: GameState, nextState: GameState) => void;
 };
 
 export function createGameActions({
@@ -32,6 +33,7 @@ export function createGameActions({
   currentLayout,
   layouts,
   achievementCatalog,
+  onGameStateChange,
 }: GameActionsArgs) {
   const persistProgressState = (next: Progress) => {
     progressRef.current = next;
@@ -39,7 +41,9 @@ export function createGameActions({
   };
 
   const commitGameState = (nextGame: GameState) => {
+    const previousGame = gameStateRef.current;
     const normalizedGame = normalizeGameState(nextGame);
+    const changed = !isGameStateEqual(previousGame, normalizedGame);
     gameStateRef.current = normalizedGame;
     setGameState(prev => (isGameStateEqual(prev, normalizedGame) ? prev : normalizedGame));
     setProgress(prev => {
@@ -48,6 +52,7 @@ export function createGameActions({
       persistProgressState(next);
       return next;
     });
+    if (changed) onGameStateChange?.(previousGame, normalizedGame);
     return normalizedGame;
   };
 

@@ -1,4 +1,4 @@
-import type { ModModeDefinition } from '../addons/modApi';
+import type { ModModeDefinition } from '../../shared/types';
 
 export type SidebarGroup = 'top' | 'bottom';
 

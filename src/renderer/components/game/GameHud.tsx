@@ -2,6 +2,7 @@ import { memo, useEffect, useMemo, useState } from 'react';
 import type { GameRunModifier } from '../../../shared/types';
 import { REGEN_HP_PER_BATTLE } from '../../../core/game/battleSystem';
 import type { BossArchetypeConfig } from '../../../core/game/bossArchetypes';
+import { buildGameHudViewModel } from '../../../core/game/viewModel';
 import { useI18n } from '../../contexts/I18nContext';
 import { GameInfoChip } from './GameInfoChip';
 import { InlineStatsBar } from '../ui/InlineStatsBar';
@@ -68,26 +69,28 @@ export const GameHud = memo(function GameHud({
     return () => clearInterval(interval);
   }, [activeIsBoss, bossTimeLimit, sessionActive]);
 
-  const liveElapsedSeconds = useMemo(() => (
-    sessionActive ? (performance.now() - sessionStartTime) / 1000 : resultElapsedSeconds
-  ), [resultElapsedSeconds, sessionActive, sessionStartTime, timerTick]);
-
-  const bossTimerRatio = useMemo(() => (
-    bossTimeLimit ? Math.min(1, liveElapsedSeconds / bossTimeLimit) : 0
-  ), [bossTimeLimit, liveElapsedSeconds]);
+  const hudViewModel = useMemo(() => buildGameHudViewModel({
+    bossTimeLimit,
+    hp,
+    maxHp,
+    nowMs: performance.now(),
+    resultElapsedSeconds,
+    sessionActive,
+    sessionStartTime,
+  }), [bossTimeLimit, hp, maxHp, resultElapsedSeconds, sessionActive, sessionStartTime, timerTick]);
 
   return (
     <>
       <InlineStatsBar
-        items={[
-          { id: 'hp', content: <><b>{Math.max(hp, 0)}</b> HP</> },
-          { id: 'level-progress', content: <><b>{level}</b> / {totalLevels}</> },
-          { id: 'level-kind', className: activeIsBoss ? 'metric-negative' : undefined, content: <b>{activeIsBoss ? t('game.hud.boss') : t('game.hud.level')}</b> },
-          { id: 'letters', content: <><b>{unlockedLetters}</b> {t('game.hud.letters')}</> },
-          { id: 'record', content: <><b>{highestLevel}</b> {t('game.hud.record')}</> },
-          { id: 'target-speed', content: <><b>{effectiveTargetSpeedDisplay}</b> <small className="speed-unit">{speedUnitLabel}</small></> },
-          { id: 'current-speed', content: <><b>{currentSpeedDisplay}</b> <small className="speed-unit">{speedUnitLabel}</small></> },
-          { id: 'accuracy', content: <><b>{Math.round(accuracy)}</b>%</> },
+        compactItems={[
+          { id: 'hp', value: Math.max(hp, 0), label: 'HP' },
+          { id: 'level-progress', value: level, label: `/ ${totalLevels}` },
+          { id: 'level-kind', value: activeIsBoss ? t('game.hud.boss') : t('game.hud.level'), tone: activeIsBoss ? 'bad' : undefined },
+          { id: 'letters', value: unlockedLetters, label: t('game.hud.letters') },
+          { id: 'record', value: highestLevel, label: t('game.hud.record') },
+          { id: 'target-speed', value: effectiveTargetSpeedDisplay, detail: speedUnitLabel },
+          { id: 'current-speed', value: currentSpeedDisplay, detail: speedUnitLabel },
+          { id: 'accuracy', value: Math.round(accuracy), label: '%' },
         ]}
       />
 
@@ -139,12 +142,12 @@ export const GameHud = memo(function GameHud({
         <div className="game-boss-timer">
           <div className="game-boss-timer-row">
             <span>{t('game.hud.bossTimer')}</span>
-            <span><b>{liveElapsedSeconds.toFixed(1)}</b> / {bossTimeLimit.toFixed(1)} {t('common.secondsShort')}</span>
+            <span><b>{hudViewModel.liveElapsedSeconds.toFixed(1)}</b> / {bossTimeLimit.toFixed(1)} {t('common.secondsShort')}</span>
           </div>
           <div className="game-boss-timer-bar">
             <div
-              className={`game-boss-timer-fill${bossTimerRatio >= 0.85 ? ' danger' : ''}`}
-              style={{ width: `${Math.min(100, bossTimerRatio * 100)}%` }}
+              className={`game-boss-timer-fill${hudViewModel.bossTimerDanger ? ' danger' : ''}`}
+              style={{ width: `${hudViewModel.bossTimerPercent}%` }}
             />
           </div>
         </div>
@@ -155,8 +158,8 @@ export const GameHud = memo(function GameHud({
           <span className="game-run-hp-label">HP</span>
           <div className="game-run-hp-bar">
             <div
-              className={`game-run-hp-fill${hp / maxHp <= 0.25 ? ' danger' : hp / maxHp <= 0.5 ? ' warn' : ''}`}
-              style={{ width: `${Math.max(0, Math.min(100, (hp / maxHp) * 100))}%` }}
+              className={`game-run-hp-fill${hudViewModel.hpTone ? ` ${hudViewModel.hpTone}` : ''}`}
+              style={{ width: `${hudViewModel.hpPercent}%` }}
             />
           </div>
           <span className="game-run-hp-value">{Math.max(hp, 0)} / {maxHp}</span>

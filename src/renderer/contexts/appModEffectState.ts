@@ -23,7 +23,7 @@ export type ResolvedModEffectState = {
   itemCatalog: GameItemDefinition[];
   achievementCatalog: GameAchievementDefinition[];
   disabledSections: string[];
-  ruleOverrides: Map<string, unknown>;
+  ruleOverrides: ModAPIState['ruleOverrides'];
   settingOverrides: Map<string, unknown>;
   cssSnippets: string[];
   panels: ModAPIState['panels'];

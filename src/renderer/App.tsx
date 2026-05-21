@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import {
   AppProvider,
   useAppNavigation,
@@ -54,6 +54,7 @@ function AppInner() {
     setCurrentLayout,
   } = useAppSettings();
   const { t } = useI18n();
+  const mainScrollRef = useRef<HTMLDivElement | null>(null);
 
   // Inject mod CSS snippets into <head>
   useEffect(() => {
@@ -64,6 +65,10 @@ function AppInner() {
     document.head.appendChild(styleEl);
     return () => { styleEl.remove(); };
   }, [modCssSnippets]);
+
+  useEffect(() => {
+    mainScrollRef.current?.scrollTo({ top: 0, left: 0 });
+  }, [currentMode]);
 
   if (!ready) {
     return (
@@ -147,7 +152,7 @@ function AppInner() {
       >
         <Sidebar />
         <main id="main-content">
-          <div className="main-scroll">
+          <div ref={mainScrollRef} className="main-scroll">
             {topPanels.map(p => <ModPanelView key={p.id} html={p.html} />)}
             {page}
             {bottomPanels.map(p => <ModPanelView key={p.id} html={p.html} />)}

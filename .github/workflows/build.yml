@@ -3,6 +3,7 @@ name: Build & Release
 env:
   APP_NAME_SLUG: typing-trainer
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  MACOS_RELEASE_STATUS: excluded-until-signing-and-notarization
 
 on:
   push:
@@ -14,8 +15,86 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  platform-smoke:
+    name: Platform smoke (${{ matrix.target }})
     strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: win
+          - os: ubuntu-latest
+            target: linux
+          - os: macos-latest
+            target: mac
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install Linux smoke dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - name: Launch app and verify writable data path
+        if: matrix.os != 'ubuntu-latest'
+        run: npm run diagnostics:platform-smoke
+
+      - name: Launch app and verify writable data path
+        if: matrix.os == 'ubuntu-latest'
+        run: xvfb-run -a npm run diagnostics:platform-smoke
+
+      - run: npm run build:electron -- --dry-run --${{ matrix.target }}
+
+  release-hardening:
+    name: Diagnostics, release-hardening, SDK gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Checkout SDK gate repository
+        if: ${{ vars.SDK_REPOSITORY != '' }}
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ vars.SDK_REPOSITORY }}
+          path: SDK
+
+      - name: Require SDK gate repository
+        if: ${{ vars.SDK_REPOSITORY == '' }}
+        run: |
+          echo "SDK_REPOSITORY repository variable is required for the release SDK gate."
+          exit 1
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run diagnostics:content-pipeline
+      - run: npm run diagnostics:release-coverage
+      - run: npm run diagnostics:release-hardening
+        env:
+          TYPING_TRAINER_SDK_DIR: SDK
+
+  build:
+    needs:
+      - platform-smoke
+      - release-hardening
+    strategy:
+      fail-fast: false
       matrix:
         include:
           - os: windows-latest
@@ -40,43 +119,96 @@ jobs:
           sudo apt-get install -y rpm
 
       - run: npm ci
+      - name: Require Windows signing material
+        if: matrix.os == 'windows-latest' && startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        env:
+          CSC_LINK: ${{ secrets.WINDOWS_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CSC_KEY_PASSWORD }}
+        run: |
+          if (-not $env:CSC_LINK -or -not $env:CSC_KEY_PASSWORD) {
+            throw 'WINDOWS_CSC_LINK and WINDOWS_CSC_KEY_PASSWORD secrets are required for signed Windows release artifacts.'
+          }
+
       - run: npm run build:electron -- --${{ matrix.target }}
+        env:
+          CSC_LINK: ${{ secrets.WINDOWS_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CSC_KEY_PASSWORD }}
+
+      - name: Verify Windows signatures
+        if: matrix.os == 'windows-latest' && startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        run: |
+          $artifacts = Get-ChildItem -Path dist-build -Recurse -File -Include *.exe
+          if (-not $artifacts) {
+            throw 'No Windows executables were produced for signature verification.'
+          }
+          foreach ($artifact in $artifacts) {
+            $signature = Get-AuthenticodeSignature -LiteralPath $artifact.FullName
+            if ($signature.Status -ne 'Valid') {
+              throw "Invalid or missing Authenticode signature: $($artifact.FullName) [$($signature.Status)]"
+            }
+          }
 
       - uses: actions/upload-artifact@v6
         if: matrix.os == 'windows-latest'
         with:
           name: dist-${{ env.APP_NAME_SLUG }}-exe
           path: dist-build/**/*.exe
-          if-no-files-found: ignore
+          if-no-files-found: error
 
       - uses: actions/upload-artifact@v6
         if: matrix.os == 'ubuntu-latest'
         with:
           name: dist-${{ env.APP_NAME_SLUG }}-appimage
           path: dist-build/**/*.AppImage
-          if-no-files-found: ignore
+          if-no-files-found: error
 
       - uses: actions/upload-artifact@v6
         if: matrix.os == 'ubuntu-latest'
         with:
           name: dist-${{ env.APP_NAME_SLUG }}-deb
           path: dist-build/**/*.deb
-          if-no-files-found: ignore
+          if-no-files-found: error
 
       - uses: actions/upload-artifact@v6
         if: matrix.os == 'ubuntu-latest'
         with:
           name: dist-${{ env.APP_NAME_SLUG }}-rpm
           path: dist-build/**/*.rpm
-          if-no-files-found: ignore
+          if-no-files-found: error
+
+  publish-release:
+    name: Publish GitHub Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v6
+        with:
+          path: release-artifacts
+
+      - name: Verify complete release artifacts
+        shell: pwsh
+        run: |
+          $required = @('*.exe', '*.AppImage', '*.deb', '*.rpm')
+          foreach ($pattern in $required) {
+            $matches = Get-ChildItem -Path release-artifacts -Recurse -File -Filter $pattern
+            if (-not $matches) {
+              throw "Missing required release artifact: $pattern"
+            }
+          }
+          if ('${{ env.MACOS_RELEASE_STATUS }}' -ne 'excluded-until-signing-and-notarization') {
+            throw 'macOS release artifacts require signing/notarization gate before publication.'
+          }
+          Write-Host 'macOS release artifacts are explicitly excluded until signing/notarization is ready.'
 
       - name: Publish GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          fail_on_unmatched_files: false
+          fail_on_unmatched_files: true
           files: |
-            dist-build/**/*.exe
-            dist-build/**/*.AppImage
-            dist-build/**/*.deb
-            dist-build/**/*.rpm
+            release-artifacts/**/*.exe
+            release-artifacts/**/*.AppImage
+            release-artifacts/**/*.deb
+            release-artifacts/**/*.rpm

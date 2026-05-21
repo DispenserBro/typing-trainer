@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import type { Session, CharStat } from '../../shared/types';
-import { createSession } from '../../core/engine';
+import { createSession } from '../../core/typingSession';
 import { useAppPractice, useAppSettings, useAppUi } from '../contexts/AppContext';
 
 interface UseTypingSessionOptions {
@@ -11,7 +11,7 @@ interface UseTypingSessionOptions {
 }
 
 export function useTypingSession({ mode, noStepBack, maxErrors, onFinish }: UseTypingSessionOptions) {
-  const { saveCharStats } = useAppPractice();
+  const { saveCharStats, emitModEvent } = useAppPractice();
   const { settings } = useAppSettings();
   const { setActiveChar } = useAppUi();
   const [session, setSession] = useState<Session>(() => {
@@ -21,7 +21,9 @@ export function useTypingSession({ mode, noStepBack, maxErrors, onFinish }: UseT
   });
   const [renderTick, setRenderTick] = useState(0);
   const [waitingForSpace, setWaitingForSpace] = useState(false);
+  const onFinishRef = useRef(onFinish);
   const sessionRef = useRef(session);
+  onFinishRef.current = onFinish;
   sessionRef.current = session;
 
   const rerender = useCallback(() => setRenderTick(t => t + 1), []);
@@ -32,8 +34,13 @@ export function useTypingSession({ mode, noStepBack, maxErrors, onFinish }: UseT
     sessionRef.current = s;
     setWaitingForSpace(false);
     if (text.length) setActiveChar(text[0]);
+    emitModEvent('sessionStart', {
+      mode: s.mode,
+      textLength: text.length,
+      lessonIndex: lessonIdx >= 0 ? lessonIdx : null,
+    });
     rerender();
-  }, [mode, setActiveChar, rerender]);
+  }, [emitModEvent, mode, setActiveChar, rerender]);
 
   const stop = useCallback(() => {
     setSession(prev => {
@@ -61,8 +68,8 @@ export function useTypingSession({ mode, noStepBack, maxErrors, onFinish }: UseT
 
     saveCharStats(s.charStats);
     setActiveChar(undefined);
-    onFinish?.(wpm, acc, elapsed, s);
-  }, [saveCharStats, setActiveChar, onFinish]);
+    onFinishRef.current?.(wpm, acc, elapsed, s);
+  }, [saveCharStats, setActiveChar]);
 
   const handleKey = useCallback((e: KeyboardEvent) => {
     const s = sessionRef.current;
@@ -121,6 +128,13 @@ export function useTypingSession({ mode, noStepBack, maxErrors, onFinish }: UseT
       interval: charTime,
       timestamp: now,
     });
+    const keypress = s.keypresses[s.keypresses.length - 1]!;
+    emitModEvent('keyPress', {
+      mode: s.mode,
+      lessonIndex: s.lessonIdx >= 0 ? s.lessonIdx : null,
+      textLength: s.text.length,
+      keypress,
+    });
 
     if (correct) {
       s.charStats[ch].hits++;
@@ -155,7 +169,7 @@ export function useTypingSession({ mode, noStepBack, maxErrors, onFinish }: UseT
         finish();
       }
     }
-  }, [maxErrors, noStepBack, settings.endWithSpace, setActiveChar, finish, rerender]);
+  }, [emitModEvent, maxErrors, noStepBack, settings.endWithSpace, setActiveChar, finish, rerender]);
 
   // live stats
   const elapsed = session.active

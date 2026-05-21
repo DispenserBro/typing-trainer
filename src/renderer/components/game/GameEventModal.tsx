@@ -4,7 +4,8 @@ import type {
   GameRunEventChoice,
   GameRunEventState,
 } from '../../../shared/types';
-import { getGameItemById, getGameItemIcon, getGameItemRarityStars } from '../../../core/game/items';
+import { getGameItemIcon } from '../../../core/game/items';
+import { buildGameEventChoiceCardViewModels } from '../../../core/game/viewModel';
 import { useI18n } from '../../contexts/I18nContext';
 import { ActionRow } from '../ui/ActionRow';
 import { Button } from '../ui/Button';
@@ -43,6 +44,12 @@ export function GameEventModal({
 }: GameEventModalProps) {
   const { t } = useI18n();
   const EventIcon = getEventIcon(pendingEvent.kind);
+  const eventKindLabel = getGameEventKindLabel(pendingEvent.kind, t);
+  const choiceCardViewModels = buildGameEventChoiceCardViewModels({
+    choices: pendingEvent.choices,
+    eventKindLabel,
+    translate: t,
+  });
   const handleChoicePointerDown = (event: React.PointerEvent<HTMLButtonElement>, choice: GameRunEventChoice) => {
     if (event.button !== 0) return;
     event.preventDefault();
@@ -62,7 +69,7 @@ export function GameEventModal({
       <div className="game-modal-head">
         <span className="game-modal-icon"><EventIcon size={18} /></span>
         <div>
-          <div className="game-modal-kicker">{getGameEventKindLabel(pendingEvent.kind, t)}</div>
+          <div className="game-modal-kicker">{eventKindLabel}</div>
           <h3>{pendingEvent.title}</h3>
         </div>
       </div>
@@ -71,56 +78,39 @@ export function GameEventModal({
       {eventPending ? (
         <>
           <div className="game-reward-grid">
-            {pendingEvent.choices.map((choice, index) => {
-            const choiceItem = choice.effect.grantItemId ? getGameItemById(choice.effect.grantItemId) : null;
-            const ChoiceIcon = choiceItem ? getGameItemIcon(choiceItem.icon) : null;
-            const effectDescriptions = [
-              choice.effect.lifeDelta
-                ? `${choice.effect.lifeDelta > 0 ? '+' : ''}${choice.effect.lifeDelta} ${t('game.hud.hpShort')}`
-                : null,
-              choice.effect.repairEquippedBy
-                ? t('game.event.repairBonus', { count: choice.effect.repairEquippedBy })
-                : null,
-              choice.effect.modifier?.description ?? null,
-            ].filter((entry): entry is string => Boolean(entry));
+            {choiceCardViewModels.map((choiceModel, index) => {
+              const ChoiceIcon = choiceModel.iconKey ? getGameItemIcon(choiceModel.iconKey) : null;
 
-            return (
-              <GameRewardChoiceCard
-                key={choice.id}
-                cardClassName={`${choiceItem ? `rarity-${choiceItem.rarity}` : ''}${choice.disabled ? ' disabled' : ''}`.trim()}
-                special={!choiceItem}
-                badge={choiceItem
-                  ? (ChoiceIcon && <ChoiceIcon size={18} />)
-                  : choice.title.slice(0, 1).toUpperCase()}
-                rarity={choiceItem ? getGameItemRarityStars(choiceItem.rarity) : getGameEventKindLabel(pendingEvent.kind, t)}
-                name={choice.title}
-                kind={choice.flavor}
-                description={choice.description}
-                durability={choiceItem?.maxDurability != null ? {
-                  current: choiceItem.maxDurability,
-                  label: t('game.inventory.durability'),
-                  max: choiceItem.maxDurability,
-                } : null}
-                effects={[
-                  ...(choiceItem?.effects.map(effect => effect.description) ?? []),
-                  ...effectDescriptions,
-                ]}
-                body={null}
-                action={(
-                  <Button
-                  ref={node => { eventChoiceRefs.current[index] = node; }}
-                  variant="accent"
-                  disabled={choice.disabled}
-                  onPointerDown={(event) => handleChoicePointerDown(event, choice)}
-                  onKeyDown={(event) => handleChoiceKeyDown(event, choice)}
-                  onClick={(event) => event.preventDefault()}
-                >
-                  {t('game.event.selectChoice')}
-                </Button>
-                )}
-              />
-            );
-          })}
+              return (
+                <GameRewardChoiceCard
+                  key={choiceModel.choice.id}
+                  cardClassName={choiceModel.cardClassName}
+                  special={choiceModel.special}
+                  badge={choiceModel.iconKey
+                    ? (ChoiceIcon && <ChoiceIcon size={18} />)
+                    : choiceModel.badgeLabel}
+                  rarity={choiceModel.rarity}
+                  name={choiceModel.name}
+                  kind={choiceModel.kind}
+                  description={choiceModel.description}
+                  durability={choiceModel.durability}
+                  effects={choiceModel.effects}
+                  body={null}
+                  action={(
+                    <Button
+                      ref={node => { eventChoiceRefs.current[index] = node; }}
+                      variant="accent"
+                      disabled={choiceModel.choice.disabled}
+                      onPointerDown={(event) => handleChoicePointerDown(event, choiceModel.choice)}
+                      onKeyDown={(event) => handleChoiceKeyDown(event, choiceModel.choice)}
+                      onClick={(event) => event.preventDefault()}
+                    >
+                      {t('game.event.selectChoice')}
+                    </Button>
+                  )}
+                />
+              );
+            })}
           </div>
           <ActionRow align="center" className="game-actions game-event-skip-row">
             <Button size="sm" onClick={onSkip}>

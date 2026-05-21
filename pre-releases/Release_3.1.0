@@ -1,0 +1,14 @@
+Release 3.1.0
+
+Range: v3.0.0..working-tree
+
+Highlights
+
+- Added a release-ready extension catalog flow with source validation, install actions, package issue reporting, and shared catalog selectors.
+- Expanded the public mod and addon contracts with SDK-ready validators, typed ModAPI payloads, permission checks, and documented compatibility behavior.
+- Added release hardening diagnostics for performance budgets, packaging dry-runs, platform smoke checks, release coverage, progress migrations, and app data path safety.
+- Improved packaging support across Windows, Linux, and macOS, including dry-run diagnostics and platform smoke execution.
+- Refactored practice, sprint, survival, result, home, stats, and game presentation logic into core view models and completion helpers with focused diagnostics.
+- Added richer onboarding, mode guidance, result follow-ups, home dashboard detail flows, and localized copy for the expanded release surface.
+- Fixed mode switching stability by resetting the main scroll container and keeping keyboard component hooks in a stable order when the keyboard panel is hidden.
+- Moved SDK examples out of the application data folder and stopped tracking local theme packages, leaving runtime themes as local user data.

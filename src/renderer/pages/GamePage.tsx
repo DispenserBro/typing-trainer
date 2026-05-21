@@ -53,11 +53,10 @@ import {
 import {
   buildEquippedBySlot,
   buildEquippedEntries,
+  buildGamePageBonusViewModel,
   buildInventoryEntries,
   getHasRepairTargets,
   getTargetSpeedDisplay,
-  sumItemBonuses,
-  sumModifierBonuses,
 } from '../../core/game/pageUtils';
 import type { EquippedEntry, InventoryEntry } from '../../core/game/viewTypes';
 import {
@@ -72,14 +71,13 @@ import {
   NORMAL_MIN_ACCURACY,
   TOTAL_GAME_LEVELS,
 } from '../../core/game/runUtils';
+import { resolveGameChoiceEffect, resolveGamePostLevelFlow } from '../../core/game/runFlow';
 import { getBossArchetype, computeRhythmDeviation } from '../../core/game/bossArchetypes';
-import { computeSetBonuses, ITEM_SET_MEMBERSHIP } from '../../core/game/itemSets';
 import {
   createEnemy,
   createBattleState,
   resolveBattleRound,
   getEnemyTier,
-  sumBattleBonuses,
   BATTLE_ROUND_WORDS,
   BOSS_BATTLE_ROUND_WORDS,
   PLAYER_BASE_HP,
@@ -253,42 +251,15 @@ export function GamePage() {
     () => gameAchievementCatalog.filter(a => (a.category ?? 'game') === 'game'),
     [gameAchievementCatalog],
   );
-  const itemBonuses = useMemo(
-    () => sumItemBonuses(stableEquippedItems, activeIsBoss),
-    [activeIsBoss, stableEquippedItems],
+  const gameBonusViewModel = useMemo(
+    () => buildGamePageBonusViewModel(stableEquippedItems, activeModifiers, activeIsBoss),
+    [activeIsBoss, activeModifiers, stableEquippedItems],
   );
-  const modifierBonuses = useMemo(
-    () => sumModifierBonuses(activeModifiers, activeIsBoss),
-    [activeIsBoss, activeModifiers],
-  );
-  const equippedItemIds = useMemo(
-    () => stableEquippedItems
-      .filter(entry => entry.meta && !entry.broken)
-      .map(entry => entry.meta!.id),
-    [stableEquippedItems],
-  );
-  const setBonuses = useMemo(
-    () => computeSetBonuses(equippedItemIds),
-    [equippedItemIds],
-  );
-  const totalBonuses = useMemo(() => ({
-    speedRequirementReductionPercent:
-      itemBonuses.speedRequirementReductionPercent
-      + modifierBonuses.speedRequirementReductionPercent
-      + setBonuses.totalSpeedReduction,
-    accuracyRequirementReduction:
-      itemBonuses.accuracyRequirementReduction
-      + modifierBonuses.accuracyRequirementReduction
-      + setBonuses.totalAccuracyReduction,
-    bossTimerBonusSeconds:
-      itemBonuses.bossTimerBonusSeconds
-      + modifierBonuses.bossTimerBonusSeconds
-      + setBonuses.totalBossTimerBonus,
-  }), [itemBonuses, modifierBonuses, setBonuses]);
-  const battleBonuses = useMemo(
-    () => sumBattleBonuses(itemBonuses, modifierBonuses),
-    [itemBonuses, modifierBonuses],
-  );
+  const {
+    setBonuses,
+    totalBonuses,
+    battleBonuses,
+  } = gameBonusViewModel;
   const activeMap = runMap ?? previewMap;
   const currentMapNode = useMemo(
     () => getGameRunMapNode(activeMap, activeMap.currentNodeId),
@@ -456,21 +427,29 @@ export function GamePage() {
       }));
 
       const nextMapNodeIds = runMap ? getGameRunMapOutgoingIds(runMap, runMap.currentNodeId) : [];
+      const postLevelFlow = resolveGamePostLevelFlow({
+        passed,
+        isBoss: boss,
+        victory,
+        level,
+        totalLevels: activeTotalLevels,
+        nextMapNodeIds,
+      });
 
-      if (passed && boss && !victory && level < activeTotalLevels) {
+      if (postLevelFlow.kind === 'bossReward') {
         setRewardChoices(generateBossRewardChoices());
         setSelectedRewardMessage(null);
         resetMapSelection();
         resetEventState();
-      } else if (passed && !victory && nextMapNodeIds.length > 0) {
-        setRunMap(prev => (prev ? setGameRunMapSelectableNodes(prev, nextMapNodeIds) : prev));
+      } else if (postLevelFlow.kind === 'mapSelection') {
+        setRunMap(prev => (prev ? setGameRunMapSelectableNodes(prev, postLevelFlow.selectableNodeIds) : prev));
         resetRewardState();
         resetEventState();
-      } else if (passed && !victory && nextMapNodeIds.length === 0) {
+      } else if (postLevelFlow.kind === 'autoAdvance') {
         resetMapSelection();
         resetRewardState();
         resetEventState();
-        setAutoAdvanceLevel(level + 1);
+        setAutoAdvanceLevel(postLevelFlow.nextLevel);
       } else {
         resetMapSelection();
         resetRewardState();
@@ -588,21 +567,29 @@ export function GamePage() {
     setCurrentGhost(prev => recordGhostLevel(prev, { level, wpm, acc, elapsed, passed }));
 
     const nextMapNodeIds = runMap ? getGameRunMapOutgoingIds(runMap, runMap.currentNodeId) : [];
+    const postLevelFlow = resolveGamePostLevelFlow({
+      passed,
+      isBoss: boss,
+      victory,
+      level,
+      totalLevels: activeTotalLevels,
+      nextMapNodeIds,
+    });
 
-    if (passed && boss && !victory && level < activeTotalLevels) {
+    if (postLevelFlow.kind === 'bossReward') {
       setRewardChoices(generateBossRewardChoices());
       setSelectedRewardMessage(null);
       resetMapSelection();
       resetEventState();
-    } else if (passed && !victory && nextMapNodeIds.length > 0) {
-      setRunMap(prev => (prev ? setGameRunMapSelectableNodes(prev, nextMapNodeIds) : prev));
+    } else if (postLevelFlow.kind === 'mapSelection') {
+      setRunMap(prev => (prev ? setGameRunMapSelectableNodes(prev, postLevelFlow.selectableNodeIds) : prev));
       resetRewardState();
       resetEventState();
-    } else if (passed && !victory && nextMapNodeIds.length === 0) {
+    } else if (postLevelFlow.kind === 'autoAdvance') {
       resetMapSelection();
       resetRewardState();
       resetEventState();
-      setAutoAdvanceLevel(level + 1);
+      setAutoAdvanceLevel(postLevelFlow.nextLevel);
     } else {
       resetMapSelection();
       resetRewardState();
@@ -945,36 +932,36 @@ export function GamePage() {
 
     if (choice.kind === 'event' && choice.effect) {
       const lines: string[] = [];
-      const effectiveMaxHp = maxHp + (choice.effect.maxLifeDelta ?? 0);
+      const effectResolution = resolveGameChoiceEffect({ effect: choice.effect, hp, maxHp });
+      const effectiveMaxHp = effectResolution.nextMaxHp;
       if (choice.effect.maxLifeDelta) {
-        setMaxHp(effectiveMaxHp);
-        setHp(prev => Math.min(prev + choice.effect!.maxLifeDelta!, effectiveMaxHp));
+        setMaxHp(effectResolution.nextMaxHp);
         lines.push(t('game.system.reward.maxHealth', { hp: effectiveMaxHp }));
       }
       if (choice.effect.fullHeal) {
-        setHp(effectiveMaxHp);
         lines.push(t('game.system.reward.fullHeal'));
       }
-      if (choice.effect.regenTurns) {
-        setRegenTurns(prev => prev + choice.effect!.regenTurns!);
-        lines.push(t('game.system.reward.regenAfterBattle', { hp: REGEN_HP_PER_BATTLE, count: choice.effect.regenTurns }));
+      if (effectResolution.regenTurnsDelta) {
+        setRegenTurns(prev => prev + effectResolution.regenTurnsDelta);
+        lines.push(t('game.system.reward.regenAfterBattle', { hp: REGEN_HP_PER_BATTLE, count: effectResolution.regenTurnsDelta }));
       }
       if (choice.effect.lifeDelta) {
         const lifeDelta = choice.effect.lifeDelta;
-        const nextHp = Math.max(0, Math.min(effectiveMaxHp, hp + lifeDelta));
-        setHp(nextHp);
-        if (lifeDelta < 0) {
-          setRunDamageTaken(prev => prev + Math.abs(lifeDelta));
+        if (effectResolution.runDamageTakenDelta > 0) {
+          setRunDamageTaken(prev => prev + effectResolution.runDamageTakenDelta);
         }
         if (lifeDelta > 0) {
-          lines.push(t('game.system.reward.healedTo', { hp: nextHp }));
+          lines.push(t('game.system.reward.healedTo', { hp: effectResolution.nextHp }));
         } else {
           lines.push(t('game.system.reward.lostHp', { hp: Math.abs(lifeDelta) }));
         }
       }
-      if (choice.effect.modifier) {
-        setActiveModifiers(prev => [...prev, choice.effect!.modifier!]);
-        lines.push(t('game.system.reward.effect', { description: choice.effect.modifier.description }));
+      if (effectResolution.hpChanged) {
+        setHp(effectResolution.nextHp);
+      }
+      if (effectResolution.modifier) {
+        setActiveModifiers(prev => [...prev, effectResolution.modifier!]);
+        lines.push(t('game.system.reward.effect', { description: effectResolution.modifier.description }));
       }
       setSelectedRewardMessage(lines.join(' ') || choice.flavor);
       return;
@@ -1006,49 +993,50 @@ export function GamePage() {
     const lines: string[] = [];
     const achievementIds: string[] = [];
 
-    const effectiveMaxHp = maxHp + (choice.effect.maxLifeDelta ?? 0);
+    const effectResolution = resolveGameChoiceEffect({ effect: choice.effect, hp, maxHp });
+    const effectiveMaxHp = effectResolution.nextMaxHp;
     if (choice.effect.maxLifeDelta) {
-      setMaxHp(effectiveMaxHp);
-      setHp(prev => Math.min(prev + choice.effect.maxLifeDelta!, effectiveMaxHp));
+      setMaxHp(effectResolution.nextMaxHp);
       lines.push(t('game.system.event.maxHealthIncreased', { hp: effectiveMaxHp }));
     }
 
     if (choice.effect.fullHeal) {
-      setHp(effectiveMaxHp);
       setResult(prev => prev ? { ...prev, livesLeft: effectiveMaxHp } : prev);
       lines.push(t('game.system.event.fullHealTo', { hp: effectiveMaxHp }));
     }
 
-    if (choice.effect.regenTurns) {
-      setRegenTurns(prev => prev + choice.effect.regenTurns!);
-      lines.push(t('game.system.event.regenEachBattle', { hp: REGEN_HP_PER_BATTLE, count: choice.effect.regenTurns }));
+    if (effectResolution.regenTurnsDelta) {
+      setRegenTurns(prev => prev + effectResolution.regenTurnsDelta);
+      lines.push(t('game.system.event.regenEachBattle', { hp: REGEN_HP_PER_BATTLE, count: effectResolution.regenTurnsDelta }));
     }
 
     if (choice.effect.lifeDelta) {
       const lifeDelta = choice.effect.lifeDelta;
-      const nextHp = Math.max(0, Math.min(effectiveMaxHp, hp + lifeDelta));
-      setHp(nextHp);
-      if (lifeDelta < 0) {
-        setRunDamageTaken(prev => prev + Math.abs(lifeDelta));
+      if (effectResolution.runDamageTakenDelta > 0) {
+        setRunDamageTaken(prev => prev + effectResolution.runDamageTakenDelta);
       }
-      setResult(prev => prev ? { ...prev, livesLeft: nextHp } : prev);
+      setResult(prev => prev ? { ...prev, livesLeft: effectResolution.nextHp } : prev);
       if (lifeDelta > 0) {
-        lines.push(t('game.system.event.healedTo', { hp: nextHp, maxHp: effectiveMaxHp }));
+        lines.push(t('game.system.event.healedTo', { hp: effectResolution.nextHp, maxHp: effectiveMaxHp }));
       } else {
         lines.push(t('game.system.event.dealLostHp', { hp: Math.abs(lifeDelta) }));
       }
     }
 
-    if (choice.effect.repairEquippedBy) {
-      const repairedNames = repairGameItems(choice.effect.repairEquippedBy, true);
+    if (effectResolution.hpChanged) {
+      setHp(effectResolution.nextHp);
+    }
+
+    if (effectResolution.repairEquippedBy) {
+      const repairedNames = repairGameItems(effectResolution.repairEquippedBy, true);
       lines.push(repairedNames.length
         ? t('game.system.event.repairedItems', { items: repairedNames.join(', ') })
         : t('game.system.event.repairNoTargets'));
     }
 
-    if (choice.effect.grantItemId) {
-      const item = getGameItemById(choice.effect.grantItemId);
-      const grantedId = grantGameItem(choice.effect.grantItemId);
+    if (effectResolution.grantItemId) {
+      const item = getGameItemById(effectResolution.grantItemId);
+      const grantedId = grantGameItem(effectResolution.grantItemId);
       if (item && grantedId) {
         lines.push(t('game.system.event.gotItem', { item: item.name }));
         achievementIds.push(
@@ -1059,9 +1047,9 @@ export function GamePage() {
       }
     }
 
-    if (choice.effect.modifier) {
-      setActiveModifiers(prev => [...prev, choice.effect.modifier!]);
-      lines.push(t('game.system.event.effectActivated', { description: choice.effect.modifier.description }));
+    if (effectResolution.modifier) {
+      setActiveModifiers(prev => [...prev, effectResolution.modifier!]);
+      lines.push(t('game.system.event.effectActivated', { description: effectResolution.modifier.description }));
     }
 
     queueAchievementToasts(achievementIds);

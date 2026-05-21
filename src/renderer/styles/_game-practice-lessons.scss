@@ -1325,6 +1325,8 @@
 .metric-negative svg { color: var(--red); }
 .metric-positive b { color: var(--green); }
 .metric-positive svg { color: var(--green); }
+.metric-warning b { color: var(--yellow); }
+.metric-warning svg { color: var(--yellow); }
 
 /* Summary badge */
 .practice-summary-row { margin-bottom: 14px; }

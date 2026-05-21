@@ -47,10 +47,24 @@ export function Keyboard() {
     return map;
   }, [layout]);
 
-  const rows = getKeyboardRows(currentLayout);
+  const rows = useMemo(() => getKeyboardRows(currentLayout), [currentLayout]);
   const target = activeChar === ' ' ? ' ' : activeChar?.toLowerCase();
   const activeFinger = target && target !== ' ' ? fingerMap[target] : undefined;
   const activeHand = getActiveHand(target, activeFinger);
+  const keyStyleByFinger = useMemo(() => {
+    const styles: Partial<Record<FingerName, CSSProperties>> = {};
+    for (const finger of Object.keys(FINGER_COLORS) as FingerName[]) {
+      styles[finger] = {
+        '--finger-color': FINGER_COLORS[finger],
+        borderBottomColor: FINGER_COLORS[finger],
+      } as CSSProperties;
+    }
+    return styles;
+  }, []);
+  const transparentKeyStyle = useMemo(() => ({
+    '--finger-color': 'transparent',
+    borderBottomColor: 'transparent',
+  }) as CSSProperties, []);
 
   const activePose = useMemo(
     () => getKeyboardActivePose(currentLayout, rows, target),
@@ -152,15 +166,21 @@ export function Keyboard() {
     };
   }, [measureHandsFrame, currentLayout, showStage, keyboardScale, hidden]);
 
-  if (hidden) return null;
-
-  const wrapStyle = {
+  const wrapStyle = useMemo(() => ({
     height: `${panelHeight}px`,
     ['--kb-panel-scale' as string]: `${keyboardScale}`,
     ['--kb-panel-offset' as string]: `${settings.keyboardPanelOffset}`,
     ['--kb-hands-opacity' as string]: `${settings.handsOpacity / 100}`,
     ['--kb-key-stroke' as string]: `${settings.keyStrokeWidth}px`,
-  } as CSSProperties;
+  }) as CSSProperties, [
+    keyboardScale,
+    panelHeight,
+    settings.handsOpacity,
+    settings.keyStrokeWidth,
+    settings.keyboardPanelOffset,
+  ]);
+
+  if (hidden) return null;
 
   return (
     <div id="keyboard-wrap" style={wrapStyle}>
@@ -183,9 +203,7 @@ export function Keyboard() {
                   {row.map(key => {
                     const finger = fingerMap[key.toLowerCase()];
                     const isActive = key === target;
-                    const keyStyle = (finger
-                      ? { '--finger-color': FINGER_COLORS[finger], borderBottomColor: FINGER_COLORS[finger] }
-                      : { '--finger-color': 'transparent', borderBottomColor: 'transparent' }) as CSSProperties;
+                    const keyStyle = finger ? keyStyleByFinger[finger] : transparentKeyStyle;
 
                     return (
                       <span

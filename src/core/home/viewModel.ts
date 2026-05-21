@@ -46,6 +46,8 @@ import {
 
 export type HomeActionId = 'continue-run' | 'replay-last' | 'start-practice' | 'lessons';
 export type HomeModeCardId = 'practice' | 'test' | 'survival' | 'lessons' | 'game' | 'stats' | 'settings';
+export type HomeDetailModalId = 'season' | 'mode-focus' | 'records' | 'mastery' | 'goals' | 'streaks';
+export type HomeProgressCenterCardId = HomeDetailModalId;
 
 export interface HomeActionModel {
   id: HomeActionId;
@@ -54,6 +56,23 @@ export interface HomeActionModel {
   meta: string;
   actionMode: string;
 }
+
+export type BuildHomeVisibleQuickActionsArgs = {
+  actions: HomeActionModel[];
+  currentRunActive: boolean;
+  primaryActionMode: string;
+  showSecondaryHeroAction: boolean;
+};
+
+export type HomeModeCardGroup<T extends { id: string }> = {
+  primaryCards: T[];
+  utilityCards: T[];
+};
+
+export type HomeProgressCenterVisibility<T> = {
+  canToggle: boolean;
+  visibleCards: T[];
+};
 
 export interface HomeModeCardModel {
   id: HomeModeCardId;
@@ -90,6 +109,18 @@ export interface HomeQuickInsightModel {
   description: string;
 }
 
+export interface HomeProgressCenterCardModel {
+  id: HomeProgressCenterCardId;
+  title: string;
+  summary: string;
+  description: string;
+}
+
+export interface HomeDetailMeta {
+  title: string;
+  description: string;
+}
+
 export type { HomeModeFocusDetailCardModel };
 export type { HomePersonalRecordDetailCardModel };
 
@@ -103,6 +134,42 @@ type WeaknessHotspot = {
   weakness: number;
   detail: string;
 };
+
+export function buildHomeVisibleQuickActions({
+  actions,
+  currentRunActive,
+  primaryActionMode,
+  showSecondaryHeroAction,
+}: BuildHomeVisibleQuickActionsArgs): HomeActionModel[] {
+  return actions.filter((action) => {
+    if (currentRunActive && action.id === 'continue-run') return false;
+    if (!currentRunActive && primaryActionMode === 'practice' && action.id === 'start-practice') return false;
+    if (!currentRunActive && primaryActionMode === 'lessons' && action.id === 'lessons') return false;
+    if (showSecondaryHeroAction && action.id === 'replay-last') return false;
+    return true;
+  });
+}
+
+export function buildHomeModeCardGroups<T extends { id: string }>(
+  cards: T[],
+): HomeModeCardGroup<T> {
+  return {
+    primaryCards: cards.filter(card => card.id !== 'stats' && card.id !== 'settings'),
+    utilityCards: cards.filter(card => card.id === 'stats' || card.id === 'settings'),
+  };
+}
+
+export function buildHomeProgressCenterVisibility<T>(
+  cards: T[],
+  expanded: boolean,
+  collapsedLimit = 3,
+): HomeProgressCenterVisibility<T> {
+  const limit = Math.max(0, Math.floor(collapsedLimit));
+  return {
+    canToggle: cards.length > limit,
+    visibleCards: expanded ? cards : cards.slice(0, limit),
+  };
+}
 
 type BuildHomePageViewModelArgs = {
   achievementCatalog: GameAchievementDefinition[];
@@ -975,4 +1042,125 @@ export function buildHomePageViewModel({
       description: goal.completed ? t('home.viewModel.weeklyGoalDone') : goal.definition.description,
     })),
   };
+}
+
+export type HomePageViewModel = ReturnType<typeof buildHomePageViewModel>;
+
+export function buildHomeProgressCenterCards(
+  homeViewModel: HomePageViewModel,
+  t: (key: string, params?: TranslationParams) => string,
+): HomeProgressCenterCardModel[] {
+  const activeSeasonGoal = homeViewModel.seasonSnapshot.goals.find(goal => !goal.completed) ?? null;
+  const emptyModeCount = homeViewModel.modeFocusSnapshots.filter(snapshot => snapshot.attempts === 0).length;
+  const unlockedRecordCount = homeViewModel.personalRecordDetailCards.filter(card => card.hasRecord).length;
+  const hottestStreak = homeViewModel.homeStreaks.length > 0
+    ? homeViewModel.homeStreaks.reduce((best, streak) => (
+        streak.current > best.current ? streak : best
+      ), homeViewModel.homeStreaks[0]!)
+    : null;
+
+  return [
+    {
+      id: 'season',
+      title: t('home.progressCenter.season.title'),
+      summary: t('home.progressCenter.season.summary', {
+        completed: homeViewModel.seasonSnapshot.completedCount,
+        total: homeViewModel.seasonSnapshot.totalCount,
+      }),
+      description: activeSeasonGoal
+        ? t('home.progressCenter.season.next', { title: activeSeasonGoal.definition.title })
+        : t('home.progressCenter.season.completed'),
+    },
+    {
+      id: 'mode-focus',
+      title: t('home.progressCenter.modeFocus.title'),
+      summary: emptyModeCount > 0
+        ? t('home.progressCenter.modeFocus.summaryMissing', { count: emptyModeCount })
+        : t('home.progressCenter.modeFocus.summaryReady'),
+      description: emptyModeCount > 0
+        ? t('home.progressCenter.modeFocus.descriptionMissing')
+        : t('home.progressCenter.modeFocus.descriptionReady'),
+    },
+    {
+      id: 'records',
+      title: t('home.progressCenter.records.title'),
+      summary: t('home.progressCenter.records.summary', {
+        count: unlockedRecordCount,
+        total: homeViewModel.personalRecordDetailCards.length,
+      }),
+      description: t('home.progressCenter.records.description'),
+    },
+    {
+      id: 'mastery',
+      title: t('home.progressCenter.mastery.title'),
+      summary: homeViewModel.layoutMastery.currentMilestone.title,
+      description: t('home.progressCenter.mastery.description', {
+        score: homeViewModel.layoutMastery.currentScore,
+      }),
+    },
+    {
+      id: 'goals',
+      title: t('home.progressCenter.goals.title'),
+      summary: t('home.progressCenter.goals.summary', {
+        count: homeViewModel.homeGoals.length,
+      }),
+      description: t('home.progressCenter.goals.description'),
+    },
+    {
+      id: 'streaks',
+      title: t('home.progressCenter.streaks.title'),
+      summary: hottestStreak
+        ? t('home.progressCenter.streaks.summaryActive', { count: hottestStreak.current })
+        : t('home.progressCenter.streaks.summaryEmpty'),
+      description: hottestStreak
+        ? t('home.progressCenter.streaks.descriptionActive', {
+            title: hottestStreak.definition.title,
+          })
+        : t('home.progressCenter.streaks.descriptionEmpty'),
+    },
+  ];
+}
+
+export function buildHomeDetailMeta(
+  activeDetailModal: HomeDetailModalId | null,
+  homeViewModel: HomePageViewModel,
+  t: (key: string, params?: TranslationParams) => string,
+): HomeDetailMeta | null {
+  switch (activeDetailModal) {
+    case 'season':
+      return {
+        title: t('home.detail.season.title'),
+        description: t('home.detail.season.description', {
+          title: homeViewModel.seasonSnapshot.definition.title,
+          count: homeViewModel.seasonRemainingDays,
+        }),
+      };
+    case 'mode-focus':
+      return {
+        title: t('home.detail.modeFocus.title'),
+        description: t('home.detail.modeFocus.description'),
+      };
+    case 'records':
+      return {
+        title: t('home.detail.records.title'),
+        description: t('home.detail.records.description'),
+      };
+    case 'mastery':
+      return {
+        title: t('home.detail.mastery.title'),
+        description: t('home.detail.mastery.description'),
+      };
+    case 'goals':
+      return {
+        title: t('home.detail.goals.title'),
+        description: t('home.detail.goals.description'),
+      };
+    case 'streaks':
+      return {
+        title: t('home.detail.streaks.title'),
+        description: t('home.detail.streaks.description'),
+      };
+    default:
+      return null;
+  }
 }

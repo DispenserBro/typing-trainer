@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 type UseModeKeyboardStartArgs = {
   handleKey: (event: KeyboardEvent) => void;
@@ -19,26 +19,47 @@ export function useModeKeyboardStart({
   resultVisible,
   sessionActive,
 }: UseModeKeyboardStartArgs) {
+  const latestRef = useRef({
+    handleKey,
+    onRetry,
+    onStart,
+    overlayVisible,
+    previewText,
+    resultVisible,
+    sessionActive,
+  });
+
+  latestRef.current = {
+    handleKey,
+    onRetry,
+    onStart,
+    overlayVisible,
+    previewText,
+    resultVisible,
+    sessionActive,
+  };
+
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
+      const latest = latestRef.current;
       const isPrintable = event.key.length === 1 && !event.ctrlKey && !event.altKey && !event.metaKey;
       const isBackspace = event.key === 'Backspace';
 
-      if (!sessionActive && resultVisible && isPrintable) {
-        onRetry(event);
+      if (!latest.sessionActive && latest.resultVisible && isPrintable) {
+        latest.onRetry(event);
         return;
       }
 
-      if (!sessionActive && overlayVisible && previewText && isPrintable) {
-        onStart(event);
+      if (!latest.sessionActive && latest.overlayVisible && latest.previewText && isPrintable) {
+        latest.onStart(event);
         return;
       }
 
-      if (!sessionActive) return;
-      if (isPrintable || isBackspace) handleKey(event);
+      if (!latest.sessionActive) return;
+      if (isPrintable || isBackspace) latest.handleKey(event);
     };
 
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [handleKey, onRetry, onStart, overlayVisible, previewText, resultVisible, sessionActive]);
+  }, []);
 }

@@ -780,6 +780,9 @@ msgstr "Package problem: {{details}}"
 msgid "addons.catalog.issue.remoteModManualOnly"
 msgstr "Remote mod does not declare manifest.files, so only manual installation is available."
 
+msgid "addons.catalog.issue.remoteModsTrustedOnly"
+msgstr "Remote mods are trusted code. Install them only from a local source until a dedicated sandbox is available."
+
 msgid "addons.catalog.issue.sourceCardEmpty"
 msgstr "Source card is empty and was skipped: {{target}}"
 
@@ -1735,14 +1738,20 @@ msgstr "All"
 msgid "stats.filters.modeOptions.practice"
 msgstr "Practice"
 
+msgid "stats.filters.modeOptions.sprint"
+msgstr "Sprint"
+
+msgid "stats.filters.modeOptions.survival"
+msgstr "Survival"
+
+msgid "stats.filters.modeOptions.flawless"
+msgstr "Flawless"
+
 msgid "stats.filters.modeOptions.game"
 msgstr "Game"
 
 msgid "stats.filters.modeOptions.lesson"
 msgstr "Lessons"
-
-msgid "stats.filters.modeOptions.test"
-msgstr "Sprint"
 
 msgid "stats.filters.layoutOptions.current"
 msgstr "Current layout"
@@ -4015,6 +4024,93 @@ msgstr "Event"
 msgid "game.reward.kind.letter"
 msgstr "Master seal"
 
+msgid "game.core.rewards.simple.title"
+msgstr "Relic"
+
+msgid "game.core.rewards.durable.title"
+msgstr "Artifact"
+
+msgid "game.core.rewards.durable.watchDurability"
+msgstr "Watch its durability."
+
+msgid "game.core.rewards.letter.title"
+msgstr "New letter"
+
+msgid "game.core.rewards.letter.flavor"
+msgstr "Unlock {{letter}}"
+
+msgid "game.core.rewards.letter.description"
+msgstr "Adds a new training letter to future practice."
+
+msgid "game.core.rewards.buffSpeed.title"
+msgstr "Tailwind"
+
+msgid "game.core.rewards.buffSpeed.flavor"
+msgstr "Lower speed pressure for the next fights"
+
+msgid "game.core.rewards.buffSpeed.description"
+msgstr "For 3 levels, reduces the required speed by 6%."
+
+msgid "game.core.rewards.buffSpeed.modifierTitle"
+msgstr "Tailwind"
+
+msgid "game.core.rewards.buffSpeed.modifierDescription"
+msgstr "-6% required speed for 3 levels"
+
+msgid "game.core.rewards.buffDefense.title"
+msgstr "Guard stance"
+
+msgid "game.core.rewards.buffDefense.flavor"
+msgstr "Soften incoming mistakes"
+
+msgid "game.core.rewards.buffDefense.description"
+msgstr "For 4 levels, reduces enemy attack by 3."
+
+msgid "game.core.rewards.buffDefense.modifierTitle"
+msgstr "Guard stance"
+
+msgid "game.core.rewards.buffDefense.modifierDescription"
+msgstr "-3 enemy attack for 4 levels"
+
+msgid "game.core.rewards.extraLife.title"
+msgstr "Second wind"
+
+msgid "game.core.rewards.extraLife.flavor"
+msgstr "Raise max health and recover fully"
+
+msgid "game.core.rewards.extraLife.description"
+msgstr "Adds +10 maximum HP and restores health to full."
+
+msgid "game.core.rewards.curseSpeed.title"
+msgstr "Heavy tempo"
+
+msgid "game.core.rewards.curseSpeed.flavor"
+msgstr "Gain health, but accept harder speed checks"
+
+msgid "game.core.rewards.curseSpeed.description"
+msgstr "Restores 20 HP, but raises speed requirements for 3 levels."
+
+msgid "game.core.rewards.curseSpeed.modifierTitle"
+msgstr "Heavy tempo"
+
+msgid "game.core.rewards.curseSpeed.modifierDescription"
+msgstr "+5% required speed for 3 levels"
+
+msgid "game.core.rewards.curseDefense.title"
+msgstr "Brittle armor"
+
+msgid "game.core.rewards.curseDefense.flavor"
+msgstr "Regenerate later, but take harder hits"
+
+msgid "game.core.rewards.curseDefense.description"
+msgstr "Adds regeneration for 4 turns, but increases enemy attack for 4 levels."
+
+msgid "game.core.rewards.curseDefense.modifierTitle"
+msgstr "Brittle armor"
+
+msgid "game.core.rewards.curseDefense.modifierDescription"
+msgstr "+4 enemy attack for 4 levels"
+
 msgid "game.overlay.savedRun"
 msgstr "Run saved\nLevel {{level}} · {{hp}} HP\nClick to continue"
 
@@ -5549,3 +5645,507 @@ msgstr "+{value}% defense coefficient"
 
 msgid "game.core.items.effects.critBonus.default"
 msgstr "+{value}% crit chance"
+
+msgid "common.actions.back"
+msgstr "Back"
+
+msgid "common.actions.next"
+msgstr "Next"
+
+msgid "common.actions.save"
+msgstr "Save"
+
+msgid "common.actions.export"
+msgstr "Export"
+
+msgid "common.actions.delete"
+msgstr "Delete"
+
+msgid "common.actions.cancel"
+msgstr "Cancel"
+
+msgid "titlebar.minimize"
+msgstr "Minimize"
+
+msgid "titlebar.maximize"
+msgstr "Maximize"
+
+msgid "titlebar.close"
+msgstr "Close"
+
+msgid "onboarding.firstRun.stepProgress"
+msgstr "Step {{current}} of {{total}}"
+
+msgid "onboarding.firstRun.language.title"
+msgstr "Choose a language"
+
+msgid "onboarding.firstRun.language.description"
+msgstr "This sets the word set for training and the matching keyboard layouts."
+
+msgid "onboarding.firstRun.layout.title"
+msgstr "Choose a layout"
+
+msgid "onboarding.firstRun.layout.description"
+msgstr "The layout defines key positions, finger zones, and the learning order for letters."
+
+msgid "onboarding.firstRun.overview.title"
+msgstr "What to expect"
+
+msgid "onboarding.firstRun.overview.description"
+msgstr "The app has several training modes, each building typing skill in its own way."
+
+msgid "onboarding.firstRun.overview.practice.title"
+msgstr "Practice"
+
+msgid "onboarding.firstRun.overview.practice.description"
+msgstr "Short adaptive drills for weak letters, combinations, and rhythm. The best way to start."
+
+msgid "onboarding.firstRun.overview.lessons.title"
+msgstr "Lessons"
+
+msgid "onboarding.firstRun.overview.lessons.description"
+msgstr "Step-by-step layout learning from base rows to the full alphabet and combinations."
+
+msgid "onboarding.firstRun.overview.game.title"
+msgstr "Game"
+
+msgid "onboarding.firstRun.overview.game.description"
+msgstr "Long runs with bosses, items, and routes, adding motivation through progression."
+
+msgid "onboarding.firstRun.done.title"
+msgstr "All set!"
+
+msgid "onboarding.firstRun.done.description"
+msgstr "Settings are saved. We recommend starting with lessons to learn the layout basics, or jumping straight into practice."
+
+msgid "onboarding.firstRun.startTraining"
+msgstr "Start training"
+
+msgid "onboarding.modeGuide.skip"
+msgstr "Skip guide"
+
+msgid "onboarding.modeGuide.interactiveStep"
+msgstr "Interactive step"
+
+msgid "onboarding.modeGuide.stepProgress"
+msgstr "Step {{current}} of {{total}}"
+
+msgid "onboarding.modeGuide.common.miniTrial.title"
+msgstr "Mini trial"
+
+msgid "onboarding.modeGuide.common.miniTrial.checklist"
+msgstr "complete 3 mini steps"
+
+msgid "onboarding.modeGuide.common.targets.finish"
+msgstr "Finish"
+
+msgid "onboarding.modeGuide.practice.description"
+msgstr "A short adaptive mode for weak characters, combinations, and rhythm."
+
+msgid "onboarding.modeGuide.practice.finish"
+msgstr "Go to practice"
+
+msgid "onboarding.modeGuide.practice.interactivePrompt"
+msgstr "Press the highlighted targets in order: focus, tempo, accuracy."
+
+msgid "onboarding.modeGuide.practice.targets.focus"
+msgstr "Focus"
+
+msgid "onboarding.modeGuide.practice.targets.tempo"
+msgstr "Tempo"
+
+msgid "onboarding.modeGuide.practice.targets.accuracy"
+msgstr "Accuracy"
+
+msgid "onboarding.modeGuide.practice.kicker"
+msgstr "Quick start"
+
+msgid "onboarding.modeGuide.practice.title"
+msgstr "Practice"
+
+msgid "onboarding.modeGuide.practice.steps.training.title"
+msgstr "What gets trained here"
+
+msgid "onboarding.modeGuide.practice.steps.training.body"
+msgstr "Practice picks material from the current layout, progress, and weak spots."
+
+msgid "onboarding.modeGuide.practice.steps.training.checklist.weakLetters"
+msgstr "weak letters"
+
+msgid "onboarding.modeGuide.practice.steps.training.checklist.adaptiveWords"
+msgstr "adaptive words"
+
+msgid "onboarding.modeGuide.practice.steps.training.checklist.rhythm"
+msgstr "rhythm and stability"
+
+msgid "onboarding.modeGuide.practice.steps.start.title"
+msgstr "How to start"
+
+msgid "onboarding.modeGuide.practice.steps.start.body"
+msgstr "Click the text area or start typing. Mode settings are available at the top."
+
+msgid "onboarding.modeGuide.practice.steps.start.checklist.material"
+msgstr "material choice"
+
+msgid "onboarding.modeGuide.practice.steps.start.checklist.speedGoal"
+msgstr "speed goal"
+
+msgid "onboarding.modeGuide.practice.steps.start.checklist.trainingMode"
+msgstr "training mode"
+
+msgid "onboarding.modeGuide.practice.steps.trial.body"
+msgstr "Before starting, remember the basic loop: focus, hold tempo, and do not trade accuracy away."
+
+msgid "onboarding.modeGuide.test.description"
+msgstr "A timed sprint to check current speed and accuracy."
+
+msgid "onboarding.modeGuide.test.finish"
+msgstr "Go to sprint"
+
+msgid "onboarding.modeGuide.test.interactivePrompt"
+msgstr "Mark the three sprint anchors before the first run."
+
+msgid "onboarding.modeGuide.test.targets.timer"
+msgstr "Timer"
+
+msgid "onboarding.modeGuide.test.targets.steadyTempo"
+msgstr "Steady tempo"
+
+msgid "onboarding.modeGuide.test.kicker"
+msgstr "Timed mode"
+
+msgid "onboarding.modeGuide.test.title"
+msgstr "Sprint"
+
+msgid "onboarding.modeGuide.test.steps.idea.title"
+msgstr "Main idea"
+
+msgid "onboarding.modeGuide.test.steps.idea.body"
+msgstr "Sprint shows how you type under a time limit."
+
+msgid "onboarding.modeGuide.test.steps.idea.checklist.duration"
+msgstr "15-60 seconds"
+
+msgid "onboarding.modeGuide.test.steps.idea.checklist.liveMetrics"
+msgstr "live metrics"
+
+msgid "onboarding.modeGuide.test.steps.idea.checklist.bestHistory"
+msgstr "best attempt history"
+
+msgid "onboarding.modeGuide.test.steps.focus.title"
+msgstr "What matters"
+
+msgid "onboarding.modeGuide.test.steps.focus.body"
+msgstr "Do not speed up at the cost of errors: the final score is more useful when speed and accuracy grow together."
+
+msgid "onboarding.modeGuide.test.steps.focus.checklist.timer"
+msgstr "watch the timer"
+
+msgid "onboarding.modeGuide.test.steps.focus.checklist.errors"
+msgstr "do not panic on mistakes"
+
+msgid "onboarding.modeGuide.test.steps.focus.checklist.series"
+msgstr "repeat in short series"
+
+msgid "onboarding.modeGuide.test.steps.trial.body"
+msgstr "Sprint is easier when you accept its rhythm in advance."
+
+msgid "onboarding.modeGuide.survival.description"
+msgstr "A longer distance with an error reserve and a stability check."
+
+msgid "onboarding.modeGuide.survival.finish"
+msgstr "Go to survival"
+
+msgid "onboarding.modeGuide.survival.interactivePrompt"
+msgstr "Build a safe route: reserve, control, finish."
+
+msgid "onboarding.modeGuide.survival.targets.reserve"
+msgstr "Reserve"
+
+msgid "onboarding.modeGuide.survival.targets.control"
+msgstr "Control"
+
+msgid "onboarding.modeGuide.survival.kicker"
+msgstr "Endurance mode"
+
+msgid "onboarding.modeGuide.survival.title"
+msgstr "Survival"
+
+msgid "onboarding.modeGuide.survival.steps.goal.title"
+msgstr "Mode goal"
+
+msgid "onboarding.modeGuide.survival.steps.goal.body"
+msgstr "Survival checks how long you can maintain typing quality."
+
+msgid "onboarding.modeGuide.survival.steps.goal.checklist.errorLimit"
+msgstr "there is an error limit"
+
+msgid "onboarding.modeGuide.survival.steps.goal.checklist.longDistance"
+msgstr "longer distance"
+
+msgid "onboarding.modeGuide.survival.steps.goal.checklist.stability"
+msgstr "stability matters"
+
+msgid "onboarding.modeGuide.survival.steps.play.title"
+msgstr "How to play"
+
+msgid "onboarding.modeGuide.survival.steps.play.body"
+msgstr "Type steadily and do not try to make up for a mistake with a sudden burst of speed."
+
+msgid "onboarding.modeGuide.survival.steps.play.checklist.attempts"
+msgstr "protect your attempts"
+
+msgid "onboarding.modeGuide.survival.steps.play.checklist.progress"
+msgstr "watch progress"
+
+msgid "onboarding.modeGuide.survival.steps.play.checklist.cycles"
+msgstr "restart in short cycles"
+
+msgid "onboarding.modeGuide.survival.steps.trial.body"
+msgstr "Mark the basic survival anchors before the first run."
+
+msgid "onboarding.modeGuide.flawless.description"
+msgstr "A clean run with no room for mistakes."
+
+msgid "onboarding.modeGuide.flawless.finish"
+msgstr "Go to flawless mode"
+
+msgid "onboarding.modeGuide.flawless.interactivePrompt"
+msgstr "Build a clean start: look, pause, input."
+
+msgid "onboarding.modeGuide.flawless.targets.lookAhead"
+msgstr "Look"
+
+msgid "onboarding.modeGuide.flawless.targets.pause"
+msgstr "Pause"
+
+msgid "onboarding.modeGuide.flawless.targets.input"
+msgstr "Input"
+
+msgid "onboarding.modeGuide.flawless.kicker"
+msgstr "Accuracy first"
+
+msgid "onboarding.modeGuide.flawless.title"
+msgstr "No mistakes"
+
+msgid "onboarding.modeGuide.flawless.steps.difference.title"
+msgstr "How this mode differs"
+
+msgid "onboarding.modeGuide.flawless.steps.difference.body"
+msgstr "Control matters most here: one mistake can end the attempt."
+
+msgid "onboarding.modeGuide.flawless.steps.difference.checklist.zeroTolerance"
+msgstr "zero tolerance for mistakes"
+
+msgid "onboarding.modeGuide.flawless.steps.difference.checklist.shortFocus"
+msgstr "short focus"
+
+msgid "onboarding.modeGuide.flawless.steps.difference.checklist.slowStart"
+msgstr "a slow start is fine"
+
+msgid "onboarding.modeGuide.flawless.steps.strategy.title"
+msgstr "Useful strategy"
+
+msgid "onboarding.modeGuide.flawless.steps.strategy.body"
+msgstr "Read half a word ahead first, then accelerate only after you catch the rhythm."
+
+msgid "onboarding.modeGuide.flawless.steps.strategy.checklist.startSlowly"
+msgstr "do not rush at the start"
+
+msgid "onboarding.modeGuide.flawless.steps.strategy.checklist.lookAhead"
+msgstr "keep your eyes ahead"
+
+msgid "onboarding.modeGuide.flawless.steps.strategy.checklist.stopAfterMistake"
+msgstr "stop after a miss"
+
+msgid "onboarding.modeGuide.flawless.steps.trial.body"
+msgstr "Accuracy starts with a small pause before the first character."
+
+msgid "onboarding.modeGuide.lessons.description"
+msgstr "Step-by-step layout learning and reinforcement of new characters."
+
+msgid "onboarding.modeGuide.lessons.finish"
+msgstr "Go to lessons"
+
+msgid "onboarding.modeGuide.lessons.interactivePrompt"
+msgstr "Mark the lesson path: row, symbol, reinforcement."
+
+msgid "onboarding.modeGuide.lessons.targets.row"
+msgstr "Row"
+
+msgid "onboarding.modeGuide.lessons.targets.symbol"
+msgstr "Symbol"
+
+msgid "onboarding.modeGuide.lessons.targets.reinforcement"
+msgstr "Reinforcement"
+
+msgid "onboarding.modeGuide.lessons.kicker"
+msgstr "Learning route"
+
+msgid "onboarding.modeGuide.lessons.title"
+msgstr "Lessons"
+
+msgid "onboarding.modeGuide.lessons.steps.purpose.title"
+msgstr "Why lessons matter"
+
+msgid "onboarding.modeGuide.lessons.steps.purpose.body"
+msgstr "Lessons guide you through the layout gradually, so fingers adapt without overload."
+
+msgid "onboarding.modeGuide.lessons.steps.purpose.checklist.rows"
+msgstr "row mastery"
+
+msgid "onboarding.modeGuide.lessons.steps.purpose.checklist.newSymbols"
+msgstr "new characters"
+
+msgid "onboarding.modeGuide.lessons.steps.purpose.checklist.orderedExercises"
+msgstr "ordered exercises"
+
+msgid "onboarding.modeGuide.lessons.steps.flow.title"
+msgstr "How to progress"
+
+msgid "onboarding.modeGuide.lessons.steps.flow.body"
+msgstr "It is better to finish lessons in short passes than to try to complete the whole layout at once."
+
+msgid "onboarding.modeGuide.lessons.steps.flow.checklist.availableLesson"
+msgstr "start with an available lesson"
+
+msgid "onboarding.modeGuide.lessons.steps.flow.checklist.repeatSymbols"
+msgstr "repeat difficult characters"
+
+msgid "onboarding.modeGuide.lessons.steps.flow.checklist.accuracy"
+msgstr "watch accuracy"
+
+msgid "onboarding.modeGuide.lessons.steps.trial.body"
+msgstr "Collect the three parts of the learning cycle."
+
+msgid "onboarding.modeGuide.game.description"
+msgstr "A roguelike run with a map, items, events, and bosses."
+
+msgid "onboarding.modeGuide.game.finish"
+msgstr "Go to game"
+
+msgid "onboarding.modeGuide.game.interactivePrompt"
+msgstr "Prepare the run: map, battle, reward."
+
+msgid "onboarding.modeGuide.game.targets.map"
+msgstr "Map"
+
+msgid "onboarding.modeGuide.game.targets.battle"
+msgstr "Battle"
+
+msgid "onboarding.modeGuide.game.targets.reward"
+msgstr "Reward"
+
+msgid "onboarding.modeGuide.game.kicker"
+msgstr "Game progression"
+
+msgid "onboarding.modeGuide.game.title"
+msgstr "Game"
+
+msgid "onboarding.modeGuide.game.steps.flow.title"
+msgstr "What happens"
+
+msgid "onboarding.modeGuide.game.steps.flow.body"
+msgstr "Game turns training into a route: choose nodes, clear battles, and collect items."
+
+msgid "onboarding.modeGuide.game.steps.flow.checklist.runMap"
+msgstr "run map"
+
+msgid "onboarding.modeGuide.game.steps.flow.checklist.levelsAndBosses"
+msgstr "regular levels and bosses"
+
+msgid "onboarding.modeGuide.game.steps.flow.checklist.inventoryRewards"
+msgstr "inventory and rewards"
+
+msgid "onboarding.modeGuide.game.steps.orientation.title"
+msgstr "How not to get lost"
+
+msgid "onboarding.modeGuide.game.steps.orientation.body"
+msgstr "Choose a comfortable speed goal first, then watch health and item effects."
+
+msgid "onboarding.modeGuide.game.steps.orientation.checklist.speedGoal"
+msgstr "speed goal"
+
+msgid "onboarding.modeGuide.game.steps.orientation.checklist.health"
+msgstr "health"
+
+msgid "onboarding.modeGuide.game.steps.orientation.checklist.rewards"
+msgstr "reward choice"
+
+msgid "onboarding.modeGuide.game.steps.trial.body"
+msgstr "Mark the three elements that drive a game run."
+
+msgid "themeEditor.title"
+msgstr "Theme editor"
+
+msgid "themeEditor.loadExisting"
+msgstr "Load existing:"
+
+msgid "themeEditor.nameLabel"
+msgstr "Name:"
+
+msgid "themeEditor.namePlaceholder"
+msgstr "My theme"
+
+msgid "themeEditor.errors.nameRequired"
+msgstr "Enter a name"
+
+msgid "themeEditor.errors.cannotDeleteBuiltIn"
+msgstr "Built-in themes cannot be deleted"
+
+msgid "themeEditor.colors.bg"
+msgstr "Background"
+
+msgid "themeEditor.colors.surface"
+msgstr "Surface"
+
+msgid "themeEditor.colors.surface2"
+msgstr "Surface 2"
+
+msgid "themeEditor.colors.text"
+msgstr "Text"
+
+msgid "themeEditor.colors.subtext"
+msgstr "Subtext"
+
+msgid "themeEditor.colors.accent"
+msgstr "Accent"
+
+msgid "themeEditor.colors.green"
+msgstr "Correct"
+
+msgid "themeEditor.colors.red"
+msgstr "Error"
+
+msgid "themeEditor.colors.yellow"
+msgstr "Warning"
+
+msgid "themeEditor.typography.title"
+msgstr "Typography and shape"
+
+msgid "themeEditor.typography.fontSans"
+msgstr "UI font"
+
+msgid "themeEditor.typography.fontMono"
+msgstr "Mono font"
+
+msgid "themeEditor.typography.radius"
+msgstr "Radius"
+
+msgid "themeEditor.typography.radiusSm"
+msgstr "Radius (small)"
+
+msgid "themeEditor.typography.transitionSpeed"
+msgstr "Animation speed"
+
+msgid "settings.cards.presets.importErrors.unsupportedFormat"
+msgstr "Unsupported file format"
+
+msgid "settings.cards.presets.importErrors.readFailed"
+msgstr "Failed to read file"
+
+msgid "settings.cards.presets.importErrors.unknownConfigType"
+msgstr "Unknown configuration type"
+
+msgid "settings.cards.language.importPoDialogTitle"
+msgstr "Import interface translation"

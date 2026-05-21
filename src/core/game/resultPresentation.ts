@@ -1,4 +1,13 @@
 import type { GameRunResult, TranslationParams } from '../../shared/types';
+import type {
+  MotivationGoalSnapshot,
+  MotivationStreakSnapshot,
+} from '../motivation/progress';
+import type {
+  LayoutMasteryResultSummary,
+  ResultComparisonSummary,
+} from '../motivation/records';
+import type { GameRewardChoiceBlockViewModel } from './resultRewards';
 
 type TranslateFn = (key: string, params?: TranslationParams) => string;
 
@@ -19,6 +28,13 @@ export type GameResultCardViewModel = {
   actions: GameResultActionViewModel[];
   summary: string;
   title: string;
+};
+
+export type GameResultSecondaryBlocksViewModel = {
+  showComparison: boolean;
+  showMastery: boolean;
+  showMotivationProgress: boolean;
+  showRewardBlock: boolean;
 };
 
 export function buildGameResultTitle(result: GameRunResult, translate: TranslateFn) {
@@ -169,5 +185,30 @@ export function buildGameResultCardViewModel({
       translate,
     }),
     title: buildGameResultTitle(result, translate),
+  };
+}
+
+export function buildGameResultSecondaryBlocksViewModel({
+  comparison,
+  masterySummary,
+  motivationGoals,
+  motivationStreaks,
+  result,
+  rewardBlock,
+}: {
+  comparison: ResultComparisonSummary | null;
+  masterySummary: LayoutMasteryResultSummary | null;
+  motivationGoals: MotivationGoalSnapshot[];
+  motivationStreaks: MotivationStreakSnapshot[];
+  result: GameRunResult;
+  rewardBlock: GameRewardChoiceBlockViewModel | null;
+}): GameResultSecondaryBlocksViewModel {
+  const terminalResult = result.victory || result.livesLeft <= 0;
+
+  return {
+    showComparison: Boolean(comparison),
+    showMastery: Boolean(masterySummary),
+    showMotivationProgress: terminalResult && (motivationGoals.length > 0 || motivationStreaks.length > 0),
+    showRewardBlock: Boolean(rewardBlock),
   };
 }

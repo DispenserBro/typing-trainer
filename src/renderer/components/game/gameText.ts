@@ -4,7 +4,7 @@ import type {
   GameMapNodeKind,
   GameRunEventState,
 } from '../../../shared/types';
-import { getGameItemRarityStars } from '../../../core/game/items';
+import { getGameItemRarityStars } from '../../../core/game/items/utils';
 import type { TranslationParams } from '../../../shared/types';
 
 type Translate = (key: string, params?: TranslationParams) => string;

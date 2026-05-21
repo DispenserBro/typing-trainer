@@ -5,6 +5,7 @@ import { AchievementsModal } from '../components/AchievementsModal';
 import { GameAchievementToastStack } from '../components/game/GameAchievementToastStack';
 import { ModePageHeader } from '../components/practice/ModePageHeader';
 import { ModeSessionStage } from '../components/practice/ModeSessionStage';
+import { EMPTY_ERR_POSITIONS } from '../components/TextDisplay';
 import { SprintResultFlow } from '../components/practice/SprintResultFlow';
 import { SprintSettingsSection } from '../components/practice/SprintSettingsSection';
 import { useI18n } from '../contexts/I18nContext';
@@ -21,7 +22,11 @@ import { useModeKeyboardStart } from '../hooks/practice/useModeKeyboardStart';
 import { useModeResultFollowup } from '../hooks/practice/useModeResultFollowup';
 import { useModeBestResultLabel } from '../hooks/practice/useModeBestResultLabel';
 import { buildSprintResultCallout } from '../../core/practice/modeResultCallouts';
-import { buildSprintWordCount } from '../hooks/practice/modeWordCounts';
+import { buildPracticeFamilyModeHeaderViewModel } from '../../core/practice/modePagePresentation';
+import {
+  buildSprintWordCount,
+  resolveSprintCompletion,
+} from '../../core/practice/modeCompletion';
 import {
   buildPracticeBuildOptionsKey,
   usePracticeBuildOptions,
@@ -34,6 +39,8 @@ import { buildModeMaterialKey, buildModePreviewKey } from '../hooks/practice/mod
 import { useModeResultHistory } from '../hooks/practice/useModeResultHistory';
 import { useModeMaterialLabels } from '../hooks/practice/useModeMaterialLabels';
 import { InlineStatsBar } from '../components/ui/InlineStatsBar';
+import type { Session } from '../../shared/types';
+import { isPrintableKeyboardStartEvent } from '../keyboard/startEvent';
 
 const SPRINT_DURATION_OPTIONS = [15, 30, 45, 60];
 
@@ -69,6 +76,7 @@ export function SprintPage() {
   const useYo = settings.useYo;
   const sprintScenario = getPracticeContentScenario('sprint', t);
   const sprintModeSettings = getModePracticeSettings('test');
+  const sprintHeader = buildPracticeFamilyModeHeaderViewModel('sprint', t);
 
   const [timerValue, setTimerValue] = useState(sprintModeSettings.sprintDurationSeconds ?? 30);
   const [result, setResult] = useState<{
@@ -153,30 +161,25 @@ export function SprintPage() {
   });
 
   const onFinish = useCallback((wpm: number, acc: number, elapsed: number, ses: any) => {
-    saveHistory('test', wpm, acc, {
-      contentScenarioId: 'sprint',
-      trainingMode: 'normal',
+    const completion = resolveSprintCompletion({
+      acc,
       contentMode: effectiveContentMode,
-      durationSeconds: elapsed,
-      charStats: ses?.charStats,
-    });
-    updateMotivationProgress((current) => updateMotivationAfterPractice(current, {
       elapsedSeconds: elapsed,
-      cpm: wpm * 5,
-      acc,
-      trainingMode: 'normal',
-      successfulSession: wpm * 5 >= Math.max(1, practiceSettings.goalSpeedCpm || 150) && acc >= 95,
-      flawlessSession: (ses?.errors ?? 0) === 0,
-    }));
-    setResult({
+      goalSpeedCpm: practiceSettings.goalSpeedCpm || 150,
+      session: ses as Session,
       wpm,
-      acc,
-      elapsed,
-      chars: ses?.totalChars ?? 0,
-      errors: ses?.errors ?? 0,
     });
+    saveHistory('test', wpm, acc, {
+      contentScenarioId: completion.historyEntry.contentScenarioId,
+      trainingMode: completion.historyEntry.trainingMode,
+      contentMode: completion.historyEntry.contentMode,
+      durationSeconds: completion.historyEntry.durationSeconds,
+      charStats: completion.historyEntry.charStats,
+    });
+    updateMotivationProgress(current => updateMotivationAfterPractice(current, completion.motivationEvent));
+    setResult(completion.result);
 
-    handleAchievementEvent({ type: 'test.completed', wpm, accuracy: acc });
+    completion.achievementEvents.forEach(handleAchievementEvent);
   }, [
     effectiveContentMode,
     handleAchievementEvent,
@@ -191,7 +194,7 @@ export function SprintPage() {
     onFinish,
   });
 
-  const startSprint = useCallback(() => {
+  const startSprint = useCallback((initialEvent?: KeyboardEvent) => {
     if (session.active) return;
     const nextText = buildSprintText();
     setSprintText(nextText);
@@ -199,11 +202,14 @@ export function SprintPage() {
     setResult(null);
     setTimerValue(duration);
     start(nextText);
-  }, [buildSprintText, duration, session.active, start]);
+    if (isPrintableKeyboardStartEvent(initialEvent)) {
+      handleKey(initialEvent);
+    }
+  }, [buildSprintText, duration, handleKey, session.active, start]);
 
-  const retrySprint = useCallback(() => {
+  const retrySprint = useCallback((initialEvent?: KeyboardEvent) => {
     stop();
-    startSprint();
+    startSprint(initialEvent);
   }, [startSprint, stop]);
 
   const sprintPreviewKey = buildModePreviewKey({
@@ -318,15 +324,15 @@ export function SprintPage() {
       />
 
       <ModePageHeader
-        title={t('sprint.title')}
-        description={t('sprint.description')}
-        achievementsLabel={t('sprint.achievements')}
+        title={sprintHeader.title}
+        description={sprintHeader.description ?? ''}
+        achievementsLabel={sprintHeader.achievementsLabel}
         achievementsUnlocked={sprintUnlockedCount}
         achievementsTotal={sprintAchievementCatalog.length}
         onOpenAchievements={() => setShowAchievements(true)}
         onStart={startSprint}
         startDisabled={session.active}
-        startLabel={t('sprint.start')}
+        startLabel={sprintHeader.startLabel ?? t('sprint.start')}
       />
 
       <SprintSettingsSection
@@ -338,7 +344,7 @@ export function SprintPage() {
         durationLabel={t('sprint.duration')}
         durationOptions={SPRINT_DURATION_OPTIONS}
         durationValueLabel={(value) => t('sprint.durationValue', { value })}
-        bestLabel={t('sprint.best')}
+        bestLabel={sprintHeader.bestLabel ?? t('sprint.best')}
         bestValue={sprintBestResult.bestValue}
         onContentModeChange={(value) => saveModePracticeSettings('test', { contentMode: value })}
         onContentPackAction={handleContentPackAction}
@@ -353,10 +359,10 @@ export function SprintPage() {
 
       {session.active && (
         <InlineStatsBar
-          items={[
-            { id: 'timer', content: <><b>{timerValue.toFixed(timerValue >= 10 ? 0 : 1)}</b> {t('common.secondsShort')}</> },
-            { id: 'speed', content: <><b>{fmtSpeed(wpm)}</b> <small className="speed-unit">{spdLabel}</small></> },
-            { id: 'accuracy', content: <><b>{Math.round(acc)}</b>%</> },
+          compactItems={[
+            { id: 'timer', value: timerValue.toFixed(timerValue >= 10 ? 0 : 1), label: t('common.secondsShort') },
+            { id: 'speed', value: fmtSpeed(wpm), detail: spdLabel },
+            { id: 'accuracy', value: Math.round(acc), label: '%' },
           ]}
         />
       )}
@@ -364,7 +370,7 @@ export function SprintPage() {
       <ModeSessionStage
         text={session.active ? session.text : sprintText}
         pos={session.active ? session.pos : 0}
-        errPositions={session.active ? session.errPositions : new Set()}
+        errPositions={session.active ? session.errPositions : EMPTY_ERR_POSITIONS}
         waitingForSpace={waitingForSpace}
         overlay={showOverlay ? t('sprint.overlay', { start: t('sprint.start') }) : null}
         onOverlayClick={startSprint}

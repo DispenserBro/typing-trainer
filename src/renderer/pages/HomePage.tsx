@@ -1,5 +1,8 @@
 import { useMemo } from 'react';
-import { buildHomePageViewModel } from '../../core/home/viewModel';
+import {
+  buildHomePageViewModel,
+  buildHomeVisibleQuickActions,
+} from '../../core/home/viewModel';
 import {
   useAppGame,
   useAppPractice,
@@ -78,12 +81,11 @@ export function HomePage() {
     ? t('home.hero.openGame')
     : getReplayTitleFromHistory(homeViewModel.lastSession, t);
   const showSecondaryHeroAction = secondaryActionMode !== primaryActionMode;
-  const visibleQuickActions = homeViewModel.actions.filter((action) => {
-    if (homeViewModel.currentRun && action.id === 'continue-run') return false;
-    if (!homeViewModel.currentRun && primaryActionMode === 'practice' && action.id === 'start-practice') return false;
-    if (!homeViewModel.currentRun && primaryActionMode === 'lessons' && action.id === 'lessons') return false;
-    if (showSecondaryHeroAction && action.id === 'replay-last') return false;
-    return true;
+  const visibleQuickActions = buildHomeVisibleQuickActions({
+    actions: homeViewModel.actions,
+    currentRunActive: Boolean(homeViewModel.currentRun),
+    primaryActionMode,
+    showSecondaryHeroAction,
   });
 
   return (

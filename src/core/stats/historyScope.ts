@@ -6,9 +6,10 @@ import type {
   TranslationParams,
 } from '../../shared/types';
 import { formatSpeed } from '../engine';
+import { matchesHistoryModeBucket } from '../history/selectors';
 import {
   aggregateCharStats,
-  findMatchingRhythmSession,
+  buildRhythmSessionMatcher,
   formatSessionTooltipTimestamp,
   getStatsLayoutScopeLabel,
   getStatsModeLabel,
@@ -110,7 +111,7 @@ export function buildStatsHistoryScopeModel({
   const allHistoryEntries = buildScopedHistoryEntries(progressHistory);
   const filteredHistoryEntries = allHistoryEntries.filter(({ layoutId, entry }) =>
     (layoutScope === 'all' || layoutId === currentLayout)
-    && (statsMode === 'all' || entry.mode === statsMode)
+    && (statsMode === 'all' || matchesHistoryModeBucket(entry, statsMode))
     && isWithinPeriod(entry.date, statsPeriod),
   );
   const filteredHistory = filteredHistoryEntries.map(item => item.entry);
@@ -120,6 +121,7 @@ export function buildStatsHistoryScopeModel({
   const keyStats = aggregateCharStats(filteredCurrentLayoutHistory);
 
   const allRhythmSessions = buildScopedRhythmSessions(practiceRhythmHistory);
+  const findRhythmSession = buildRhythmSessionMatcher(allRhythmSessions);
   const rhythmSessions = statsMode !== 'all' && statsMode !== 'practice'
     ? []
     : allRhythmSessions.filter(({ layoutId, session }) =>
@@ -132,7 +134,7 @@ export function buildStatsHistoryScopeModel({
     .sort((a, b) => new Date(b.entry.date).getTime() - new Date(a.entry.date).getTime())
     .map(item => ({
       ...item,
-      rhythm: findMatchingRhythmSession(item, allRhythmSessions),
+      rhythm: findRhythmSession(item),
     }));
 
   const chartTimestamps = filteredHistory.map(entry => formatSessionTooltipTimestamp(entry.date, locale));

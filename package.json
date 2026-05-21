@@ -1,6 +1,6 @@
 {
   "name": "typing-trainer",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "Клавиатурный тренажёр с поддержкой русского и английского языков",
   "author": {
     "name": "DispenserBro",
@@ -25,6 +25,11 @@
     "diagnostics:history": "npm run build:debug-tools && node dist-debug/debug/runHistoryDiagnostics.js",
     "diagnostics:i18n": "npm run build:debug-tools && node dist-debug/debug/runI18nDiagnostics.js",
     "diagnostics:extensions": "npm run build:debug-tools && node dist-debug/debug/runExtensionSourceDiagnostics.js",
+    "diagnostics:perf-budget": "npm run build:debug-tools && node dist-debug/debug/runPerfBudgetDiagnostics.js",
+    "diagnostics:packaging": "node scripts/build-electron.mjs --dry-run --win --linux --mac",
+    "diagnostics:platform-smoke": "electron . --platform-smoke",
+    "diagnostics:release-coverage": "npm run build:debug-tools && node dist-debug/debug/runReleaseCoverageDiagnostics.js",
+    "diagnostics:release-hardening": "node scripts/release-hardening.mjs",
     "build:electron": "node scripts/build-electron.mjs",
     "build:win": "node scripts/build-electron.mjs --win",
     "build:linux": "node scripts/build-electron.mjs --linux",
@@ -64,6 +69,15 @@
       "icon": "data/app-icon.png",
       "category": "Education",
       "maintainer": "DispenserBro <dispenserbro@users.noreply.github.com>"
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "identity": null,
+      "icon": "data/app-icon.png",
+      "category": "public.app-category.education"
     }
   },
   "devDependencies": {

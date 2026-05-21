@@ -780,6 +780,9 @@ msgstr "Проблема пакета: {{details}}"
 msgid "addons.catalog.issue.remoteModManualOnly"
 msgstr "Удалённый мод не объявляет manifest.files, поэтому доступна только ручная установка."
 
+msgid "addons.catalog.issue.remoteModsTrustedOnly"
+msgstr "Удалённые моды являются доверенным кодом. До появления отдельной sandbox-изоляции устанавливайте их только из локального источника."
+
 msgid "addons.catalog.issue.sourceCardEmpty"
 msgstr "Карточка источника пустая и пропущена: {{target}}"
 
@@ -1751,14 +1754,20 @@ msgstr "Все"
 msgid "stats.filters.modeOptions.practice"
 msgstr "Практика"
 
+msgid "stats.filters.modeOptions.sprint"
+msgstr "Спринт"
+
+msgid "stats.filters.modeOptions.survival"
+msgstr "Выживание"
+
+msgid "stats.filters.modeOptions.flawless"
+msgstr "Без ошибок"
+
 msgid "stats.filters.modeOptions.game"
 msgstr "Игра"
 
 msgid "stats.filters.modeOptions.lesson"
 msgstr "Уроки"
-
-msgid "stats.filters.modeOptions.test"
-msgstr "Спринт"
 
 msgid "stats.filters.layoutOptions.current"
 msgstr "Текущая раскладка"
@@ -3148,6 +3157,93 @@ msgstr "Событие"
 
 msgid "game.reward.kind.letter"
 msgstr "Печать мастера"
+
+msgid "game.core.rewards.simple.title"
+msgstr "Реликвия"
+
+msgid "game.core.rewards.durable.title"
+msgstr "Артефакт"
+
+msgid "game.core.rewards.durable.watchDurability"
+msgstr "Следи за прочностью."
+
+msgid "game.core.rewards.letter.title"
+msgstr "Новая буква"
+
+msgid "game.core.rewards.letter.flavor"
+msgstr "Открыть {{letter}}"
+
+msgid "game.core.rewards.letter.description"
+msgstr "Добавляет новую тренировочную букву в будущие упражнения."
+
+msgid "game.core.rewards.buffSpeed.title"
+msgstr "Попутный ритм"
+
+msgid "game.core.rewards.buffSpeed.flavor"
+msgstr "Снизить давление темпа в следующих боях"
+
+msgid "game.core.rewards.buffSpeed.description"
+msgstr "На 3 уровня снижает требуемую скорость на 6%."
+
+msgid "game.core.rewards.buffSpeed.modifierTitle"
+msgstr "Попутный ритм"
+
+msgid "game.core.rewards.buffSpeed.modifierDescription"
+msgstr "-6% к требуемой скорости на 3 уровня"
+
+msgid "game.core.rewards.buffDefense.title"
+msgstr "Защитная стойка"
+
+msgid "game.core.rewards.buffDefense.flavor"
+msgstr "Смягчить цену ошибок"
+
+msgid "game.core.rewards.buffDefense.description"
+msgstr "На 4 уровня снижает атаку противника на 3."
+
+msgid "game.core.rewards.buffDefense.modifierTitle"
+msgstr "Защитная стойка"
+
+msgid "game.core.rewards.buffDefense.modifierDescription"
+msgstr "-3 к атаке противника на 4 уровня"
+
+msgid "game.core.rewards.extraLife.title"
+msgstr "Второе дыхание"
+
+msgid "game.core.rewards.extraLife.flavor"
+msgstr "Увеличить максимум HP и полностью восстановиться"
+
+msgid "game.core.rewards.extraLife.description"
+msgstr "Добавляет +10 к максимальному HP и полностью восстанавливает здоровье."
+
+msgid "game.core.rewards.curseSpeed.title"
+msgstr "Тяжёлый темп"
+
+msgid "game.core.rewards.curseSpeed.flavor"
+msgstr "Получить здоровье, но принять более жёсткий темп"
+
+msgid "game.core.rewards.curseSpeed.description"
+msgstr "Восстанавливает 20 HP, но повышает требования к скорости на 3 уровня."
+
+msgid "game.core.rewards.curseSpeed.modifierTitle"
+msgstr "Тяжёлый темп"
+
+msgid "game.core.rewards.curseSpeed.modifierDescription"
+msgstr "+5% к требуемой скорости на 3 уровня"
+
+msgid "game.core.rewards.curseDefense.title"
+msgstr "Хрупкая броня"
+
+msgid "game.core.rewards.curseDefense.flavor"
+msgstr "Получить регенерацию позже, но пропускать более тяжёлые удары"
+
+msgid "game.core.rewards.curseDefense.description"
+msgstr "Даёт регенерацию на 4 хода, но повышает атаку противника на 4 уровня."
+
+msgid "game.core.rewards.curseDefense.modifierTitle"
+msgstr "Хрупкая броня"
+
+msgid "game.core.rewards.curseDefense.modifierDescription"
+msgstr "+4 к атаке противника на 4 уровня"
 
 msgid "game.overlay.savedRun"
 msgstr "Забег сохранён\nУровень {{level}} · {{hp}} HP\nНажмите, чтобы продолжить"
@@ -5597,3 +5693,507 @@ msgstr "+{value}% к коэфф. защиты"
 
 msgid "game.core.items.effects.critBonus.default"
 msgstr "+{value}% к шансу крита"
+
+msgid "common.actions.back"
+msgstr "Назад"
+
+msgid "common.actions.next"
+msgstr "Дальше"
+
+msgid "common.actions.save"
+msgstr "Сохранить"
+
+msgid "common.actions.export"
+msgstr "Экспорт"
+
+msgid "common.actions.delete"
+msgstr "Удалить"
+
+msgid "common.actions.cancel"
+msgstr "Отмена"
+
+msgid "titlebar.minimize"
+msgstr "Свернуть"
+
+msgid "titlebar.maximize"
+msgstr "Развернуть"
+
+msgid "titlebar.close"
+msgstr "Закрыть"
+
+msgid "onboarding.firstRun.stepProgress"
+msgstr "Шаг {{current}} из {{total}}"
+
+msgid "onboarding.firstRun.language.title"
+msgstr "Выберите язык"
+
+msgid "onboarding.firstRun.language.description"
+msgstr "Это определит набор слов для тренировки и подходящие раскладки клавиатуры."
+
+msgid "onboarding.firstRun.layout.title"
+msgstr "Выберите раскладку"
+
+msgid "onboarding.firstRun.layout.description"
+msgstr "Раскладка определяет расположение клавиш, пальцевые зоны и порядок обучения буквам."
+
+msgid "onboarding.firstRun.overview.title"
+msgstr "Что вас ждёт"
+
+msgid "onboarding.firstRun.overview.description"
+msgstr "В приложении есть несколько режимов тренировки — каждый развивает навык печати по-своему."
+
+msgid "onboarding.firstRun.overview.practice.title"
+msgstr "Практика"
+
+msgid "onboarding.firstRun.overview.practice.description"
+msgstr "Короткие адаптивные упражнения на слабые буквы, сочетания и ритм. Лучший способ начать."
+
+msgid "onboarding.firstRun.overview.lessons.title"
+msgstr "Уроки"
+
+msgid "onboarding.firstRun.overview.lessons.description"
+msgstr "Пошаговое обучение раскладке от базовых рядов к полному алфавиту и связкам."
+
+msgid "onboarding.firstRun.overview.game.title"
+msgstr "Игра"
+
+msgid "onboarding.firstRun.overview.game.description"
+msgstr "Длинные забеги с боссами, предметами и маршрутами — мотивация через прогрессию."
+
+msgid "onboarding.firstRun.done.title"
+msgstr "Всё готово!"
+
+msgid "onboarding.firstRun.done.description"
+msgstr "Настройки сохранены. Рекомендуем начать с уроков, чтобы освоить базу раскладки, или сразу перейти в практику."
+
+msgid "onboarding.firstRun.startTraining"
+msgstr "Начать тренировку"
+
+msgid "onboarding.modeGuide.skip"
+msgstr "Пропустить гайд"
+
+msgid "onboarding.modeGuide.interactiveStep"
+msgstr "Интерактивный шаг"
+
+msgid "onboarding.modeGuide.stepProgress"
+msgstr "Шаг {{current}} из {{total}}"
+
+msgid "onboarding.modeGuide.common.miniTrial.title"
+msgstr "Мини-проба"
+
+msgid "onboarding.modeGuide.common.miniTrial.checklist"
+msgstr "пройти 3 мини-шага"
+
+msgid "onboarding.modeGuide.common.targets.finish"
+msgstr "Финиш"
+
+msgid "onboarding.modeGuide.practice.description"
+msgstr "Короткий адаптивный режим для слабых символов, сочетаний и ритма."
+
+msgid "onboarding.modeGuide.practice.finish"
+msgstr "Перейти к практике"
+
+msgid "onboarding.modeGuide.practice.interactivePrompt"
+msgstr "Нажмите подсвеченные цели по порядку: фокус, темп, точность."
+
+msgid "onboarding.modeGuide.practice.targets.focus"
+msgstr "Фокус"
+
+msgid "onboarding.modeGuide.practice.targets.tempo"
+msgstr "Темп"
+
+msgid "onboarding.modeGuide.practice.targets.accuracy"
+msgstr "Точность"
+
+msgid "onboarding.modeGuide.practice.kicker"
+msgstr "Быстрый старт"
+
+msgid "onboarding.modeGuide.practice.title"
+msgstr "Практика"
+
+msgid "onboarding.modeGuide.practice.steps.training.title"
+msgstr "Что здесь тренируется"
+
+msgid "onboarding.modeGuide.practice.steps.training.body"
+msgstr "Практика подбирает материал под текущую раскладку, прогресс и слабые места."
+
+msgid "onboarding.modeGuide.practice.steps.training.checklist.weakLetters"
+msgstr "слабые буквы"
+
+msgid "onboarding.modeGuide.practice.steps.training.checklist.adaptiveWords"
+msgstr "адаптивные слова"
+
+msgid "onboarding.modeGuide.practice.steps.training.checklist.rhythm"
+msgstr "ритм и стабильность"
+
+msgid "onboarding.modeGuide.practice.steps.start.title"
+msgstr "Как начать"
+
+msgid "onboarding.modeGuide.practice.steps.start.body"
+msgstr "Нажмите на текстовую область или начните печатать. Настройки режима можно открыть сверху."
+
+msgid "onboarding.modeGuide.practice.steps.start.checklist.material"
+msgstr "выбор материала"
+
+msgid "onboarding.modeGuide.practice.steps.start.checklist.speedGoal"
+msgstr "цель скорости"
+
+msgid "onboarding.modeGuide.practice.steps.start.checklist.trainingMode"
+msgstr "режим тренировки"
+
+msgid "onboarding.modeGuide.practice.steps.trial.body"
+msgstr "Перед стартом запомните базовый цикл: сосредоточиться, держать темп, не жертвовать точностью."
+
+msgid "onboarding.modeGuide.test.description"
+msgstr "Спринт на время для проверки текущей скорости и точности."
+
+msgid "onboarding.modeGuide.test.finish"
+msgstr "Перейти к спринту"
+
+msgid "onboarding.modeGuide.test.interactivePrompt"
+msgstr "Отметьте три опоры спринта перед первым запуском."
+
+msgid "onboarding.modeGuide.test.targets.timer"
+msgstr "Таймер"
+
+msgid "onboarding.modeGuide.test.targets.steadyTempo"
+msgstr "Ровный темп"
+
+msgid "onboarding.modeGuide.test.kicker"
+msgstr "Режим на время"
+
+msgid "onboarding.modeGuide.test.title"
+msgstr "Спринт"
+
+msgid "onboarding.modeGuide.test.steps.idea.title"
+msgstr "Главная идея"
+
+msgid "onboarding.modeGuide.test.steps.idea.body"
+msgstr "Спринт показывает, как вы печатаете под ограничением времени."
+
+msgid "onboarding.modeGuide.test.steps.idea.checklist.duration"
+msgstr "15-60 секунд"
+
+msgid "onboarding.modeGuide.test.steps.idea.checklist.liveMetrics"
+msgstr "живые метрики"
+
+msgid "onboarding.modeGuide.test.steps.idea.checklist.bestHistory"
+msgstr "история лучших попыток"
+
+msgid "onboarding.modeGuide.test.steps.focus.title"
+msgstr "Что важно"
+
+msgid "onboarding.modeGuide.test.steps.focus.body"
+msgstr "Не разгоняйтесь ценой ошибок: итоговая оценка полезнее, когда скорость и точность растут вместе."
+
+msgid "onboarding.modeGuide.test.steps.focus.checklist.timer"
+msgstr "следите за таймером"
+
+msgid "onboarding.modeGuide.test.steps.focus.checklist.errors"
+msgstr "не паникуйте на ошибках"
+
+msgid "onboarding.modeGuide.test.steps.focus.checklist.series"
+msgstr "повторяйте короткими сериями"
+
+msgid "onboarding.modeGuide.test.steps.trial.body"
+msgstr "Спринт легче, если заранее принять его ритм."
+
+msgid "onboarding.modeGuide.survival.description"
+msgstr "Длинная дистанция с запасом ошибок и проверкой стабильности."
+
+msgid "onboarding.modeGuide.survival.finish"
+msgstr "Перейти к выживанию"
+
+msgid "onboarding.modeGuide.survival.interactivePrompt"
+msgstr "Соберите безопасный маршрут: запас, контроль, финиш."
+
+msgid "onboarding.modeGuide.survival.targets.reserve"
+msgstr "Запас"
+
+msgid "onboarding.modeGuide.survival.targets.control"
+msgstr "Контроль"
+
+msgid "onboarding.modeGuide.survival.kicker"
+msgstr "Режим на выдержку"
+
+msgid "onboarding.modeGuide.survival.title"
+msgstr "Выживание"
+
+msgid "onboarding.modeGuide.survival.steps.goal.title"
+msgstr "Цель режима"
+
+msgid "onboarding.modeGuide.survival.steps.goal.body"
+msgstr "Выживание проверяет, насколько долго вы удерживаете качество печати."
+
+msgid "onboarding.modeGuide.survival.steps.goal.checklist.errorLimit"
+msgstr "есть лимит ошибок"
+
+msgid "onboarding.modeGuide.survival.steps.goal.checklist.longDistance"
+msgstr "дистанция длиннее"
+
+msgid "onboarding.modeGuide.survival.steps.goal.checklist.stability"
+msgstr "важна стабильность"
+
+msgid "onboarding.modeGuide.survival.steps.play.title"
+msgstr "Как играть"
+
+msgid "onboarding.modeGuide.survival.steps.play.body"
+msgstr "Печатайте ровно, не пытайтесь отыграть ошибку резким ускорением."
+
+msgid "onboarding.modeGuide.survival.steps.play.checklist.attempts"
+msgstr "берегите попытки"
+
+msgid "onboarding.modeGuide.survival.steps.play.checklist.progress"
+msgstr "смотрите на прогресс"
+
+msgid "onboarding.modeGuide.survival.steps.play.checklist.cycles"
+msgstr "перезапускайте короткими циклами"
+
+msgid "onboarding.modeGuide.survival.steps.trial.body"
+msgstr "Отметьте базовые опоры выживания перед первым запуском."
+
+msgid "onboarding.modeGuide.flawless.description"
+msgstr "Чистый забег без права на ошибку."
+
+msgid "onboarding.modeGuide.flawless.finish"
+msgstr "Перейти к безошибочному режиму"
+
+msgid "onboarding.modeGuide.flawless.interactivePrompt"
+msgstr "Соберите чистый старт: взгляд, пауза, ввод."
+
+msgid "onboarding.modeGuide.flawless.targets.lookAhead"
+msgstr "Взгляд"
+
+msgid "onboarding.modeGuide.flawless.targets.pause"
+msgstr "Пауза"
+
+msgid "onboarding.modeGuide.flawless.targets.input"
+msgstr "Ввод"
+
+msgid "onboarding.modeGuide.flawless.kicker"
+msgstr "Точность прежде всего"
+
+msgid "onboarding.modeGuide.flawless.title"
+msgstr "Без ошибок"
+
+msgid "onboarding.modeGuide.flawless.steps.difference.title"
+msgstr "Чем отличается режим"
+
+msgid "onboarding.modeGuide.flawless.steps.difference.body"
+msgstr "Здесь важнее всего контроль: одна ошибка может завершить попытку."
+
+msgid "onboarding.modeGuide.flawless.steps.difference.checklist.zeroTolerance"
+msgstr "нулевая терпимость к ошибкам"
+
+msgid "onboarding.modeGuide.flawless.steps.difference.checklist.shortFocus"
+msgstr "короткая концентрация"
+
+msgid "onboarding.modeGuide.flawless.steps.difference.checklist.slowStart"
+msgstr "медленный старт допустим"
+
+msgid "onboarding.modeGuide.flawless.steps.strategy.title"
+msgstr "Полезная стратегия"
+
+msgid "onboarding.modeGuide.flawless.steps.strategy.body"
+msgstr "Сначала читайте на полслова вперед, затем ускоряйтесь только когда поймали ритм."
+
+msgid "onboarding.modeGuide.flawless.steps.strategy.checklist.startSlowly"
+msgstr "не спешить на старте"
+
+msgid "onboarding.modeGuide.flawless.steps.strategy.checklist.lookAhead"
+msgstr "держать взгляд впереди"
+
+msgid "onboarding.modeGuide.flawless.steps.strategy.checklist.stopAfterMistake"
+msgstr "останавливаться после сбоя"
+
+msgid "onboarding.modeGuide.flawless.steps.trial.body"
+msgstr "Точность начинается с маленькой паузы перед первым символом."
+
+msgid "onboarding.modeGuide.lessons.description"
+msgstr "Пошаговое изучение раскладки и закрепление новых символов."
+
+msgid "onboarding.modeGuide.lessons.finish"
+msgstr "Перейти к урокам"
+
+msgid "onboarding.modeGuide.lessons.interactivePrompt"
+msgstr "Отметьте путь урока: ряд, символ, закрепление."
+
+msgid "onboarding.modeGuide.lessons.targets.row"
+msgstr "Ряд"
+
+msgid "onboarding.modeGuide.lessons.targets.symbol"
+msgstr "Символ"
+
+msgid "onboarding.modeGuide.lessons.targets.reinforcement"
+msgstr "Закрепление"
+
+msgid "onboarding.modeGuide.lessons.kicker"
+msgstr "Учебный маршрут"
+
+msgid "onboarding.modeGuide.lessons.title"
+msgstr "Уроки"
+
+msgid "onboarding.modeGuide.lessons.steps.purpose.title"
+msgstr "Зачем нужны уроки"
+
+msgid "onboarding.modeGuide.lessons.steps.purpose.body"
+msgstr "Уроки проводят по раскладке постепенно, чтобы пальцы привыкали без перегруза."
+
+msgid "onboarding.modeGuide.lessons.steps.purpose.checklist.rows"
+msgstr "освоение рядов"
+
+msgid "onboarding.modeGuide.lessons.steps.purpose.checklist.newSymbols"
+msgstr "новые символы"
+
+msgid "onboarding.modeGuide.lessons.steps.purpose.checklist.orderedExercises"
+msgstr "упражнения по порядку"
+
+msgid "onboarding.modeGuide.lessons.steps.flow.title"
+msgstr "Как проходить"
+
+msgid "onboarding.modeGuide.lessons.steps.flow.body"
+msgstr "Лучше закрывать уроки короткими подходами, чем пытаться пройти всю раскладку за один раз."
+
+msgid "onboarding.modeGuide.lessons.steps.flow.checklist.availableLesson"
+msgstr "начните с доступного урока"
+
+msgid "onboarding.modeGuide.lessons.steps.flow.checklist.repeatSymbols"
+msgstr "повторяйте сложные символы"
+
+msgid "onboarding.modeGuide.lessons.steps.flow.checklist.accuracy"
+msgstr "следите за точностью"
+
+msgid "onboarding.modeGuide.lessons.steps.trial.body"
+msgstr "Соберите три части учебного цикла."
+
+msgid "onboarding.modeGuide.game.description"
+msgstr "Рогалик-забег с картой, предметами, событиями и боссами."
+
+msgid "onboarding.modeGuide.game.finish"
+msgstr "Перейти к игре"
+
+msgid "onboarding.modeGuide.game.interactivePrompt"
+msgstr "Подготовьте забег: карта, бой, награда."
+
+msgid "onboarding.modeGuide.game.targets.map"
+msgstr "Карта"
+
+msgid "onboarding.modeGuide.game.targets.battle"
+msgstr "Бой"
+
+msgid "onboarding.modeGuide.game.targets.reward"
+msgstr "Награда"
+
+msgid "onboarding.modeGuide.game.kicker"
+msgstr "Игровая прогрессия"
+
+msgid "onboarding.modeGuide.game.title"
+msgstr "Игра"
+
+msgid "onboarding.modeGuide.game.steps.flow.title"
+msgstr "Что происходит"
+
+msgid "onboarding.modeGuide.game.steps.flow.body"
+msgstr "Игра превращает тренировку в маршрут: вы выбираете узлы, проходите бои и собираете предметы."
+
+msgid "onboarding.modeGuide.game.steps.flow.checklist.runMap"
+msgstr "карта забега"
+
+msgid "onboarding.modeGuide.game.steps.flow.checklist.levelsAndBosses"
+msgstr "обычные уровни и боссы"
+
+msgid "onboarding.modeGuide.game.steps.flow.checklist.inventoryRewards"
+msgstr "инвентарь и награды"
+
+msgid "onboarding.modeGuide.game.steps.orientation.title"
+msgstr "Как не потеряться"
+
+msgid "onboarding.modeGuide.game.steps.orientation.body"
+msgstr "Сначала выберите комфортную цель скорости, затем следите за здоровьем и эффектами предметов."
+
+msgid "onboarding.modeGuide.game.steps.orientation.checklist.speedGoal"
+msgstr "цель скорости"
+
+msgid "onboarding.modeGuide.game.steps.orientation.checklist.health"
+msgstr "здоровье"
+
+msgid "onboarding.modeGuide.game.steps.orientation.checklist.rewards"
+msgstr "выбор наград"
+
+msgid "onboarding.modeGuide.game.steps.trial.body"
+msgstr "Отметьте три элемента, которые ведут игровой забег."
+
+msgid "themeEditor.title"
+msgstr "Редактор темы"
+
+msgid "themeEditor.loadExisting"
+msgstr "Загрузить существующую:"
+
+msgid "themeEditor.nameLabel"
+msgstr "Название:"
+
+msgid "themeEditor.namePlaceholder"
+msgstr "Моя тема"
+
+msgid "themeEditor.errors.nameRequired"
+msgstr "Введите название"
+
+msgid "themeEditor.errors.cannotDeleteBuiltIn"
+msgstr "Встроенные темы нельзя удалить"
+
+msgid "themeEditor.colors.bg"
+msgstr "Фон"
+
+msgid "themeEditor.colors.surface"
+msgstr "Поверхность"
+
+msgid "themeEditor.colors.surface2"
+msgstr "Поверхность 2"
+
+msgid "themeEditor.colors.text"
+msgstr "Текст"
+
+msgid "themeEditor.colors.subtext"
+msgstr "Подтекст"
+
+msgid "themeEditor.colors.accent"
+msgstr "Акцент"
+
+msgid "themeEditor.colors.green"
+msgstr "Правильно"
+
+msgid "themeEditor.colors.red"
+msgstr "Ошибка"
+
+msgid "themeEditor.colors.yellow"
+msgstr "Предупр."
+
+msgid "themeEditor.typography.title"
+msgstr "Типографика и форма"
+
+msgid "themeEditor.typography.fontSans"
+msgstr "Шрифт UI"
+
+msgid "themeEditor.typography.fontMono"
+msgstr "Моно-шрифт"
+
+msgid "themeEditor.typography.radius"
+msgstr "Радиус"
+
+msgid "themeEditor.typography.radiusSm"
+msgstr "Радиус (малый)"
+
+msgid "themeEditor.typography.transitionSpeed"
+msgstr "Скорость анимации"
+
+msgid "settings.cards.presets.importErrors.unsupportedFormat"
+msgstr "Неподдерживаемый формат файла"
+
+msgid "settings.cards.presets.importErrors.readFailed"
+msgstr "Ошибка чтения файла"
+
+msgid "settings.cards.presets.importErrors.unknownConfigType"
+msgstr "Неизвестный тип конфигурации"
+
+msgid "settings.cards.language.importPoDialogTitle"
+msgstr "Импорт перевода интерфейса"

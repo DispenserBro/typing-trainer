@@ -5,8 +5,32 @@ import type {
   GameRunModifier,
   SpeedUnit,
 } from '../../shared/types';
+import { sumBattleBonuses, type BattleBonuses } from './battleSystem';
+import { computeSetBonuses } from './itemSets';
 import { GAME_EQUIPMENT_SLOTS, getGameItemById, isBrokenInventoryItem } from './items';
 import type { EquippedEntry, InventoryEntry } from './viewTypes';
+
+export type GameInventoryPanelEmptyReason = 'all-equipped' | 'after-boss';
+
+export type GameInventoryPanelViewModel = {
+  visibleInventoryItems: InventoryEntry[];
+  emptyReason: GameInventoryPanelEmptyReason | null;
+};
+
+export type GamePageTotalBonusesViewModel = {
+  speedRequirementReductionPercent: number;
+  accuracyRequirementReduction: number;
+  bossTimerBonusSeconds: number;
+};
+
+export type GamePageBonusViewModel = {
+  itemBonuses: ReturnType<typeof sumItemBonuses>;
+  modifierBonuses: ReturnType<typeof sumModifierBonuses>;
+  equippedItemIds: string[];
+  setBonuses: ReturnType<typeof computeSetBonuses>;
+  totalBonuses: GamePageTotalBonusesViewModel;
+  battleBonuses: BattleBonuses;
+};
 
 export function buildEquippedBySlot(equipped: GameEquipmentState) {
   return Object.fromEntries(
@@ -49,6 +73,23 @@ export function buildEquippedEntries(
       broken: inventoryItem?.broken ?? false,
     };
   });
+}
+
+export function buildGameInventoryPanelViewModel(
+  inventoryItems: InventoryEntry[],
+  equippedItems: EquippedEntry[],
+): GameInventoryPanelViewModel {
+  const visibleInventoryItems = inventoryItems.filter(item => !item.equippedIn);
+  const hasEquippedInventoryItem = equippedItems.some(entry => Boolean(entry.inventoryItem));
+
+  return {
+    visibleInventoryItems,
+    emptyReason: visibleInventoryItems.length
+      ? null
+      : hasEquippedInventoryItem
+        ? 'all-equipped'
+        : 'after-boss',
+  };
 }
 
 export function getHasRepairTargets(equippedItems: EquippedEntry[]) {
@@ -119,6 +160,42 @@ export function sumModifierBonuses(activeModifiers: GameRunModifier[], activeIsB
     defCoeff: 0,
     critBonus: 0,
   });
+}
+
+export function buildGamePageBonusViewModel(
+  equippedItems: EquippedEntry[],
+  activeModifiers: GameRunModifier[],
+  activeIsBoss: boolean,
+): GamePageBonusViewModel {
+  const itemBonuses = sumItemBonuses(equippedItems, activeIsBoss);
+  const modifierBonuses = sumModifierBonuses(activeModifiers, activeIsBoss);
+  const equippedItemIds = equippedItems
+    .filter(entry => entry.meta && !entry.broken)
+    .map(entry => entry.meta!.id);
+  const setBonuses = computeSetBonuses(equippedItemIds);
+  const totalBonuses = {
+    speedRequirementReductionPercent:
+      itemBonuses.speedRequirementReductionPercent
+      + modifierBonuses.speedRequirementReductionPercent
+      + setBonuses.totalSpeedReduction,
+    accuracyRequirementReduction:
+      itemBonuses.accuracyRequirementReduction
+      + modifierBonuses.accuracyRequirementReduction
+      + setBonuses.totalAccuracyReduction,
+    bossTimerBonusSeconds:
+      itemBonuses.bossTimerBonusSeconds
+      + modifierBonuses.bossTimerBonusSeconds
+      + setBonuses.totalBossTimerBonus,
+  };
+
+  return {
+    itemBonuses,
+    modifierBonuses,
+    equippedItemIds,
+    setBonuses,
+    totalBonuses,
+    battleBonuses: sumBattleBonuses(itemBonuses, modifierBonuses),
+  };
 }
 
 export function getTargetSpeedDisplay(targetSpeedCpm: number, unit: SpeedUnit) {

@@ -1,5 +1,6 @@
 import { memo, useEffect, useState } from 'react';
 import type { GameAchievementDefinition } from '../../../shared/types';
+import { buildGameAchievementToastViewModels } from '../../../core/game/viewModel';
 import { useI18n } from '../../contexts/I18nContext';
 
 type GameAchievementToastStackProps = {
@@ -63,12 +64,7 @@ export const GameAchievementToastStack = memo(function GameAchievementToastStack
     };
   }, [achievements.length, autoHideDelay, onRemove]);
 
-  const visibleAchievements = achievements
-    .slice(0, 3)
-    .map((achievement, displayIndex) => {
-      const toastState = toastStates.get(displayIndex);
-      return { achievement, displayIndex, isHiding: toastState?.isHiding || false };
-    });
+  const visibleAchievements = buildGameAchievementToastViewModels(achievements, toastStates);
 
   return (
     <div className="game-achievement-toast-stack" aria-live="polite" aria-atomic="true">

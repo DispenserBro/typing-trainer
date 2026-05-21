@@ -51,6 +51,16 @@ npm run build:mac
 
 Готовые артефакты создаются в `dist-build`.
 
+Перед релизом локально должен проходить полный gate:
+
+```bash
+npm run diagnostics:release-hardening
+```
+
+Он запускает production build, debug diagnostics, content-pipeline, perf budget, Electron platform smoke, packaging dry-run и gate отдельного SDK (`npm ci`, `npm run smoke`, `npm pack --dry-run`). По умолчанию SDK ожидается в `../SDK`; в CI путь задаётся через `TYPING_TRAINER_SDK_DIR`.
+
+В GitHub Actions release-публикация выпускает обязательный Windows/Linux набор. Windows tag-release требует secrets `WINDOWS_CSC_LINK` и `WINDOWS_CSC_KEY_PASSWORD`, затем проверяет Authenticode-подпись `.exe`. macOS проходит platform-smoke в `--dry-run`, но исключён из tag-release до готовности signing/notarization gate. Для SDK gate в репозитории должна быть задана variable `SDK_REPOSITORY` с именем публичного SDK-репозитория.
+
 ## Расширения
 
 Центр расширений поддерживает внешние источники контента. Через него можно устанавливать:

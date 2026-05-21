@@ -1,5 +1,8 @@
 import { useRef, useEffect, useMemo, type CSSProperties, type ReactNode } from 'react';
+import { buildTextDisplayWords } from '../../core/text/displayModel';
 import { useAppSettings } from '../contexts/AppContext';
+
+export const EMPTY_ERR_POSITIONS = new Set<number>();
 
 interface Props {
   text: string;
@@ -29,38 +32,15 @@ export function TextDisplay({
   const displayStyle = resolvedFontSize ? { fontSize: `${resolvedFontSize}rem` } as CSSProperties : undefined;
 
   /* Group characters into words so a word never splits across lines */
-  const words = useMemo(() => {
-    const result: { ch: string; cls: string; idx: number }[][] = [];
-    let current: { ch: string; cls: string; idx: number }[] = [];
-
-    for (let i = 0; i < text.length; i++) {
-      let cls = '';
-      if (i < pos) {
-        cls = errPositions.has(i) ? 'char-err' : 'char-ok';
-      } else if (i === pos) {
-        cls = `${highlightCurrentChar ? 'char-current ' : ''}cursor-${curStyle}`;
-        if (curSmooth === 'smooth') cls += ' cursor-smooth';
-      }
-
-      if (text[i] === ' ') {
-        // push the accumulated word, then start a new group with the space
-        if (current.length) { result.push(current); current = []; }
-        result.push([{ ch: '\u00A0', cls, idx: i }]);
-      } else {
-        current.push({ ch: text[i], cls, idx: i });
-      }
-    }
-    if (current.length) result.push(current);
-
-    // Append trailing space cursor when waiting for final space
-    if (waitingForSpace) {
-      let cls = `${highlightCurrentChar ? 'char-current ' : ''}cursor-${curStyle}`;
-      if (curSmooth === 'smooth') cls += ' cursor-smooth';
-      result.push([{ ch: '\u00A0', cls, idx: text.length }]);
-    }
-
-    return result;
-  }, [text, pos, errPositions, curStyle, curSmooth, waitingForSpace, highlightCurrentChar]);
+  const words = useMemo(() => buildTextDisplayWords({
+    cursorSmooth: curSmooth,
+    cursorStyle: curStyle,
+    errPositions,
+    highlightCurrentChar,
+    pos,
+    text,
+    waitingForSpace,
+  }), [text, pos, errPositions, curStyle, curSmooth, waitingForSpace, highlightCurrentChar]);
 
   // Scroll current char into view / running line shift
   useEffect(() => {

@@ -4,11 +4,13 @@ import { installAddonFromJSON, scanAddons, validateAddonManifest } from './addon
 import { installModFromFolder, installModFromPackage, scanMods, validateModManifest } from './modLoader';
 import { installThemeFromJSON, scanThemes, validateThemeManifest } from './themeLoader';
 import type { AddonManifest, ModManifest } from '../../shared/types/addon';
+import type { ModPermission } from '../../shared/types/modApi';
 import type {
   ExtensionCatalogEntry,
   ExtensionCatalogCompatibility,
   ExtensionCatalogIssue,
   ExtensionCatalogIssueFallback,
+  ExtensionCatalogIssueSeverity,
   ExtensionCatalogIssueStage,
   ExtensionCatalogInstallResult,
   ExtensionCatalogKind,
@@ -21,7 +23,13 @@ import type {
   ExtensionSourceSyncResult,
   InstalledExtensionSource,
 } from '../../shared/types/extensionSource';
-import { EXTENSION_SOURCE_MANIFEST_VERSION } from '../../shared/types/extensionSource';
+import {
+  EXTENSION_CATALOG_KINDS,
+  EXTENSION_SOURCE_MANIFEST_TYPE,
+  EXTENSION_SOURCE_MANIFEST_VERSION,
+  getExtensionCatalogEntryBlockReason,
+  isExtensionCatalogEntryBlocked,
+} from '../../shared/types/extensionSource';
 import type { ThemeManifest } from '../../shared/types/theme';
 import { THEME_STYLE_CSS_FILE_CANDIDATES, THEME_STYLE_SCSS_FILE_CANDIDATES } from '../../shared/types/theme';
 
@@ -164,7 +172,7 @@ function isMissingUriReadError(error: unknown) {
 
 function createCatalogIssue(
   stage: ExtensionCatalogIssueStage,
-  severity: 'warning' | 'error',
+  severity: ExtensionCatalogIssueSeverity,
   message: string,
   options?: {
     code?: string;
@@ -273,8 +281,8 @@ export function validateExtensionSourceManifest(raw: unknown): ExtensionSourceVa
     errors.push('Missing or invalid "version".');
   }
 
-  if (manifestLike.type !== 'extension-source') {
-    errors.push('Source "type" must be "extension-source".');
+  if (manifestLike.type !== EXTENSION_SOURCE_MANIFEST_TYPE) {
+    errors.push(`Source "type" must be "${EXTENSION_SOURCE_MANIFEST_TYPE}".`);
   }
 
   const lists = manifestLike.lists;
@@ -295,7 +303,7 @@ export function validateExtensionSourceManifest(raw: unknown): ExtensionSourceVa
     name: name!,
     version: version!,
     icon: normalizeOptionalString(manifestLike.icon),
-    type: 'extension-source',
+    type: EXTENSION_SOURCE_MANIFEST_TYPE,
     description: normalizeOptionalString(manifestLike.description),
     author: normalizeOptionalString(manifestLike.author),
     basePath: normalizeOptionalString(manifestLike.basePath),
@@ -443,7 +451,7 @@ async function syncSourceInput(input: ExtensionSourceInput): Promise<SyncedSourc
   const manifest = validation.manifest;
   const lists: ExtensionSourceCachedLists = {};
 
-  for (const key of ['addons', 'mods', 'themes'] as const) {
+  for (const key of EXTENSION_CATALOG_KINDS) {
     const ref = manifest.lists[key];
     if (!ref) continue;
     const resolvedRef = resolveSourceRef(input, resolvedManifestUri, manifest, ref);
@@ -670,7 +678,7 @@ function canDirectInstallCatalogEntry(
 ) {
   if (resolved.kind !== 'mods') return true;
   if (source.input.type === 'local') return true;
-  return resolved.packageFiles.length > 0;
+  return false;
 }
 
 function compareVersionStrings(left?: string, right?: string) {
@@ -717,7 +725,7 @@ type ResolvedCatalogEntryPayload = {
   manifestVersion: string;
   packageFiles: string[];
   minAppVersion?: string;
-  permissions: string[];
+  permissions: ModPermission[];
   resolvedCardUri?: string;
   resolvedManifestUri: string;
   manifestText: string;
@@ -739,11 +747,25 @@ function buildCatalogCompatibility(
 }
 
 function buildCatalogPreflightIssues(
+  source: InstalledExtensionSource,
   resolved: ResolvedCatalogEntryPayload,
   installedDependencyIds: Set<string>,
   compatibility?: ExtensionCatalogCompatibility,
 ): ExtensionCatalogIssue[] {
   const issues: ExtensionCatalogIssue[] = [];
+
+  if (resolved.kind === 'mods' && source.input.type !== 'local') {
+    issues.push(createCatalogIssue(
+      'manifest',
+      'error',
+      'Remote mods are trusted code and must be installed from a local source before this app has a dedicated sandbox.',
+      {
+        code: 'addons.catalog.issue.remoteModsTrustedOnly',
+        fallback: 'blocked-install',
+        target: resolved.resolvedManifestUri,
+      },
+    ));
+  }
 
   if (compatibility && !compatibility.compatible) {
     issues.push(createCatalogIssue(
@@ -903,13 +925,24 @@ async function resolveCatalogEntryPayload(
 
   if (kind === 'mods') {
     const manifest = validation.manifest as ModManifest;
-    if (source.input.type !== 'local' && (!manifest.files || manifest.files.length === 0)) {
+    if (source.input.type !== 'local') {
+      issues.push(createCatalogIssue(
+        'package',
+        'error',
+        'Remote mods are trusted code and can only be installed from local sources.',
+        {
+          code: 'addons.catalog.issue.remoteModsTrustedOnly',
+          fallback: 'blocked-install',
+          target: resolvedManifestUri,
+        },
+      ));
+    } else if (!manifest.files || manifest.files.length === 0) {
       issues.push(createCatalogIssue(
         'package',
         'warning',
-        'Remote mod package does not declare manifest.files, so the entry stays manual-only.',
+        'Local mod package does not declare manifest.files. Folder install remains available.',
         {
-          code: 'addons.catalog.issue.remoteModManualOnly',
+          code: 'addons.catalog.issue.localModFolderOnly',
           fallback: 'manual-only',
           target: resolvedManifestUri,
         },
@@ -1025,27 +1058,6 @@ function buildCatalogEntryStatus(
   return { installedVersion, status: 'installed' };
 }
 
-function isCatalogEntryBlocked(entry: ExtensionCatalogEntry) {
-  return entry.status === 'invalid'
-    || entry.status === 'source-disabled'
-    || entry.status === 'source-error'
-    || entry.status === 'incompatible'
-    || entry.installSupport !== 'direct'
-    || entry.issues.some(issue => issue.fallback === 'blocked-install');
-}
-
-function getCatalogEntryBlockReason(entry: ExtensionCatalogEntry) {
-  const blockingIssue = entry.issues.find(issue => issue.fallback === 'blocked-install' || issue.severity === 'error');
-  if (blockingIssue) return blockingIssue.message;
-
-  if (entry.status === 'invalid') return entry.lastError ?? 'Catalog entry is invalid.';
-  if (entry.status === 'source-disabled') return 'Extension source is disabled.';
-  if (entry.status === 'source-error') return entry.lastError ?? 'Extension source is not synchronized.';
-  if (entry.status === 'incompatible') return 'Catalog entry is not compatible with this app version.';
-  if (entry.installSupport !== 'direct') return 'Catalog entry requires manual installation.';
-  return undefined;
-}
-
 function compareCatalogEntryVersions(left: ExtensionCatalogEntry, right: ExtensionCatalogEntry) {
   return compareVersionStrings(left.manifestVersion, right.manifestVersion);
 }
@@ -1053,11 +1065,11 @@ function compareCatalogEntryVersions(left: ExtensionCatalogEntry, right: Extensi
 function applyDuplicateRecommendations(group: ExtensionCatalogEntry[]) {
   const sortedByVersion = [...group].sort((left, right) => compareCatalogEntryVersions(right, left));
   const newestEntry = sortedByVersion[0];
-  const preferredInstallableEntry = sortedByVersion.find(entry => !isCatalogEntryBlocked(entry));
+  const preferredInstallableEntry = sortedByVersion.find(entry => !isExtensionCatalogEntryBlocked(entry));
   if (!newestEntry || !preferredInstallableEntry) return;
 
   for (const entry of group) {
-    if (newestEntry.id !== preferredInstallableEntry.id && isCatalogEntryBlocked(newestEntry)) {
+    if (newestEntry.id !== preferredInstallableEntry.id && isExtensionCatalogEntryBlocked(newestEntry)) {
       entry.duplicatePreferredSourceName = preferredInstallableEntry.sourceName;
       entry.duplicatePreferredVersion = preferredInstallableEntry.manifestVersion;
       entry.duplicateRecommendationReason = 'newest-blocked';
@@ -1124,7 +1136,7 @@ async function resolveExtensionCatalogEntryPreflight(
     installedThemeVersions,
   );
   const installSupport = canDirectInstallCatalogEntry(source, resolved) ? 'direct' : 'manual';
-  const preflightIssues = buildCatalogPreflightIssues(resolved, installedDependencyIds, compatibility);
+  const preflightIssues = buildCatalogPreflightIssues(source, resolved, installedDependencyIds, compatibility);
 
   return {
     source,
@@ -1196,7 +1208,7 @@ export async function scanExtensionCatalog(
     const sourceName = source.syncState.manifest?.name ?? source.id;
     const sourceIssues = buildSourceCatalogIssues(source);
 
-    for (const kind of ['addons', 'mods', 'themes'] as const) {
+    for (const kind of EXTENSION_CATALOG_KINDS) {
       const cachedEntries = source.syncState.lists?.[kind]?.entries ?? [];
       for (const rawEntryId of cachedEntries) {
         const entryId = normalizeCatalogEntryId(rawEntryId);
@@ -1205,7 +1217,7 @@ export async function scanExtensionCatalog(
         try {
           const resolved = await resolveCatalogEntryPayload(source, kind, entryId);
           const compatibility = buildCatalogCompatibility(resolved.minAppVersion, appVersion);
-          const preflightIssues = buildCatalogPreflightIssues(resolved, installedDependencyIds, compatibility);
+          const preflightIssues = buildCatalogPreflightIssues(source, resolved, installedDependencyIds, compatibility);
           const sourceErrorIssue = getFirstErrorIssue(sourceIssues);
           const status = buildCatalogEntryStatus(
             source,
@@ -1484,7 +1496,7 @@ export async function validateExtensionCatalogEntry(
       entryId,
       appVersion,
     );
-    const blockReason = getCatalogEntryBlockReason(preflight.entry);
+    const blockReason = getExtensionCatalogEntryBlockReason(preflight.entry);
 
     return {
       ok: !blockReason,
@@ -1525,7 +1537,7 @@ export async function installExtensionCatalogEntry(
       appVersion,
     );
     const { entry, resolved, source, compatibility } = preflight;
-    const blockReason = getCatalogEntryBlockReason(entry);
+    const blockReason = getExtensionCatalogEntryBlockReason(entry);
     if (blockReason) {
       return {
         ok: false,

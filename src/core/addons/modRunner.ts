@@ -9,17 +9,18 @@
  * and catches any errors.
  */
 import type { InstalledMod } from '../../shared/types/addon';
-import type { ModAPI, ModAPIState } from './modApi';
-import { createModAPI, createEmptyModState } from './modApi';
 import type {
   AddonInterfaceLocaleDefinition,
   GameItemDefinition,
   GameAchievementDefinition,
   InterfaceLocaleDefinition,
+  ModAPI,
   ModLocaleResourceFile,
   UserSettings,
   Lesson,
 } from '../../shared/types';
+import type { ModAPIState } from './modApi';
+import { createModAPI, createEmptyModState } from './modApi';
 import { parseInterfaceLocaleDefinitionFromPo } from '../i18n/po';
 import { normalizeExternalInterfaceLocaleDefinitions } from '../i18n/resources';
 
@@ -57,8 +58,10 @@ export async function runAllMods(
 
   for (const mod of enabledMods) {
     const manifest = mod.manifest;
-    const localeFiles = await readModLocaleResources(mod.id);
-    state.interfaceLocales.push(...parseModLocaleResourceFiles(mod, localeFiles, errors));
+    if (manifest.permissions?.includes('i18n')) {
+      const localeFiles = await readModLocaleResources(mod.id);
+      state.interfaceLocales.push(...parseModLocaleResourceFiles(mod, localeFiles, errors));
+    }
 
     const scriptSource = await readModScript(mod.id);
 

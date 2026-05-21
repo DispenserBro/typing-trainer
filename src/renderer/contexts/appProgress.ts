@@ -5,7 +5,7 @@ import type {
   PracticeState,
   Progress,
 } from '../../shared/types';
-import { filterYoKeys } from '../../core/engine';
+import { filterYoKeys } from '../../core/textFilters';
 import { createEmptyLayoutPracticeInsights } from '../../core/practice/insights';
 import {
   normalizeLayoutPracticeInsights,

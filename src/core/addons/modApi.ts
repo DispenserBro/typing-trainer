@@ -16,173 +16,44 @@ import type {
   InterfaceLocaleDefinition,
   UserSettings,
   Lesson,
+  ModAPI,
+  ModEventHandler,
+  ModEventName,
+  ModEventPayloadMap,
+  ModI18nAPI,
+  ModModeDefinition,
+  ModModesAPI,
+  ModPanel,
+  ModRuleId,
+  ModRulesAPI,
+  ModRuleValue,
+  ModSectionsAPI,
+  ModSettingsAPI,
+  ModItemsAPI,
+  ModAchievementsAPI,
+  ModEventsAPI,
+  ModWordsAPI,
+  ModLessonsAPI,
+  ModUIAPI,
+  ModLogAPI,
+  ModPermission,
+} from '../../shared/types';
+import {
+  isModEventName,
+  isModGameAchievementDefinition,
+  isModGameItemDefinition,
+  isModInterfaceLocaleDefinition,
+  isModLesson,
+  isModModeDefinition,
+  isModPanel,
+  isModRuleId,
+  isModRuleValue,
+  isModUserSettingKey,
+  isModUserSettingValue,
+  normalizeModLessons,
+  normalizeModWords,
 } from '../../shared/types';
 import { normalizeExternalInterfaceLocaleDefinitions } from '../i18n/resources';
-
-/* ── Event types ────────────────────────────────────────── */
-
-export type ModEventName =
-  | 'sessionStart'
-  | 'sessionFinish'
-  | 'keyPress'
-  | 'modeSwitch'
-  | 'settingChange'
-  | 'lessonComplete'
-  | 'gameStateChange';
-
-export type ModEventHandler = (data: unknown) => void;
-
-/* ── Sub-APIs ───────────────────────────────────────────── */
-
-export interface ModSectionsAPI {
-  /** Hide a sidebar section */
-  disable(sectionId: string): void;
-  /** Re-enable a previously disabled section */
-  enable(sectionId: string): void;
-  /** Get list of currently disabled sections */
-  getDisabled(): string[];
-}
-
-export interface ModSettingsAPI {
-  /** Override a specific setting while the mod is active */
-  override<K extends keyof UserSettings>(key: K, value: UserSettings[K]): void;
-  /** Remove a setting override */
-  removeOverride(key: string): void;
-  /** Read current value of a setting */
-  get<K extends keyof UserSettings>(key: K): UserSettings[K];
-}
-
-export interface ModItemsAPI {
-  /** Add a new item to the catalog */
-  add(item: GameItemDefinition): void;
-  /** Remove an item from the catalog by id */
-  remove(itemId: string): void;
-  /** Replace an existing item */
-  replace(itemId: string, item: GameItemDefinition): void;
-  /** Get current catalog */
-  getAll(): GameItemDefinition[];
-}
-
-export interface ModAchievementsAPI {
-  /** Add a new achievement */
-  add(achievement: GameAchievementDefinition): void;
-  /** Remove an achievement by id */
-  remove(achievementId: string): void;
-  /** Replace an existing achievement */
-  replace(achievementId: string, achievement: GameAchievementDefinition): void;
-  /** Get current catalog */
-  getAll(): GameAchievementDefinition[];
-}
-
-export interface ModRulesAPI {
-  /** Set a rule override (e.g. "game.baseHp", 120) */
-  set(ruleId: string, value: unknown): void;
-  /** Remove a rule override */
-  remove(ruleId: string): void;
-  /** Get current value of a rule */
-  get(ruleId: string): unknown;
-}
-
-export interface ModEventsAPI {
-  /** Subscribe to an app event */
-  on(event: ModEventName, handler: ModEventHandler): void;
-  /** Unsubscribe from an event */
-  off(event: ModEventName, handler: ModEventHandler): void;
-}
-
-export interface ModWordsAPI {
-  /** Add words to the active language pool */
-  add(words: string[]): void;
-  /** Remove words from the pool by exact match */
-  remove(words: string[]): void;
-  /** Get current word pool */
-  getAll(): string[];
-}
-
-export interface ModLessonsAPI {
-  /** Add lessons to a layout (layoutId must match an existing layout) */
-  add(layoutId: string, lessons: Lesson[]): void;
-  /** Remove lessons by id from a layout */
-  remove(layoutId: string, lessonIds: string[]): void;
-  /** Replace a lesson in a layout */
-  replace(layoutId: string, lessonId: string, lesson: Lesson): void;
-  /** Get all lessons for a layout */
-  getAll(layoutId: string): Lesson[];
-}
-
-/** Panel registration for custom UI injection */
-export interface ModPanel {
-  id: string;
-  /** Where to inject: 'sidebar-top' | 'sidebar-bottom' | 'page-top' | 'page-bottom' | 'overlay' */
-  location: string;
-  /** Raw HTML content (sanitised at render) */
-  html: string;
-}
-
-export interface ModUIAPI {
-  /** Register a custom panel */
-  registerPanel(panel: ModPanel): void;
-  /** Remove a previously registered panel */
-  removePanel(panelId: string): void;
-  /** Inject a CSS snippet */
-  injectCSS(css: string): void;
-}
-
-/** Mode definition for new sidebar modes */
-export interface ModModeDefinition {
-  /** Unique mode ID (kebab-case) */
-  id: string;
-  /** Display label */
-  label: string;
-  /** Lucide icon name or raw SVG string */
-  icon: string;
-  /** Position: 'top' (with practice/game) or 'bottom' (with settings) */
-  group: 'top' | 'bottom';
-  /** Raw HTML content for the page */
-  html: string;
-}
-
-export interface ModModesAPI {
-  /** Register a new sidebar mode / page */
-  register(mode: ModModeDefinition): void;
-  /** Unregister a previously registered mode */
-  unregister(modeId: string): void;
-}
-
-export interface ModI18nAPI {
-  /** Register one interface locale from a mod script */
-  registerLocale(locale: AddonInterfaceLocaleDefinition): void;
-  /** Register several interface locales from a mod script */
-  registerLocales(locales: AddonInterfaceLocaleDefinition[]): void;
-}
-
-export interface ModLogAPI {
-  info(message: string): void;
-  warn(message: string): void;
-  error(message: string): void;
-}
-
-/* ── Combined API ───────────────────────────────────────── */
-
-export interface ModAPI {
-  /** Mod metadata */
-  readonly modId: string;
-  readonly modName: string;
-
-  /** Sub-APIs */
-  sections: ModSectionsAPI;
-  settings: ModSettingsAPI;
-  items: ModItemsAPI;
-  achievements: ModAchievementsAPI;
-  rules: ModRulesAPI;
-  events: ModEventsAPI;
-  words: ModWordsAPI;
-  lessons: ModLessonsAPI;
-  ui: ModUIAPI;
-  modes: ModModesAPI;
-  i18n: ModI18nAPI;
-  log: ModLogAPI;
-}
 
 /* ══════════════════════════════════════════════════════════
    ModAPIState — mutable state shared across all active mods.
@@ -200,7 +71,7 @@ export interface ModAPIState {
   addedAchievements: GameAchievementDefinition[];
   removedAchievementIds: Set<string>;
   replacedAchievements: Map<string, GameAchievementDefinition>;
-  ruleOverrides: Map<string, unknown>;
+  ruleOverrides: Map<ModRuleId, ModRuleValue>;
   eventHandlers: Map<ModEventName, Set<ModEventHandler>>;
   /* ── Words ── */
   addedWords: string[];
@@ -246,12 +117,29 @@ export function createEmptyModState(): ModAPIState {
   };
 }
 
+export function emitModEvent<K extends ModEventName>(
+  state: ModAPIState,
+  event: K,
+  data: ModEventPayloadMap[K],
+) {
+  const handlers = state.eventHandlers.get(event);
+  if (!handlers || handlers.size === 0) return;
+
+  for (const handler of handlers) {
+    try {
+      (handler as ModEventHandler<K>)(data);
+    } catch (error) {
+      console.error(`[ModEvent:${event}] handler failed:`, error);
+    }
+  }
+}
+
 /* ── Factory: create a sandboxed ModAPI for one mod ─────── */
 
 export function createModAPI(
   modId: string,
   modName: string,
-  permissions: string[],
+  permissions: ModPermission[],
   state: ModAPIState,
   getCurrentSettings: () => UserSettings,
   getCurrentItems: () => GameItemDefinition[],
@@ -259,9 +147,9 @@ export function createModAPI(
   getCurrentWords: () => string[],
   getCurrentLessons: (layoutId: string) => Lesson[],
 ): ModAPI {
-  const hasPermission = (p: string) => permissions.includes(p);
+  const hasPermission = (p: ModPermission) => permissions.includes(p);
 
-  const guard = (p: string, fn: () => void) => {
+  const guard = (p: ModPermission, fn: () => void) => {
     if (!hasPermission(p)) {
       console.warn(`[Mod:${modId}] Permission "${p}" not granted, action blocked.`);
       return;
@@ -276,101 +164,285 @@ export function createModAPI(
   };
 
   const settings: ModSettingsAPI = {
-    override(key, value) { guard('settings', () => state.settingOverrides.set(key as string, value)); },
-    removeOverride(key) { guard('settings', () => state.settingOverrides.delete(key)); },
+    override(key, value) {
+      guard('settings', () => {
+        if (!isModUserSettingKey(key)) {
+          console.warn(`[Mod:${modId}] Unknown settings key "${String(key)}" ignored.`);
+          return;
+        }
+        if (!isModUserSettingValue(key, value)) {
+          console.warn(`[Mod:${modId}] Invalid value for settings key "${String(key)}" ignored.`);
+          return;
+        }
+        state.settingOverrides.set(key as string, value);
+      });
+    },
+    removeOverride(key) {
+      guard('settings', () => {
+        if (!isModUserSettingKey(key)) {
+          console.warn(`[Mod:${modId}] Unknown settings key "${String(key)}" ignored.`);
+          return;
+        }
+        state.settingOverrides.delete(key);
+      });
+    },
     get(key) { return getCurrentSettings()[key]; },
   };
 
   const items: ModItemsAPI = {
-    add(item) { guard('items', () => { state.addedItems.push(item); }); },
-    remove(itemId) { guard('items', () => { state.removedItemIds.add(itemId); }); },
-    replace(itemId, item) { guard('items', () => { state.replacedItems.set(itemId, item); }); },
+    add(item) {
+      guard('items', () => {
+        if (!isModGameItemDefinition(item)) {
+          console.warn(`[Mod:${modId}] Invalid item definition ignored.`);
+          return;
+        }
+        state.addedItems.push(item);
+      });
+    },
+    remove(itemId) {
+      guard('items', () => {
+        if (!isNonEmptyString(itemId)) {
+          console.warn(`[Mod:${modId}] Item id must be a non-empty string.`);
+          return;
+        }
+        state.removedItemIds.add(itemId);
+      });
+    },
+    replace(itemId, item) {
+      guard('items', () => {
+        if (!isNonEmptyString(itemId)) {
+          console.warn(`[Mod:${modId}] Item id must be a non-empty string.`);
+          return;
+        }
+        if (!isModGameItemDefinition(item)) {
+          console.warn(`[Mod:${modId}] Invalid replacement item definition ignored.`);
+          return;
+        }
+        state.replacedItems.set(itemId, item);
+      });
+    },
     getAll() { return getCurrentItems(); },
   };
 
   const achievements: ModAchievementsAPI = {
     add(ach) { 
       guard('achievements', () => { 
+        if (!isModGameAchievementDefinition(ach)) {
+          console.warn(`[Mod:${modId}] Invalid achievement definition ignored.`);
+          return;
+        }
         state.addedAchievements.push(ach); 
       }); 
     },
-    remove(achId) { guard('achievements', () => { state.removedAchievementIds.add(achId); }); },
-    replace(achId, ach) { guard('achievements', () => { state.replacedAchievements.set(achId, ach); }); },
+    remove(achId) {
+      guard('achievements', () => {
+        if (!isNonEmptyString(achId)) {
+          console.warn(`[Mod:${modId}] Achievement id must be a non-empty string.`);
+          return;
+        }
+        state.removedAchievementIds.add(achId);
+      });
+    },
+    replace(achId, ach) {
+      guard('achievements', () => {
+        if (!isNonEmptyString(achId)) {
+          console.warn(`[Mod:${modId}] Achievement id must be a non-empty string.`);
+          return;
+        }
+        if (!isModGameAchievementDefinition(ach)) {
+          console.warn(`[Mod:${modId}] Invalid replacement achievement definition ignored.`);
+          return;
+        }
+        state.replacedAchievements.set(achId, ach);
+      });
+    },
     getAll() { return getCurrentAchievements(); },
   };
 
   const rules: ModRulesAPI = {
-    set(ruleId, value) { guard('rules', () => state.ruleOverrides.set(ruleId, value)); },
-    remove(ruleId) { guard('rules', () => state.ruleOverrides.delete(ruleId)); },
-    get(ruleId) { return state.ruleOverrides.get(ruleId); },
+    set(ruleId, value) {
+      guard('rules', () => {
+        if (!isModRuleId(ruleId)) {
+          console.warn(`[Mod:${modId}] Unknown rule "${String(ruleId)}" ignored.`);
+          return;
+        }
+        if (!isModRuleValue(ruleId, value)) {
+          console.warn(`[Mod:${modId}] Invalid value for rule "${ruleId}" ignored.`);
+          return;
+        }
+        state.ruleOverrides.set(ruleId, value);
+      });
+    },
+    remove(ruleId) {
+      guard('rules', () => {
+        if (!isModRuleId(ruleId)) {
+          console.warn(`[Mod:${modId}] Unknown rule "${String(ruleId)}" ignored.`);
+          return;
+        }
+        state.ruleOverrides.delete(ruleId);
+      });
+    },
+    get(ruleId) {
+      return isModRuleId(ruleId) ? state.ruleOverrides.get(ruleId) : undefined;
+    },
   };
 
   const events: ModEventsAPI = {
     on(event, handler) {
       guard('events', () => {
+        if (!isModEventName(event)) {
+          console.warn(`[Mod:${modId}] Unknown event "${String(event)}" ignored.`);
+          return;
+        }
+        if (typeof handler !== 'function') {
+          console.warn(`[Mod:${modId}] Handler for event "${event}" must be a function.`);
+          return;
+        }
         if (!state.eventHandlers.has(event)) state.eventHandlers.set(event, new Set());
-        state.eventHandlers.get(event)!.add(handler);
+        state.eventHandlers.get(event)!.add(handler as ModEventHandler);
       });
     },
     off(event, handler) {
       guard('events', () => {
-        state.eventHandlers.get(event)?.delete(handler);
+        if (!isModEventName(event)) {
+          console.warn(`[Mod:${modId}] Unknown event "${String(event)}" ignored.`);
+          return;
+        }
+        state.eventHandlers.get(event)?.delete(handler as ModEventHandler);
       });
     },
   };
 
   const words: ModWordsAPI = {
-    add(w) { guard('words', () => { state.addedWords.push(...w); }); },
-    remove(w) { guard('words', () => { for (const word of w) state.removedWords.add(word); }); },
+    add(w) {
+      guard('words', () => {
+        const wordsToAdd = normalizeModWords(w);
+        if (wordsToAdd.length === 0) {
+          console.warn(`[Mod:${modId}] Word add ignored because it did not contain non-empty strings.`);
+          return;
+        }
+        state.addedWords.push(...wordsToAdd);
+      });
+    },
+    remove(w) {
+      guard('words', () => {
+        const wordsToRemove = normalizeModWords(w);
+        if (wordsToRemove.length === 0) {
+          console.warn(`[Mod:${modId}] Word remove ignored because it did not contain non-empty strings.`);
+          return;
+        }
+        for (const word of wordsToRemove) state.removedWords.add(word);
+      });
+    },
     getAll() { return getCurrentWords(); },
   };
 
   const lessons: ModLessonsAPI = {
     add(layoutId, ls) {
       guard('lessons', () => {
+        if (!isNonEmptyString(layoutId)) {
+          console.warn(`[Mod:${modId}] Lesson add ignored because layoutId is invalid.`);
+          return;
+        }
+        const lessonsToAdd = normalizeModLessons(ls);
+        if (lessonsToAdd.length === 0) {
+          console.warn(`[Mod:${modId}] Lesson add ignored because it did not contain valid lessons.`);
+          return;
+        }
         if (!state.addedLessons.has(layoutId)) state.addedLessons.set(layoutId, []);
-        state.addedLessons.get(layoutId)!.push(...ls);
+        state.addedLessons.get(layoutId)!.push(...lessonsToAdd);
       });
     },
     remove(layoutId, ids) {
       guard('lessons', () => {
+        if (!isNonEmptyString(layoutId)) {
+          console.warn(`[Mod:${modId}] Lesson remove ignored because layoutId is invalid.`);
+          return;
+        }
+        const lessonIds = normalizeModWords(ids);
+        if (lessonIds.length === 0) {
+          console.warn(`[Mod:${modId}] Lesson remove ignored because it did not contain valid lesson ids.`);
+          return;
+        }
         if (!state.removedLessonIds.has(layoutId)) state.removedLessonIds.set(layoutId, new Set());
-        for (const id of ids) state.removedLessonIds.get(layoutId)!.add(id);
+        for (const id of lessonIds) state.removedLessonIds.get(layoutId)!.add(id);
       });
     },
     replace(layoutId, lessonId, lesson) {
       guard('lessons', () => {
+        if (!isNonEmptyString(layoutId) || !isNonEmptyString(lessonId)) {
+          console.warn(`[Mod:${modId}] Lesson replace ignored because layoutId or lessonId is invalid.`);
+          return;
+        }
+        if (!isModLesson(lesson)) {
+          console.warn(`[Mod:${modId}] Lesson replace ignored because replacement lesson is invalid.`);
+          return;
+        }
         if (!state.replacedLessons.has(layoutId)) state.replacedLessons.set(layoutId, new Map());
         state.replacedLessons.get(layoutId)!.set(lessonId, lesson);
       });
     },
-    getAll(layoutId) { return getCurrentLessons(layoutId); },
+    getAll(layoutId) { return isNonEmptyString(layoutId) ? getCurrentLessons(layoutId) : []; },
   };
 
   const ui: ModUIAPI = {
     registerPanel(panel) {
-      guard('ui', () => { state.panels.push(panel); });
+      guard('ui', () => {
+        if (!isModPanel(panel)) {
+          console.warn(`[Mod:${modId}] Invalid panel registration ignored.`);
+          return;
+        }
+        state.panels.push(panel);
+      });
     },
     removePanel(panelId) {
-      guard('ui', () => { state.removedPanelIds.add(panelId); });
+      guard('ui', () => {
+        if (!isNonEmptyString(panelId)) {
+          console.warn(`[Mod:${modId}] Panel id must be a non-empty string.`);
+          return;
+        }
+        state.removedPanelIds.add(panelId);
+      });
     },
     injectCSS(css) {
-      guard('ui', () => { state.cssSnippets.push(css); });
+      guard('ui', () => {
+        if (typeof css !== 'string') {
+          console.warn(`[Mod:${modId}] CSS snippet must be a string.`);
+          return;
+        }
+        state.cssSnippets.push(css);
+      });
     },
   };
 
   const modes: ModModesAPI = {
     register(mode) {
-      guard('modes', () => { state.registeredModes.push(mode); });
+      guard('modes', () => {
+        if (!isModModeDefinition(mode)) {
+          console.warn(`[Mod:${modId}] Invalid mode registration ignored.`);
+          return;
+        }
+        state.registeredModes.push(mode);
+      });
     },
     unregister(modeId) {
-      guard('modes', () => { state.unregisteredModeIds.add(modeId); });
+      guard('modes', () => {
+        if (!isNonEmptyString(modeId)) {
+          console.warn(`[Mod:${modId}] Mode id must be a non-empty string.`);
+          return;
+        }
+        state.unregisteredModeIds.add(modeId);
+      });
     },
   };
 
   const i18n: ModI18nAPI = {
     registerLocale(locale) {
       guard('i18n', () => {
+        if (!isModInterfaceLocaleDefinition(locale)) {
+          console.warn(`[Mod:${modId}] Invalid interface locale ignored.`);
+          return;
+        }
         state.interfaceLocales.push(...normalizeExternalInterfaceLocaleDefinitions([
           {
             ...locale,
@@ -381,8 +453,17 @@ export function createModAPI(
     },
     registerLocales(locales) {
       guard('i18n', () => {
+        if (!Array.isArray(locales)) {
+          console.warn(`[Mod:${modId}] Interface locales must be an array.`);
+          return;
+        }
+        const validLocales = locales.filter(isModInterfaceLocaleDefinition);
+        if (validLocales.length === 0) {
+          console.warn(`[Mod:${modId}] Interface locale registration ignored because it did not contain valid locales.`);
+          return;
+        }
         state.interfaceLocales.push(...normalizeExternalInterfaceLocaleDefinitions(
-          locales.map((locale) => ({
+          validLocales.map((locale) => ({
             ...locale,
             sourceName: modName,
           })),
@@ -414,4 +495,8 @@ export function createModAPI(
     i18n,
     log,
   };
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
 }

@@ -2,25 +2,49 @@ import fs from 'fs';
 import path from 'path';
 import type {
   CustomPracticePack,
+  ExtensionCatalogEntry,
+  GameEquipmentState,
   GameAchievementDefinition,
+  GameItemDefinition,
   GameGhostRun,
+  GameRunEventChoice,
   GameRunResult,
+  GameRunModifier,
   HistoryEntry,
+  ImportedInterfaceLocaleDefinition,
+  InstalledAddon,
+  InstalledExtensionSource,
+  InstalledMod,
+  InstalledTheme,
   Lesson,
+  LayoutPracticeInsights,
+  LayoutProgressState,
   LayoutsData,
   Progress,
+  PracticeState,
   PracticeRhythmSessionEntry,
   PracticeContentPack,
+  Session,
+  ThemeDefinitions,
 } from '../shared/types';
 import {
   getAvailablePracticeContentPacks,
   resolvePracticeContentPackSelection,
 } from '../core/practice/contentPackSelection';
 import { buildModeBestResultLabelViewModel } from '../core/practice/modeBestResult';
+import { createEmptyLayoutPracticeInsights } from '../core/practice/insights';
 import {
   buildChallengeResultCallout,
   buildSprintResultCallout,
 } from '../core/practice/modeResultCallouts';
+import { buildPracticeFamilyModeHeaderViewModel } from '../core/practice/modePagePresentation';
+import {
+  getChallengeModeConfig,
+  getChallengeTotalLives,
+  resolveChallengeCompletion,
+  resolveSprintCompletion,
+} from '../core/practice/modeCompletion';
+import { resolvePracticeSessionCompletion } from '../core/practice/sessionCompletion';
 import {
   buildChallengeResultPrimaryMetrics,
   buildSprintResultPrimaryMetrics,
@@ -35,6 +59,14 @@ import {
   updateMotivationAfterPractice,
 } from '../core/motivation/progress';
 import { buildHomeHistoryMetrics } from '../core/home/historyMetrics';
+import {
+  buildHomeDetailMeta,
+  buildHomeModeCardGroups,
+  buildHomeProgressCenterCards,
+  buildHomeProgressCenterVisibility,
+  buildHomeVisibleQuickActions,
+  type HomeActionModel,
+} from '../core/home/viewModel';
 import { buildHomeModeFocusDetailCards } from '../core/home/modeFocusDetails';
 import { buildHomePersonalRecordDetailCards } from '../core/home/personalRecordDetails';
 import {
@@ -48,6 +80,7 @@ import {
   hasResultComparison,
 } from '../core/motivation/resultComparisonViewModel';
 import {
+  buildCompactMetricStripViewModel,
   buildResultMetricStripViewModel,
   buildResultProgressMetricItems,
   buildResultProgressMetricStripViewModel,
@@ -62,10 +95,32 @@ import {
   buildStatsWorstKeyCardsViewModel,
 } from '../core/stats/sessionsViewModel';
 import { buildStatsSessionSelectionViewModel } from '../core/stats/sessionSelectionViewModel';
+import {
+  buildImportedInterfaceLocaleEntries,
+  buildSettingsThemeOptions,
+} from '../core/settings/viewModel';
+import { buildTextDisplayWords } from '../core/text/displayModel';
 import { buildGameResultHistoryModel } from '../core/game/resultHistory';
 import { buildGameResultMetricItems } from '../core/game/resultMetrics';
-import { buildGameResultCardViewModel } from '../core/game/resultPresentation';
+import { resolveGameChoiceEffect, resolveGamePostLevelFlow } from '../core/game/runFlow';
+import {
+  buildGameResultCardViewModel,
+  buildGameResultSecondaryBlocksViewModel,
+} from '../core/game/resultPresentation';
 import { buildGameRewardChoiceBlockViewModel } from '../core/game/resultRewards';
+import { buildGameRunMapLayoutViewModel } from '../core/game/routes';
+import {
+  buildGameAchievementToastViewModels,
+  buildGameEventChoiceCardViewModels,
+  buildGameHudViewModel,
+} from '../core/game/viewModel';
+import {
+  buildEquippedBySlot,
+  buildEquippedEntries,
+  buildGamePageBonusViewModel,
+  buildGameInventoryPanelViewModel,
+  buildInventoryEntries,
+} from '../core/game/pageUtils';
 import {
   buildAchievementsModalViewModel,
   buildGameAchievementsModalViewModel,
@@ -81,6 +136,34 @@ import {
   isLessonUnlocked,
 } from '../core/lessons/viewModel';
 import {
+  applySetupPreferenceSettings,
+  normalizeSetupPreferences,
+  resolveBundledExtensionSourceManifestPath,
+  resolveSetupPreferenceExtensionSourceManifestPaths,
+} from '../core/setup/setupPreferences';
+import { resolveAppDataPaths } from '../core/setup/appDataPaths';
+import {
+  CURRENT_PROGRESS_SCHEMA_VERSION,
+  migrateProgressData,
+  normalizeProgressForSave,
+} from '../core/progress/migrations';
+import { resolveSafeRegistryFilePath } from '../core/addons/pathSafety';
+import {
+  countAttentionCatalogEntries,
+  filterExtensionCatalogEntries,
+  filterExtensionSources,
+  filterInstalledAddons,
+  filterInstalledMods,
+  filterInstalledThemes,
+  getAddonContentKinds,
+  getAvailableInstalledAddonContentKinds,
+  getSourceLocationLabel,
+} from '../core/addons/catalogSelectors';
+import {
+  buildExtensionCatalogEmptyStateViewModel,
+  buildExtensionCatalogInstallActionViewModel,
+} from '../core/addons/extensionCatalogUi';
+import {
   getHistoryModeBucket,
   isBasePracticeHistoryEntry,
   isChallengeHistoryEntry,
@@ -90,6 +173,53 @@ import {
   matchesHistoryModeBucket,
   matchesPracticeScenario,
 } from '../core/history/selectors';
+import { createEmptyModState, createModAPI } from '../core/addons/modApi';
+import { runAllMods } from '../core/addons/modRunner';
+import {
+  ADDON_MANIFEST_TYPE,
+  ADDON_MANIFEST_VERSION,
+  EXTENSION_CATALOG_ENTRY_STATUSES,
+  EXTENSION_CATALOG_DUPLICATE_RECOMMENDATION_REASONS,
+  EXTENSION_CATALOG_INSTALL_SUPPORTS,
+  EXTENSION_CATALOG_ISSUE_FALLBACKS,
+  EXTENSION_CATALOG_ISSUE_SEVERITIES,
+  EXTENSION_CATALOG_ISSUE_STAGES,
+  EXTENSION_CATALOG_KINDS,
+  EXTENSION_SOURCE_MANIFEST_TYPE,
+  EXTENSION_SOURCE_MANIFEST_VERSION,
+  EXTENSION_SOURCE_SYNC_STATUSES,
+  EXTENSION_SOURCE_TYPES,
+  canInstallExtensionCatalogEntry,
+  getExtensionCatalogEntryBlockReason,
+  hasExtensionCatalogAttention,
+  isExtensionCatalogEntryStatus,
+  isExtensionCatalogInstallSupport,
+  isExtensionCatalogIssueFallback,
+  isExtensionCatalogIssueSeverity,
+  isExtensionCatalogIssueStage,
+  isExtensionCatalogKind,
+  isExtensionCatalogEntryBlocked,
+  isExtensionSourceType,
+  isExtensionCatalogDuplicateRecommendationReason,
+  isExtensionSourceSyncStatus,
+  isModGameAchievementDefinition,
+  isModGameItemDefinition,
+  isModInterfaceLocaleDefinition,
+  isModModeDefinition,
+  isModPanel,
+  isModPermission,
+  isModUserSettingKey,
+  isModUserSettingValue,
+  hasThemeStyleContent,
+  MOD_MANIFEST_TYPE,
+  MOD_PERMISSIONS,
+  normalizeThemeColors,
+  normalizeThemeStringArray,
+  normalizeThemeStringRecord,
+  normalizeModPermissions,
+  THEME_MANIFEST_TYPE,
+  THEME_MANIFEST_VERSION,
+} from '../shared/types';
 
 type DiagnosticCheck = {
   name: string;
@@ -181,6 +311,34 @@ function rhythmSession(partial: Partial<PracticeRhythmSessionEntry> & Pick<Pract
     worstInterval: 230,
     ...partial,
   };
+}
+
+function diagnosticTypingSession(partial: Partial<Session> = {}): Session {
+  return {
+    active: false,
+    charStats: {
+      a: { hits: 4, misses: 0, totalTime: 720 },
+      b: { hits: 1, misses: 2, totalTime: 540 },
+    },
+    errPositions: new Set(),
+    errors: 0,
+    keypresses: [
+      { position: 0, expected: 'a', actual: 'a', correct: true, interval: 180, timestamp: 1 },
+      { position: 1, expected: 'b', actual: 'x', correct: false, interval: 220, timestamp: 2 },
+      { position: 2, expected: ' ', actual: ' ', correct: true, interval: 180, timestamp: 3 },
+      { position: 3, expected: 'a', actual: 'a', correct: true, interval: 190, timestamp: 4 },
+    ],
+    lastKeyTime: 0,
+    lessonIdx: 0,
+    mode: 'practice',
+    pos: 4,
+    startTime: 0,
+    text: 'ab a',
+    timer: null,
+    timerValue: 0,
+    totalChars: 4,
+    ...partial,
+  } as Session;
 }
 
 function gameResult(partial: Partial<GameRunResult>): GameRunResult {
@@ -313,6 +471,15 @@ function runResultMetricStripViewModelChecks(): DiagnosticCheck[] {
   const progressModel = buildResultProgressMetricStripViewModel([
     { id: 'weekly', title: 'Weekly', value: '4 / 10', tone: 'good', progressPercent: 42.4 },
   ]);
+  const compactModel = buildCompactMetricStripViewModel({
+    className: 'live-metrics',
+    items: [
+      { id: 'speed', value: '72', detail: 'WPM' },
+      { id: 'accuracy', value: 95, label: '%', tone: 'good' },
+      { id: 'boss', value: 'Boss', tone: 'bad' },
+    ],
+  });
+  const emptyCompactModel = buildCompactMetricStripViewModel({ items: [] });
 
   return [
     check(
@@ -338,6 +505,17 @@ function runResultMetricStripViewModelChecks(): DiagnosticCheck[] {
         && progressItems[1]?.details?.[0] === '0%'
         && progressModel.metrics[0]?.details?.[0] === '42%',
       `Progress details=${progressItems.map(item => item.details?.[0] ?? 'none').join(', ')}; model=${progressModel.metrics[0]?.details?.[0] ?? 'none'}.`,
+    ),
+    check(
+      'compact metric strip view model normalizes live stats classes and empty state',
+      compactModel.className === 'stats-bar live-metrics'
+        && compactModel.items.map(item => item.id).join('|') === 'speed|accuracy|boss'
+        && compactModel.items[1]?.itemClassName === 'metric metric-positive'
+        && compactModel.items[2]?.itemClassName === 'metric metric-negative'
+        && compactModel.items[0]?.detail === 'WPM'
+        && compactModel.items[1]?.label === '%'
+        && emptyCompactModel.hidden,
+      `Compact=${compactModel.className}, items=${compactModel.items.map(item => item.itemClassName).join(', ')}, empty=${emptyCompactModel.hidden}.`,
     ),
   ];
 }
@@ -705,6 +883,356 @@ function runHomeHistoryMetricsChecks(): DiagnosticCheck[] {
   ];
 }
 
+function runHomeVisibleQuickActionChecks(): DiagnosticCheck[] {
+  const actions: HomeActionModel[] = [
+    { id: 'continue-run', title: 'Continue', description: '', meta: '', actionMode: 'game' },
+    { id: 'start-practice', title: 'Practice', description: '', meta: '', actionMode: 'practice' },
+    { id: 'replay-last', title: 'Replay', description: '', meta: '', actionMode: 'test' },
+    { id: 'lessons', title: 'Lessons', description: '', meta: '', actionMode: 'lessons' },
+  ];
+  const activeRunActions = buildHomeVisibleQuickActions({
+    actions,
+    currentRunActive: true,
+    primaryActionMode: 'game',
+    showSecondaryHeroAction: true,
+  });
+  const practicePrimaryActions = buildHomeVisibleQuickActions({
+    actions,
+    currentRunActive: false,
+    primaryActionMode: 'practice',
+    showSecondaryHeroAction: false,
+  });
+  const lessonsPrimaryWithReplayActions = buildHomeVisibleQuickActions({
+    actions,
+    currentRunActive: false,
+    primaryActionMode: 'lessons',
+    showSecondaryHeroAction: true,
+  });
+
+  return [
+    check(
+      'home visible quick actions hide active run and secondary replay duplicates',
+      activeRunActions.map(action => action.id).join('|') === 'start-practice|lessons',
+      `Active run actions=${activeRunActions.map(action => action.id).join(', ')}.`,
+    ),
+    check(
+      'home visible quick actions hide primary practice duplicate',
+      practicePrimaryActions.map(action => action.id).join('|') === 'continue-run|replay-last|lessons',
+      `Practice primary actions=${practicePrimaryActions.map(action => action.id).join(', ')}.`,
+    ),
+    check(
+      'home visible quick actions hide primary lessons and hero replay duplicates',
+      lessonsPrimaryWithReplayActions.map(action => action.id).join('|') === 'continue-run|start-practice',
+      `Lessons primary actions=${lessonsPrimaryWithReplayActions.map(action => action.id).join(', ')}.`,
+    ),
+  ];
+}
+
+function runHomeModeCardGroupChecks(): DiagnosticCheck[] {
+  const cards = [
+    { id: 'game', title: 'Game' },
+    { id: 'settings', title: 'Settings' },
+    { id: 'practice', title: 'Practice' },
+    { id: 'stats', title: 'Stats' },
+    { id: 'lessons', title: 'Lessons' },
+  ];
+  const grouped = buildHomeModeCardGroups(cards);
+
+  return [
+    check(
+      'home mode card groups keep primary cards in source order',
+      grouped.primaryCards.map(card => card.id).join('|') === 'game|practice|lessons',
+      `Primary=${grouped.primaryCards.map(card => card.id).join(', ')}.`,
+    ),
+    check(
+      'home mode card groups move stats and settings to utility row',
+      grouped.utilityCards.map(card => card.id).join('|') === 'settings|stats',
+      `Utility=${grouped.utilityCards.map(card => card.id).join(', ')}.`,
+    ),
+  ];
+}
+
+function runHomeProgressCenterVisibilityChecks(): DiagnosticCheck[] {
+  const translate = (key: string, params?: Record<string, unknown>) => {
+    if (!params) return key;
+    return `${key}:${Object.values(params).join('|')}`;
+  };
+  const cards = [
+    { id: 'season' },
+    { id: 'mode-focus' },
+    { id: 'records' },
+    { id: 'mastery' },
+    { id: 'goals' },
+  ];
+  const collapsed = buildHomeProgressCenterVisibility(cards, false);
+  const expanded = buildHomeProgressCenterVisibility(cards, true);
+  const shortList = buildHomeProgressCenterVisibility(cards.slice(0, 3), false);
+  const zeroLimit = buildHomeProgressCenterVisibility(cards, false, 0);
+  const homeViewModel = {
+    homeGoals: [{ id: 'goal-1' }, { id: 'goal-2' }],
+    homeStreaks: [
+      { current: 3, definition: { title: 'Warmup' } },
+      { current: 7, definition: { title: 'Daily streak' } },
+    ],
+    layoutMastery: {
+      currentMilestone: { title: 'Stable' },
+      currentScore: 62,
+    },
+    modeFocusSnapshots: [
+      { attempts: 0 },
+      { attempts: 2 },
+      { attempts: 0 },
+    ],
+    personalRecordDetailCards: [
+      { hasRecord: true },
+      { hasRecord: false },
+      { hasRecord: true },
+    ],
+    seasonRemainingDays: 4,
+    seasonSnapshot: {
+      completedCount: 1,
+      definition: { title: 'Season arc' },
+      goals: [
+        { completed: true, definition: { title: 'Done' } },
+        { completed: false, definition: { title: 'Next goal' } },
+      ],
+      totalCount: 3,
+    },
+  } as unknown as Parameters<typeof buildHomeProgressCenterCards>[0];
+  const progressCards = buildHomeProgressCenterCards(homeViewModel, translate);
+  const seasonMeta = buildHomeDetailMeta('season', homeViewModel, translate);
+
+  return [
+    check(
+      'home progress center visibility limits collapsed cards',
+      collapsed.canToggle
+        && collapsed.visibleCards.map(card => card.id).join('|') === 'season|mode-focus|records',
+      `Collapsed=${collapsed.visibleCards.map(card => card.id).join(', ')}, toggle=${collapsed.canToggle}.`,
+    ),
+    check(
+      'home progress center visibility exposes all cards when expanded',
+      expanded.canToggle
+        && expanded.visibleCards.map(card => card.id).join('|') === 'season|mode-focus|records|mastery|goals',
+      `Expanded=${expanded.visibleCards.map(card => card.id).join(', ')}, toggle=${expanded.canToggle}.`,
+    ),
+    check(
+      'home progress center visibility handles short and zero-limit lists',
+      !shortList.canToggle
+        && shortList.visibleCards.length === 3
+        && zeroLimit.canToggle
+        && zeroLimit.visibleCards.length === 0,
+      `Short=${shortList.visibleCards.length}/${shortList.canToggle}, zero=${zeroLimit.visibleCards.length}/${zeroLimit.canToggle}.`,
+    ),
+    check(
+      'home progress center cards are built in core',
+      progressCards.map(card => card.id).join('|') === 'season|mode-focus|records|mastery|goals|streaks'
+        && progressCards.find(card => card.id === 'mode-focus')?.summary === 'home.progressCenter.modeFocus.summaryMissing:2'
+        && progressCards.find(card => card.id === 'records')?.summary === 'home.progressCenter.records.summary:2|3'
+        && progressCards.find(card => card.id === 'streaks')?.summary === 'home.progressCenter.streaks.summaryActive:7',
+      `Progress cards: ${progressCards.map(card => `${card.id}:${card.summary}`).join(', ')}.`,
+    ),
+    check(
+      'home detail modal meta is built in core',
+      seasonMeta?.title === 'home.detail.season.title'
+        && seasonMeta.description === 'home.detail.season.description:Season arc|4',
+      `Season meta: ${seasonMeta?.title ?? 'none'} / ${seasonMeta?.description ?? 'none'}.`,
+    ),
+  ];
+}
+
+function runPracticeCompletionFlowChecks(): DiagnosticCheck[] {
+  const translate = (key: string) => key;
+  const layouts = diagnosticLayouts();
+  const layoutFingers = layouts.layouts.en!.fingers;
+  const baseInsights = createEmptyLayoutPracticeInsights();
+  const baseLayoutProgress: LayoutProgressState = { unlocked: 0, unlockProgress: 2 };
+  const basePracticeState: PracticeState = {
+    lastDate: '2026-04-20',
+    minutesToday: 12,
+    sessionsToday: 2,
+    sessionsTotal: 5,
+    worstChar: null,
+  };
+  const success = resolvePracticeSessionCompletion({
+    acc: 97,
+    baseCharStats: {},
+    contentMode: 'adaptive-words',
+    contentScenarioId: 'practice-normal',
+    elapsedSeconds: 120,
+    fallbackWorstChar: 'z',
+    goalSpeedCpm: 150,
+    layoutFingers,
+    layoutId: 'en',
+    layoutProgress: baseLayoutProgress,
+    practiceInsights: baseInsights,
+    practiceState: basePracticeState,
+    practiceUnlockOrder: ['a', 'b'],
+    session: diagnosticTypingSession(),
+    today: '2026-04-21',
+    trainingMode: 'normal',
+    translate,
+    unlockedChars: ['a', 'b'],
+    wpm: 42,
+  });
+  const failed = resolvePracticeSessionCompletion({
+    acc: 90,
+    baseCharStats: {},
+    contentMode: 'adaptive-words',
+    contentScenarioId: 'practice-normal',
+    elapsedSeconds: 60,
+    fallbackWorstChar: 'q',
+    goalSpeedCpm: 300,
+    layoutFingers,
+    layoutId: 'en',
+    layoutProgress: { unlocked: 0, unlockProgress: 1 },
+    practiceInsights: baseInsights,
+    practiceState: { ...basePracticeState, lastDate: '2026-04-21' },
+    practiceUnlockOrder: ['a', 'b'],
+    session: diagnosticTypingSession({ errors: 2 }),
+    today: '2026-04-21',
+    trainingMode: 'normal',
+    translate,
+    unlockedChars: ['a', 'b'],
+    wpm: 30,
+  });
+  const sprint = resolveSprintCompletion({
+    acc: 96,
+    contentMode: 'custom',
+    elapsedSeconds: 30,
+    goalSpeedCpm: 150,
+    session: diagnosticTypingSession({ errors: 0, totalChars: 220 }),
+    wpm: 70,
+  });
+  const survivalConfig = getChallengeModeConfig(false);
+  const survival = resolveChallengeCompletion({
+    acc: 96,
+    config: survivalConfig,
+    contentMode: 'custom',
+    elapsedSeconds: 100,
+    goalSpeedCpm: 150,
+    practiceState: basePracticeState,
+    session: diagnosticTypingSession({ errors: 1, pos: 10, text: 'abcdefghij', totalChars: 10 }),
+    today: '2026-04-21',
+    totalLives: getChallengeTotalLives(survivalConfig),
+    wpm: 52,
+  });
+  const flawlessConfig = getChallengeModeConfig(true);
+  const flawlessFailure = resolveChallengeCompletion({
+    acc: 92,
+    config: flawlessConfig,
+    contentMode: 'adaptive-words',
+    elapsedSeconds: 45,
+    goalSpeedCpm: 150,
+    practiceState: basePracticeState,
+    session: diagnosticTypingSession({ errors: 1, pos: 2, text: 'abcdef', totalChars: 6 }),
+    today: '2026-04-21',
+    totalLives: getChallengeTotalLives(flawlessConfig),
+    wpm: 38,
+  });
+
+  return [
+    check(
+      'practice completion unlocks letters without mutating source state',
+      success.result.newLetter
+        && success.result.openedLetter === 'a'
+        && success.nextLayoutProgress.unlocked === 1
+        && success.nextLayoutProgress.unlockProgress === 0
+        && baseLayoutProgress.unlocked === 0
+        && baseLayoutProgress.unlockProgress === 2,
+      `Unlock result=${success.result.openedLetter ?? 'none'}, source=${baseLayoutProgress.unlocked}/${baseLayoutProgress.unlockProgress}.`,
+    ),
+    check(
+      'practice completion handles daily rollover and rhythm payload',
+      success.nextPracticeState.sessionsToday === 1
+        && success.nextPracticeState.minutesToday === 2
+        && success.nextPracticeState.sessionsTotal === 6
+        && success.rhythmSession.intervals.join('|') === '180|220|190'
+        && success.rhythmSession.worstInterval === 220,
+      `State=${success.nextPracticeState.sessionsToday}/${success.nextPracticeState.minutesToday}, intervals=${success.rhythmSession.intervals.join(',')}.`,
+    ),
+    check(
+      'practice completion preserves failed progress and motivation payload',
+      !failed.result.newLetter
+        && failed.nextLayoutProgress.unlockProgress === 1
+        && !failed.motivationEvent.successfulSession
+        && !failed.motivationEvent.flawlessSession,
+      `Failed progress=${failed.nextLayoutProgress.unlockProgress}, success=${failed.motivationEvent.successfulSession}.`,
+    ),
+    check(
+      'sprint completion builds test history and achievement event',
+      sprint.historyEntry.mode === 'test'
+        && sprint.historyEntry.contentScenarioId === 'sprint'
+        && sprint.historyEntry.durationSeconds === 30
+        && sprint.result.chars === 220
+        && sprint.result.errors === 0
+        && sprint.achievementEvents[0]?.type === 'test.completed',
+      `Sprint=${sprint.historyEntry.mode}/${sprint.historyEntry.contentScenarioId}, chars=${sprint.result.chars}.`,
+    ),
+    check(
+      'challenge completion separates survival pass and flawless fail',
+      survival.result.passed
+        && survival.historyEntry.passed === true
+        && survival.result.livesLeft === 2
+        && survival.result.progressPercent === 100
+        && survival.motivationEvent.successfulSession
+        && !flawlessFailure.result.passed
+        && flawlessFailure.result.livesLeft === 0
+        && flawlessFailure.historyEntry.contentScenarioId === 'flawless',
+      `Survival=${survival.result.passed}/${survival.result.livesLeft}, flawless=${flawlessFailure.result.passed}/${flawlessFailure.result.livesLeft}.`,
+    ),
+  ];
+}
+
+function runPracticeFamilyModeHeaderChecks(): DiagnosticCheck[] {
+  const translate = (key: string) => key;
+  const practice = buildPracticeFamilyModeHeaderViewModel('practice', translate);
+  const sprint = buildPracticeFamilyModeHeaderViewModel('sprint', translate);
+  const survival = buildPracticeFamilyModeHeaderViewModel('survival', translate);
+  const flawless = buildPracticeFamilyModeHeaderViewModel('flawless', translate);
+
+  return [
+    check(
+      'practice mode header exposes base practice labels',
+      practice.title === 'practice.title'
+        && practice.achievementsLabel === 'practice.achievements'
+        && practice.settingsLabel === 'practice.settings.title'
+        && practice.description === null
+        && practice.startLabel === null
+        && practice.bestLabel === null,
+      `Practice header title=${practice.title}, settings=${practice.settingsLabel ?? 'none'}.`,
+    ),
+    check(
+      'sprint mode header exposes shared sprint labels',
+      sprint.title === 'sprint.title'
+        && sprint.description === 'sprint.description'
+        && sprint.achievementsLabel === 'sprint.achievements'
+        && sprint.startLabel === 'sprint.start'
+        && sprint.bestLabel === 'sprint.best',
+      `Sprint header title=${sprint.title}, start=${sprint.startLabel ?? 'none'}.`,
+    ),
+    check(
+      'survival mode header keeps survival terminology consistent',
+      survival.title === 'survival.title'
+        && survival.description === 'survival.description'
+        && survival.extraDescription === 'survival.toggleDescription'
+        && survival.achievementsLabel === 'survival.achievements'
+        && survival.startLabel === 'survival.start'
+        && survival.bestLabel === 'survival.best',
+      `Survival header title=${survival.title}, description=${survival.description ?? 'none'}.`,
+    ),
+    check(
+      'flawless mode header reuses survival title with flawless descriptions',
+      flawless.title === 'survival.title'
+        && flawless.description === 'survival.flawlessDescription'
+        && flawless.extraDescription === 'survival.flawlessToggleDescription'
+        && flawless.achievementsLabel === 'survival.achievements'
+        && flawless.startLabel === 'survival.start'
+        && flawless.bestLabel === 'survival.best',
+      `Flawless header title=${flawless.title}, description=${flawless.description ?? 'none'}.`,
+    ),
+  ];
+}
+
 function runHomeModeFocusDetailCardsChecks(): DiagnosticCheck[] {
   const translate = (key: string, params?: Record<string, unknown>) => {
     if (!params) return key;
@@ -1025,6 +1553,23 @@ function runStatsHistoryScopeChecks(): DiagnosticCheck[] {
         date: '2026-04-22T10:00:00.000Z',
         wpm: 80,
         acc: 98,
+        contentScenarioId: 'sprint',
+      }),
+      historyEntry({
+        mode: 'practice',
+        date: '2026-04-22T10:10:00.000Z',
+        wpm: 55,
+        acc: 96,
+        contentScenarioId: 'survival',
+        passed: true,
+      }),
+      historyEntry({
+        mode: 'practice',
+        date: '2026-04-22T10:20:00.000Z',
+        wpm: 52,
+        acc: 99,
+        contentScenarioId: 'flawless',
+        passed: true,
       }),
     ],
     ru: [
@@ -1068,12 +1613,36 @@ function runStatsHistoryScopeChecks(): DiagnosticCheck[] {
     translate,
     unit: 'wpm',
   });
+  const buildModeScope = (statsMode: 'practice' | 'sprint' | 'survival' | 'flawless') => buildStatsHistoryScopeModel({
+    currentLayout: 'en',
+    currentLayoutLabel: 'English',
+    layoutScope: 'current',
+    locale: 'en-US',
+    practiceRhythmHistory,
+    progressHistory,
+    statsMode,
+    statsPeriod: 'all',
+    translate,
+    unit: 'wpm',
+  });
+  const practiceScope = buildModeScope('practice');
+  const sprintScope = buildModeScope('sprint');
+  const survivalScope = buildModeScope('survival');
+  const flawlessScope = buildModeScope('flawless');
 
   return [
     check(
       'stats scope filters history by current layout and mode',
       scope.filteredHistory.length === 1 && scope.filteredHistory[0]?.wpm === 45,
       `Filtered entries: ${scope.filteredHistory.map(entry => `${entry.mode}:${entry.wpm}`).join(', ')}.`,
+    ),
+    check(
+      'stats scope keeps persisted challenge buckets separate',
+      practiceScope.filteredHistory.map(entry => entry.wpm).join(',') === '45'
+        && sprintScope.filteredHistory.map(entry => entry.wpm).join(',') === '80'
+        && survivalScope.filteredHistory.map(entry => entry.wpm).join(',') === '55'
+        && flawlessScope.filteredHistory.map(entry => entry.wpm).join(',') === '52',
+      `Buckets: practice=${practiceScope.filteredHistory.map(entry => entry.wpm).join(',')}; sprint=${sprintScope.filteredHistory.map(entry => entry.wpm).join(',')}; survival=${survivalScope.filteredHistory.map(entry => entry.wpm).join(',')}; flawless=${flawlessScope.filteredHistory.map(entry => entry.wpm).join(',')}.`,
     ),
     check(
       'stats scope filters rhythm sessions with the same layout scope',
@@ -1775,6 +2344,108 @@ function runGameResultHistoryChecks(): DiagnosticCheck[] {
   ];
 }
 
+function runGameFlowResolverChecks(): DiagnosticCheck[] {
+  const bossReward = resolveGamePostLevelFlow({
+    passed: true,
+    isBoss: true,
+    victory: false,
+    level: 5,
+    totalLevels: 20,
+    nextMapNodeIds: ['rest'],
+  });
+  const mapSelection = resolveGamePostLevelFlow({
+    passed: true,
+    isBoss: false,
+    victory: false,
+    level: 3,
+    totalLevels: 20,
+    nextMapNodeIds: ['battle-a', 'battle-b'],
+  });
+  const autoAdvance = resolveGamePostLevelFlow({
+    passed: true,
+    isBoss: false,
+    victory: false,
+    level: 3,
+    totalLevels: 20,
+    nextMapNodeIds: [],
+  });
+  const terminal = resolveGamePostLevelFlow({
+    passed: false,
+    isBoss: false,
+    victory: false,
+    level: 3,
+    totalLevels: 20,
+    nextMapNodeIds: ['battle-a'],
+  });
+  const modifier: GameRunModifier = {
+    id: 'focus',
+    name: 'Focus',
+    description: 'Focus',
+    accuracyRequirementReduction: 2,
+    remainingLevels: 2,
+  };
+  const buffEffect = resolveGameChoiceEffect({
+    hp: 6,
+    maxHp: 10,
+    effect: {
+      maxLifeDelta: 2,
+      fullHeal: true,
+      regenTurns: 3,
+      modifier,
+    },
+  });
+  const damageEffect = resolveGameChoiceEffect({
+    hp: 4,
+    maxHp: 10,
+    effect: {
+      lifeDelta: -6,
+      repairEquippedBy: 1,
+      grantItemId: 'tempo-ring',
+    },
+  });
+
+  return [
+    check(
+      'game post-level flow routes boss wins to rewards',
+      bossReward.kind === 'bossReward',
+      `kind=${bossReward.kind}`,
+    ),
+    check(
+      'game post-level flow exposes selectable map nodes',
+      mapSelection.kind === 'mapSelection'
+        && mapSelection.selectableNodeIds.join(',') === 'battle-a,battle-b',
+      `kind=${mapSelection.kind}`,
+    ),
+    check(
+      'game post-level flow auto-advances linear runs',
+      autoAdvance.kind === 'autoAdvance' && autoAdvance.nextLevel === 4,
+      `kind=${autoAdvance.kind}`,
+    ),
+    check(
+      'game post-level flow resets terminal or failed levels',
+      terminal.kind === 'terminalOrFailed',
+      `kind=${terminal.kind}`,
+    ),
+    check(
+      'game choice effect resolves max hp heal regen and modifier',
+      buffEffect.nextMaxHp === 12
+        && buffEffect.nextHp === 12
+        && buffEffect.regenTurnsDelta === 3
+        && buffEffect.modifier?.id === 'focus'
+        && buffEffect.hpChanged,
+      JSON.stringify(buffEffect),
+    ),
+    check(
+      'game choice effect resolves damage repair and item grants',
+      damageEffect.nextHp === 0
+        && damageEffect.runDamageTakenDelta === 6
+        && damageEffect.repairEquippedBy === 1
+        && damageEffect.grantItemId === 'tempo-ring',
+      JSON.stringify(damageEffect),
+    ),
+  ];
+}
+
 function runGameResultMetricItemsChecks(): DiagnosticCheck[] {
   const translate = (key: string) => key;
   const cleanBossMetrics = buildGameResultMetricItems(gameResult({
@@ -1944,6 +2615,62 @@ function runGameResultCardViewModelChecks(): DiagnosticCheck[] {
   ];
 }
 
+function runGameResultSecondaryBlocksChecks(): DiagnosticCheck[] {
+  const visibleRewardBlock = {
+    choices: [],
+    selectedRewardMessage: null,
+    title: 'Reward',
+  };
+  const terminalModel = buildGameResultSecondaryBlocksViewModel({
+    comparison: {} as ResultComparisonSummary,
+    masterySummary: {} as any,
+    motivationGoals: [{} as any],
+    motivationStreaks: [],
+    result: gameResult({ livesLeft: 0, passed: false, victory: false }),
+    rewardBlock: visibleRewardBlock,
+  });
+  const nonTerminalModel = buildGameResultSecondaryBlocksViewModel({
+    comparison: null,
+    masterySummary: null,
+    motivationGoals: [{} as any],
+    motivationStreaks: [{} as any],
+    result: gameResult({ livesLeft: 2, passed: false, victory: false }),
+    rewardBlock: null,
+  });
+  const victoryModel = buildGameResultSecondaryBlocksViewModel({
+    comparison: null,
+    masterySummary: null,
+    motivationGoals: [],
+    motivationStreaks: [{} as any],
+    result: gameResult({ livesLeft: 2, passed: true, victory: true }),
+    rewardBlock: null,
+  });
+
+  return [
+    check(
+      'game result secondary blocks show terminal motivation, comparison, mastery and rewards',
+      terminalModel.showMotivationProgress
+        && terminalModel.showComparison
+        && terminalModel.showMastery
+        && terminalModel.showRewardBlock,
+      `Terminal blocks=${JSON.stringify(terminalModel)}.`,
+    ),
+    check(
+      'game result secondary blocks hide non-terminal motivation and absent optional blocks',
+      !nonTerminalModel.showMotivationProgress
+        && !nonTerminalModel.showComparison
+        && !nonTerminalModel.showMastery
+        && !nonTerminalModel.showRewardBlock,
+      `Non-terminal blocks=${JSON.stringify(nonTerminalModel)}.`,
+    ),
+    check(
+      'game result secondary blocks show streak motivation for victory',
+      victoryModel.showMotivationProgress,
+      `Victory motivation=${victoryModel.showMotivationProgress}.`,
+    ),
+  ];
+}
+
 function runGameRewardChoiceBlockViewModelChecks(): DiagnosticCheck[] {
   const translate = (key: string, params?: Record<string, string | number | boolean | null | undefined>) => {
     if (!params) return key;
@@ -2052,8 +2779,1473 @@ function runGameRewardChoiceBlockViewModelChecks(): DiagnosticCheck[] {
   ];
 }
 
-function runCoreDiagnostics(): DiagnosticReport {
+function runGameInventoryPanelViewModelChecks(): DiagnosticCheck[] {
+  const equipped: GameEquipmentState = {
+    slotA: 'item-equipped',
+    slotB: null,
+    slotC: null,
+  };
+  const inventoryItems = buildInventoryEntries([
+    {
+      id: 'item-equipped',
+      itemId: 'steady-gloves',
+      durability: null,
+      maxDurability: null,
+    },
+    {
+      id: 'item-free',
+      itemId: 'focus-lens',
+      durability: null,
+      maxDurability: null,
+    },
+  ], equipped);
+  const equippedItems = buildEquippedEntries(buildEquippedBySlot(equipped), inventoryItems);
+  const mixedInventory = buildGameInventoryPanelViewModel(inventoryItems, equippedItems);
+
+  const allEquippedInventoryItems = buildInventoryEntries([
+    {
+      id: 'item-equipped',
+      itemId: 'steady-gloves',
+      durability: null,
+      maxDurability: null,
+    },
+  ], equipped);
+  const allEquipped = buildGameInventoryPanelViewModel(
+    allEquippedInventoryItems,
+    buildEquippedEntries(buildEquippedBySlot(equipped), allEquippedInventoryItems),
+  );
+  const emptyAfterBoss = buildGameInventoryPanelViewModel(
+    [],
+    buildEquippedEntries(buildEquippedBySlot({ slotA: null, slotB: null, slotC: null }), []),
+  );
+
+  return [
+    check(
+      'game inventory panel view model hides equipped items',
+      mixedInventory.visibleInventoryItems.map(item => item.id).join('|') === 'item-free'
+        && mixedInventory.emptyReason === null,
+      `Visible=${mixedInventory.visibleInventoryItems.map(item => item.id).join('|')}, empty=${mixedInventory.emptyReason}.`,
+    ),
+    check(
+      'game inventory panel view model distinguishes empty reasons',
+      allEquipped.emptyReason === 'all-equipped'
+        && emptyAfterBoss.emptyReason === 'after-boss',
+      `All equipped=${allEquipped.emptyReason}, after boss=${emptyAfterBoss.emptyReason}.`,
+    ),
+  ];
+}
+
+function runGamePageBonusViewModelChecks(): DiagnosticCheck[] {
+  const equipped: GameEquipmentState = {
+    slotA: 'tempo-a',
+    slotB: 'tempo-b',
+    slotC: null,
+  };
+  const tempoInventory = buildInventoryEntries([
+    {
+      id: 'tempo-a',
+      itemId: 'steady-gloves',
+      durability: null,
+      maxDurability: null,
+    },
+    {
+      id: 'tempo-b',
+      itemId: 'whisper-feather',
+      durability: null,
+      maxDurability: null,
+    },
+  ], equipped);
+  const tempoBonuses = buildGamePageBonusViewModel(
+    buildEquippedEntries(buildEquippedBySlot(equipped), tempoInventory),
+    [],
+    false,
+  );
+
+  const brokenTempoInventory = buildInventoryEntries([
+    {
+      id: 'tempo-a',
+      itemId: 'steady-gloves',
+      durability: null,
+      maxDurability: null,
+    },
+    {
+      id: 'tempo-b',
+      itemId: 'whisper-feather',
+      durability: 0,
+      maxDurability: 1,
+    },
+  ], equipped);
+  const brokenTempoBonuses = buildGamePageBonusViewModel(
+    buildEquippedEntries(buildEquippedBySlot(equipped), brokenTempoInventory),
+    [],
+    false,
+  );
+  const bossOnlyModifier: GameRunModifier = {
+    id: 'boss-focus',
+    name: 'Boss focus',
+    description: 'Boss-only diagnostic modifier',
+    bossOnly: true,
+    remainingLevels: 1,
+    speedRequirementReductionPercent: 7,
+    enemyAttackReduction: 2,
+  };
+  const nonBossModifierBonuses = buildGamePageBonusViewModel([], [bossOnlyModifier], false);
+  const bossModifierBonuses = buildGamePageBonusViewModel([], [bossOnlyModifier], true);
+
+  return [
+    check(
+      'game page bonus view model combines active set bonuses',
+      tempoBonuses.equippedItemIds.join('|') === 'steady-gloves|whisper-feather'
+        && tempoBonuses.setBonuses.totalSpeedReduction === 3
+        && tempoBonuses.totalBonuses.speedRequirementReductionPercent >= 3,
+      `Equipped=${tempoBonuses.equippedItemIds.join('|')}, setSpeed=${tempoBonuses.setBonuses.totalSpeedReduction}, totalSpeed=${tempoBonuses.totalBonuses.speedRequirementReductionPercent}.`,
+    ),
+    check(
+      'game page bonus view model excludes broken equipped items from set bonuses',
+      brokenTempoBonuses.equippedItemIds.join('|') === 'steady-gloves'
+        && brokenTempoBonuses.setBonuses.totalSpeedReduction === 0,
+      `Equipped=${brokenTempoBonuses.equippedItemIds.join('|')}, setSpeed=${brokenTempoBonuses.setBonuses.totalSpeedReduction}.`,
+    ),
+    check(
+      'game page bonus view model applies boss-only modifiers only during boss nodes',
+      nonBossModifierBonuses.totalBonuses.speedRequirementReductionPercent === 0
+        && nonBossModifierBonuses.battleBonuses.enemyAttackReduction === 0
+        && bossModifierBonuses.totalBonuses.speedRequirementReductionPercent === 7
+        && bossModifierBonuses.battleBonuses.enemyAttackReduction === 2,
+      `NonBoss=${nonBossModifierBonuses.totalBonuses.speedRequirementReductionPercent}/${nonBossModifierBonuses.battleBonuses.enemyAttackReduction}, boss=${bossModifierBonuses.totalBonuses.speedRequirementReductionPercent}/${bossModifierBonuses.battleBonuses.enemyAttackReduction}.`,
+    ),
+  ];
+}
+
+function runGameRunMapLayoutViewModelChecks(): DiagnosticCheck[] {
+  const layout = buildGameRunMapLayoutViewModel({
+    nodes: [
+      {
+        id: 'late',
+        kind: 'battle',
+        title: 'Late',
+        flavor: 'Late',
+        description: 'Late node',
+        column: 2,
+        lane: 4,
+      },
+      {
+        id: 'middle-low',
+        kind: 'treasure',
+        title: 'Middle low',
+        flavor: 'Middle low',
+        description: 'Middle low node',
+        column: 1,
+        lane: 3,
+      },
+      {
+        id: 'start',
+        kind: 'battle',
+        title: 'Start',
+        flavor: 'Start',
+        description: 'Start node',
+        column: 0,
+        lane: 2,
+      },
+      {
+        id: 'middle-high',
+        kind: 'rest',
+        title: 'Middle high',
+        flavor: 'Middle high',
+        description: 'Middle high node',
+        column: 1,
+        lane: 1,
+      },
+    ],
+  });
+  const columnOrder = layout.columns.map(column => column.column).join('|');
+  const middleNodes = layout.columns[1]?.slots.map(slot => slot.node?.id ?? '-').join('|') ?? '';
+
+  return [
+    check(
+      'game run map layout view model sorts columns and preserves lane slots',
+      layout.columnCount === 3
+        && columnOrder === '0|1|2'
+        && layout.columns.every(column => column.slots.length === 5),
+      `Columns=${columnOrder}, count=${layout.columnCount}, slots=${layout.columns.map(column => column.slots.length).join('|')}.`,
+    ),
+    check(
+      'game run map layout view model sorts nodes by lane inside columns',
+      middleNodes === '-|middle-high|-|middle-low|-',
+      `Middle column=${middleNodes}.`,
+    ),
+  ];
+}
+
+function runGameHudViewModelChecks(): DiagnosticCheck[] {
+  const activeBossHud = buildGameHudViewModel({
+    bossTimeLimit: 10,
+    hp: 24,
+    maxHp: 100,
+    nowMs: 9000,
+    resultElapsedSeconds: 3,
+    sessionActive: true,
+    sessionStartTime: 0,
+  });
+  const completedHud = buildGameHudViewModel({
+    bossTimeLimit: null,
+    hp: 55,
+    maxHp: 100,
+    nowMs: 2000,
+    resultElapsedSeconds: 4.5,
+    sessionActive: false,
+    sessionStartTime: 1000,
+  });
+  const invalidHpHud = buildGameHudViewModel({
+    bossTimeLimit: 0,
+    hp: 10,
+    maxHp: 0,
+    nowMs: 0,
+    resultElapsedSeconds: -1,
+    sessionActive: false,
+    sessionStartTime: 0,
+  });
+
+  return [
+    check(
+      'game hud view model computes live boss timer danger state',
+      activeBossHud.liveElapsedSeconds === 9
+        && activeBossHud.bossTimerRatio === 0.9
+        && activeBossHud.bossTimerPercent === 90
+        && activeBossHud.bossTimerDanger
+        && activeBossHud.hpTone === 'danger',
+      `Elapsed=${activeBossHud.liveElapsedSeconds}, timer=${activeBossHud.bossTimerPercent}, hpTone=${activeBossHud.hpTone}.`,
+    ),
+    check(
+      'game hud view model preserves completed elapsed and hp warning state',
+      completedHud.liveElapsedSeconds === 4.5
+        && completedHud.bossTimerPercent === 0
+        && Math.abs(completedHud.hpPercent - 55) < 0.001
+        && completedHud.hpTone === null,
+      `Elapsed=${completedHud.liveElapsedSeconds}, timer=${completedHud.bossTimerPercent}, hp=${completedHud.hpPercent}.`,
+    ),
+    check(
+      'game hud view model clamps invalid timer and hp inputs',
+      invalidHpHud.liveElapsedSeconds === 0
+        && invalidHpHud.bossTimerRatio === 0
+        && invalidHpHud.hpPercent === 0
+        && invalidHpHud.hpTone === 'danger',
+      `Elapsed=${invalidHpHud.liveElapsedSeconds}, timer=${invalidHpHud.bossTimerRatio}, hp=${invalidHpHud.hpPercent}.`,
+    ),
+  ];
+}
+
+function runGameEventChoiceCardViewModelChecks(): DiagnosticCheck[] {
+  const translate = (key: string, params?: Record<string, string | number | boolean | null | undefined>) => {
+    if (key === 'game.hud.hpShort') return 'HP';
+    if (key === 'game.event.repairBonus') return `repair:${params?.count ?? ''}`;
+    if (key === 'game.inventory.durability') return 'Durability';
+    return key;
+  };
+  const modifier: GameRunModifier = {
+    description: 'mod bonus',
+    enemyAttackReduction: 2,
+    id: 'diagnostic-modifier',
+    name: 'Diagnostic modifier',
+    remainingLevels: 1,
+  };
+  const choices: GameRunEventChoice[] = [
+    {
+      description: 'Take a breath.',
+      effect: { lifeDelta: 5 },
+      flavor: 'Safe',
+      id: 'heal',
+      title: 'Rest',
+    },
+    {
+      description: 'Patch equipped items.',
+      disabled: true,
+      effect: {
+        lifeDelta: -3,
+        modifier,
+        repairEquippedBy: 2,
+      },
+      flavor: 'Risky',
+      id: 'risk',
+      title: 'Risk',
+    },
+    {
+      description: 'Take an item.',
+      effect: { grantItemId: 'focus-lens' },
+      flavor: 'Cache',
+      id: 'item',
+      title: 'Lens',
+    },
+  ];
+  const models = buildGameEventChoiceCardViewModels({
+    choices,
+    eventKindLabel: 'Risk event',
+    translate,
+  });
+  const healModel = models[0];
+  const riskModel = models[1];
+  const itemModel = models[2];
+
+  return [
+    check(
+      'game event choice card view model builds non-item effects and fallback badge',
+      healModel?.badgeLabel === 'R'
+        && healModel.cardClassName === ''
+        && healModel.effects.join('|') === '+5 HP'
+        && healModel.rarity === 'Risk event'
+        && healModel.special,
+      `Heal badge=${healModel?.badgeLabel}, effects=${healModel?.effects.join('|')}.`,
+    ),
+    check(
+      'game event choice card view model preserves disabled state and negative effects',
+      riskModel?.cardClassName === 'disabled'
+        && riskModel.effects.join('|') === '-3 HP|repair:2|mod bonus'
+        && riskModel.choice.disabled === true,
+      `Risk class=${riskModel?.cardClassName}, effects=${riskModel?.effects.join('|')}.`,
+    ),
+    check(
+      'game event choice card view model exposes catalog item presentation data',
+      itemModel?.cardClassName === 'rarity-1'
+        && itemModel.iconKey === 'eye'
+        && itemModel.rarity === '★☆☆'
+        && itemModel.badgeLabel === null
+        && !itemModel.special,
+      `Item class=${itemModel?.cardClassName}, icon=${itemModel?.iconKey}, rarity=${itemModel?.rarity}.`,
+    ),
+  ];
+}
+
+function gameAchievementFixture(id: string): GameAchievementDefinition {
+  return {
+    category: 'game',
+    conditions: [{ type: 'manual' }],
+    description: `${id} description`,
+    id,
+    name: `${id} name`,
+  };
+}
+
+function runGameAchievementToastViewModelChecks(): DiagnosticCheck[] {
+  const achievements = [
+    gameAchievementFixture('first'),
+    gameAchievementFixture('second'),
+    gameAchievementFixture('third'),
+    gameAchievementFixture('fourth'),
+  ];
+  const visible = buildGameAchievementToastViewModels(
+    achievements,
+    new Map([
+      [1, { isHiding: true }],
+      [3, { isHiding: true }],
+    ]),
+  );
+  const allVisible = buildGameAchievementToastViewModels(achievements, new Map(), 10);
+  const zeroVisible = buildGameAchievementToastViewModels(achievements, new Map(), 0);
+
+  return [
+    check(
+      'game achievement toast view model limits visible toasts',
+      visible.map(item => item.achievement.id).join('|') === 'first|second|third',
+      `Visible=${visible.map(item => item.achievement.id).join(', ')}.`,
+    ),
+    check(
+      'game achievement toast view model keeps display index and hiding state',
+      visible.map(item => `${item.displayIndex}:${item.isHiding ? 'hide' : 'show'}`).join('|') === '0:show|1:hide|2:show',
+      `States=${visible.map(item => `${item.displayIndex}:${item.isHiding ? 'hide' : 'show'}`).join(', ')}.`,
+    ),
+    check(
+      'game achievement toast view model supports custom and zero limits',
+      allVisible.length === 4 && zeroVisible.length === 0,
+      `All=${allVisible.length}, zero=${zeroVisible.length}.`,
+    ),
+  ];
+}
+
+function importedLocaleFixture(
+  partial: Pick<ImportedInterfaceLocaleDefinition, 'id' | 'importedAt'> & Partial<ImportedInterfaceLocaleDefinition>,
+): ImportedInterfaceLocaleDefinition {
+  return {
+    dictionary: {},
+    label: partial.id,
+    nativeLabel: partial.id.toUpperCase(),
+    source: 'imported',
+    sourceName: `${partial.id}.po`,
+    ...partial,
+  };
+}
+
+function runSettingsViewModelChecks(): DiagnosticCheck[] {
+  const importedLocales = {
+    older: importedLocaleFixture({
+      id: 'older',
+      importedAt: '2026-01-01T10:00:00.000Z',
+    }),
+    newest: importedLocaleFixture({
+      id: 'newest',
+      importedAt: '2026-01-03T10:00:00.000Z',
+    }),
+    middle: importedLocaleFixture({
+      id: 'middle',
+      importedAt: '2026-01-02T10:00:00.000Z',
+    }),
+  };
+  const importedLocaleEntries = buildImportedInterfaceLocaleEntries(importedLocales);
+  const availableThemes: ThemeDefinitions = {
+    'dark-orange': {
+      id: 'dark-orange',
+      label: 'Should not duplicate',
+      source: 'built-in',
+      editable: false,
+      deletable: false,
+      style: {},
+    },
+    'custom-ocean': {
+      id: 'custom-ocean',
+      label: 'Custom Ocean',
+      source: 'custom',
+      editable: true,
+      deletable: true,
+      style: {},
+    },
+    'addon-forest': {
+      id: 'addon-forest',
+      label: 'Addon Forest',
+      source: 'addon',
+      editable: false,
+      deletable: false,
+      style: {},
+    },
+  };
+  const themeOptions = buildSettingsThemeOptions(availableThemes);
+
+  return [
+    check(
+      'settings view model sorts imported locales by newest import first',
+      importedLocaleEntries.map(locale => locale.id).join('|') === 'newest|middle|older',
+      `Locales=${importedLocaleEntries.map(locale => locale.id).join(', ')}.`,
+    ),
+    check(
+      'settings view model keeps built-in themes first and appends custom themes',
+      themeOptions.slice(0, 5).map(theme => theme.id).join('|') === 'dark-orange|catppuccin|nord|monokai|light'
+        && themeOptions.slice(5).map(theme => theme.id).join('|') === 'custom-ocean|addon-forest',
+      `Themes=${themeOptions.map(theme => theme.id).join(', ')}.`,
+    ),
+    check(
+      'settings view model avoids duplicate built-in theme options',
+      themeOptions.filter(theme => theme.id === 'dark-orange').length === 1,
+      `Dark orange count=${themeOptions.filter(theme => theme.id === 'dark-orange').length}.`,
+    ),
+  ];
+}
+
+function runTextDisplayViewModelChecks(): DiagnosticCheck[] {
+  const words = buildTextDisplayWords({
+    cursorSmooth: 'smooth',
+    cursorStyle: 'underline',
+    errPositions: new Set([1]),
+    highlightCurrentChar: true,
+    pos: 2,
+    text: 'ab cd',
+    waitingForSpace: true,
+  });
+  const serialized = words
+    .map(word => word.map(char => `${char.ch}:${char.cls || '-'}:${char.idx}`).join(','))
+    .join('|');
+  const noHighlightCursor = buildTextDisplayWords({
+    cursorSmooth: 'instant',
+    cursorStyle: 'block',
+    errPositions: new Set(),
+    highlightCurrentChar: false,
+    pos: 0,
+    text: 'x',
+  });
+
+  return [
+    check(
+      'text display view model groups words and spaces without splitting indexes',
+      words.length === 4
+        && words[0].map(char => char.ch).join('') === 'ab'
+        && words[1][0]?.ch === '\u00A0'
+        && words[2].map(char => char.ch).join('') === 'cd'
+        && words[3][0]?.idx === 5,
+      `Words=${serialized}.`,
+    ),
+    check(
+      'text display view model marks typed errors and current cursor classes',
+      words[0][0]?.cls === 'char-ok'
+        && words[0][1]?.cls === 'char-err'
+        && words[1][0]?.cls === 'char-current cursor-underline cursor-smooth'
+        && words[3][0]?.cls === 'char-current cursor-underline cursor-smooth',
+      `Classes=${serialized}.`,
+    ),
+    check(
+      'text display view model supports cursor without highlight class',
+      noHighlightCursor[0]?.[0]?.cls === 'cursor-block',
+      `Cursor=${noHighlightCursor[0]?.[0]?.cls ?? 'none'}.`,
+    ),
+  ];
+}
+
+function runModApiContractChecks(): DiagnosticCheck[] {
+  const diagnosticItem: GameItemDefinition = {
+    id: 'mod-item',
+    name: 'Mod Item',
+    shortName: 'MI',
+    description: 'Diagnostic item',
+    rarity: 1,
+    slotType: 'trinket',
+    icon: 'sparkles',
+    rewardKind: 'simple',
+    effects: [{ kind: 'speed', value: 5, unit: 'percent', description: 'Speed bonus' }],
+  };
+  const replacementItem: GameItemDefinition = {
+    ...diagnosticItem,
+    id: 'replacement-item',
+    name: 'Replacement Item',
+    shortName: 'RI',
+  };
+  const diagnosticAchievement: GameAchievementDefinition = {
+    id: 'mod-achievement',
+    name: 'Mod Achievement',
+    description: 'Diagnostic achievement',
+    category: 'game',
+    conditions: [{ type: 'sessionCount', count: 1 }],
+  };
+  const replacementAchievement: GameAchievementDefinition = {
+    ...diagnosticAchievement,
+    id: 'replacement-achievement',
+    name: 'Replacement Achievement',
+  };
+  const diagnosticLocale = {
+    id: 'en-US',
+    label: 'English',
+    nativeLabel: 'English',
+    dictionary: { common: { ok: 'OK' } },
+  };
+
+  const state = createEmptyModState();
+  const api = createModAPI(
+    'diagnostic-mod',
+    'Diagnostic Mod',
+    ['rules', 'events', 'ui', 'modes', 'words', 'lessons'],
+    state,
+    () => ({} as any),
+    () => [],
+    () => [],
+    () => [],
+    () => [],
+  );
+  const blockedState = createEmptyModState();
+  const blockedApi = createModAPI(
+    'blocked-mod',
+    'Blocked Mod',
+    [],
+    blockedState,
+    () => ({ theme: 'dark' } as any),
+    () => [],
+    () => [],
+    () => [],
+    () => [],
+  );
+  const payloadState = createEmptyModState();
+  const payloadApi = createModAPI(
+    'payload-mod',
+    'Payload Mod',
+    ['settings', 'items', 'achievements', 'i18n'],
+    payloadState,
+    () => ({ theme: 'dark' } as any),
+    () => [],
+    () => [],
+    () => [],
+    () => [],
+  );
+
+  const originalWarn = console.warn;
+  const sessionFinishHandler = () => undefined;
+  console.warn = () => undefined;
+  try {
+    blockedApi.sections.disable('game');
+    blockedApi.settings.override('theme', 'light');
+    blockedApi.items.add(diagnosticItem);
+    blockedApi.items.remove('mod-item');
+    blockedApi.items.replace('mod-item', replacementItem);
+    blockedApi.achievements.add(diagnosticAchievement);
+    blockedApi.achievements.remove('mod-achievement');
+    blockedApi.achievements.replace('mod-achievement', replacementAchievement);
+    blockedApi.rules.set('game.baseHp', 3);
+    blockedApi.events.on('sessionFinish', sessionFinishHandler);
+    blockedApi.words.add(['blocked']);
+    blockedApi.lessons.add('en-qwerty', [{ id: 'blocked-lesson', name: 'Blocked Lesson', keys: ['b'] }]);
+    blockedApi.ui.registerPanel({ id: 'blocked-panel', location: 'page-top', html: '<p>Blocked</p>' });
+    blockedApi.modes.register({ id: 'blocked-mode', label: 'Blocked Mode', icon: 'box', group: 'top', html: '<p>Blocked</p>' });
+    blockedApi.i18n.registerLocale(diagnosticLocale);
+
+    api.rules.set('game.baseHp', 3);
+    (api.rules.set as any)('game.unknownRule', 9);
+    (api.rules.set as any)('game.baseLives', 'two');
+    (api.rules.remove as any)('game.unknownRule');
+    api.events.on('sessionFinish', sessionFinishHandler);
+    (api.events.on as any)('unknownEvent', sessionFinishHandler);
+    (api.events.on as any)('sessionStart', 'not-a-function');
+    (api.events.off as any)('unknownEvent', sessionFinishHandler);
+    api.ui.registerPanel({ id: 'top-panel', location: 'page-top', html: '<p>Panel</p>' });
+    (api.ui.registerPanel as any)({ id: 'bad-panel', location: 'sidebar-top', html: '<p>Bad</p>' });
+    (api.ui.registerPanel as any)({ id: '', location: 'overlay', html: '<p>Bad</p>' });
+    (api.ui.injectCSS as any)(123);
+    api.ui.removePanel('top-panel');
+    (api.ui.removePanel as any)('');
+    api.modes.register({ id: 'diagnostic-page', label: 'Diagnostic Page', icon: 'box', group: 'top', html: '<p>Mode</p>' });
+    (api.modes.register as any)({ id: 'bad-page', label: 'Bad Page', icon: 'box', group: 'middle', html: '<p>Bad</p>' });
+    (api.modes.register as any)({ id: '', label: 'Bad Page', icon: 'box', group: 'top', html: '<p>Bad</p>' });
+    api.modes.unregister('diagnostic-page');
+    (api.modes.unregister as any)('');
+    (api.words.add as any)(['  focus  ', '', 'focus', 42]);
+    (api.words.add as any)('not-an-array');
+    api.words.remove(['  easy ', '', 'easy']);
+    (api.words.remove as any)([null, '']);
+    api.lessons.add('en-qwerty', [
+      { id: 'mod-lesson', name: 'Mod Lesson', keys: ['f', 'j'] },
+      { id: '', name: 'Broken Lesson', keys: ['x'] },
+      { id: 'bad-keys', name: 'Bad Keys', keys: [1] },
+    ] as any);
+    (api.lessons.add as any)('', [{ id: 'ignored', name: 'Ignored', keys: ['x'] }]);
+    api.lessons.remove('en-qwerty', [' old-lesson ', '', 'old-lesson']);
+    (api.lessons.remove as any)('', ['ignored']);
+    api.lessons.replace('en-qwerty', 'existing-lesson', { id: 'replacement', name: 'Replacement', keys: ['r'] });
+    (api.lessons.replace as any)('en-qwerty', 'bad-replacement', { id: '', name: 'Bad', keys: ['b'] });
+    (api.lessons.replace as any)('', 'ignored', { id: 'ignored', name: 'Ignored', keys: ['i'] });
+
+    payloadApi.settings.override('theme', 'light');
+    (payloadApi.settings.override as any)('unknownSetting', 'value');
+    (payloadApi.settings.override as any)('showKeyboard', 'yes');
+    (payloadApi.settings.override as any)('handsOpacity', Number.NaN);
+    payloadApi.settings.removeOverride('theme');
+    (payloadApi.settings.removeOverride as any)('unknownSetting');
+    payloadApi.settings.override('showKeyboard', true);
+    payloadApi.items.add(diagnosticItem);
+    (payloadApi.items.add as any)({ ...diagnosticItem, id: '', effects: [] });
+    payloadApi.items.remove('old-item');
+    (payloadApi.items.remove as any)('');
+    payloadApi.items.replace('old-item', replacementItem);
+    (payloadApi.items.replace as any)('', replacementItem);
+    (payloadApi.items.replace as any)('old-item', { ...replacementItem, rarity: 5 });
+    payloadApi.achievements.add(diagnosticAchievement);
+    (payloadApi.achievements.add as any)({ ...diagnosticAchievement, id: '', conditions: [] });
+    payloadApi.achievements.remove('old-achievement');
+    (payloadApi.achievements.remove as any)('');
+    payloadApi.achievements.replace('old-achievement', replacementAchievement);
+    (payloadApi.achievements.replace as any)('', replacementAchievement);
+    (payloadApi.achievements.replace as any)('old-achievement', { ...replacementAchievement, conditions: [{ broken: true }] });
+    payloadApi.i18n.registerLocale(diagnosticLocale);
+    (payloadApi.i18n.registerLocale as any)({ ...diagnosticLocale, id: '', dictionary: {} });
+    payloadApi.i18n.registerLocales([{ ...diagnosticLocale, id: 'de-DE', label: 'Deutsch', nativeLabel: 'Deutsch' }]);
+    (payloadApi.i18n.registerLocales as any)('not-an-array');
+    (payloadApi.i18n.registerLocales as any)([{ ...diagnosticLocale, id: '', dictionary: {} }]);
+  } finally {
+    console.warn = originalWarn;
+  }
+
+  const sessionFinishHandlers = state.eventHandlers.get('sessionFinish');
+  const addedLessons = state.addedLessons.get('en-qwerty') ?? [];
+  const removedLessonIds = state.removedLessonIds.get('en-qwerty');
+  const replacedLessons = state.replacedLessons.get('en-qwerty');
+  const normalizedPermissions = normalizeModPermissions(['ui', 'ui', 'events', 'unknown', 42]);
+  const blockedStateIsEmpty = blockedState.disabledSections.size === 0
+    && blockedState.settingOverrides.size === 0
+    && blockedState.addedItems.length === 0
+    && blockedState.removedItemIds.size === 0
+    && blockedState.replacedItems.size === 0
+    && blockedState.addedAchievements.length === 0
+    && blockedState.removedAchievementIds.size === 0
+    && blockedState.replacedAchievements.size === 0
+    && blockedState.ruleOverrides.size === 0
+    && blockedState.eventHandlers.size === 0
+    && blockedState.addedWords.length === 0
+    && blockedState.removedWords.size === 0
+    && blockedState.addedLessons.size === 0
+    && blockedState.removedLessonIds.size === 0
+    && blockedState.replacedLessons.size === 0
+    && blockedState.panels.length === 0
+    && blockedState.removedPanelIds.size === 0
+    && blockedState.cssSnippets.length === 0
+    && blockedState.registeredModes.length === 0
+    && blockedState.unregisteredModeIds.size === 0
+    && blockedState.interfaceLocales.length === 0;
+
+  return [
+    check(
+      'mod api shared validators expose SDK-ready permission contract',
+      MOD_PERMISSIONS.includes('ui')
+        && isModPermission('events')
+        && !isModPermission('unknown')
+        && normalizedPermissions.join('|') === 'ui|events',
+      `Permissions=${normalizedPermissions.join(',') || 'none'}.`,
+    ),
+    check(
+      'mod api shared validators expose SDK-ready panel and mode contracts',
+      isModPanel({ id: 'top-panel', location: 'page-top', html: '<p>Panel</p>' })
+        && !isModPanel({ id: 'bad-panel', location: 'sidebar-top', html: '<p>Bad</p>' })
+        && isModModeDefinition({ id: 'diagnostic-page', label: 'Diagnostic Page', icon: 'box', group: 'top', html: '<p>Mode</p>' })
+        && !isModModeDefinition({ id: 'bad-page', label: 'Bad Page', icon: 'box', group: 'middle', html: '<p>Bad</p>' }),
+      'Shared validators should match runtime UI and mode acceptance.',
+    ),
+    check(
+      'mod api shared validators expose SDK-ready settings item achievement and i18n contracts',
+      isModUserSettingKey('theme')
+        && !isModUserSettingKey('unknownSetting')
+        && isModGameItemDefinition(diagnosticItem)
+        && !isModGameItemDefinition({ ...diagnosticItem, rarity: 5 })
+        && isModGameAchievementDefinition(diagnosticAchievement)
+        && !isModGameAchievementDefinition({ ...diagnosticAchievement, conditions: [{ broken: true }] })
+        && isModInterfaceLocaleDefinition(diagnosticLocale)
+        && !isModInterfaceLocaleDefinition({ ...diagnosticLocale, id: '', dictionary: {} }),
+      'Shared validators should match runtime settings, item, achievement and i18n acceptance.',
+    ),
+    check(
+      'mod api shared validators expose SDK-ready settings value contract',
+      isModUserSettingValue('showKeyboard', true)
+        && !isModUserSettingValue('showKeyboard', 'yes')
+        && isModUserSettingValue('handsOpacity', 0.75)
+        && !isModUserSettingValue('handsOpacity', Number.NaN)
+        && isModUserSettingValue('cursorStyle', 'block')
+        && !isModUserSettingValue('cursorStyle', 'beam')
+        && isModUserSettingValue('theme', 'dark-orange')
+        && !isModUserSettingValue('theme', ''),
+      'Shared settings validator should reject invalid known-key values before runtime mutation.',
+    ),
+    check(
+      'mod api blocks all mutating APIs when permissions are missing',
+      blockedStateIsEmpty,
+      `Blocked state sizes: sections=${blockedState.disabledSections.size}, settings=${blockedState.settingOverrides.size}, items=${blockedState.addedItems.length}, achievements=${blockedState.addedAchievements.length}, locales=${blockedState.interfaceLocales.length}.`,
+    ),
+    check(
+      'mod api accepts only known rule ids and valid rule values',
+      state.ruleOverrides.size === 1
+        && state.ruleOverrides.get('game.baseHp') === 3
+        && !state.ruleOverrides.has('game.baseLives'),
+      `Rules=${[...state.ruleOverrides.entries()].map(([key, value]) => `${key}:${value}`).join(',') || 'none'}.`,
+    ),
+    check(
+      'mod api accepts only known event names and function handlers',
+      state.eventHandlers.size === 1
+        && sessionFinishHandlers?.size === 1
+        && sessionFinishHandlers.has(sessionFinishHandler),
+      `Events=${[...state.eventHandlers.entries()].map(([key, handlers]) => `${key}:${handlers.size}`).join(',') || 'none'}.`,
+    ),
+    check(
+      'mod api accepts only valid panels, css snippets and mode definitions',
+      state.panels.length === 1
+        && state.panels[0]?.id === 'top-panel'
+        && state.removedPanelIds.has('top-panel')
+        && state.cssSnippets.length === 0
+        && state.registeredModes.length === 1
+        && state.registeredModes[0]?.id === 'diagnostic-page'
+        && state.unregisteredModeIds.has('diagnostic-page'),
+      `Panels=${state.panels.map(panel => `${panel.id}:${panel.location}`).join(',') || 'none'}, modes=${state.registeredModes.map(mode => `${mode.id}:${mode.group}`).join(',') || 'none'}.`,
+    ),
+    check(
+      'mod api normalizes word and lesson effects',
+      state.addedWords.length === 1
+        && state.addedWords[0] === 'focus'
+        && state.removedWords.size === 1
+        && state.removedWords.has('easy')
+        && addedLessons.length === 1
+        && addedLessons[0]?.id === 'mod-lesson'
+        && removedLessonIds?.size === 1
+        && removedLessonIds.has('old-lesson')
+        && replacedLessons?.size === 1
+        && replacedLessons.get('existing-lesson')?.id === 'replacement',
+      `Words=${state.addedWords.join(',') || 'none'}, lessons=${addedLessons.map(lesson => lesson.id).join(',') || 'none'}.`,
+    ),
+    check(
+      'mod api validates settings item achievement and i18n payloads before mutating state',
+      payloadState.settingOverrides.size === 1
+        && payloadState.settingOverrides.get('showKeyboard') === true
+        && payloadState.addedItems.length === 1
+        && payloadState.addedItems[0]?.id === 'mod-item'
+        && payloadState.removedItemIds.size === 1
+        && payloadState.removedItemIds.has('old-item')
+        && payloadState.replacedItems.size === 1
+        && payloadState.replacedItems.get('old-item')?.id === 'replacement-item'
+        && payloadState.addedAchievements.length === 1
+        && payloadState.addedAchievements[0]?.id === 'mod-achievement'
+        && payloadState.removedAchievementIds.size === 1
+        && payloadState.removedAchievementIds.has('old-achievement')
+        && payloadState.replacedAchievements.size === 1
+        && payloadState.replacedAchievements.get('old-achievement')?.id === 'replacement-achievement'
+        && payloadState.interfaceLocales.length === 2
+        && payloadState.interfaceLocales.map(locale => locale.id).join('|') === 'en-US|de-DE',
+      `Settings=${[...payloadState.settingOverrides.keys()].join(',') || 'none'}, items=${payloadState.addedItems.length}/${payloadState.replacedItems.size}, achievements=${payloadState.addedAchievements.length}/${payloadState.replacedAchievements.size}, locales=${payloadState.interfaceLocales.map(locale => locale.id).join(',') || 'none'}.`,
+    ),
+  ];
+}
+
+function runExtensionContractChecks(): DiagnosticCheck[] {
+  const themeColors = normalizeThemeColors({
+    accent: ' #f97316 ',
+    bg: '#111827',
+    green: '#22c55e',
+    red: '#ef4444',
+    subtext: '#9ca3af',
+    surface: '#1f2937',
+    surface2: '#374151',
+    text: '#f9fafb',
+    yellow: '#eab308',
+    ignored: 42,
+  });
+  const incompleteThemeColors = normalizeThemeColors({
+    bg: '#111827',
+    surface: '#1f2937',
+  });
+  const themeVariables = normalizeThemeStringRecord({
+    ' --accent ': ' #f97316 ',
+    empty: '',
+    numeric: 42,
+  });
+  const themeClasses = normalizeThemeStringArray([' theme-custom ', '', 42]);
+  const installableUpdate = {
+    status: 'update-available',
+    installSupport: 'direct',
+    issues: [],
+    duplicateRecommendationReason: undefined,
+    duplicateSourceIds: [],
+  } as any;
+  const installedEntry = {
+    ...installableUpdate,
+    status: 'installed',
+  } as any;
+  const manualOnlyEntry = {
+    ...installableUpdate,
+    status: 'available',
+    installSupport: 'manual',
+  } as any;
+  const blockedFallbackEntry = {
+    ...installableUpdate,
+    status: 'available',
+    issues: [{ stage: 'manifest', severity: 'error', message: 'Blocked', fallback: 'blocked-install' }],
+  } as any;
+  const sourceErrorEntry = {
+    ...installableUpdate,
+    status: 'source-error',
+    lastError: 'Source failed.',
+  } as any;
+  const duplicateEntry = {
+    ...installableUpdate,
+    status: 'available',
+    duplicateSourceIds: ['fixture-source'],
+  } as any;
+
+  return [
+    check(
+      'theme shared validators normalize SDK-ready style primitives',
+      themeColors?.accent === '#f97316'
+        && themeColors.bg === '#111827'
+        && incompleteThemeColors === undefined
+        && themeVariables?.['--accent'] === '#f97316'
+        && themeClasses?.join('|') === 'theme-custom'
+        && hasThemeStyleContent({ variables: themeVariables, bodyClasses: themeClasses }),
+      `Theme colors=${themeColors?.accent ?? 'none'}, variables=${Object.keys(themeVariables ?? {}).join(',') || 'none'}, classes=${themeClasses?.join(',') ?? 'none'}.`,
+    ),
+    check(
+      'package shared manifest contracts are stable',
+      ADDON_MANIFEST_VERSION === 1
+        && ADDON_MANIFEST_TYPE === 'content'
+        && MOD_MANIFEST_TYPE === 'mod'
+        && THEME_MANIFEST_VERSION === 1
+        && THEME_MANIFEST_TYPE === 'theme',
+      `Addon=${ADDON_MANIFEST_TYPE}@${ADDON_MANIFEST_VERSION}, mod=${MOD_MANIFEST_TYPE}, theme=${THEME_MANIFEST_TYPE}@${THEME_MANIFEST_VERSION}.`,
+    ),
+    check(
+      'extension shared manifest contract is stable',
+      EXTENSION_SOURCE_MANIFEST_VERSION === 1
+        && EXTENSION_SOURCE_MANIFEST_TYPE === 'extension-source',
+      `Version=${EXTENSION_SOURCE_MANIFEST_VERSION}, type=${EXTENSION_SOURCE_MANIFEST_TYPE}.`,
+    ),
+    check(
+      'extension shared source types are closed',
+      EXTENSION_SOURCE_TYPES.join(',') === 'local,url,github'
+        && isExtensionSourceType('local')
+        && isExtensionSourceType('url')
+        && isExtensionSourceType('github')
+        && !isExtensionSourceType('registry'),
+      `Source types=${EXTENSION_SOURCE_TYPES.join(',')}.`,
+    ),
+    check(
+      'extension shared catalog kinds are closed',
+      EXTENSION_CATALOG_KINDS.join(',') === 'addons,mods,themes'
+        && isExtensionCatalogKind('addons')
+        && isExtensionCatalogKind('mods')
+        && isExtensionCatalogKind('themes')
+        && !isExtensionCatalogKind('plugins'),
+      `Kinds=${EXTENSION_CATALOG_KINDS.join(',')}.`,
+    ),
+    check(
+      'extension shared status contracts are closed',
+      EXTENSION_CATALOG_ENTRY_STATUSES.join(',') === 'available,installed,update-available,source-disabled,source-error,incompatible,invalid'
+        && EXTENSION_CATALOG_INSTALL_SUPPORTS.join(',') === 'direct,manual'
+        && EXTENSION_SOURCE_SYNC_STATUSES.join(',') === 'never,ready,error'
+        && isExtensionCatalogEntryStatus('available')
+        && !isExtensionCatalogEntryStatus('pending')
+        && isExtensionCatalogInstallSupport('direct')
+        && !isExtensionCatalogInstallSupport('automatic')
+        && isExtensionSourceSyncStatus('ready')
+        && !isExtensionSourceSyncStatus('syncing'),
+      `Statuses=${EXTENSION_CATALOG_ENTRY_STATUSES.length}, support=${EXTENSION_CATALOG_INSTALL_SUPPORTS.join('/')}, sync=${EXTENSION_SOURCE_SYNC_STATUSES.join('/')}.`,
+    ),
+    check(
+      'extension shared issue contracts are closed',
+      EXTENSION_CATALOG_ISSUE_STAGES.join(',') === 'manifest,list,card,package'
+        && EXTENSION_CATALOG_ISSUE_SEVERITIES.join(',') === 'warning,error'
+        && EXTENSION_CATALOG_ISSUE_FALLBACKS.join(',') === 'stale-cache,skipped-card,manual-only,blocked-install'
+        && isExtensionCatalogIssueStage('manifest')
+        && !isExtensionCatalogIssueStage('runtime')
+        && isExtensionCatalogIssueSeverity('warning')
+        && !isExtensionCatalogIssueSeverity('notice')
+        && isExtensionCatalogIssueFallback('blocked-install')
+        && !isExtensionCatalogIssueFallback('retry'),
+      `Issue stages=${EXTENSION_CATALOG_ISSUE_STAGES.join(',')}, fallbacks=${EXTENSION_CATALOG_ISSUE_FALLBACKS.join(',')}.`,
+    ),
+    check(
+      'extension shared duplicate recommendation reasons are closed',
+      EXTENSION_CATALOG_DUPLICATE_RECOMMENDATION_REASONS.join(',') === 'newer-available,newest-blocked'
+        && isExtensionCatalogDuplicateRecommendationReason('newer-available')
+        && isExtensionCatalogDuplicateRecommendationReason('newest-blocked')
+        && !isExtensionCatalogDuplicateRecommendationReason('same-version'),
+      `Duplicate reasons=${EXTENSION_CATALOG_DUPLICATE_RECOMMENDATION_REASONS.join(',')}.`,
+    ),
+    check(
+      'extension catalog entry helpers share install and attention logic',
+      !isExtensionCatalogEntryBlocked(installableUpdate)
+        && canInstallExtensionCatalogEntry(installableUpdate)
+        && !canInstallExtensionCatalogEntry(installedEntry)
+        && isExtensionCatalogEntryBlocked(manualOnlyEntry)
+        && !canInstallExtensionCatalogEntry(manualOnlyEntry)
+        && isExtensionCatalogEntryBlocked(blockedFallbackEntry)
+        && hasExtensionCatalogAttention(blockedFallbackEntry)
+        && hasExtensionCatalogAttention(duplicateEntry),
+      `Installable=${canInstallExtensionCatalogEntry(installableUpdate)}, manualBlocked=${isExtensionCatalogEntryBlocked(manualOnlyEntry)}, duplicateAttention=${hasExtensionCatalogAttention(duplicateEntry)}.`,
+    ),
+    check(
+      'extension catalog entry block reasons are shared',
+      getExtensionCatalogEntryBlockReason(blockedFallbackEntry) === 'Blocked'
+        && getExtensionCatalogEntryBlockReason(manualOnlyEntry) === 'Catalog entry requires manual installation.'
+        && getExtensionCatalogEntryBlockReason(sourceErrorEntry) === 'Source failed.'
+        && getExtensionCatalogEntryBlockReason(installableUpdate) === undefined,
+      `Blocked=${getExtensionCatalogEntryBlockReason(blockedFallbackEntry) ?? 'none'}, manual=${getExtensionCatalogEntryBlockReason(manualOnlyEntry) ?? 'none'}.`,
+    ),
+  ];
+}
+
+function catalogEntryFixture(patch: Partial<ExtensionCatalogEntry> = {}): ExtensionCatalogEntry {
+  return {
+    id: 'fixture-source:addons:daily-pack',
+    sourceId: 'fixture-source',
+    sourceName: 'Fixture Source',
+    sourceEnabled: true,
+    kind: 'addons',
+    entryId: 'daily-pack',
+    manifestId: 'daily-pack',
+    manifestName: 'Daily Pack',
+    manifestVersion: '1.0.0',
+    status: 'available',
+    installSupport: 'direct',
+    dependencies: [],
+    packageFiles: ['daily-pack.json'],
+    permissions: [],
+    duplicateSourceIds: [],
+    duplicateSourceNames: [],
+    issues: [],
+    ...patch,
+  };
+}
+
+function runExtensionCatalogUiChecks(): DiagnosticCheck[] {
+  const translate = (key: string, params?: Record<string, string | number | boolean | null | undefined>) => {
+    if (!params) return key;
+    return `${key}:${Object.entries(params).map(([name, value]) => `${name}=${value}`).join('|')}`;
+  };
+  const installable = buildExtensionCatalogInstallActionViewModel(catalogEntryFixture(), translate);
+  const installed = buildExtensionCatalogInstallActionViewModel(catalogEntryFixture({
+    installedVersion: '1.0.0',
+    status: 'installed',
+  }), translate);
+  const manualOnly = buildExtensionCatalogInstallActionViewModel(catalogEntryFixture({
+    installSupport: 'manual',
+  }), translate);
+  const incompatible = buildExtensionCatalogInstallActionViewModel(catalogEntryFixture({
+    status: 'incompatible',
+  }), translate);
+  const sourceError = buildExtensionCatalogInstallActionViewModel(catalogEntryFixture({
+    lastError: 'Source failed.',
+    status: 'source-error',
+  }), translate);
+  const searchEmpty = buildExtensionCatalogEmptyStateViewModel({
+    search: 'daily',
+    view: 'catalog',
+  }, translate);
+  const catalogEmpty = buildExtensionCatalogEmptyStateViewModel({
+    search: '',
+    view: 'catalog',
+  }, translate);
+  const installedEmpty = buildExtensionCatalogEmptyStateViewModel({
+    filter: 'all',
+    hasInstalledContent: false,
+    search: '',
+    view: 'installed',
+  }, translate);
+  const sourcesEmpty = buildExtensionCatalogEmptyStateViewModel({
+    search: '',
+    view: 'sources',
+  }, translate);
+
+  return [
+    check(
+      'extension catalog install action exposes installable state',
+      installable.canInstall
+        && !installable.disabled
+        && installable.variant === 'accent'
+        && installable.label === 'addons.catalog.actions.installAddon',
+      `Installable=${installable.label}/${installable.variant}/${installable.disabled}.`,
+    ),
+    check(
+      'extension catalog install action exposes installed disabled state',
+      !installed.canInstall
+        && installed.disabled
+        && installed.variant === 'secondary'
+        && installed.label === 'addons.catalog.actions.installed',
+      `Installed=${installed.label}/${installed.variant}/${installed.disabled}.`,
+    ),
+    check(
+      'extension catalog install action exposes blocked reasons',
+      !manualOnly.canInstall
+        && manualOnly.label === 'addons.catalog.actions.manualOnly'
+        && manualOnly.blockReason === 'Catalog entry requires manual installation.'
+        && incompatible.blockReason === 'Catalog entry is not compatible with this app version.'
+        && sourceError.blockReason === 'Source failed.',
+      `Manual=${manualOnly.blockReason ?? 'none'}, incompatible=${incompatible.blockReason ?? 'none'}, source=${sourceError.blockReason ?? 'none'}.`,
+    ),
+    check(
+      'extension catalog empty states distinguish search, catalog, installed and sources',
+      searchEmpty.title === 'addons.empty.search'
+        && searchEmpty.iconKind === 'catalog'
+        && catalogEmpty.title === 'addons.catalog.emptyTitle'
+        && catalogEmpty.subtitle === 'addons.catalog.emptySubtitle'
+        && installedEmpty.title === 'addons.empty.installedTitle'
+        && installedEmpty.subtitle === 'addons.empty.installedSubtitle'
+        && sourcesEmpty.title === 'addons.empty.sourcesTitle'
+        && sourcesEmpty.iconKind === 'sources',
+      `Empty states=${searchEmpty.title}, ${catalogEmpty.title}, ${installedEmpty.title}, ${sourcesEmpty.title}.`,
+    ),
+  ];
+}
+
+function runExtensionCatalogSelectorChecks(): DiagnosticCheck[] {
+  const installableAddon = catalogEntryFixture({
+    entryId: 'daily-pack',
+    kind: 'addons',
+    manifestName: 'Daily Pack',
+    status: 'available',
+  });
+  const updateTheme = catalogEntryFixture({
+    entryId: 'aurora',
+    kind: 'themes',
+    manifestName: 'Aurora Theme',
+    status: 'update-available',
+  });
+  const installedMod = catalogEntryFixture({
+    entryId: 'hardcore',
+    kind: 'mods',
+    manifestName: 'Hardcore Mode',
+    status: 'installed',
+  });
+  const attentionEntry = catalogEntryFixture({
+    entryId: 'broken',
+    issues: [{ stage: 'manifest', severity: 'error', message: 'Broken', fallback: 'blocked-install' }],
+    kind: 'mods',
+    manifestName: 'Broken Mod',
+    status: 'available',
+  });
+  const catalog = [installedMod, attentionEntry, installableAddon, updateTheme];
+  const filteredCatalog = filterExtensionCatalogEntries({
+    entries: catalog,
+    filter: 'all',
+    search: '',
+  });
+  const attentionCatalog = filterExtensionCatalogEntries({
+    entries: catalog,
+    filter: 'attention',
+    search: '',
+  });
+  const searchedCatalog = filterExtensionCatalogEntries({
+    entries: catalog,
+    filter: 'all',
+    search: 'aurora',
+  });
+  const addonWithResources = {
+    id: 'lesson-pack',
+    enabled: true,
+    fileName: 'lesson-pack.json',
+    installedAt: '2026-01-01T00:00:00.000Z',
+    manifest: {
+      manifestVersion: 1,
+      id: 'lesson-pack',
+      name: 'Lesson Pack',
+      version: '1.0.0',
+      type: ADDON_MANIFEST_TYPE,
+      resources: {
+        lessons: [{ layoutId: 'qwerty', lessons: [] }],
+        words: [{ lang: 'en', words: ['focus'] }],
+      },
+    },
+  } as InstalledAddon;
+  const addonWithoutResources = {
+    ...addonWithResources,
+    id: 'plain-pack',
+    fileName: 'plain-pack.json',
+    manifest: {
+      ...addonWithResources.manifest,
+      id: 'plain-pack',
+      name: 'Plain Pack',
+      resources: undefined,
+    },
+  } as InstalledAddon;
+  const filteredAddons = filterInstalledAddons({
+    addons: [addonWithResources, addonWithoutResources],
+    contentFilter: 'lessons',
+    search: 'lesson',
+  });
+  const source = {
+    id: 'github-source',
+    enabled: true,
+    installedAt: '2026-01-01T00:00:00.000Z',
+    input: { type: 'github', owner: 'typing', repo: 'packs', branch: 'main', basePath: 'catalog' },
+    syncState: {
+      manifest: { name: 'GitHub Packs', description: 'Remote packs', author: 'Team' },
+      status: 'ready',
+    },
+  } as InstalledExtensionSource;
+  const mod = {
+    id: 'hardcore-mode',
+    enabled: true,
+    dirName: 'hardcore-mode',
+    installedAt: '2026-01-01T00:00:00.000Z',
+    manifest: {
+      manifestVersion: 1,
+      id: 'hardcore-mode',
+      name: 'Hardcore Mode',
+      version: '1.0.0',
+      type: MOD_MANIFEST_TYPE,
+      entry: 'index.js',
+      permissions: [],
+    },
+  } as InstalledMod;
+  const theme = {
+    id: 'aurora-theme',
+    fileName: 'aurora-theme.json',
+    installedAt: '2026-01-01T00:00:00.000Z',
+    manifest: {
+      manifestVersion: 1,
+      id: 'aurora-theme',
+      name: 'Aurora Theme',
+      version: '1.0.0',
+      type: THEME_MANIFEST_TYPE,
+      style: { css: 'body { color: red; }' },
+    },
+  } as InstalledTheme;
+
+  return [
+    check(
+      'extension catalog selectors sort actionable entries before installed and attention entries',
+      filteredCatalog.map(entry => entry.entryId).join('|') === 'aurora|daily-pack|hardcore|broken'
+        && attentionCatalog.map(entry => entry.entryId).join('|') === 'broken'
+        && searchedCatalog.map(entry => entry.entryId).join('|') === 'aurora'
+        && countAttentionCatalogEntries(catalog) === 1,
+      `Catalog order=${filteredCatalog.map(entry => entry.entryId).join(',')}.`,
+    ),
+    check(
+      'extension catalog selectors filter installed addons by search and content kind',
+      getAddonContentKinds(addonWithResources).join('|') === 'words|lessons'
+        && getAvailableInstalledAddonContentKinds([addonWithResources, addonWithoutResources], 'lesson').join('|') === 'words|lessons'
+        && filteredAddons.map(addon => addon.id).join('|') === 'lesson-pack',
+      `Addon filters=${filteredAddons.map(addon => addon.id).join(',') || 'none'}.`,
+    ),
+    check(
+      'extension catalog selectors filter sources, mods and themes by shared search text',
+      getSourceLocationLabel(source) === 'typing/packs#main/catalog'
+        && filterExtensionSources([source], 'catalog').length === 1
+        && filterInstalledMods([mod], 'hardcore').length === 1
+        && filterInstalledThemes([theme], 'aurora').length === 1,
+      `Source=${getSourceLocationLabel(source)}.`,
+    ),
+  ];
+}
+
+function runSetupPreferenceChecks(): DiagnosticCheck[] {
+  const normalized = normalizeSetupPreferences({
+    settings: {
+      language: 'ru',
+      layout: 'йцукен',
+      theme: 'aurora-cascade-theme-pack',
+    },
+    extensionSources: [
+      'data/local-extension-sources/tech-english-source/manifest.json',
+      42,
+      '../outside/manifest.json',
+    ],
+  });
+  const invalid = normalizeSetupPreferences(null);
+  const applied = normalized
+    ? applySetupPreferenceSettings({
+        settings: {
+          language: 'en',
+          layout: 'qwerty',
+          theme: 'dark-orange',
+          showKeyboard: true,
+        },
+      } as Progress, normalized)
+    : null;
+  const resolved = resolveBundledExtensionSourceManifestPath(
+    'C:/App',
+    'data/local-extension-sources/tech-english-source/manifest.json',
+  )?.replace(/\\/g, '/');
+  const rejectedOutside = resolveBundledExtensionSourceManifestPath('C:/App', '../manifest.json');
+  const rejectedTraversal = resolveBundledExtensionSourceManifestPath(
+    'C:/App',
+    'data/local-extension-sources/../manifest.json',
+  );
+  const sourceManifestPaths = normalized
+    ? resolveSetupPreferenceExtensionSourceManifestPaths('C:/App', normalized).map(item => item.replace(/\\/g, '/'))
+    : [];
+
+  return [
+    check(
+      'setup preferences normalize settings and source refs',
+      normalized?.settings?.language === 'ru'
+        && normalized?.settings?.layout === 'йцукен'
+        && normalized?.settings?.theme === 'aurora-cascade-theme-pack'
+        && normalized.extensionSources.length === 2
+        && invalid === null,
+      `Sources=${normalized?.extensionSources.length ?? 'none'}, invalid=${invalid === null}.`,
+    ),
+    check(
+      'setup preferences merge first-run settings without dropping existing settings',
+      applied?.settings?.language === 'ru'
+        && applied.settings.layout === 'йцукен'
+        && applied.settings.theme === 'aurora-cascade-theme-pack'
+        && applied.settings.showKeyboard === true,
+      `Language=${applied?.settings?.language ?? 'none'}, layout=${applied?.settings?.layout ?? 'none'}, keyboard=${applied?.settings?.showKeyboard ?? 'none'}.`,
+    ),
+    check(
+      'setup preferences resolve only bundled extension source manifests',
+      resolved === 'C:/App/data/local-extension-sources/tech-english-source/manifest.json'
+        && rejectedOutside === null
+        && rejectedTraversal === null,
+      `Resolved=${resolved}, outside=${rejectedOutside ?? 'blocked'}, traversal=${rejectedTraversal ?? 'blocked'}.`,
+    ),
+    check(
+      'setup preferences build installable source manifest list',
+      sourceManifestPaths.join('|') === 'C:/App/data/local-extension-sources/tech-english-source/manifest.json',
+      `Source manifests=${sourceManifestPaths.join(', ') || 'none'}.`,
+    ),
+  ];
+}
+
+function runAppDataPathChecks(): DiagnosticCheck[] {
+  const devPaths = resolveAppDataPaths({
+    appPath: 'C:/Projects/TypingTrainer',
+    exePath: 'C:/Projects/TypingTrainer/node_modules/electron/electron.exe',
+    isPackaged: false,
+  });
+  const packagedPaths = resolveAppDataPaths({
+    appPath: 'C:/Program Files/Typing Trainer/resources/app.asar',
+    exePath: 'C:/Program Files/Typing Trainer/Typing Trainer.exe',
+    isPackaged: true,
+  });
+
+  return [
+    check(
+      'app data paths keep dev data inside project data directory',
+      devPaths.userDataPath.replace(/\\/g, '/') === 'C:/Projects/TypingTrainer/data'
+        && devPaths.progressFile.replace(/\\/g, '/') === 'C:/Projects/TypingTrainer/data/progress.json'
+        && devPaths.addonsDir.replace(/\\/g, '/') === 'C:/Projects/TypingTrainer/data/addons'
+        && devPaths.modsDir.replace(/\\/g, '/') === 'C:/Projects/TypingTrainer/data/mods'
+        && devPaths.themesDir.replace(/\\/g, '/') === 'C:/Projects/TypingTrainer/data/themes',
+      `Dev data=${devPaths.userDataPath.replace(/\\/g, '/')}.`,
+    ),
+    check(
+      'app data paths keep packaged data beside executable',
+      packagedPaths.userDataPath.replace(/\\/g, '/') === 'C:/Program Files/Typing Trainer/data'
+        && packagedPaths.progressFile.replace(/\\/g, '/') === 'C:/Program Files/Typing Trainer/data/progress.json'
+        && packagedPaths.customThemesFile.replace(/\\/g, '/') === 'C:/Program Files/Typing Trainer/data/custom-themes.json'
+        && packagedPaths.installerThemeFile.replace(/\\/g, '/') === 'C:/Program Files/Typing Trainer/data/installer-theme.ini'
+        && packagedPaths.setupPreferencesFile.replace(/\\/g, '/') === 'C:/Program Files/Typing Trainer/data/setup-preferences.json',
+      `Packaged data=${packagedPaths.userDataPath.replace(/\\/g, '/')}.`,
+    ),
+  ];
+}
+
+function runProgressMigrationChecks(): DiagnosticCheck[] {
+  const legacyProgress = {
+    settings: { language: 'en', layout: 'qwerty' },
+    history: {
+      qwerty: [
+        {
+          mode: 'practice',
+          wpm: 42,
+          acc: 97,
+          date: '2026-01-02T10:00:00.000Z',
+        },
+      ],
+    },
+  };
+  const migrated = migrateProgressData(legacyProgress, '3.0.0');
+  const invalidMigrated = migrateProgressData(null, '3.0.0');
+  const futureMigrated = migrateProgressData({ schemaVersion: CURRENT_PROGRESS_SCHEMA_VERSION + 1 }, '3.0.0');
+  const normalized = normalizeProgressForSave({
+    schemaVersion: 0,
+    settings: { language: 'ru' },
+  } as Progress, '3.0.0');
+
+  return [
+    check(
+      'progress migration stamps legacy saves without dropping data',
+      migrated.progress.schemaVersion === CURRENT_PROGRESS_SCHEMA_VERSION
+        && migrated.progress.appVersion === '3.0.0'
+        && migrated.progress.settings?.language === 'en'
+        && migrated.progress.history?.qwerty?.[0]?.wpm === 42
+        && migrated.diagnostics.length > 0,
+      `schema=${migrated.progress.schemaVersion}, app=${migrated.progress.appVersion}.`,
+    ),
+    check(
+      'progress migration normalizes invalid saves to current empty schema',
+      invalidMigrated.progress.schemaVersion === CURRENT_PROGRESS_SCHEMA_VERSION
+        && invalidMigrated.progress.appVersion === '3.0.0'
+        && invalidMigrated.diagnostics.length > 0,
+      `schema=${invalidMigrated.progress.schemaVersion}, app=${invalidMigrated.progress.appVersion}.`,
+    ),
+    check(
+      'progress migration gate rejects unsupported future schema',
+      !futureMigrated.ok
+        && !futureMigrated.migrated
+        && futureMigrated.progress.schemaVersion === CURRENT_PROGRESS_SCHEMA_VERSION
+        && futureMigrated.progress.appVersion === '3.0.0'
+        && futureMigrated.diagnostics.some(item => item.code === 'progress.unsupportedSchemaVersion'),
+      `ok=${futureMigrated.ok}, diagnostics=${futureMigrated.diagnostics.map(item => item.code).join(',') || 'none'}.`,
+    ),
+    check(
+      'progress save normalization keeps current schema and app version',
+      normalized.schemaVersion === CURRENT_PROGRESS_SCHEMA_VERSION
+        && normalized.appVersion === '3.0.0'
+        && normalized.settings?.language === 'ru',
+      `schema=${normalized.schemaVersion}, app=${normalized.appVersion}.`,
+    ),
+  ];
+}
+
+function runAddonRegistryPathSafetyChecks(): DiagnosticCheck[] {
+  const addonsDir = 'C:/App/data/addons';
+  const validPath = resolveSafeRegistryFilePath(addonsDir, 'daily-pack.json')?.replace(/\\/g, '/');
+  const nestedPath = resolveSafeRegistryFilePath(addonsDir, 'packs/daily-pack.json');
+  const outsidePath = resolveSafeRegistryFilePath(addonsDir, '../progress.json');
+  const outsideWindowsPath = resolveSafeRegistryFilePath(addonsDir, '..\\progress.json');
+  const absolutePath = resolveSafeRegistryFilePath(addonsDir, 'C:/App/data/progress.json');
+
+  return [
+    check(
+      'addon registry file paths resolve only direct child files',
+      validPath === 'C:/App/data/addons/daily-pack.json'
+        && nestedPath === null
+        && outsidePath === null
+        && outsideWindowsPath === null
+        && absolutePath === null,
+      `Valid=${validPath ?? 'blocked'}, nested=${nestedPath ?? 'blocked'}, outside=${outsidePath ?? 'blocked'}, windowsOutside=${outsideWindowsPath ?? 'blocked'}, absolute=${absolutePath ?? 'blocked'}.`,
+    ),
+  ];
+}
+
+async function runModLocaleResourcePermissionChecks(): Promise<DiagnosticCheck[]> {
+  const localeResource = {
+    name: 'en.json',
+    relativePath: 'locales/en.json',
+    extension: 'json' as const,
+    content: JSON.stringify({
+      id: 'en-US',
+      label: 'English',
+      nativeLabel: 'English',
+      dictionary: { common: { ok: 'OK' } },
+    }),
+  };
+  const mods: InstalledMod[] = [
+    {
+      id: 'locale-without-permission',
+      enabled: true,
+      dirName: 'locale-without-permission',
+      installedAt: '2026-01-01T00:00:00.000Z',
+      manifest: {
+        manifestVersion: 1,
+        id: 'locale-without-permission',
+        name: 'Locale Without Permission',
+        version: '1.0.0',
+        type: MOD_MANIFEST_TYPE,
+        entry: 'index.js',
+        permissions: [],
+      },
+    },
+    {
+      id: 'locale-with-permission',
+      enabled: true,
+      dirName: 'locale-with-permission',
+      installedAt: '2026-01-01T00:00:00.000Z',
+      manifest: {
+        manifestVersion: 1,
+        id: 'locale-with-permission',
+        name: 'Locale With Permission',
+        version: '1.0.0',
+        type: MOD_MANIFEST_TYPE,
+        entry: 'index.js',
+        permissions: ['i18n'],
+      },
+    },
+  ];
+  const resourceReads: string[] = [];
+  const result = await runAllMods(
+    mods,
+    async () => 'module.exports = function() {};',
+    async (modId) => {
+      resourceReads.push(modId);
+      return [{ ...localeResource }];
+    },
+    () => ({} as any),
+    () => [],
+    () => [],
+    () => [],
+    () => [],
+  );
+
+  return [
+    check(
+      'mod runner gates declarative locale resources behind i18n permission',
+      result.state.interfaceLocales.length === 1
+        && result.state.interfaceLocales[0]?.id === 'en-US'
+        && resourceReads.join('|') === 'locale-with-permission',
+      `Locales=${result.state.interfaceLocales.map(locale => `${locale.id}:${locale.source}`).join(',') || 'none'}, reads=${resourceReads.join(',') || 'none'}.`,
+    ),
+  ];
+}
+
+async function runCoreDiagnostics(): Promise<DiagnosticReport> {
   const checks = [
+    ...runModApiContractChecks(),
+    ...(await runModLocaleResourcePermissionChecks()),
+    ...runExtensionContractChecks(),
+    ...runExtensionCatalogUiChecks(),
+    ...runExtensionCatalogSelectorChecks(),
+    ...runSetupPreferenceChecks(),
+    ...runProgressMigrationChecks(),
+    ...runAppDataPathChecks(),
+    ...runAddonRegistryPathSafetyChecks(),
+    ...runSettingsViewModelChecks(),
+    ...runTextDisplayViewModelChecks(),
     ...runSidebarViewModelChecks(),
     ...runResultMetricStripViewModelChecks(),
     ...runAchievementsViewModelChecks(),
@@ -2061,6 +4253,11 @@ function runCoreDiagnostics(): DiagnosticReport {
     ...runContentPackSelectionChecks(),
     ...runHistorySelectorChecks(),
     ...runHomeHistoryMetricsChecks(),
+    ...runHomeVisibleQuickActionChecks(),
+    ...runHomeModeCardGroupChecks(),
+    ...runHomeProgressCenterVisibilityChecks(),
+    ...runPracticeCompletionFlowChecks(),
+    ...runPracticeFamilyModeHeaderChecks(),
     ...runHomeModeFocusDetailCardsChecks(),
     ...runHomePersonalRecordDetailCardsChecks(),
     ...runResultComparisonMetricItemsChecks(),
@@ -2073,9 +4270,17 @@ function runCoreDiagnostics(): DiagnosticReport {
     ...runModeResultCalloutChecks(),
     ...runModeResultHistoryChecks(),
     ...runGameResultHistoryChecks(),
+    ...runGameFlowResolverChecks(),
     ...runGameResultMetricItemsChecks(),
     ...runGameResultCardViewModelChecks(),
+    ...runGameResultSecondaryBlocksChecks(),
     ...runGameRewardChoiceBlockViewModelChecks(),
+    ...runGameInventoryPanelViewModelChecks(),
+    ...runGamePageBonusViewModelChecks(),
+    ...runGameRunMapLayoutViewModelChecks(),
+    ...runGameHudViewModelChecks(),
+    ...runGameEventChoiceCardViewModelChecks(),
+    ...runGameAchievementToastViewModelChecks(),
   ];
 
   return {
@@ -2101,9 +4306,9 @@ function formatReport(report: DiagnosticReport): string {
   return lines.join('\n');
 }
 
-function main() {
+async function main() {
   const options = parseCliArgs(process.argv.slice(2));
-  const report = runCoreDiagnostics();
+  const report = await runCoreDiagnostics();
   process.stdout.write(`${formatReport(report)}\n`);
 
   if (options.jsonPath) {
@@ -2116,4 +4321,4 @@ function main() {
   }
 }
 
-main();
+void main();

@@ -65,8 +65,24 @@ export {
 } from './addonMerger';
 
 /* ── Mod API & runner ───────────────────────────────────── */
-export { createModAPI, createEmptyModState } from './modApi';
-export type { ModAPI, ModAPIState, ModEventName, ModEventHandler } from './modApi';
+export { createModAPI, createEmptyModState, emitModEvent } from './modApi';
+export type {
+  ModAPIState,
+} from './modApi';
+export type {
+  ModAPI,
+  ModPermission,
+  ModEventName,
+  ModEventHandler,
+  ModEventPayloadMap,
+  ModModeDefinition,
+  ModPanel,
+  ModRuleId,
+  ModRuleValue,
+  MOD_EVENT_NAMES,
+  MOD_PERMISSIONS,
+  MOD_RULE_IDS,
+} from '../../shared/types';
 
 export { runAllMods } from './modRunner';
 export type { ModRunnerResult } from './modRunner';

@@ -34,7 +34,9 @@ pre-releases/
 # User data (addons, mods, progress)
 data/addons/
 data/mods/
+data/themes/
 data/progress.json
+data/platform-smoke.json
 data/custom-themes.json
 data/addon-registry.json
 data/mod-registry.json

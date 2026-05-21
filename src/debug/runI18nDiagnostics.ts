@@ -35,9 +35,10 @@ function readJsonFile<T>(filePath: string): T | null {
 
 function getExternalFixtureLocales() {
   const root = path.resolve(__dirname, '../..');
+  const examplesRoot = path.resolve(root, '..', 'SDK', 'examples');
   const locales = [];
 
-  const addonTemplate = readJsonFile<AddonManifest>(path.join(root, 'data/addon-template.json'));
+  const addonTemplate = readJsonFile<AddonManifest>(path.join(examplesRoot, 'addon-template.json'));
   if (addonTemplate?.resources?.interfaceLocales?.locales) {
     locales.push(...normalizeExternalInterfaceLocaleDefinitions(
       addonTemplate.resources.interfaceLocales.locales.map((locale) => ({
@@ -48,9 +49,9 @@ function getExternalFixtureLocales() {
     ));
   }
 
-  const modExample = readJsonFile<ModManifest>(path.join(root, 'data/hardcore-mode-example/manifest.json'));
+  const modExample = readJsonFile<ModManifest>(path.join(examplesRoot, 'hardcore-mode-example/manifest.json'));
   const modExampleLocaleFile = readJsonFile<{ locales?: AddonInterfaceLocaleDefinition[] }>(
-    path.join(root, 'data/hardcore-mode-example/locales/de.json'),
+    path.join(examplesRoot, 'hardcore-mode-example/locales/de.json'),
   );
   if (modExample && modExampleLocaleFile?.locales) {
     locales.push(...normalizeExternalInterfaceLocaleDefinitions(

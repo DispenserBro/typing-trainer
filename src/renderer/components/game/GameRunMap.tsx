@@ -10,6 +10,7 @@ import {
   Skull,
 } from 'lucide-react';
 import type { GameRunMapNode, GameRunMapState } from '../../../shared/types';
+import { buildGameRunMapLayoutViewModel } from '../../../core/game/routes';
 import { useI18n } from '../../contexts/I18nContext';
 import { getGameMapKindLabel } from './gameText';
 
@@ -50,14 +51,13 @@ export const GameRunMap = memo(function GameRunMap({ map, onSelectNode }: GameRu
     y2: number;
     active: boolean;
   }>>([]);
-  const columns = useMemo(
-    () => Array.from(new Set(map.nodes.map(node => node.column))).sort((a, b) => a - b),
+  const mapLayout = useMemo(
+    () => buildGameRunMapLayoutViewModel(map),
     [map.nodes],
   );
   const selectableNodeIds = new Set(map.selectableNodeIds);
   const visitedNodeIds = new Set(map.visitedNodeIds);
   const currentNode = map.nodes.find(node => node.id === map.currentNodeId) ?? null;
-  const lanes = useMemo(() => Array.from({ length: 5 }, (_, index) => index), []);
 
   useEffect(() => {
     const targetId = map.selectableNodeIds[0] ?? map.currentNodeId;
@@ -146,9 +146,9 @@ export const GameRunMap = memo(function GameRunMap({ map, onSelectNode }: GameRu
       <div ref={scrollRef} className="game-map-scroll">
         <div
           ref={graphRef}
-          className="game-map-graph"
-          style={{
-            gridTemplateColumns: `repeat(${columns.length}, minmax(${columnWidth}px, ${columnWidth}px))`,
+            className="game-map-graph"
+            style={{
+            gridTemplateColumns: `repeat(${mapLayout.columnCount}, minmax(${columnWidth}px, ${columnWidth}px))`,
             height: `${graphHeight}px`,
             minHeight: `${graphHeight}px`,
           }}
@@ -172,15 +172,13 @@ export const GameRunMap = memo(function GameRunMap({ map, onSelectNode }: GameRu
             ))}
           </svg>
 
-          {columns.map(column => {
-            const nodes = map.nodes.filter(node => node.column === column).sort((a, b) => a.lane - b.lane);
-            const nodesByLane = new Map(nodes.map(node => [node.lane, node]));
+          {mapLayout.columns.map(column => {
             return (
-              <div key={`map-column-${column}`} className="game-map-column">
-                {lanes.map(lane => {
-                  const node = nodesByLane.get(lane);
+              <div key={`map-column-${column.column}`} className="game-map-column">
+                {column.slots.map(slot => {
+                  const { lane, node } = slot;
                   if (!node) {
-                    return <div key={`map-slot-${column}-${lane}`} className="game-map-slot" />;
+                    return <div key={`map-slot-${column.column}-${lane}`} className="game-map-slot" />;
                   }
 
                   const Icon = getMapNodeIcon(node.kind);

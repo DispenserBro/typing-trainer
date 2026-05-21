@@ -2,6 +2,30 @@ export type ResultMetricTone = 'good' | 'warn' | 'bad' | 'neutral';
 
 export type ResultMetricPrimitive = string | number;
 
+export type CompactMetricStripItemInput = {
+  className?: string;
+  detail?: ResultMetricPrimitive | null;
+  id: string;
+  label?: ResultMetricPrimitive | null;
+  tone?: ResultMetricTone;
+  value: ResultMetricPrimitive;
+};
+
+export type CompactMetricStripItemViewModel = {
+  detail: ResultMetricPrimitive | null;
+  id: string;
+  itemClassName: string;
+  label: ResultMetricPrimitive | null;
+  tone?: ResultMetricTone;
+  value: ResultMetricPrimitive;
+};
+
+export type CompactMetricStripViewModel = {
+  className: string;
+  hidden: boolean;
+  items: CompactMetricStripItemViewModel[];
+};
+
 export type ResultMetricItemViewModel = {
   details?: ResultMetricPrimitive[];
   id: string;
@@ -62,6 +86,33 @@ export function buildMetricStripViewModel({
     labelClassName: joinClassNames(['ui-metric-strip-label', labelClassName]),
     metrics,
     valueClassName: joinClassNames(['ui-metric-strip-value', valueClassName]),
+  };
+}
+
+export function buildCompactMetricStripViewModel({
+  className,
+  items,
+}: {
+  className?: string;
+  items: CompactMetricStripItemInput[];
+}): CompactMetricStripViewModel {
+  return {
+    className: joinClassNames(['stats-bar', className]),
+    hidden: items.length === 0,
+    items: items.map((item) => ({
+      detail: item.detail ?? null,
+      id: item.id,
+      itemClassName: joinClassNames([
+        'metric',
+        item.tone === 'bad' ? 'metric-negative' : undefined,
+        item.tone === 'warn' ? 'metric-warning' : undefined,
+        item.tone === 'good' ? 'metric-positive' : undefined,
+        item.className,
+      ]),
+      label: item.label ?? null,
+      tone: item.tone,
+      value: item.value,
+    })),
   };
 }
 

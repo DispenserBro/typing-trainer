@@ -17,6 +17,21 @@ type CreateGameRouteArgs = {
   hasRepairTargets: boolean;
 };
 
+export type GameRunMapLaneSlotViewModel = {
+  lane: number;
+  node: GameRunMapNode | null;
+};
+
+export type GameRunMapColumnViewModel = {
+  column: number;
+  slots: GameRunMapLaneSlotViewModel[];
+};
+
+export type GameRunMapLayoutViewModel = {
+  columns: GameRunMapColumnViewModel[];
+  columnCount: number;
+};
+
 function createRouteId(level: number) {
   return `route-${level}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 }
@@ -676,6 +691,36 @@ export function getGameRunMapNode(map: GameRunMapState | null, nodeId: string | 
 export function getGameRunMapOutgoingIds(map: GameRunMapState | null, nodeId: string | null) {
   if (!map || !nodeId) return [];
   return map.links.filter(link => link.fromId === nodeId).map(link => link.toId);
+}
+
+export function buildGameRunMapLayoutViewModel(
+  map: Pick<GameRunMapState, 'nodes'>,
+  laneCount = 5,
+): GameRunMapLayoutViewModel {
+  const lanes = Array.from({ length: laneCount }, (_, index) => index);
+  const columns = Array.from(new Set(map.nodes.map(node => node.column)))
+    .sort((left, right) => left - right)
+    .map((column) => {
+      const nodesByLane = new Map(
+        map.nodes
+          .filter(node => node.column === column)
+          .sort((left, right) => left.lane - right.lane)
+          .map(node => [node.lane, node]),
+      );
+
+      return {
+        column,
+        slots: lanes.map(lane => ({
+          lane,
+          node: nodesByLane.get(lane) ?? null,
+        })),
+      };
+    });
+
+  return {
+    columns,
+    columnCount: columns.length,
+  };
 }
 
 export function selectGameRunMapNode(

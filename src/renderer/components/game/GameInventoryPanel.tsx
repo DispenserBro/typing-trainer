@@ -8,7 +8,8 @@ import type {
 } from '../../../shared/types';
 import {
   getGameItemIcon,
-} from '../../../core/game/items';
+} from '../../../core/game/items/icons';
+import { buildGameInventoryPanelViewModel } from '../../../core/game/pageUtils';
 import type { EquippedEntry, InventoryEntry } from '../../../core/game/viewTypes';
 import { useI18n } from '../../contexts/I18nContext';
 import {
@@ -41,14 +42,11 @@ export const GameInventoryPanel = memo(function GameInventoryPanel({
   const [hoveredSlot, setHoveredSlot] = useState<GameEquipmentSlot | null>(null);
   const [inventoryDropActive, setInventoryDropActive] = useState(false);
 
-  const equippedBySlot = useMemo(
-    () => Object.fromEntries(equippedItems.map(entry => [entry.slot.key, entry])) as Record<GameEquipmentSlot, EquippedEntry>,
-    [equippedItems],
+  const inventoryViewModel = useMemo(
+    () => buildGameInventoryPanelViewModel(inventoryItems, equippedItems),
+    [equippedItems, inventoryItems],
   );
-  const visibleInventoryItems = useMemo(
-    () => inventoryItems.filter(item => !item.equippedIn),
-    [inventoryItems],
-  );
+  const { visibleInventoryItems } = inventoryViewModel;
 
   const startDrag = (event: ReactDragEvent<HTMLElement>, itemId: string, fromSlot: GameEquipmentSlot | null) => {
     setDragPayload({ itemId, fromSlot });
@@ -143,7 +141,7 @@ export const GameInventoryPanel = memo(function GameInventoryPanel({
           ) : (
             <EmptyStateNotice
               className="game-items-empty"
-              text={equippedItems.some(entry => entry.inventoryItem)
+              text={inventoryViewModel.emptyReason === 'all-equipped'
                 ? t('game.inventory.empty.allEquipped')
                 : t('game.inventory.empty.afterBoss')}
             />

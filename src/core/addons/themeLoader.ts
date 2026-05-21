@@ -2,16 +2,22 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { compileString } from 'sass';
 import type {
-  CustomThemeColors,
   InstalledTheme,
   ThemeManifest,
   ThemeRegistryState,
 } from '../../shared/types';
+import { resolveSafeRegistryFilePath } from './pathSafety';
 import {
   THEME_MANIFEST_VERSION,
+  THEME_MANIFEST_TYPE,
   THEME_STYLE_CSS_FILE_CANDIDATES,
   THEME_STYLE_SCSS_FILE_CANDIDATES,
-} from '../../shared/types';
+  hasThemeStyleContent,
+  normalizeThemeColors,
+  normalizeThemeOptionalString,
+  normalizeThemeStringArray,
+  normalizeThemeStringRecord,
+} from '../../shared/types/theme';
 
 const REGISTRY_FILE = 'theme-registry.json';
 
@@ -26,89 +32,9 @@ type ThemeManifestValidationOptions = {
   sidecarScss?: string;
 };
 
-function normalizeOptionalString(value: unknown) {
-  if (typeof value !== 'string') return undefined;
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
-}
-
-function normalizeStringArray(value: unknown) {
-  if (!Array.isArray(value)) return undefined;
-  const normalized = value
-    .filter((entry): entry is string => typeof entry === 'string')
-    .map(entry => entry.trim())
-    .filter(Boolean);
-  return normalized.length > 0 ? normalized : undefined;
-}
-
-function normalizeStringRecord(value: unknown) {
-  if (!value || typeof value !== 'object') return undefined;
-  const entries = Object.entries(value as Record<string, unknown>)
-    .filter(([, entryValue]) => typeof entryValue === 'string')
-    .map(([key, entryValue]) => [key.trim(), (entryValue as string).trim()] as const)
-    .filter(([key, entryValue]) => key.length > 0 && entryValue.length > 0);
-
-  if (entries.length === 0) return undefined;
-  return Object.fromEntries(entries);
-}
-
-function normalizeThemeColors(value: unknown): CustomThemeColors | undefined {
-  if (!value || typeof value !== 'object') return undefined;
-  const colors = value as Record<string, unknown>;
-
-  const bg = normalizeOptionalString(colors.bg);
-  const surface = normalizeOptionalString(colors.surface);
-  const surface2 = normalizeOptionalString(colors.surface2);
-  const text = normalizeOptionalString(colors.text);
-  const subtext = normalizeOptionalString(colors.subtext);
-  const accent = normalizeOptionalString(colors.accent);
-  const green = normalizeOptionalString(colors.green);
-  const red = normalizeOptionalString(colors.red);
-  const yellow = normalizeOptionalString(colors.yellow);
-
-  if (!bg || !surface || !surface2 || !text || !subtext || !accent || !green || !red || !yellow) {
-    return undefined;
-  }
-
-  return {
-    bg,
-    surface,
-    surface2,
-    surface3: normalizeOptionalString(colors.surface3),
-    text,
-    textDim: normalizeOptionalString(colors.textDim),
-    subtext,
-    accent,
-    accentHover: normalizeOptionalString(colors.accentHover),
-    accentDim: normalizeOptionalString(colors.accentDim),
-    green,
-    red,
-    yellow,
-    fontSans: normalizeOptionalString(colors.fontSans),
-    fontMono: normalizeOptionalString(colors.fontMono),
-    radius: normalizeOptionalString(colors.radius),
-    radiusSm: normalizeOptionalString(colors.radiusSm),
-    transitionSpeed: normalizeOptionalString(colors.transitionSpeed),
-  };
-}
-
-function hasThemeStyleContent(manifest: ThemeManifest) {
-  const style = manifest.style;
-  return Boolean(
-    style.colors
-    || style.css
-    || style.scss
-    || (style.variables && Object.keys(style.variables).length > 0)
-    || (style.bodyClasses && style.bodyClasses.length > 0)
-    || (style.rootClasses && style.rootClasses.length > 0)
-    || (style.bodyAttributes && Object.keys(style.bodyAttributes).length > 0)
-    || (style.rootAttributes && Object.keys(style.rootAttributes).length > 0),
-  );
-}
-
 function joinStyleChunks(...chunks: Array<string | undefined>) {
   const normalized = chunks
-    .map(chunk => normalizeOptionalString(chunk))
+    .map(chunk => normalizeThemeOptionalString(chunk))
     .filter((chunk): chunk is string => Boolean(chunk));
   return normalized.length > 0 ? normalized.join('\n\n') : undefined;
 }
@@ -130,8 +56,8 @@ function readThemeStyleSidecars(manifestPath: string) {
   const scssFilePath = findFirstExistingSidecarFile(manifestPath, THEME_STYLE_SCSS_FILE_CANDIDATES);
 
   return {
-    css: cssFilePath ? normalizeOptionalString(fs.readFileSync(cssFilePath, 'utf-8')) : undefined,
-    scss: scssFilePath ? normalizeOptionalString(fs.readFileSync(scssFilePath, 'utf-8')) : undefined,
+    css: cssFilePath ? normalizeThemeOptionalString(fs.readFileSync(cssFilePath, 'utf-8')) : undefined,
+    scss: scssFilePath ? normalizeThemeOptionalString(fs.readFileSync(scssFilePath, 'utf-8')) : undefined,
   };
 }
 
@@ -167,25 +93,25 @@ export function validateThemeManifest(
     errors.push(`Unsupported manifestVersion ${manifestLike.manifestVersion} (max ${THEME_MANIFEST_VERSION}).`);
   }
 
-  const id = normalizeOptionalString(manifestLike.id);
+  const id = normalizeThemeOptionalString(manifestLike.id);
   if (!id) {
     errors.push('Missing or invalid "id".');
   } else if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(id) && id.length > 1) {
     errors.push('"id" must be kebab-case (lowercase, digits, hyphens).');
   }
 
-  const name = normalizeOptionalString(manifestLike.name);
+  const name = normalizeThemeOptionalString(manifestLike.name);
   if (!name) {
     errors.push('Missing or invalid "name".');
   }
 
-  const version = normalizeOptionalString(manifestLike.version);
+  const version = normalizeThemeOptionalString(manifestLike.version);
   if (!version) {
     errors.push('Missing or invalid "version".');
   }
 
-  if (manifestLike.type !== 'theme') {
-    errors.push('Theme "type" must be "theme".');
+  if (manifestLike.type !== THEME_MANIFEST_TYPE) {
+    errors.push(`Theme "type" must be "${THEME_MANIFEST_TYPE}".`);
   }
 
   const styleRaw = manifestLike.style;
@@ -218,26 +144,26 @@ export function validateThemeManifest(
     id: id!,
     name: name!,
     version: version!,
-    icon: normalizeOptionalString(manifestLike.icon),
-    description: normalizeOptionalString(manifestLike.description),
-    author: normalizeOptionalString(manifestLike.author),
-    minAppVersion: normalizeOptionalString(manifestLike.minAppVersion),
-    type: 'theme',
+    icon: normalizeThemeOptionalString(manifestLike.icon),
+    description: normalizeThemeOptionalString(manifestLike.description),
+    author: normalizeThemeOptionalString(manifestLike.author),
+    minAppVersion: normalizeThemeOptionalString(manifestLike.minAppVersion),
+    type: THEME_MANIFEST_TYPE,
     preview: normalizeThemeColors(manifestLike.preview),
     style: {
       colors: normalizeThemeColors(styleLike.colors),
-      variables: normalizeStringRecord(styleLike.variables),
+      variables: normalizeThemeStringRecord(styleLike.variables),
       css,
       scss,
       compiledScss,
-      bodyClasses: normalizeStringArray(styleLike.bodyClasses),
-      rootClasses: normalizeStringArray(styleLike.rootClasses),
-      bodyAttributes: normalizeStringRecord(styleLike.bodyAttributes),
-      rootAttributes: normalizeStringRecord(styleLike.rootAttributes),
+      bodyClasses: normalizeThemeStringArray(styleLike.bodyClasses),
+      rootClasses: normalizeThemeStringArray(styleLike.rootClasses),
+      bodyAttributes: normalizeThemeStringRecord(styleLike.bodyAttributes),
+      rootAttributes: normalizeThemeStringRecord(styleLike.rootAttributes),
     },
   };
 
-  if (!hasThemeStyleContent(manifest)) {
+  if (!hasThemeStyleContent(manifest.style)) {
     return { ok: false, errors: ['Theme "style" must define colors, variables, CSS, classes, or attributes.'] };
   }
 
@@ -424,8 +350,8 @@ export function removeTheme(
   const theme = registry.themes.find(entry => entry.id === themeId);
   if (!theme) return false;
 
-  const filePath = path.join(themesDir, theme.fileName);
-  if (fs.existsSync(filePath)) {
+  const filePath = resolveSafeRegistryFilePath(themesDir, theme.fileName);
+  if (filePath && fs.existsSync(filePath)) {
     fs.rmSync(filePath, { force: true });
   }
 

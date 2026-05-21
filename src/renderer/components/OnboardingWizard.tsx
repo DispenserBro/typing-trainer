@@ -9,6 +9,7 @@ import {
   Target,
 } from 'lucide-react';
 import type { LanguageInfo, Layout, LayoutsData } from '../../shared/types';
+import { useI18n } from '../contexts/I18nContext';
 import { Button } from './ui/Button';
 
 type OnboardingWizardProps = {
@@ -28,6 +29,7 @@ export function OnboardingWizard({
   currentLayout,
   onComplete,
 }: OnboardingWizardProps) {
+  const { t } = useI18n();
   const [step, setStep] = useState<Step>('language');
   const [selectedLanguage, setSelectedLanguage] = useState(currentLanguage || '');
   const [selectedLayout, setSelectedLayout] = useState(currentLayout || '');
@@ -89,7 +91,7 @@ export function OnboardingWizard({
             <span style={{ width: `${progressPercent}%` }} />
           </div>
           <span className="onboarding-progress-label">
-            Шаг {stepIndex + 1} из {STEP_ORDER.length}
+            {t('onboarding.firstRun.stepProgress', { current: stepIndex + 1, total: STEP_ORDER.length })}
           </span>
         </div>
 
@@ -98,9 +100,9 @@ export function OnboardingWizard({
             <div className="onboarding-step-icon">
               <Globe size={32} />
             </div>
-            <h2>Выберите язык</h2>
+            <h2>{t('onboarding.firstRun.language.title')}</h2>
             <p className="onboarding-step-desc">
-              Это определит набор слов для тренировки и подходящие раскладки клавиатуры.
+              {t('onboarding.firstRun.language.description')}
             </p>
             <div className="onboarding-options">
               {languages.map((lang: LanguageInfo) => (
@@ -123,9 +125,9 @@ export function OnboardingWizard({
             <div className="onboarding-step-icon">
               <Keyboard size={32} />
             </div>
-            <h2>Выберите раскладку</h2>
+            <h2>{t('onboarding.firstRun.layout.title')}</h2>
             <p className="onboarding-step-desc">
-              Раскладка определяет расположение клавиш, пальцевые зоны и порядок обучения буквам.
+              {t('onboarding.firstRun.layout.description')}
             </p>
             <div className="onboarding-options">
               {layoutsForLanguage.map(([id, layout]) => (
@@ -148,30 +150,30 @@ export function OnboardingWizard({
             <div className="onboarding-step-icon">
               <Target size={32} />
             </div>
-            <h2>Что вас ждёт</h2>
+            <h2>{t('onboarding.firstRun.overview.title')}</h2>
             <p className="onboarding-step-desc">
-              В приложении есть несколько режимов тренировки — каждый развивает навык печати по-своему.
+              {t('onboarding.firstRun.overview.description')}
             </p>
             <div className="onboarding-modes">
               <div className="onboarding-mode-card">
                 <Target size={22} />
                 <div>
-                  <h4>Практика</h4>
-                  <p>Короткие адаптивные упражнения на слабые буквы, сочетания и ритм. Лучший способ начать.</p>
+                  <h4>{t('onboarding.firstRun.overview.practice.title')}</h4>
+                  <p>{t('onboarding.firstRun.overview.practice.description')}</p>
                 </div>
               </div>
               <div className="onboarding-mode-card">
                 <BookOpen size={22} />
                 <div>
-                  <h4>Уроки</h4>
-                  <p>Пошаговое обучение раскладке от базовых рядов к полному алфавиту и связкам.</p>
+                  <h4>{t('onboarding.firstRun.overview.lessons.title')}</h4>
+                  <p>{t('onboarding.firstRun.overview.lessons.description')}</p>
                 </div>
               </div>
               <div className="onboarding-mode-card">
                 <Gamepad2 size={22} />
                 <div>
-                  <h4>Игра</h4>
-                  <p>Длинные забеги с боссами, предметами и маршрутами — мотивация через прогрессию.</p>
+                  <h4>{t('onboarding.firstRun.overview.game.title')}</h4>
+                  <p>{t('onboarding.firstRun.overview.game.description')}</p>
                 </div>
               </div>
             </div>
@@ -183,9 +185,9 @@ export function OnboardingWizard({
             <div className="onboarding-step-icon onboarding-done-icon">
               <Check size={36} />
             </div>
-            <h2>Всё готово!</h2>
+            <h2>{t('onboarding.firstRun.done.title')}</h2>
             <p className="onboarding-step-desc">
-              Настройки сохранены. Рекомендуем начать с уроков, чтобы освоить базу раскладки, или сразу перейти в практику.
+              {t('onboarding.firstRun.done.description')}
             </p>
           </div>
         )}
@@ -193,7 +195,7 @@ export function OnboardingWizard({
         <div className="onboarding-actions">
           {stepIndex > 0 && step !== 'done' && (
             <Button onClick={goBack}>
-              Назад
+              {t('common.actions.back')}
             </Button>
           )}
           <div className="onboarding-actions-spacer" />
@@ -203,11 +205,11 @@ export function OnboardingWizard({
               disabled={!canProceed}
               onClick={goNext}
             >
-              Далее <ArrowRight size={16} />
+              {t('common.actions.next')} <ArrowRight size={16} />
             </Button>
           ) : (
             <Button variant="accent" onClick={handleFinish}>
-              Начать тренировку <ArrowRight size={16} />
+              {t('onboarding.firstRun.startTraining')} <ArrowRight size={16} />
             </Button>
           )}
         </div>
