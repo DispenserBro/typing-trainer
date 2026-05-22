@@ -85,10 +85,15 @@ jobs:
           node-version: 22
           cache: npm
 
+      - name: Install Linux release-hardening dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+
       - run: npm ci
       - run: npm run diagnostics:content-pipeline
       - run: npm run diagnostics:release-coverage
-      - run: npm run diagnostics:release-hardening
+      - run: xvfb-run -a npm run diagnostics:release-hardening
         env:
           TYPING_TRAINER_SDK_DIR: SDK
 

@@ -36,14 +36,45 @@ type CliOptions = {
   jsonPath?: string;
 };
 
+const FALLBACK_ADDON_TEMPLATE: AddonManifest = {
+  manifestVersion: 1,
+  id: 'tech-english-pack',
+  name: 'Tech English',
+  version: '1.0.0',
+  type: 'content',
+  resources: {
+    practicePacks: {
+      packs: [
+        {
+          id: 'tech-en-snippets',
+          name: 'Tech snippets',
+          description: 'Fallback practice pack for content-pipeline diagnostics.',
+          language: 'en',
+          kind: 'mixed',
+          items: [
+            'clean architecture',
+            'typed event flow',
+            'stable render loop',
+            'Component state must stay predictable.',
+          ],
+        },
+      ],
+    },
+  },
+};
+
 function readJson<T>(relativePath: string): T {
   const absolutePath = path.resolve(process.cwd(), relativePath);
   return JSON.parse(fs.readFileSync(absolutePath, 'utf8')) as T;
 }
 
-function readSdkExampleJson<T>(relativePath: string): T {
+function readSdkExampleJson<T>(relativePath: string, fallback: T): T {
   const appRoot = path.resolve(__dirname, '../..');
-  const absolutePath = path.resolve(appRoot, '..', 'SDK', 'examples', relativePath);
+  const sdkRoot = process.env.TYPING_TRAINER_SDK_DIR
+    ? path.resolve(process.env.TYPING_TRAINER_SDK_DIR)
+    : path.resolve(appRoot, '..', 'SDK');
+  const absolutePath = path.resolve(sdkRoot, 'examples', relativePath);
+  if (!fs.existsSync(absolutePath)) return fallback;
   return JSON.parse(fs.readFileSync(absolutePath, 'utf8')) as T;
 }
 
@@ -158,7 +189,7 @@ function buildFocusedPracticeContentPacks(
   language: string,
 ): PracticeContentPack[] {
   const customPack = createFocusedCustomPack(language);
-  const addonManifest = readSdkExampleJson<AddonManifest>('addon-template.json');
+  const addonManifest = readSdkExampleJson<AddonManifest>('addon-template.json', FALLBACK_ADDON_TEMPLATE);
   const focusedAddon = createFocusedAddon(addonManifest, language);
 
   return mergeAddonPracticePacks([...basePracticeContentPacks, customPack], [focusedAddon]);

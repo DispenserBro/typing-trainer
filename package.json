@@ -27,7 +27,7 @@
     "diagnostics:extensions": "npm run build:debug-tools && node dist-debug/debug/runExtensionSourceDiagnostics.js",
     "diagnostics:perf-budget": "npm run build:debug-tools && node dist-debug/debug/runPerfBudgetDiagnostics.js",
     "diagnostics:packaging": "node scripts/build-electron.mjs --dry-run --win --linux --mac",
-    "diagnostics:platform-smoke": "electron . --platform-smoke",
+    "diagnostics:platform-smoke": "node scripts/run-platform-smoke.mjs",
     "diagnostics:release-coverage": "npm run build:debug-tools && node dist-debug/debug/runReleaseCoverageDiagnostics.js",
     "diagnostics:release-hardening": "node scripts/release-hardening.mjs",
     "sync:sdk-examples": "node scripts/sync-sdk-examples.mjs",
