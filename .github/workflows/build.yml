@@ -33,6 +33,19 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Checkout SDK gate repository
+        if: ${{ vars.SDK_REPOSITORY != '' }}
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ vars.SDK_REPOSITORY }}
+          path: SDK
+
+      - name: Require SDK gate repository
+        if: ${{ vars.SDK_REPOSITORY == '' }}
+        run: |
+          echo "SDK_REPOSITORY repository variable is required for the release SDK gate."
+          exit 1
+
       - uses: actions/setup-node@v6
         with:
           node-version: 22
@@ -57,6 +70,8 @@ jobs:
         run: xvfb-run -a npm run diagnostics:platform-smoke
 
       - run: npm run build:electron -- --dry-run --${{ matrix.target }}
+        env:
+          TYPING_TRAINER_SDK_DIR: SDK
 
   release-hardening:
     name: Diagnostics, release-hardening, SDK gate
@@ -107,6 +122,19 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Checkout SDK gate repository
+        if: ${{ vars.SDK_REPOSITORY != '' }}
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ vars.SDK_REPOSITORY }}
+          path: SDK
+
+      - name: Require SDK gate repository
+        if: ${{ vars.SDK_REPOSITORY == '' }}
+        run: |
+          echo "SDK_REPOSITORY repository variable is required for the release SDK gate."
+          exit 1
+
       - uses: actions/setup-node@v6
         with:
           node-version: 22
@@ -134,6 +162,7 @@ jobs:
         env:
           CSC_LINK: ${{ secrets.WINDOWS_CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CSC_KEY_PASSWORD }}
+          TYPING_TRAINER_SDK_DIR: SDK
 
       - name: Verify Windows signatures
         if: matrix.os == 'windows-latest' && startsWith(github.ref, 'refs/tags/')

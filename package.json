@@ -30,6 +30,7 @@
     "diagnostics:platform-smoke": "electron . --platform-smoke",
     "diagnostics:release-coverage": "npm run build:debug-tools && node dist-debug/debug/runReleaseCoverageDiagnostics.js",
     "diagnostics:release-hardening": "node scripts/release-hardening.mjs",
+    "sync:sdk-examples": "node scripts/sync-sdk-examples.mjs",
     "build:electron": "node scripts/build-electron.mjs",
     "build:win": "node scripts/build-electron.mjs --win",
     "build:linux": "node scripts/build-electron.mjs --linux",

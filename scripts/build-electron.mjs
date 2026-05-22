@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { applyElectronBuilderPatch } from './patch-electron-builder.mjs';
+import { syncSdkExamplesToBundledExtensionSources } from './sync-sdk-examples.mjs';
 
 const PLATFORM_FLAGS = new Set(['win', 'linux', 'mac']);
 
@@ -436,6 +437,8 @@ function buildUserDataPreservationChecks(installerScript) {
 }
 
 function assertPackagingReadiness(targets, electronBuilderCli) {
+  syncSdkExamplesToBundledExtensionSources();
+
   const packageJson = readJsonFile('package.json');
   const buildConfig = packageJson.build ?? {};
   const files = Array.isArray(buildConfig.files) ? buildConfig.files : [];
