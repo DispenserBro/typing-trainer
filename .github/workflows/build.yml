@@ -139,12 +139,21 @@ jobs:
         env:
           CSC_LINK: ${{ secrets.WINDOWS_CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CSC_KEY_PASSWORD }}
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
           TYPING_TRAINER_SDK_DIR: SDK
 
       - name: Verify Windows signatures
-        if: matrix.os == 'windows-latest' && startsWith(github.ref, 'refs/tags/') && secrets.WINDOWS_CSC_LINK != '' && secrets.WINDOWS_CSC_KEY_PASSWORD != ''
+        if: matrix.os == 'windows-latest' && startsWith(github.ref, 'refs/tags/')
         shell: pwsh
+        env:
+          CSC_LINK: ${{ secrets.WINDOWS_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CSC_KEY_PASSWORD }}
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
         run: |
+          if (-not $env:CSC_LINK -or -not $env:CSC_KEY_PASSWORD) {
+            Write-Host 'Skipping Windows signature verification because signing secrets are not configured.'
+            exit 0
+          }
           $artifacts = Get-ChildItem -Path dist-build -Recurse -File -Include *.exe
           if (-not $artifacts) {
             throw 'No Windows executables were produced for signature verification.'
