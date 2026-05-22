@@ -4145,6 +4145,7 @@ function runProgressMigrationChecks(): DiagnosticCheck[] {
 function runAddonRegistryPathSafetyChecks(): DiagnosticCheck[] {
   const addonsDir = 'C:/App/data/addons';
   const validPath = resolveSafeRegistryFilePath(addonsDir, 'daily-pack.json')?.replace(/\\/g, '/');
+  const expectedValidPath = path.resolve(addonsDir, 'daily-pack.json').replace(/\\/g, '/');
   const nestedPath = resolveSafeRegistryFilePath(addonsDir, 'packs/daily-pack.json');
   const outsidePath = resolveSafeRegistryFilePath(addonsDir, '../progress.json');
   const outsideWindowsPath = resolveSafeRegistryFilePath(addonsDir, '..\\progress.json');
@@ -4153,7 +4154,7 @@ function runAddonRegistryPathSafetyChecks(): DiagnosticCheck[] {
   return [
     check(
       'addon registry file paths resolve only direct child files',
-      validPath === 'C:/App/data/addons/daily-pack.json'
+      validPath === expectedValidPath
         && nestedPath === null
         && outsidePath === null
         && outsideWindowsPath === null
