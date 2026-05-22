@@ -106,10 +106,10 @@ function buildChecks(): Check[] {
     ),
     makeCheck(
       'GitHub Actions Windows signing coverage',
-      'Tag releases require Windows signing secrets and verify Authenticode signatures.',
+      'Tag releases build unsigned Windows artifacts by default and verify Authenticode signatures when signing secrets are configured.',
       includesAll(releaseWorkflow, [
-        'Require Windows signing material',
-        'WINDOWS_CSC_LINK and WINDOWS_CSC_KEY_PASSWORD secrets are required',
+        "secrets.WINDOWS_CSC_LINK != ''",
+        "secrets.WINDOWS_CSC_KEY_PASSWORD != ''",
         'Verify Windows signatures',
         'Get-AuthenticodeSignature',
       ]),

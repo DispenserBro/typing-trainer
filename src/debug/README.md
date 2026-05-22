@@ -94,7 +94,7 @@ npm run diagnostics:release-hardening
 
 Запускает локальный release-hardening набор: production build, сборку debug-инструментов, core/practice/content-pipeline/game-balance/history/i18n/extensions/perf-budget diagnostics, Electron platform smoke, release-coverage gate, packaging dry-run и SDK gate (`npm ci`, `npm run smoke`, `npm pack --dry-run`). По умолчанию SDK ищется в `..\SDK`; для CI или нестандартной раскладки задайте `TYPING_TRAINER_SDK_DIR`.
 
-GitHub Actions дополняет локальный gate платформенной проверкой Windows/Linux/macOS: приложение запускается через `diagnostics:platform-smoke` и проверяет запись в writable data path. Для tag-release Windows требует `WINDOWS_CSC_LINK` и `WINDOWS_CSC_KEY_PASSWORD`, а после сборки проверяет Authenticode-подписи `.exe`. Для SDK gate в настройках репозитория нужна variable `SDK_REPOSITORY`.
+GitHub Actions дополняет локальный gate платформенной проверкой Windows/Linux/macOS: приложение запускается через `diagnostics:platform-smoke` и проверяет запись в writable data path. Для tag-release Windows подпись не обязательна; если заданы `WINDOWS_CSC_LINK` и `WINDOWS_CSC_KEY_PASSWORD`, после сборки проверяются Authenticode-подписи `.exe`. Если в настройках репозитория задана variable `SDK_REPOSITORY`, workflow дополнительно запускает SDK gate.
 
 macOS release-артефакты сейчас исключены из публикации до появления signing/notarization gate. Workflow продолжает выполнять macOS platform-smoke без физических устройств и проверяет unsigned packaging contract (`identity: null`), но tag-release публикует только обязательный Windows/Linux набор и падает, если любой из этих артефактов отсутствует.
 

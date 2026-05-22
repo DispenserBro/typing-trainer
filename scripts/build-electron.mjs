@@ -57,7 +57,6 @@ const REQUIRED_RELEASE_WORKFLOW_SNIPPETS = [
   'diagnostics:platform-smoke',
   'diagnostics:release-coverage',
   'TYPING_TRAINER_SDK_DIR: SDK',
-  'WINDOWS_CSC_LINK and WINDOWS_CSC_KEY_PASSWORD secrets are required',
   'Verify Windows signatures',
   'Get-AuthenticodeSignature',
   'MACOS_RELEASE_STATUS: excluded-until-signing-and-notarization',

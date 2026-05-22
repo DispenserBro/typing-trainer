@@ -57,9 +57,9 @@ npm run build:mac
 npm run diagnostics:release-hardening
 ```
 
-Он запускает production build, debug diagnostics, content-pipeline, perf budget, Electron platform smoke, packaging dry-run и gate отдельного SDK (`npm ci`, `npm run smoke`, `npm pack --dry-run`). По умолчанию SDK ожидается в `../SDK`; в CI путь задаётся через `TYPING_TRAINER_SDK_DIR`.
+Он запускает production build, debug diagnostics, content-pipeline, perf budget, Electron platform smoke, packaging dry-run и, если SDK checkout доступен, gate отдельного SDK (`npm ci`, `npm run smoke`, `npm pack --dry-run`). По умолчанию SDK ожидается в `../SDK`; в CI путь задаётся через `TYPING_TRAINER_SDK_DIR`.
 
-В GitHub Actions release-публикация выпускает обязательный Windows/Linux набор. Windows tag-release требует secrets `WINDOWS_CSC_LINK` и `WINDOWS_CSC_KEY_PASSWORD`, затем проверяет Authenticode-подпись `.exe`. macOS проходит platform-smoke в `--dry-run`, но исключён из tag-release до готовности signing/notarization gate. Для SDK gate в репозитории должна быть задана variable `SDK_REPOSITORY` с именем публичного SDK-репозитория.
+В GitHub Actions release-публикация выпускает обязательный Windows/Linux набор. Windows tag-release собирается без обязательной подписи; если заданы secrets `WINDOWS_CSC_LINK` и `WINDOWS_CSC_KEY_PASSWORD`, workflow дополнительно проверяет Authenticode-подпись `.exe`. macOS проходит platform-smoke в `--dry-run`, но исключён из tag-release до готовности signing/notarization gate. Если задана variable `SDK_REPOSITORY`, workflow дополнительно checkout-ит публичный SDK-репозиторий и включает SDK gate.
 
 ## Расширения
 
