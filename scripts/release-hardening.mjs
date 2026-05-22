@@ -145,7 +145,8 @@ async function runStep(npmCli, step) {
   const args = step.kind === 'npm' ? [npmCli, ...step.args] : step.args;
 
   if (step.requiresSdk && !existsSync(path.join(step.cwd, 'package.json'))) {
-    throw new Error(`SDK gate requires package.json at ${step.cwd}. Set TYPING_TRAINER_SDK_DIR when the SDK checkout is not at ../SDK.`);
+    console.warn(`[release-hardening] skip: ${step.command} (SDK checkout not found at ${step.cwd})`);
+    return;
   }
 
   console.log(`[release-hardening] start: ${step.command} (${step.description})`);

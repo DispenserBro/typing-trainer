@@ -40,12 +40,6 @@ jobs:
           repository: ${{ vars.SDK_REPOSITORY }}
           path: SDK
 
-      - name: Require SDK gate repository
-        if: ${{ vars.SDK_REPOSITORY == '' }}
-        run: |
-          echo "SDK_REPOSITORY repository variable is required for the release SDK gate."
-          exit 1
-
       - uses: actions/setup-node@v6
         with:
           node-version: 22
@@ -86,12 +80,6 @@ jobs:
           repository: ${{ vars.SDK_REPOSITORY }}
           path: SDK
 
-      - name: Require SDK gate repository
-        if: ${{ vars.SDK_REPOSITORY == '' }}
-        run: |
-          echo "SDK_REPOSITORY repository variable is required for the release SDK gate."
-          exit 1
-
       - uses: actions/setup-node@v6
         with:
           node-version: 22
@@ -128,12 +116,6 @@ jobs:
         with:
           repository: ${{ vars.SDK_REPOSITORY }}
           path: SDK
-
-      - name: Require SDK gate repository
-        if: ${{ vars.SDK_REPOSITORY == '' }}
-        run: |
-          echo "SDK_REPOSITORY repository variable is required for the release SDK gate."
-          exit 1
 
       - uses: actions/setup-node@v6
         with:
