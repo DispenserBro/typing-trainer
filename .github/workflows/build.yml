@@ -170,7 +170,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         with:
           name: dist-${{ env.APP_NAME_SLUG }}-exe
-          path: dist-build/**/*.exe
+          path: dist-build/**/Typing-Trainer-*.exe
           if-no-files-found: error
 
       - uses: actions/upload-artifact@v6
@@ -178,7 +178,7 @@ jobs:
         with:
           name: dist-${{ env.APP_NAME_SLUG }}-win-update
           path: |
-            dist-build/**/*.yml
+            dist-build/**/latest*.yml
             dist-build/**/*.blockmap
           if-no-files-found: error
 
@@ -208,7 +208,7 @@ jobs:
         with:
           name: dist-${{ env.APP_NAME_SLUG }}-linux-update
           path: |
-            dist-build/**/*.yml
+            dist-build/**/latest*.yml
             dist-build/**/*.blockmap
           if-no-files-found: error
 
@@ -226,7 +226,7 @@ jobs:
         with:
           name: dist-${{ env.APP_NAME_SLUG }}-mac-update
           path: |
-            dist-build/**/*.yml
+            dist-build/**/latest*.yml
             dist-build/**/*.blockmap
           if-no-files-found: error
 
@@ -270,11 +270,11 @@ jobs:
           body_path: ${{ steps.release-notes.outputs.path }}
           fail_on_unmatched_files: true
           files: |
-            release-artifacts/**/*.exe
+            release-artifacts/**/Typing-Trainer-*.exe
             release-artifacts/**/*.AppImage
             release-artifacts/**/*.deb
             release-artifacts/**/*.rpm
             release-artifacts/**/*.dmg
             release-artifacts/**/*.zip
-            release-artifacts/**/*.yml
+            release-artifacts/**/latest*.yml
             release-artifacts/**/*.blockmap

@@ -64,13 +64,13 @@ const REQUIRED_RELEASE_WORKFLOW_SNIPPETS = [
   'if-no-files-found: error',
   'fail_on_unmatched_files: true',
   'npm run build:electron -- --${{ matrix.target }}',
-  'dist-build/**/*.exe',
+  'dist-build/**/Typing-Trainer-*.exe',
   'dist-build/**/*.AppImage',
   'dist-build/**/*.deb',
   'dist-build/**/*.rpm',
   'dist-build/**/*.dmg',
   'dist-build/**/*.zip',
-  'dist-build/**/*.yml',
+  'dist-build/**/latest*.yml',
   'dist-build/**/*.blockmap',
 ];
 

@@ -139,7 +139,7 @@ function buildChecks(): Check[] {
         'latest.yml',
         'latest-linux.yml',
         'latest-mac.yml',
-        'release-artifacts/**/*.yml',
+        'release-artifacts/**/latest*.yml',
         'release-artifacts/**/*.blockmap',
         'dist-build/**/*.dmg',
         'dist-build/**/*.zip',
