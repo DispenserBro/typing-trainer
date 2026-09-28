@@ -25,8 +25,14 @@ export function getGameItemRarityStars(rarity: GameItemDefinition['rarity']) {
   return `${'★'.repeat(rarity)}${'☆'.repeat(3 - rarity)}`;
 }
 
-export function pickRandomGameItem(kind: GameItemRewardKind) {
+export function pickRandomGameItem(kind: GameItemRewardKind, random: () => number = Math.random) {
   const pool = GAME_ITEM_POOLS[kind];
   if (!pool.length) return null;
-  return pool[Math.floor(Math.random() * pool.length)] ?? null;
+  const weight = (item: GameItemDefinition) => [0, 6, 3, 1][item.rarity]!;
+  let roll = random() * pool.reduce((sum, item) => sum + weight(item), 0);
+  for (const item of pool) {
+    roll -= weight(item);
+    if (roll < 0) return item;
+  }
+  return pool[pool.length - 1] ?? null;
 }

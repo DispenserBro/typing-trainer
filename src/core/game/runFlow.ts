@@ -68,7 +68,7 @@ export function resolveGameChoiceEffect(args: ResolveGameChoiceEffectArgs): Game
   }
 
   if (effect.lifeDelta) {
-    nextHp = Math.max(0, Math.min(nextMaxHp, hp + effect.lifeDelta));
+    nextHp = Math.max(0, Math.min(nextMaxHp, nextHp + effect.lifeDelta));
     hpChanged = true;
   }
 

@@ -7,6 +7,7 @@ import {
   shouldOfferGameEvent,
 } from '../core/game/gameEvents';
 import { GAME_ITEM_CATALOG } from '../core/game/items/catalog';
+import { resolveGameChoiceEffect } from '../core/game/runFlow';
 import { isDurableGameItem, pickRandomGameItem } from '../core/game/items/utils';
 import type {
   GameEventKind,
@@ -104,6 +105,7 @@ function randomChoice(choices: GameRunEventChoice[]): GameRunEventChoice | null 
 
 function simulateRun(levelsPerRun: number, startLives: number): RunTrace {
   let lives = startLives;
+  let maxLives = startLives;
   let totalLifeHealed = 0;
   let totalLifeLost = 0;
   let totalRepairPoints = 0;
@@ -127,7 +129,7 @@ function simulateRun(levelsPerRun: number, startLives: number): RunTrace {
     if (!shouldOfferGameEvent(level)) continue;
 
     const hasRepairTargets = equippedDurables.some(d => d.durability < d.maxDurability);
-    const event = createGameEvent({ level, lives, hasRepairTargets });
+    const event = createGameEvent({ level, lives, maxLives, hasRepairTargets });
     eventsTriggered += 1;
     eventKinds.push(event.kind);
 
@@ -136,11 +138,11 @@ function simulateRun(levelsPerRun: number, startLives: number): RunTrace {
 
     const eff = choice.effect;
 
-    if (eff.lifeDelta) {
-      if (eff.lifeDelta > 0) totalLifeHealed += eff.lifeDelta;
-      else totalLifeLost += Math.abs(eff.lifeDelta);
-      lives = Math.max(0, Math.min(3, lives + eff.lifeDelta));
-    }
+    const resolved = resolveGameChoiceEffect({ effect: eff, hp: lives, maxHp: maxLives });
+    totalLifeHealed += Math.max(0, resolved.nextHp - lives);
+    totalLifeLost += Math.max(0, lives - resolved.nextHp);
+    lives = resolved.nextHp;
+    maxLives = resolved.nextMaxHp;
 
     if (eff.grantItemId) {
       itemsGranted.push(eff.grantItemId);
@@ -220,7 +222,7 @@ function buildWarnings(report: Omit<GameBalanceReport, 'warnings'>): string[] {
     }
   }
 
-  if (report.lifeDelta.avgLostPerRun > 1.5) {
+  if (report.lifeDelta.avgLostPerRun > report.scenario.startLives * 0.5) {
     warnings.push(`Высокие потери жизней: в среднем ${report.lifeDelta.avgLostPerRun} за забег.`);
   }
 

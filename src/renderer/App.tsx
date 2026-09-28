@@ -55,6 +55,7 @@ function AppInner() {
   } = useAppSettings();
   const { t } = useI18n();
   const mainScrollRef = useRef<HTMLDivElement | null>(null);
+  // The shared keyboard also serves the adventure, using its activeChar.
 
   // Inject mod CSS snippets into <head>
   useEffect(() => {

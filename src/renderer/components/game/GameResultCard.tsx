@@ -33,6 +33,7 @@ import { ActionRow } from '../ui/ActionRow';
 import { Button } from '../ui/Button';
 import { ResultCardLayout } from '../ui/ResultCardLayout';
 import { GameRewardChoiceCard } from './GameRewardChoiceCard';
+import { GameCombatBurst } from './GameCombatBurst';
 
 type GameResultCardProps = {
   result: GameRunResult;
@@ -163,6 +164,12 @@ export function GameResultCard({
       title={resultCard.title}
       headline={<>{formatSpeed(result.wpm)} {speedLabel}</>}
     >
+      {result.passed && (
+        <div className="game-victory-burst" aria-hidden="true">
+          <Swords size={24} />
+          <GameCombatBurst key={result.level} kind="victory" />
+        </div>
+      )}
       <ResultMetricStrip metrics={gameResultMetrics} />
       {result.brokenItems.length > 0 && (
         <p className="game-breakage-note">{t('game.result.brokenItems')}: <b>{result.brokenItems.join(', ')}</b></p>

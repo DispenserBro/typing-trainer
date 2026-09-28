@@ -108,7 +108,7 @@ export function buildGameRewardChoiceBlockViewModel({
   selectedRewardMessage: string | null;
   translate: TranslateFn;
 }): GameRewardChoiceBlockViewModel | null {
-  if (!rewardChoices || !result.passed || !result.isBoss || result.victory) {
+  if (!rewardChoices || !result.passed || result.victory) {
     return null;
   }
 
@@ -117,6 +117,6 @@ export function buildGameRewardChoiceBlockViewModel({
       ? []
       : rewardChoices.map(choice => buildGameRewardChoiceViewModel(choice, translate)),
     selectedRewardMessage,
-    title: translate('game.result.bossRewardTitle'),
+    title: translate(result.isBoss ? 'game.result.bossRewardTitle' : 'game.expedition.eliteRewardTitle'),
   };
 }

@@ -17,6 +17,13 @@ module.exports = {
     splitChunks: {
       chunks: 'all',
       cacheGroups: {
+        gameEngine: {
+          test: /[\\/]node_modules[\\/](phaser|eventemitter3)[\\/]/,
+          name: 'game-engine',
+          chunks: 'async',
+          priority: 30,
+          enforce: true,
+        },
         vendor: {
           test: /[\\/]node_modules[\\/]/,
           name: 'vendor',

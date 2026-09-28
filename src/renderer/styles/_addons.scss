@@ -314,6 +314,24 @@
   align-items: start;
 }
 
+.addon-card__details-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover { color: var(--accent); }
+  &:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+}
+
+.addons-markdown-modal__description {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .addon-card__icon {
   flex-shrink: 0;
   display: flex;

@@ -1,3 +1,4 @@
+import { normalizeAdventure } from '../../core/game/adventure';
 import type { GameState, Progress } from '../../shared/types';
 import { GAME_ACHIEVEMENT_MAP } from '../../core/game/gameAchievements';
 import { GAME_ITEM_MAP, isBrokenInventoryItem } from '../../core/game/items';
@@ -63,5 +64,6 @@ export function resolveGameState(progress: Progress): GameState {
     currentRun: normalizeSavedGameRunState(base.currentRun),
     ghostRun: normalizeGameGhostRun(base.ghostRun),
     dailyRun: normalizeGameDailyRunState(base.dailyRun),
+    adventure: base.adventure ? normalizeAdventure(base.adventure) : undefined,
   };
 }

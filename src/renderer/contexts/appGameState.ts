@@ -1,3 +1,4 @@
+import { normalizeAdventure } from '../../core/game/adventure';
 import type { GameEquipmentSlot, GameInventoryItem, GameRunState, GameState, Progress } from '../../shared/types';
 import { GAME_ITEM_MAP } from '../../core/game/items/catalog';
 import { isBrokenInventoryItem } from '../../core/game/items/utils';
@@ -144,7 +145,8 @@ const isDailyRunEqual = (left: GameState['dailyRun'], right: GameState['dailyRun
 };
 
 export const isGameStateEqual = (left: GameState, right: GameState) => (
-  left.highestLevel === right.highestLevel
+  JSON.stringify(left.adventure) === JSON.stringify(right.adventure)
+  && left.highestLevel === right.highestLevel
   && isInventoryEqual(left.inventory, right.inventory)
   && isStringArrayEqual(left.discoveredItemIds, right.discoveredItemIds)
   && isStringArrayEqual(left.achievements, right.achievements)
@@ -174,6 +176,7 @@ export const stabilizeGameState = (prev: GameState | null, next: GameState): Gam
     currentRun: isGameRunEqual(prev.currentRun ?? null, next.currentRun ?? null) ? prev.currentRun : next.currentRun,
     ghostRun: ghostRunEqual ? prev.ghostRun : next.ghostRun,
     dailyRun: dailyRunEqual ? prev.dailyRun : next.dailyRun,
+    adventure: next.adventure,
   };
 };
 
@@ -229,6 +232,7 @@ export const normalizeGameState = (next: GameState): GameState => {
     currentRun: normalizeCurrentRunState(next.currentRun),
     ghostRun: normalizedGhostRun,
     dailyRun: normalizedDailyRun,
+    adventure: next.adventure ? normalizeAdventure(next.adventure) : undefined,
   };
 };
 

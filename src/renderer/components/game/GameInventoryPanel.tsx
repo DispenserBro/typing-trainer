@@ -79,7 +79,7 @@ export const GameInventoryPanel = memo(function GameInventoryPanel({
 
   return (
     <>
-      <details className={`card game-items-card${inventoryDropActive ? ' drag-target' : ''}`} open>
+      <details className={`card game-items-card${inventoryDropActive ? ' drag-target' : ''}`} open={visibleInventoryItems.length > 0}>
         <summary className="game-items-summary">
           <span>{t('game.inventory.title')}</span>
           <small>{t('game.inventory.itemsCount', { count: visibleInventoryItems.length })}</small>

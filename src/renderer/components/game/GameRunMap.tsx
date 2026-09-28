@@ -10,6 +10,7 @@ import {
   Skull,
 } from 'lucide-react';
 import type { GameRunMapNode, GameRunMapState } from '../../../shared/types';
+import { getMapNodeRegion } from '../../../core/game/expedition';
 import { buildGameRunMapLayoutViewModel } from '../../../core/game/routes';
 import { useI18n } from '../../contexts/I18nContext';
 import { getGameMapKindLabel } from './gameText';
@@ -35,6 +36,7 @@ function getMapNodeIcon(kind: GameRunMapNode['kind']) {
 export const GameRunMap = memo(function GameRunMap({ map, onSelectNode }: GameRunMapProps) {
   const { t } = useI18n();
   const columnWidth = 164;
+  const [previewNodeId, setPreviewNodeId] = useState<string | null>(null);
   const shellRef = useRef<HTMLDivElement | null>(null);
   const titleRowRef = useRef<HTMLDivElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -58,6 +60,11 @@ export const GameRunMap = memo(function GameRunMap({ map, onSelectNode }: GameRu
   const selectableNodeIds = new Set(map.selectableNodeIds);
   const visitedNodeIds = new Set(map.visitedNodeIds);
   const currentNode = map.nodes.find(node => node.id === map.currentNodeId) ?? null;
+
+  const region = getMapNodeRegion(currentNode);
+  const nextChoices = map.nodes.filter(node => selectableNodeIds.has(node.id));
+  const previewLinks = new Set(map.links.filter(link => link.fromId === previewNodeId || link.toId === previewNodeId)
+    .map(link => `${link.fromId}-${link.toId}`));
 
   useEffect(() => {
     const targetId = map.selectableNodeIds[0] ?? map.currentNodeId;
@@ -133,14 +140,34 @@ export const GameRunMap = memo(function GameRunMap({ map, onSelectNode }: GameRu
   }, [map.links, map.selectableNodeIds, map.visitedNodeIds, map.nodes]);
 
   return (
-    <div ref={shellRef} className="game-map-shell">
+    <div ref={shellRef} className={`game-map-shell game-map-region--${region}`}>
       <div ref={titleRowRef} className="game-map-title-row">
         <div>
-          <div className="game-map-title">{t('game.map.title')}</div>
+          <div className="game-map-title">{t('game.expedition.regions.' + region + '.title')}</div>
           <div className="game-map-subtitle">
-            {t('game.map.subtitle')}
+            {t('game.expedition.regions.' + region + '.description')}
           </div>
         </div>
+        {nextChoices.length > 0 && (
+          <div className="game-route-choices" aria-label={t('game.expedition.chooseRoute')}>
+            {nextChoices.map(node => {
+              const Icon = getMapNodeIcon(node.kind);
+              const nextKinds = [...new Set(map.links.filter(link => link.fromId === node.id)
+                .map(link => map.nodes.find(candidate => candidate.id === link.toId)?.kind)
+                .filter((kind): kind is GameRunMapNode['kind'] => Boolean(kind)))];
+              return (
+                <button key={node.id} className={`game-route-choice kind-${node.kind}`}
+                  onClick={() => onSelectNode(node.id)}
+                  onMouseEnter={() => setPreviewNodeId(node.id)} onMouseLeave={() => setPreviewNodeId(null)}
+                  onFocus={() => setPreviewNodeId(node.id)} onBlur={() => setPreviewNodeId(null)}>
+                  <strong><Icon size={16} aria-hidden="true" />{node.title}</strong>
+                  <span>{node.description}</span>
+                  <small>{t('game.expedition.after')}: {nextKinds.map(kind => getGameMapKindLabel(kind, t)).join(' · ')}</small>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <div ref={scrollRef} className="game-map-scroll">
@@ -167,7 +194,7 @@ export const GameRunMap = memo(function GameRunMap({ map, onSelectNode }: GameRu
                 y1={line.y1}
                 x2={line.x2}
                 y2={line.y2}
-                className={line.active ? 'active' : undefined}
+                className={previewLinks.has(line.key) ? 'preview' : line.active ? 'active' : undefined}
               />
             ))}
           </svg>
@@ -193,6 +220,9 @@ export const GameRunMap = memo(function GameRunMap({ map, onSelectNode }: GameRu
                         className={`game-map-node kind-${node.kind}${selectable ? ' selectable' : ''}${current ? ' current' : ''}${visited ? ' visited' : ''}`}
                         disabled={!selectable}
                         onClick={() => onSelectNode(node.id)}
+                        onMouseEnter={() => setPreviewNodeId(node.id)} onMouseLeave={() => setPreviewNodeId(null)}
+                        onFocus={() => setPreviewNodeId(node.id)} onBlur={() => setPreviewNodeId(null)}
+                        aria-current={current ? 'step' : undefined}
                         title={`${node.title} — ${node.description}`}
                       >
                         <span className="game-map-node-icon">

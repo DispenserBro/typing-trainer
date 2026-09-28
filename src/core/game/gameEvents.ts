@@ -7,6 +7,7 @@ import type {
 import { i18n, sanitizeTranslationParams } from '../i18n';
 import { pickRandomGameItem } from './items';
 import { PLAYER_BASE_HP, REGEN_HP_PER_BATTLE } from './battleSystem';
+import { seededShuffle } from './seededRng';
 
 type CreateGameEventArgs = {
   level: number;
@@ -50,7 +51,7 @@ function createChoice(
  */
 function pickRandomChoices(pool: GameRunEventChoice[], n: number): GameRunEventChoice[] {
   if (pool.length <= n) return pool;
-  const shuffled = [...pool].sort(() => Math.random() - 0.5);
+  const shuffled = seededShuffle(pool, Math.random);
   return shuffled.slice(0, n);
 }
 

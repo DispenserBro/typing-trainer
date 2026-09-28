@@ -356,6 +356,8 @@ export interface GameDailyRunState {
 }
 
 export interface GameState {
+  /** Отдельное сохранение приключения на Phaser; classic currentRun не изменяется. */
+  adventure?: import('./adventure').AdventureState;
   highestLevel: number;
   inventory: GameInventoryItem[];
   discoveredItemIds: string[];

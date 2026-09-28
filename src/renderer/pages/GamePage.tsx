@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { AdventurePage } from './AdventurePage';
 import { Trophy } from 'lucide-react';
 import type {
   GameAchievementDefinition,
@@ -72,6 +73,8 @@ import {
   TOTAL_GAME_LEVELS,
 } from '../../core/game/runUtils';
 import { resolveGameChoiceEffect, resolveGamePostLevelFlow } from '../../core/game/runFlow';
+import { createExpeditionEvent, buildEliteRewardChoices } from '../../core/game/expedition';
+import { createSeededRng, hashSeed } from '../../core/game/seededRng';
 import { getBossArchetype, computeRhythmDeviation } from '../../core/game/bossArchetypes';
 import {
   createEnemy,
@@ -151,6 +154,12 @@ function blurActiveElement() {
 }
 
 export function GamePage() {
+  const [classic, setClassic] = useState(false);
+  const { t } = useI18n();
+  return classic ? <><button className="adventure-classic-back" onClick={() => setClassic(false)}>{t('adventure.backAdventure')}</button><ClassicGamePage /></> : <AdventurePage onClassic={() => setClassic(true)} />;
+}
+
+function ClassicGamePage() {
   const { t } = useI18n();
   const {
     layouts, allWords, ngramModel, progress,
@@ -231,12 +240,12 @@ export function GamePage() {
   const activeTotalLevels = dailySeed ? DAILY_RUN_LEVELS : TOTAL_GAME_LEVELS;
   const [autoAdvanceLevel, setAutoAdvanceLevel] = useState<number | null>(null);
   const finishCauseRef = useRef<'completed' | 'timeout'>('completed');
-  const startSessionRef = useRef<(text: string) => void>(() => {});
+  const [queuedRoundText, setQueuedRoundText] = useState<string | null>(null);
   const previewMap = useMemo(
     () => createGameRunMap(TOTAL_GAME_LEVELS, 'main-game-preview-map'),
     [],
   );
-  const activeIsBoss = isBossLevel(level);
+  const activeIsBoss = battleState ? battleState.enemy.tier === 'boss' : isBossLevel(level);
   const achievementMap = useMemo(
     () => Object.fromEntries(gameAchievementCatalog.map(a => [a.id, a])),
     [gameAchievementCatalog],
@@ -270,8 +279,9 @@ export function GamePage() {
   const goalWpm = targetSpeedCpm / 5;
   const unit = settings.speedUnit;
   const targetSpeedDisplay = getTargetSpeedDisplay(targetSpeedCpm, unit);
-  const effectiveGoalWpm = goalWpm * (1 - totalBonuses.speedRequirementReductionPercent / 100);
-  const effectiveTargetSpeedCpm = targetSpeedCpm * (1 - totalBonuses.speedRequirementReductionPercent / 100);
+  const speedFactor = Math.max(0.5, Math.min(1.5, 1 - totalBonuses.speedRequirementReductionPercent / 100));
+  const effectiveGoalWpm = goalWpm * speedFactor;
+  const effectiveTargetSpeedCpm = targetSpeedCpm * speedFactor;
   const effectiveTargetSpeedDisplay = formatSpeedFromCpm(effectiveTargetSpeedCpm, unit);
   const {
     achievementToasts,
@@ -319,8 +329,8 @@ export function GamePage() {
 
   const calculateBossTimeLimit = useCallback((text: string) => {
     const requiredChars = text.length + (settings.endWithSpace ? 1 : 0);
-    return requiredChars * 60 / targetSpeedCpm + totalBonuses.bossTimerBonusSeconds;
-  }, [settings.endWithSpace, targetSpeedCpm, totalBonuses.bossTimerBonusSeconds]);
+    return requiredChars * 60 / effectiveTargetSpeedCpm + totalBonuses.bossTimerBonusSeconds;
+  }, [settings.endWithSpace, effectiveTargetSpeedCpm, totalBonuses.bossTimerBonusSeconds]);
 
   const currentBossTimeLimit = useMemo(() => {
     if (!activeIsBoss || !levelText) return null;
@@ -334,8 +344,9 @@ export function GamePage() {
   );
 
   const generateBossRewardChoices = useCallback((): BossRewardChoice[] => {
-    return buildBossRewardChoices(peekNextGameLetter(), level);
-  }, [peekNextGameLetter, level]);
+    return buildBossRewardChoices(peekNextGameLetter(), level,
+      dailySeed ? createSeededRng(hashSeed(`${dailySeed}:reward:${level}`)) : Math.random);
+  }, [peekNextGameLetter, level, dailySeed]);
 
   const resetRewardState = useCallback(() => {
     setRewardChoices(null);
@@ -360,7 +371,7 @@ export function GamePage() {
   }, []);
 
   const onFinish = useCallback((wpm: number, acc: number, elapsed: number, ses: any) => {
-    const boss = isBossLevel(level);
+    const boss = battleState ? battleState.enemy.tier === 'boss' : isBossLevel(level);
     const archetype = boss ? getBossArchetype(level) : null;
     const baseMinAccuracy = boss ? getBossMinAccuracy(level) : NORMAL_MIN_ACCURACY;
     const minAccuracy = Math.max(0, baseMinAccuracy - totalBonuses.accuracyRequirementReduction);
@@ -374,8 +385,12 @@ export function GamePage() {
       const rhythmIntervals = keypressesForRhythm
         .filter((kp: any) => kp.interval > 0)
         .map((kp: any) => kp.interval);
+      // Incomplete timed rounds only receive credit for the text actually typed.
+      const completion = timedOut ? Math.min(1, (ses?.pos ?? 0) / Math.max(1, levelText.length)) : 1;
       const updatedBattle = resolveBattleRound(
-        battleState, acc, currentCpm, targetSpeedCpm, rhythmIntervals, battleBonuses,
+        battleState, Math.min(100, acc + totalBonuses.accuracyRequirementReduction),
+        currentCpm * completion, effectiveTargetSpeedCpm, rhythmIntervals, battleBonuses,
+        dailySeed ? createSeededRng(hashSeed(`${dailySeed}:${level}:${battleState.enemy.tier}:${battleState.roundResults.length}`)) : Math.random,
       );
       const damageTakenThisRound = Math.max(0, hp - updatedBattle.playerHp);
       setBattleState(updatedBattle);
@@ -388,7 +403,7 @@ export function GamePage() {
         // Battle continues — generate text for next round and start it
         const nextText = buildLevelText(level, boss ? BOSS_BATTLE_ROUND_WORDS : BATTLE_ROUND_WORDS);
         setLevelText(nextText);
-        setTimeout(() => startSessionRef.current(nextText), 300);
+        setQueuedRoundText(nextText);
         return;
       }
 
@@ -418,13 +433,8 @@ export function GamePage() {
       consumeActiveModifiers();
 
       // Record ghost
-      setCurrentGhost(prev => recordGhostLevel(prev, {
-        level,
-        wpm,
-        acc,
-        elapsed,
-        passed,
-      }));
+      const nextGhost = recordGhostLevel(currentGhost, { level, wpm, acc, elapsed, passed });
+      setCurrentGhost(nextGhost);
 
       const nextMapNodeIds = runMap ? getGameRunMapOutgoingIds(runMap, runMap.currentNodeId) : [];
       const postLevelFlow = resolveGamePostLevelFlow({
@@ -436,8 +446,13 @@ export function GamePage() {
         nextMapNodeIds,
       });
 
-      if (postLevelFlow.kind === 'bossReward') {
-        setRewardChoices(generateBossRewardChoices());
+      const eliteTier = updatedBattle.enemy.tier;
+      const eliteRewards = passed && !victory && (eliteTier === 'elite' || eliteTier === 'miniboss')
+        ? buildEliteRewardChoices(eliteTier, dailySeed
+          ? createSeededRng(hashSeed(`${dailySeed}:loot:${runMap?.currentNodeId}`)) : Math.random)
+        : null;
+      if (postLevelFlow.kind === 'bossReward' || eliteRewards) {
+        setRewardChoices(eliteRewards ?? generateBossRewardChoices());
         setSelectedRewardMessage(null);
         resetMapSelection();
         resetEventState();
@@ -465,12 +480,12 @@ export function GamePage() {
       }));
 
       if (runCompleted) {
-        const finalized = finalizeGhostRun(currentGhost);
+        const finalized = finalizeGhostRun(nextGhost);
         const replaceGhost = shouldReplaceGhost(gameState.ghostRun, finalized);
         const updatedDailyRun = dailySeed
           ? recordDailyRunAttempt(
               gameState.dailyRun ?? { history: {} },
-              level, level - 1, wpm, acc, elapsed,
+              level, passed ? level : completedLevels, wpm, acc, elapsed,
             )
           : gameState.dailyRun;
         saveGameState({
@@ -647,6 +662,8 @@ export function GamePage() {
     buildLevelText,
     calculateBossTimeLimit,
     effectiveGoalWpm,
+    effectiveTargetSpeedCpm,
+    completedLevels,
     generateBossRewardChoices,
     hasRepairTargets,
     stableEquippedItems,
@@ -681,8 +698,15 @@ export function GamePage() {
     onFinish,
   });
 
-  // Keep ref in sync so onFinish can start next round without circular dep
-  useEffect(() => { startSessionRef.current = start; }, [start]);
+  // Cancel the handoff on restart/navigation; a stale timer must never restart typing.
+  useEffect(() => {
+    if (!queuedRoundText || showStartPanel || result || !battleState || battleState.finished) return;
+    const timer = setTimeout(() => {
+      start(queuedRoundText);
+      setQueuedRoundText(null);
+    }, 650);
+    return () => clearTimeout(timer);
+  }, [queuedRoundText, showStartPanel, result, battleState, start]);
 
   const startLevel = useCallback((nextLevel: number, resetGame = false, nodeKind?: string) => {
     if (!layout || !words.length || !unlocked.length) return;
@@ -690,15 +714,17 @@ export function GamePage() {
     blurActiveElement();
 
     // Determine if this is a battle with an enemy
-    const boss = isBossLevel(nextLevel);
-    const combatKind = nodeKind ?? (boss ? 'boss' : 'battle');
+    const combatKind = nodeKind ?? (isBossLevel(nextLevel) ? 'boss' : 'battle');
+    const boss = combatKind === 'boss';
     const tier = getEnemyTier(combatKind);
-    const enemy = createEnemy(tier, nextLevel);
+    setQueuedRoundText(null);
+    const enemy = createEnemy(tier, nextLevel,
+      dailySeed ? createSeededRng(hashSeed(`${dailySeed}:enemy:${nextLevel}:${tier}`)) : Math.random);
     const bs = createBattleState(enemy, hp, maxHp);
     setBattleState(bs);
 
     // First round: short text for attack phase
-    const text = boss ? buildLevelText(nextLevel) : buildLevelText(nextLevel, BATTLE_ROUND_WORDS);
+    const text = buildLevelText(nextLevel, boss ? BOSS_BATTLE_ROUND_WORDS : BATTLE_ROUND_WORDS);
     setLevel(nextLevel);
     setLevelText(text);
     setResult(null);
@@ -719,7 +745,7 @@ export function GamePage() {
     }
     setShowStartPanel(false);
     start(text);
-  }, [layout, words.length, unlocked.length, buildLevelText, resetEventState, resetRewardState, resetMapSelection, start, hp, maxHp, baseHp]);
+  }, [layout, words.length, unlocked.length, buildLevelText, resetEventState, resetRewardState, resetMapSelection, start, hp, maxHp, baseHp, dailySeed]);
 
   // Auto-advance to next level when map has no outgoing nodes (dead-end fallback)
   useEffect(() => {
@@ -755,6 +781,15 @@ export function GamePage() {
       resetEventState();
       stop();
       startLevel(nextNode.battleLevel, false, nextNode.kind);
+      return;
+    }
+
+    const encounter = createExpeditionEvent(nextNode, {
+      level, hp, maxHp, hasRepairTargets,
+    });
+    if (encounter) {
+      setPendingEvent(encounter);
+      eventChoiceRefs.current = [];
       return;
     }
 
@@ -821,6 +856,7 @@ export function GamePage() {
   }, [enterMapNode, runMap]);
 
   const startGame = useCallback((isDaily = false) => {
+    setQueuedRoundText(null);
     blurActiveElement();
     stop();
     clearCurrentGameRun(true);
@@ -859,6 +895,7 @@ export function GamePage() {
   }, [clearCurrentGameRun, stop, baseHp]);
 
   const openStartPanel = useCallback(() => {
+    setQueuedRoundText(null);
     stop();
     setResult(null);
     resetMapSelection();
@@ -869,6 +906,7 @@ export function GamePage() {
   }, [resetEventState, resetRewardState, resetMapSelection, stop]);
 
   const returnToMainGame = useCallback(() => {
+    setQueuedRoundText(null);
     stop();
     setDailySeed(null);
     setResult(null);
@@ -919,7 +957,7 @@ export function GamePage() {
   }, [currentMapNode?.kind, level, hp, startLevel, stop]);
 
   const handleRewardChoice = useCallback((choice: BossRewardChoice) => {
-    if (choice.disabled) return;
+    if (choice.disabled || selectedRewardMessage || !rewardChoices?.some(entry => entry.id === choice.id)) return;
 
     if (choice.kind === 'letter') {
       const unlockedChar = unlockNextGameLetter();
@@ -980,7 +1018,7 @@ export function GamePage() {
       ...(choice.kind === 'durable' ? ['collect-durable-item'] : []),
       ...(item.rarity === 3 ? ['collect-top-rarity-item'] : []),
     ]);
-  }, [grantGameItem, hp, maxHp, queueAchievementToasts, t, unlockNextGameLetter]);
+  }, [grantGameItem, hp, maxHp, queueAchievementToasts, t, unlockNextGameLetter, selectedRewardMessage, rewardChoices]);
 
   const handleMapNodeSelect = useCallback((nodeId: string) => {
     if (!runMap || !runMap.selectableNodeIds.includes(nodeId)) return;
@@ -1075,14 +1113,14 @@ export function GamePage() {
   }, [continueFromMap, pendingEvent, resetEventState, runMap]);
 
   const resumeSavedLevel = useCallback(() => {
-    if (session.active || !levelText) return;
+    if (session.active || queuedRoundText || !levelText) return;
     blurActiveElement();
     setResult(null);
     setPendingEvent(null);
     setRewardChoices(null);
     setSelectedRewardMessage(null);
     start(levelText);
-  }, [levelText, session.active, start]);
+  }, [levelText, queuedRoundText, session.active, start]);
 
   useEffect(() => {
     if (!session.active) return;
@@ -1098,7 +1136,7 @@ export function GamePage() {
     && !result
     && !pendingEvent
     && selectableMapNodeIds.length === 0
-    && Boolean(currentMapNode?.battleLevel)
+    && Boolean(battleState || currentMapNode?.battleLevel)
     && Boolean(levelText);
   const historyEntries = progress.history?.[currentLayout] ?? EMPTY_HISTORY;
   const gameResultViewModel = useMemo(
@@ -1143,7 +1181,7 @@ export function GamePage() {
     }),
     [activeTotalLevels, completedLevels, gameWon, level, t],
   );
-  const battleOverlayText = !session.active && !showStartPanel && !result && levelText
+  const battleOverlayText = queuedRoundText ? t('game.combat.nextRound') : !session.active && !showStartPanel && !result && levelText
     ? t('game.overlay.savedRun', { level, hp: Math.max(hp, 0) }).replace(/\\n/g, '\n')
     : null;
 

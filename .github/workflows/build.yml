@@ -3,7 +3,6 @@ name: Build & Release
 env:
   APP_NAME_SLUG: typing-trainer
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  MACOS_RELEASE_STATUS: excluded-until-signing-and-notarization
 
 on:
   push:
@@ -109,6 +108,8 @@ jobs:
             target: win
           - os: ubuntu-latest
             target: linux
+          - os: macos-latest
+            target: mac
 
     runs-on: ${{ matrix.os }}
 
@@ -173,6 +174,15 @@ jobs:
           if-no-files-found: error
 
       - uses: actions/upload-artifact@v6
+        if: matrix.os == 'windows-latest'
+        with:
+          name: dist-${{ env.APP_NAME_SLUG }}-win-update
+          path: |
+            dist-build/**/*.yml
+            dist-build/**/*.blockmap
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v6
         if: matrix.os == 'ubuntu-latest'
         with:
           name: dist-${{ env.APP_NAME_SLUG }}-appimage
@@ -193,12 +203,51 @@ jobs:
           path: dist-build/**/*.rpm
           if-no-files-found: error
 
+      - uses: actions/upload-artifact@v6
+        if: matrix.os == 'ubuntu-latest'
+        with:
+          name: dist-${{ env.APP_NAME_SLUG }}-linux-update
+          path: |
+            dist-build/**/*.yml
+            dist-build/**/*.blockmap
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v6
+        if: matrix.os == 'macos-latest'
+        with:
+          name: dist-${{ env.APP_NAME_SLUG }}-mac
+          path: |
+            dist-build/**/*.dmg
+            dist-build/**/*.zip
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v6
+        if: matrix.os == 'macos-latest'
+        with:
+          name: dist-${{ env.APP_NAME_SLUG }}-mac-update
+          path: |
+            dist-build/**/*.yml
+            dist-build/**/*.blockmap
+          if-no-files-found: error
+
   publish-release:
     name: Publish GitHub Release
     needs: build
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v6
+
+      - name: Read release notes
+        id: release-notes
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          notes="pre-releases/Release_${version}"
+          test -s "$notes"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "path=$notes" >> "$GITHUB_OUTPUT"
+
       - uses: actions/download-artifact@v6
         with:
           path: release-artifacts
@@ -206,24 +255,26 @@ jobs:
       - name: Verify complete release artifacts
         shell: pwsh
         run: |
-          $required = @('*.exe', '*.AppImage', '*.deb', '*.rpm')
+          $required = @('*.exe', '*.AppImage', '*.deb', '*.rpm', '*.dmg', '*.zip', 'latest.yml', 'latest-linux.yml', 'latest-mac.yml')
           foreach ($pattern in $required) {
             $matches = Get-ChildItem -Path release-artifacts -Recurse -File -Filter $pattern
             if (-not $matches) {
               throw "Missing required release artifact: $pattern"
             }
           }
-          if ('${{ env.MACOS_RELEASE_STATUS }}' -ne 'excluded-until-signing-and-notarization') {
-            throw 'macOS release artifacts require signing/notarization gate before publication.'
-          }
-          Write-Host 'macOS release artifacts are explicitly excluded until signing/notarization is ready.'
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          name: Typing Trainer ${{ steps.release-notes.outputs.version }}
+          body_path: ${{ steps.release-notes.outputs.path }}
           fail_on_unmatched_files: true
           files: |
             release-artifacts/**/*.exe
             release-artifacts/**/*.AppImage
             release-artifacts/**/*.deb
             release-artifacts/**/*.rpm
+            release-artifacts/**/*.dmg
+            release-artifacts/**/*.zip
+            release-artifacts/**/*.yml
+            release-artifacts/**/*.blockmap

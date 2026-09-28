@@ -2725,7 +2725,7 @@ function runGameRewardChoiceBlockViewModelChecks(): DiagnosticCheck[] {
     translate,
   });
   const hiddenBlock = buildGameRewardChoiceBlockViewModel({
-    result: gameResult({ isBoss: false, passed: true, victory: false }),
+    result: gameResult({ isBoss: false, passed: false, victory: false }),
     rewardChoices,
     selectedRewardMessage: null,
     translate,

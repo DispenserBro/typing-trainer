@@ -7,6 +7,7 @@ import type {
 import { getGameItemRarityStars, pickRandomGameItem } from './items';
 import { getBossArchetype, type BossArchetypeConfig } from './bossArchetypes';
 import { i18n, sanitizeTranslationParams } from '../i18n';
+import { seededShuffle } from './seededRng';
 
 function randomFromArray<T>(items: T[]): T {
   return items[Math.floor(Math.random() * items.length)] ?? items[0];
@@ -65,15 +66,15 @@ export function getEventKindLabel(kind: GameRunEventState['kind']) {
 }
 
 /**
- * Boss reward pool — fully random selection of 3 rewards from a shared pool.
+ * Boss reward pool — with at least one item selection of 3 rewards from a shared pool.
  * Pool includes: items (simple/durable), curses, buffs, letter unlock, extra HP.
  * Curses now appear as events in boss rewards, not as map nodes.
  */
-export function buildBossRewardChoices(nextLetter: string | null, level: number): GameRunRewardChoice[] {
+export function buildBossRewardChoices(nextLetter: string | null, level: number, random: () => number = Math.random): GameRunRewardChoice[] {
   const pool: GameRunRewardChoice[] = [];
 
   // ── Item rewards ──
-  const simpleItem = pickRandomGameItem('simple');
+  const simpleItem = pickRandomGameItem('simple', random);
   if (simpleItem) {
     pool.push({
       id: `reward-simple-${simpleItem.id}`,
@@ -84,7 +85,7 @@ export function buildBossRewardChoices(nextLetter: string | null, level: number)
       itemId: simpleItem.id,
     });
   }
-  const durableItem = pickRandomGameItem('durable');
+  const durableItem = pickRandomGameItem('durable', random);
   if (durableItem) {
     pool.push({
       id: `reward-durable-${durableItem.id}`,
@@ -96,7 +97,7 @@ export function buildBossRewardChoices(nextLetter: string | null, level: number)
     });
   }
   // Second simple for variety
-  const simpleItem2 = pickRandomGameItem('simple');
+  const simpleItem2 = pickRandomGameItem('simple', random);
   if (simpleItem2 && simpleItem2.id !== simpleItem?.id) {
     pool.push({
       id: `reward-simple2-${simpleItem2.id}`,
@@ -204,7 +205,9 @@ export function buildBossRewardChoices(nextLetter: string | null, level: number)
     });
   }
 
-  // Shuffle and pick 3 unique
-  const shuffled = pool.sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, 3);
+  // A boss always offers equipment; the other choices remain varied.
+  const items = pool.filter(choice => choice.itemId);
+  const guaranteedItem = items[Math.floor(random() * items.length)];
+  const remaining = seededShuffle(pool.filter(choice => choice !== guaranteedItem), random);
+  return guaranteedItem ? [guaranteedItem, ...remaining.slice(0, 2)] : remaining.slice(0, 3);
 }

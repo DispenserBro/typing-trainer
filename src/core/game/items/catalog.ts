@@ -551,6 +551,38 @@ const GAME_ITEM_CATALOG_BASE: GameItemDefinition[] = [
     ],
   },
 
+  // Combat styles: precise strikes, evasive defense and armor penetration.
+  {
+    id: 'metronome-heart',
+    name: '', shortName: '', description: '',
+    rarity: 2, slotType: 'trinket', icon: 'timer', rewardKind: 'simple',
+    critBonus: 0.035, dmgCoeff: 0.08,
+    effects: [
+      { kind: 'critBonus', value: 3.5, unit: 'percent', description: '' },
+      { kind: 'dmgCoeff', value: 8, unit: 'percent', description: '' },
+    ],
+  },
+  {
+    id: 'mist-step',
+    name: '', shortName: '', description: '',
+    rarity: 2, slotType: 'trinket', icon: 'wind', rewardKind: 'simple',
+    dodgeBonus: 8, defCoeff: 0.08,
+    effects: [
+      { kind: 'dodge', value: 8, unit: 'percent', description: '' },
+      { kind: 'defCoeff', value: 8, unit: 'percent', description: '' },
+    ],
+  },
+  {
+    id: 'piercing-quill',
+    name: '', shortName: '', description: '',
+    rarity: 1, slotType: 'trinket', icon: 'feather', rewardKind: 'simple',
+    enemyDefenseReduction: 6, playerDamageBonus: 1,
+    effects: [
+      { kind: 'enemyDefense', value: 6, unit: 'flat', description: '' },
+      { kind: 'playerDamage', value: 1, unit: 'flat', description: '' },
+    ],
+  },
+
   // ═══════════════════════════════════════════════
   //  Прочные (durable) артефакты — с износом
   // ═══════════════════════════════════════════════

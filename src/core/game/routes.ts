@@ -7,6 +7,7 @@ import type {
   GameRunRouteChoice,
   GameRunRouteState,
 } from '../../shared/types';
+import { getExpeditionRegion, getExpeditionEncounterKey } from './expedition';
 import { BOSS_LEVEL_INTERVAL, isBossLevel } from './runUtils';
 import { i18n, sanitizeTranslationParams } from '../i18n';
 
@@ -353,54 +354,26 @@ function getSegmentNodeKind(
   totalCols: number,
   random: () => number,
 ): GameMapNodeKind {
-  const canElite = bossLevel >= 10;
-  const canMiniboss = bossLevel >= 15;
-
-  // First column after boss leans toward battles; last column leans toward events
-  const isFirstCol = colIndex === 0;
-  const isLastCol = colIndex === totalCols - 1;
-
-  const pool: GameMapNodeKind[] = [];
-
-  if (isFirstCol) {
-    pool.push('battle', 'battle', 'battle');
-    if (canElite) pool.push('elite');
-    pool.push('treasure');
-  } else if (isLastCol) {
-    pool.push('rest', 'treasure', 'shop');
-    pool.push('risk');
-  } else {
-    pool.push('battle', 'battle');
-    pool.push(lane === 1 ? 'battle' : 'treasure');
-    pool.push(bossLevel % 4 === 0 ? 'shop' : 'treasure');
-    pool.push(bossLevel % 3 === 0 ? 'risk' : 'rest');
-    if (canMiniboss && bossLevel % 7 === 0 && lane === 0) pool.push('miniboss');
-    if (canElite && lane !== 1) pool.push('elite');
+  const region = getExpeditionRegion(bossLevel);
+  const safeLane = lane <= 1;
+  const dangerLane = lane >= 3;
+  if (colIndex === totalCols - 1) {
+    if (safeLane) return 'rest';
+    if (dangerLane) return bossLevel >= 15 ? 'miniboss' : bossLevel >= 10 ? 'elite' : 'risk';
+    return region === 'forge' ? 'shop' : 'treasure';
   }
-
-  return randomFrom(pool, random);
+  if (safeLane) return randomFrom<GameMapNodeKind>(
+    region === 'grove' ? ['battle', 'rest', 'treasure'] : ['battle', 'battle', 'rest', 'treasure'], random);
+  if (dangerLane) return randomFrom<GameMapNodeKind>(
+    bossLevel >= 10 ? ['elite', 'risk', 'battle', 'treasure'] : ['battle', 'risk', 'treasure'], random);
+  const specialty: GameMapNodeKind = region === 'forge' ? 'shop'
+    : region === 'rift' ? 'risk' : region === 'archive' ? 'treasure' : 'rest';
+  return randomFrom<GameMapNodeKind>(['battle', 'battle', specialty, 'shop'], random);
 }
 
-/**
- * Determine how many branches (lanes) a segment between two bosses should have.
- */
-function getSegmentBranchCount(bossLevel: number): number {
-  if (bossLevel >= 60) return randomFrom([2, 2, 3, 3]);
-  if (bossLevel >= 30) return randomFrom([2, 2, 3]);
-  if (bossLevel >= 15) return randomFrom([2, 2, 2, 3]);
-  return randomFrom([2, 2]);
-}
-
-/**
- * Determine how many intermediate columns to place between bosses.
- * This is the number of columns BETWEEN the boss-start and the next boss.
- * (Battles within these columns count as the non-boss fights.)
- */
+/** More decisions per region, with room for recovery before its boss. */
 function getSegmentDepth(bossLevel: number, random: () => number): number {
-  if (bossLevel >= 60) return randomFrom([3, 3, 4, 4, 5], random);
-  if (bossLevel >= 30) return randomFrom([2, 3, 3, 4], random);
-  if (bossLevel >= 15) return randomFrom([2, 2, 3, 3], random);
-  return randomFrom([2, 2, 3], random);
+  return bossLevel < 15 ? 4 : bossLevel < 50 ? randomFrom([4, 5], random) : randomFrom([5, 6], random);
 }
 
 /**
@@ -465,7 +438,7 @@ export function createGameRunMap(totalLevels: number, seed = `game-map:${totalLe
       const t = depth <= 1 ? 0.5 : col / (depth - 1); // 0..1
       // Diamond: width peaks in the middle
       const peak = getSegmentPeakWidth(bossLevel, random);
-      const edge = bossIdx === 1 && col === 0 ? 2 : 2; // start/end narrower
+      const edge = 3; // start/end narrower
       const w = Math.round(edge + (peak - edge) * Math.sin(t * Math.PI));
       widths.push(Math.max(2, Math.min(maxLanes, w)));
     }
@@ -473,8 +446,6 @@ export function createGameRunMap(totalLevels: number, seed = `game-map:${totalLe
     // For each column, pick lane positions (spread evenly)
     const columnLanes: number[][] = widths.map(w => spreadLanes(w, maxLanes));
 
-    // Assign battle levels round-robin to combat nodes
-    let battleLevelCursor = 0;
 
     // Create nodes for each column
     const columnNodeIds: string[][] = [];
@@ -482,14 +453,20 @@ export function createGameRunMap(totalLevels: number, seed = `game-map:${totalLe
     for (let col = 0; col < depth; col += 1) {
       const lanes = columnLanes[col];
       const colNodeIds: string[] = [];
+      const usedKinds = new Set<GameMapNodeKind>();
       for (const lane of lanes) {
-        const kind = getSegmentNodeKind(bossLevel, lane, col, depth, random);
-        let battleLevel: number | null = null;
-        if (isCombatKind(kind) && battleLevelCursor < segBattleLevels.length) {
-          battleLevel = segBattleLevels[battleLevelCursor];
-          battleLevelCursor += 1;
+        let kind = getSegmentNodeKind(bossLevel, lane, col, depth, random);
+        if (usedKinds.has(kind)) {
+          kind = randomFrom<GameMapNodeKind>(
+            (['battle', 'treasure', 'shop', 'rest', 'risk'] as GameMapNodeKind[]).filter(candidate => !usedKinds.has(candidate)), random,
+          );
         }
-        const nodeId = `seg-${bossLevel}-c${col}-l${lane}`;
+        usedKinds.add(kind);
+        // Parallel choices share the same depth; no exhausted pool or backwards levels.
+        const battleLevel = isCombatKind(kind)
+          ? segBattleLevels[Math.min(segBattleLevels.length - 1, Math.floor(col * segBattleLevels.length / depth))]
+          : null;
+        const nodeId = `seg-${bossLevel}-c${col}-l${lane}-v${Math.floor(random() * 1000000)}`;
         nodes.push(createMapNode(nodeId, kind, currentColumn + col, lane, battleLevel));
         colNodeIds.push(nodeId);
       }
@@ -532,7 +509,7 @@ export function createGameRunMap(totalLevels: number, seed = `game-map:${totalLe
   if (lastBossLevel < totalLevels) {
     const lastBossId = totalBosses > 0 ? `boss-${lastBossLevel}` : startId;
     let prevId = lastBossId;
-    for (let lvl = lastBossLevel + 1; lvl <= totalLevels; lvl += 1) {
+    for (let lvl = Math.max(2, lastBossLevel + 1); lvl <= totalLevels; lvl += 1) {
       const nodeId = `battle-${lvl}`;
       nodes.push(createMapNode(nodeId, 'battle', currentColumn, 2, lvl));
       links.push({ fromId: prevId, toId: nodeId });
@@ -541,35 +518,22 @@ export function createGameRunMap(totalLevels: number, seed = `game-map:${totalLe
     }
   }
 
-  // ── Final convergence node ──
-  const maxCol = Math.max(...nodes.map(n => n.column));
-  const finalNodes = nodes.filter(n => n.column === maxCol);
-  if (finalNodes.length > 1) {
-    // Already converges to one — no extra node needed
-  }
-  // Always add a finish node so all paths converge
-  const finishId = 'finish';
-  nodes.push(createMapNode(finishId, 'boss', maxCol + 1, 2, totalLevels));
-  // Connect all leaf nodes to finish
-  const outgoing = new Set(links.map(l => l.fromId));
-  for (const node of nodes) {
-    if (node.id === finishId) continue;
-    if (!outgoing.has(node.id)) {
-      links.push({ fromId: node.id, toId: finishId });
+  // The last encounter is the finish: never show a second copy of the final boss.
+  const terminal = nodes[nodes.length - 1];
+  if (terminal.id !== startId) {
+    const oldId = terminal.id;
+    terminal.id = 'finish';
+    for (const link of links) {
+      if (link.toId === oldId) link.toId = terminal.id;
+      if (link.fromId === oldId) link.fromId = terminal.id;
     }
   }
-
-  // ── Dead-end & dedup safety pass ──
-  const finalOutgoing = new Set(links.map(l => l.fromId));
   for (const node of nodes) {
-    if (node.id === finishId) continue;
-    if (finalOutgoing.has(node.id)) continue;
-    const nextCol = nodes.filter(n => n.column === node.column + 1);
-    if (nextCol.length > 0) {
-      const closest = nextCol.reduce((b, c) =>
-        Math.abs(c.lane - node.lane) < Math.abs(b.lane - node.lane) ? c : b, nextCol[0]);
-      links.push({ fromId: node.id, toId: closest.id });
-    }
+    const encounter = getExpeditionEncounterKey(node);
+    if (!encounter) continue;
+    node.title = t('game.expedition.events.' + encounter + '.title');
+    node.flavor = t('game.expedition.events.' + encounter + '.description');
+    node.description = node.flavor;
   }
 
   // Deduplicate links

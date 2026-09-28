@@ -1,21 +1,20 @@
-// БОССЫ СЛЕГКА УСИЛЕНЫ (BOSS_HP_COEFF = 1.25)
 /**
- * Battle System v2 — round-based attack/defense combat with CPM & rhythm mechanics.
+ * Round-based combat: typing quality controls damage, guard and critical hits.
  *
  * Formulas:
  *   ΔCPM = currentCPM / baseCPM (ratio, 1.0 = on target)
- *   Δrhythm = avgInterval / worstInterval → mapped from (0,1) to (0,3)
+ *   Δrhythm = 3 / (1 + standardDeviation / averageInterval)
  *
  * Attack phase (player attacks enemy):
  *   damage = baseDmgCoeff * (1 + artifactDmgCoeff) * ΔCPM
- *   damage *= accuracyFactor (0.5..1.0)
- *   damage reduced by enemyDefense
- *   critChance = (baseCritCoeff + artifactCritBonus) * Δrhythm   (clamped 0-1)
+ *   damage *= accuracyFactor (0..1)
+ *   damage *= 1 - enemyDefense / 100 (armor capped at 75%)
+ *   critChance = (baseCritCoeff + artifactCritBonus) * Δrhythm   (clamped 0-0.5)
  *   if crit: damage *= critMultiplier (2×)
  *
  * Defend phase (enemy attacks player):
- *   defPoints   = baseDefCoeff * (1 + artifactDefCoeff) * ΔCPM   (damage reduced)
- *   incomingDmg = max(1, enemyBaseDmg − enemyAttackReduction − defPoints)
+ *   defPoints   = baseDefCoeff * (1 + artifactDefCoeff) * ΔCPM * accuracyFactor
+ *   incomingDmg = dodge ? 0 : max(1, enemyBaseDmg − enemyAttackReduction − defPoints)
  *
  * Enemy HP scales progressively with level. Bosses get a multiplier.
  * Bosses also debuff one player parameter (CPM, accuracy, or rhythm).
@@ -34,9 +33,9 @@ import { resolveRuntimeTranslation } from '../i18n';
 /* ── Player base constants ── */
 
 export const PLAYER_BASE_HP = 100;
-export const PLAYER_BASE_DMG_COEFF = 10;
-export const PLAYER_BASE_DEF_COEFF = 10;
-export const PLAYER_BASE_CRIT_COEFF = 0.01;
+export const PLAYER_BASE_DMG_COEFF = 12;
+export const PLAYER_BASE_DEF_COEFF = 8;
+export const PLAYER_BASE_CRIT_COEFF = 0.025;
 export const REGEN_HP_PER_BATTLE = 10;
 const CRIT_MULTIPLIER = 2;
 
@@ -54,32 +53,32 @@ interface EnemyStatRange {
 
 const ENEMY_STAT_RANGES: Record<EnemyTier, EnemyStatRange> = {
   normal: {
-    baseHp: 3,
+    baseHp: 12,
     defenseMin: 15,
     defenseMax: 30,
-    baseDamage: 8,
+    baseDamage: 10,
   },
   elite: {
-    baseHp: 5,
+    baseHp: 20,
     defenseMin: 25,
     defenseMax: 40,
     baseDamage: 12,
   },
   miniboss: {
-    baseHp: 7,
+    baseHp: 28,
     defenseMin: 30,
     defenseMax: 45,
     baseDamage: 15,
   },
   boss: {
-    baseHp: 9,
+    baseHp: 34,
     defenseMin: 35,
     defenseMax: 50,
-    baseDamage: 18,
+    baseDamage: 16,
   },
 };
 
-const BOSS_HP_COEFF = 1.25;
+const BOSS_HP_COEFF = 1.15;
 
 const ENEMY_NAME_KEYS: Record<EnemyTier, string[]> = {
   normal: ['scripter', 'watcher', 'pathGuard', 'sentinel', 'codeShadow'],
@@ -90,12 +89,12 @@ const ENEMY_NAME_KEYS: Record<EnemyTier, string[]> = {
 
 const BOSS_DEBUFFS: BossDebuff[] = ['cpm', 'accuracy', 'rhythm'];
 
-function randInt(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+function randInt(min: number, max: number, random: () => number): number {
+  return Math.floor(random() * (max - min + 1)) + min;
 }
 
-function randFrom<T>(items: T[]): T {
-  return items[Math.floor(Math.random() * items.length)] ?? items[0];
+function randFrom<T>(items: T[], random: () => number): T {
+  return items[Math.floor(random() * items.length)] ?? items[0];
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -109,20 +108,21 @@ function t(key: string, params?: Record<string, string | number>) {
 /* ── Enemy creation ── */
 
 /**
- * Progressive HP scaling: base * (1 + level * 0.06)
+ * Gentle HP scaling: base * (1 + (level - 1) * 0.018), levels 1–100.
  * Boss HP = scaled HP * BOSS_HP_COEFF
  */
-export function createEnemy(tier: EnemyTier, level: number): EnemyStats {
+export function createEnemy(tier: EnemyTier, level: number, random: () => number = Math.random): EnemyStats {
   const range = ENEMY_STAT_RANGES[tier];
-  const hpScaling = 1 + level * 0.06;
+  const safeLevel = Number.isFinite(level) ? clamp(level, 1, 100) : 1;
+  const hpScaling = 1 + (safeLevel - 1) * 0.018;
   let hp = Math.round(range.baseHp * hpScaling);
   if (tier === 'boss') {
     hp = Math.round(hp * BOSS_HP_COEFF);
   }
-  const defense = randInt(range.defenseMin, range.defenseMax);
-  const nameKey = randFrom(ENEMY_NAME_KEYS[tier]);
+  const defense = randInt(range.defenseMin, range.defenseMax, random);
+  const nameKey = randFrom(ENEMY_NAME_KEYS[tier], random);
   const name = t(`game.core.events.battle.enemyNames.${tier}.${nameKey}`);
-  const debuff = tier === 'boss' ? randFrom(BOSS_DEBUFFS) : null;
+  const debuff = tier === 'boss' ? randFrom(BOSS_DEBUFFS, random) : null;
 
   return { name, tier, maxHp: hp, hp, hitChance: 100, defense, debuff };
 }
@@ -157,33 +157,32 @@ export const BOSS_BATTLE_ROUND_WORDS = 10;
 
 /**
  * Compute Δrhythm from keypress intervals.
- * Δrhythm = avgInterval / worstInterval (worst = max deviation from mean).
- * Raw value in (0, 1) is mapped linearly to (0, 3).
+ * Δrhythm = 3 / (1 + standardDeviation / averageInterval).
+ * Uses every valid interval, including pauses; isolated jitter is not decisive.
  *
  * Perfect rhythm → ratio close to 1 → mapped to 3.
  * Terrible rhythm → ratio close to 0 → mapped to 0.
  */
 export function computeDeltaRhythm(intervals: number[]): number {
   if (intervals.length < 2) return 1.5; // neutral default
-  const filtered = intervals.filter(ms => ms > 0 && ms < 2000);
+  // Keep pauses: dropping long intervals rewarded irregular typing.
+  const filtered = intervals.filter(ms => Number.isFinite(ms) && ms > 0);
   if (filtered.length < 2) return 1.5;
 
   const avg = filtered.reduce((s, v) => s + v, 0) / filtered.length;
-  const worst = Math.max(...filtered.map(v => Math.abs(v - avg)));
-  if (worst <= 0) return 3; // perfectly uniform
-
-  const raw = clamp(avg / (avg + worst), 0, 1); // normalized (0,1)
-  return raw * 3; // mapped to (0,3)
+  const deviation = Math.sqrt(filtered.reduce((sum, ms) => sum + (ms - avg) ** 2, 0) / filtered.length);
+  return clamp(3 / (1 + deviation / avg), 0, 3);
 }
 
 /**
  * Compute ΔCPM ratio.
  * ΔCPM = currentCPM / baseCPM  (1.0 = on target, >1 = faster, <1 = slower)
- * Clamped to (0.2, 3.0) to avoid extremes.
+ * Clamped to [0, 2] to avoid rewarding an artificially tiny speed target.
  */
 export function computeDeltaCpm(currentCpm: number, baseCpm: number): number {
-  if (baseCpm <= 0) return 1;
-  return clamp(currentCpm / baseCpm, 0.2, 3.0);
+  if (!Number.isFinite(currentCpm) || currentCpm <= 0) return 0;
+  if (!Number.isFinite(baseCpm) || baseCpm <= 0) return 1;
+  return clamp(currentCpm / baseCpm, 0, 2);
 }
 
 /* ── Battle bonuses interface ── */
@@ -211,13 +210,15 @@ export function resolveBattleRound(
   baseCpm: number,
   rhythmIntervals: number[],
   bonuses: BattleBonuses,
+  random: () => number = Math.random,
 ): BattleState {
+  if (state.finished) return state;
   const { phase, enemy } = state;
   const deltaCpm = computeDeltaCpm(currentCpm, baseCpm);
   const deltaRhythm = computeDeltaRhythm(rhythmIntervals);
 
   // Apply boss debuff
-  let effectiveAcc = accuracy;
+  let effectiveAcc = Number.isFinite(accuracy) ? clamp(accuracy, 0, 100) : 0;
   let effectiveDeltaCpm = deltaCpm;
   let effectiveDeltaRhythm = deltaRhythm;
   if (enemy.debuff === 'accuracy') effectiveAcc *= 0.85;
@@ -225,19 +226,19 @@ export function resolveBattleRound(
   if (enemy.debuff === 'rhythm') effectiveDeltaRhythm *= 0.6;
 
   // Effective enemy stats after bonuses
-  const effectiveDefense = Math.max(0, enemy.defense - bonuses.enemyDefenseReduction);
+  const effectiveDefense = clamp(enemy.defense - bonuses.enemyDefenseReduction, 0, 75);
+  const accFactor = effectiveAcc / 100;
 
   let hit = false;
   let damage = 0;
   let crit = false;
   let critMultiplier = 1;
-  const hitChance = 100;
+  let hitChance = 100;
   let defensePoints = 0;
 
   if (phase === 'attack') {
     // ── Attack phase ──
-    hit = true;
-    const accFactor = clamp(effectiveAcc / 100, 0.5, 1);
+    hit = effectiveAcc > 0 && effectiveDeltaCpm > 0;
     const rawDmg = (
       PLAYER_BASE_DMG_COEFF * (1 + bonuses.dmgCoeff) * effectiveDeltaCpm
       + bonuses.playerDamageBonus
@@ -247,23 +248,24 @@ export function resolveBattleRound(
     // Crit chance = (baseCritCoeff + artifactCritBonus) * Δrhythm
     const critChance = clamp(
       (PLAYER_BASE_CRIT_COEFF + bonuses.critBonus) * effectiveDeltaRhythm,
-      0, 1,
+      0, 0.5,
     );
-    crit = Math.random() < critChance;
+    crit = hit && random() < critChance;
     critMultiplier = crit ? CRIT_MULTIPLIER : 1;
 
-    damage = Math.round(rawDmg * critMultiplier) - effectiveDefense;
-    if (damage < 1) damage = 1;
+    damage = hit ? Math.max(1, Math.round(rawDmg * critMultiplier * (1 - effectiveDefense / 100))) : 0;
   } else {
     // ── Defend phase ──
-    hit = true;
-    defensePoints = Math.round(
-      PLAYER_BASE_DEF_COEFF * (1 + bonuses.defCoeff) * effectiveDeltaCpm,
-    );
+    const dodgeChance = clamp(bonuses.dodgeBonus, 0, 35);
+    hitChance = 100 - dodgeChance;
+    hit = random() * 100 >= dodgeChance;
+    defensePoints = Math.max(0, Math.round(
+      PLAYER_BASE_DEF_COEFF * (1 + bonuses.defCoeff) * effectiveDeltaCpm * accFactor,
+    ));
     const tierRange = ENEMY_STAT_RANGES[enemy.tier ?? 'normal'] ?? ENEMY_STAT_RANGES.normal;
     const rawEnemyDmg = tierRange.baseDamage;
     const reducedEnemyDmg = Math.max(1, rawEnemyDmg - bonuses.enemyAttackReduction);
-    damage = Math.max(1, reducedEnemyDmg - defensePoints);
+    damage = hit ? Math.max(1, reducedEnemyDmg - defensePoints) : 0;
   }
 
   const roundResult: BattleRoundResult = {

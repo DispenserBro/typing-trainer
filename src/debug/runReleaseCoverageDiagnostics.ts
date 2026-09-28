@@ -27,6 +27,9 @@ function buildChecks(): Check[] {
   const coreDiagnostics = readProjectFile('src/debug/runCoreDiagnostics.ts');
   const releaseHardening = readProjectFile('scripts/release-hardening.mjs');
   const releaseWorkflow = readProjectFile('.github/workflows/build.yml');
+  const packageJson = readProjectFile('package.json');
+  const autoUpdates = readProjectFile('src/main/autoUpdates.ts');
+  const mainProcess = readProjectFile('src/main/main.ts');
   const enLocale = readProjectFile('src/core/i18n/locales/en.po');
   const ruLocale = readProjectFile('src/core/i18n/locales/ru.po');
 
@@ -113,6 +116,33 @@ function buildChecks(): Check[] {
         'CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CSC_KEY_PASSWORD }}',
         'Verify Windows signatures',
         'Get-AuthenticodeSignature',
+      ]),
+    ),
+    makeCheck(
+      'GitHub Releases auto-update coverage',
+      'Packaged apps check GitHub Releases on startup and release publishing includes update metadata for Windows, Linux and macOS.',
+      includesAll(packageJson, [
+        '"electron-updater"',
+        '"provider": "github"',
+        '"owner": "DispenserBro"',
+        '"repo": "typing-trainer"',
+      ]) && includesAll(autoUpdates, [
+        'autoUpdater.checkForUpdates()',
+        'autoUpdater.autoDownload = true',
+        'autoUpdater.autoInstallOnAppQuit = true',
+        'autoUpdater.quitAndInstall(false, true)',
+        'app.isPackaged',
+      ]) && includesAll(mainProcess, [
+        "import { startAutoUpdates } from './autoUpdates';",
+        'startAutoUpdates(() => win)',
+      ]) && includesAll(releaseWorkflow, [
+        'latest.yml',
+        'latest-linux.yml',
+        'latest-mac.yml',
+        'release-artifacts/**/*.yml',
+        'release-artifacts/**/*.blockmap',
+        'dist-build/**/*.dmg',
+        'dist-build/**/*.zip',
       ]),
     ),
     makeCheck(

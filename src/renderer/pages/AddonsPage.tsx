@@ -85,7 +85,8 @@ type MarkdownPreviewState = {
   description?: string;
   entry?: ExtensionCatalogEntry;
   appVersion?: string;
-  markdown: string;
+  markdown?: string;
+  plainDescription?: string;
   minAppVersion?: string;
   title: string;
   version?: string;
@@ -370,9 +371,7 @@ function getEmptyStateIcon(kind: ExtensionCatalogEmptyIconKind): ReactElement {
 function createMarkdownPreviewFromCatalogEntry(
   entry: ExtensionCatalogEntry,
   t: (key: string, params?: Record<string, string | number>) => string,
-): MarkdownPreviewState | null {
-  if (!entry.cardMarkdown) return null;
-
+): MarkdownPreviewState {
   return {
     author: entry.manifestAuthor,
     baseUri: entry.resolvedCardUri,
@@ -381,7 +380,8 @@ function createMarkdownPreviewFromCatalogEntry(
     entry,
     appVersion: entry.compatibility?.appVersion,
     compatible: entry.compatibility?.compatible,
-    markdown: entry.cardMarkdown,
+    markdown: entry.cardMarkdown?.trim() || undefined,
+    plainDescription: entry.manifestDescription?.trim() || t('addons.catalog.noDescription'),
     minAppVersion: entry.minAppVersion,
     version: entry.manifestVersion,
   };
@@ -624,22 +624,15 @@ function CatalogCard({
   const dependencies = entry.dependencies.join(', ');
   const duplicateSources = formatDuplicateSourceNames(entry.duplicateSourceNames, t);
   const permissions = entry.permissions.join(', ');
-  const canOpenCard = Boolean(entry.cardMarkdown?.trim());
   const duplicateRecommendation = getDuplicateRecommendationText(entry, t);
 
   return (
     <div
-      className={`addon-card addon-card--catalog${entry.status === 'invalid' || entry.status === 'incompatible' ? ' addon-card--blocked' : ''}${canOpenCard ? ' addon-card--clickable' : ''}`}
-      onClick={() => canOpenCard && onOpenCard(entry)}
-      onKeyDown={(event) => {
-        if (!canOpenCard) return;
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          onOpenCard(entry);
-        }
+      className={`addon-card addon-card--catalog addon-card--clickable${entry.status === 'invalid' || entry.status === 'incompatible' ? ' addon-card--blocked' : ''}`}
+      onClick={(event) => {
+        if ((event.target as Element).closest('button, a')) return;
+        onOpenCard(entry);
       }}
-      role={canOpenCard ? 'button' : undefined}
-      tabIndex={canOpenCard ? 0 : undefined}
     >
       <div className="addon-card__icon">
         {renderManifestIcon(
@@ -650,7 +643,14 @@ function CatalogCard({
       <div className="addon-card__body">
         <div className="addon-card__source-head">
           <div className="addon-card__header">
-            <span className="addon-card__name">{entry.manifestName ?? entry.entryId}</span>
+            <button
+              type="button"
+              className="addon-card__name addon-card__details-button"
+              aria-haspopup="dialog"
+              onClick={() => onOpenCard(entry)}
+            >
+              {entry.manifestName ?? entry.entryId}
+            </button>
             {entry.manifestVersion ? <span className="addon-card__version">v{entry.manifestVersion}</span> : null}
             {entry.manifestAuthor ? <span className="addon-card__author">{entry.manifestAuthor}</span> : null}
           </div>
@@ -1281,8 +1281,7 @@ export function AddonsPage() {
   };
 
   const handleOpenCatalogCard = (entry: ExtensionCatalogEntry) => {
-    const nextPreview = createMarkdownPreviewFromCatalogEntry(entry, t);
-    if (nextPreview) setMarkdownPreview(nextPreview);
+    setMarkdownPreview(createMarkdownPreviewFromCatalogEntry(entry, t));
   };
 
   const handleRemoveAddon = async (id: string) => {
@@ -1734,11 +1733,17 @@ export function AddonsPage() {
               <CatalogIssueSections entry={markdownPreview.entry} t={t} />
             </div>
           ) : null}
-          <SafeMarkdown
-            baseUri={markdownPreview.baseUri}
-            className="addon-card__markdown addons-markdown-modal__content"
-            markdown={markdownPreview.markdown}
-          />
+          {markdownPreview.markdown ? (
+            <SafeMarkdown
+              baseUri={markdownPreview.baseUri}
+              className="addon-card__markdown addons-markdown-modal__content"
+              markdown={markdownPreview.markdown}
+            />
+          ) : (
+            <p className="addons-markdown-modal__content addons-markdown-modal__description">
+              {markdownPreview.plainDescription}
+            </p>
+          )}
         </ModalLayout>
         );
       })() : null}

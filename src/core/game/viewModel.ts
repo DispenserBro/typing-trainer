@@ -113,7 +113,7 @@ export function buildGameResultViewModel({
   selectedRewardMessage,
   translate,
 }: BuildGameResultViewModelArgs) {
-  const rewardPending = Boolean(result?.passed && result.isBoss && rewardChoices && !selectedRewardMessage);
+  const rewardPending = Boolean(result?.passed && rewardChoices && !selectedRewardMessage);
   const mapSelectionPending = Boolean(result?.passed && selectableMapNodeIdsLength > 0);
   const isTerminalDailyRun = Boolean(dailySeed) && Boolean(result && (result.victory || result.livesLeft <= 0));
   const historyModel = buildGameResultHistoryModel({

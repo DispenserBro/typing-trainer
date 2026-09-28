@@ -59,7 +59,6 @@ const REQUIRED_RELEASE_WORKFLOW_SNIPPETS = [
   'TYPING_TRAINER_SDK_DIR: SDK',
   'Verify Windows signatures',
   'Get-AuthenticodeSignature',
-  'MACOS_RELEASE_STATUS: excluded-until-signing-and-notarization',
   'publish-release:',
   'Verify complete release artifacts',
   'if-no-files-found: error',
@@ -69,6 +68,10 @@ const REQUIRED_RELEASE_WORKFLOW_SNIPPETS = [
   'dist-build/**/*.AppImage',
   'dist-build/**/*.deb',
   'dist-build/**/*.rpm',
+  'dist-build/**/*.dmg',
+  'dist-build/**/*.zip',
+  'dist-build/**/*.yml',
+  'dist-build/**/*.blockmap',
 ];
 
 const FIRST_RUN_SETUP_CONTRACT = {
@@ -461,7 +464,15 @@ function assertPackagingReadiness(targets, electronBuilderCli) {
     {
       name: 'electron-builder app icon and beforeBuild hook are configured',
       passed: buildConfig.icon === 'data/app-icon.png'
+        && buildConfig.artifactName === 'Typing-Trainer-${version}-${os}-${arch}.${ext}'
         && buildConfig.beforeBuild === './scripts/electron-builder-before-build.cjs',
+    },
+    {
+      name: 'electron-builder GitHub auto-update provider is configured',
+      passed: Array.isArray(buildConfig.publish)
+        && buildConfig.publish.some(publishConfig => publishConfig?.provider === 'github'
+          && publishConfig.owner === 'DispenserBro'
+          && publishConfig.repo === 'typing-trainer'),
     },
     {
       name: 'NSIS include is configured',
@@ -479,7 +490,7 @@ function assertPackagingReadiness(targets, electronBuilderCli) {
         && buildConfig.linux?.category === 'Education',
     },
     {
-      name: 'macOS packaging targets are configured as unsigned smoke-only release candidates',
+      name: 'macOS packaging targets are configured for release publishing',
       passed: ['dmg', 'zip'].every(target => hasBuildTarget(buildConfig.mac?.target, target))
         && buildConfig.mac?.identity === null
         && buildConfig.mac?.icon === 'data/app-icon.png'

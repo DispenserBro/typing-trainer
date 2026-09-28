@@ -9,17 +9,30 @@ import type {
   GameRunRouteState,
 } from '../../shared/types';
 
+function finiteNumber(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
 export function normalizeGameRunModifier(modifier?: Partial<GameRunModifier> | null): GameRunModifier | null {
   if (!modifier?.id || !modifier?.name) return null;
   return {
     id: modifier.id,
     name: modifier.name,
     description: typeof modifier.description === 'string' ? modifier.description : '',
-    speedRequirementReductionPercent: Math.max(0, Number(modifier.speedRequirementReductionPercent ?? 0)) || undefined,
-    accuracyRequirementReduction: Math.max(0, Number(modifier.accuracyRequirementReduction ?? 0)) || undefined,
-    bossTimerBonusSeconds: Math.max(0, Number(modifier.bossTimerBonusSeconds ?? 0)) || undefined,
+    // Signed values are intentional: curses and trades must retain their cost on reload.
+    speedRequirementReductionPercent: finiteNumber(modifier.speedRequirementReductionPercent),
+    accuracyRequirementReduction: finiteNumber(modifier.accuracyRequirementReduction),
+    bossTimerBonusSeconds: finiteNumber(modifier.bossTimerBonusSeconds),
+    enemyAttackReduction: finiteNumber(modifier.enemyAttackReduction),
+    enemyDefenseReduction: finiteNumber(modifier.enemyDefenseReduction),
+    dodgeBonus: finiteNumber(modifier.dodgeBonus),
+    playerAttackBonus: finiteNumber(modifier.playerAttackBonus),
+    playerDamageBonus: finiteNumber(modifier.playerDamageBonus),
+    dmgCoeff: finiteNumber(modifier.dmgCoeff),
+    defCoeff: finiteNumber(modifier.defCoeff),
+    critBonus: finiteNumber(modifier.critBonus),
     bossOnly: Boolean(modifier.bossOnly),
-    remainingLevels: Math.max(0, Math.floor(Number(modifier.remainingLevels ?? 0))),
+    remainingLevels: Math.max(0, Math.floor(finiteNumber(modifier.remainingLevels) ?? 0)),
   };
 }
 
@@ -31,8 +44,11 @@ export function normalizeGameRunEventChoice(choice?: Partial<GameRunEventChoice>
     flavor: typeof choice.flavor === 'string' ? choice.flavor : '',
     description: typeof choice.description === 'string' ? choice.description : '',
     effect: {
-      lifeDelta: typeof choice.effect?.lifeDelta === 'number' ? Math.round(choice.effect.lifeDelta) : undefined,
-      repairEquippedBy: typeof choice.effect?.repairEquippedBy === 'number' ? Math.max(0, Math.round(choice.effect.repairEquippedBy)) : undefined,
+      lifeDelta: finiteNumber(choice.effect?.lifeDelta) == null ? undefined : Math.round(choice.effect!.lifeDelta!),
+      maxLifeDelta: finiteNumber(choice.effect?.maxLifeDelta) == null ? undefined : Math.round(choice.effect!.maxLifeDelta!),
+      fullHeal: choice.effect?.fullHeal === true ? true : undefined,
+      regenTurns: finiteNumber(choice.effect?.regenTurns) == null ? undefined : Math.max(0, Math.floor(choice.effect!.regenTurns!)),
+      repairEquippedBy: finiteNumber(choice.effect?.repairEquippedBy) == null ? undefined : Math.max(0, Math.round(choice.effect!.repairEquippedBy!)),
       grantItemId: typeof choice.effect?.grantItemId === 'string' ? choice.effect.grantItemId : undefined,
       modifier: normalizeGameRunModifier(choice.effect?.modifier) ?? undefined,
     },

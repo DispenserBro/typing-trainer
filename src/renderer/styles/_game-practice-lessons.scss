@@ -1153,6 +1153,100 @@
 .game-battle-overlay {
   width: min(960px, 100%);
 }
+
+/* Combat feedback stays above the typing surface and never captures input. */
+.game-combat-arena {
+  display: grid;
+  grid-template-columns: minmax(80px, 1fr) minmax(160px, 2fr) minmax(80px, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 20px 16px;
+  margin-bottom: 8px;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--surface3));
+  border-radius: 16px;
+  background: radial-gradient(ellipse at 50% 110%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 70%), var(--surface);
+}
+.game-combat-fighter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  min-width: 0;
+  color: var(--text);
+  font-size: .8rem;
+  > span { overflow-wrap: anywhere; }
+  small { color: var(--subtext); font-size: .7rem; }
+}
+.game-combat-emblem {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 66px;
+  height: 66px;
+  border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+  border-radius: 20px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface2));
+  box-shadow: inset 0 0 20px color-mix(in srgb, var(--accent) 8%, transparent);
+}
+.game-combat-fighter--enemy .game-combat-emblem {
+  color: var(--red);
+  border-color: color-mix(in srgb, var(--red) 45%, transparent);
+  background: color-mix(in srgb, var(--red) 10%, var(--surface2));
+}
+.game-combat-center { text-align: center; min-width: 0; }
+.game-combat-center > small { color: var(--subtext); font-size: .72rem; }
+.game-combat-phase {
+  display: inline-flex; align-items: center; gap: 6px;
+  border-radius: 100px; padding: 5px 12px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent); font-size: .75rem; font-weight: 700;
+}
+.game-combat-phase--defend { color: var(--green); background: color-mix(in srgb, var(--green) 12%, transparent); }
+.game-combat-feedback { margin: 10px 0 5px; min-height: 1.4em; font-size: .9rem; font-weight: 600; color: var(--text); }
+.game-combat-feedback--critical { color: var(--yellow); }
+.game-combat-feedback--dodge { color: var(--green); }
+.game-combat-burst {
+  --burst-color: var(--accent);
+  position: absolute; inset: 0; pointer-events: none; z-index: 1;
+  &--critical, &--victory { --burst-color: var(--yellow); }
+  &--guard { --burst-color: var(--red); }
+  &--dodge { --burst-color: var(--green); }
+  i {
+    position: absolute; left: 50%; top: 50%;
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--burst-color); box-shadow: 0 0 8px var(--burst-color);
+    opacity: 0;
+    animation: game-combat-particle 650ms ease-out var(--particle-delay) both;
+  }
+  &::after {
+    content: ''; position: absolute; inset: 2px; border-radius: inherit;
+    border: 2px solid var(--burst-color); opacity: 0;
+    animation: game-combat-ring 500ms ease-out both;
+  }
+}
+@keyframes game-combat-particle {
+  0% { opacity: .9; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(var(--particle-x), var(--particle-y)) scale(.2); }
+}
+@keyframes game-combat-ring {
+  0% { opacity: .75; transform: scale(.85); }
+  100% { opacity: 0; transform: scale(1.55); }
+}
+.game-victory-burst { position: relative; display: grid; place-items: center; width: 44px; height: 44px; margin: 0 auto 12px; color: var(--yellow); }
+[data-reduced-motion] .game-combat-burst { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .game-combat-burst { display: none; }
+  .game-battle-overlay .game-hp-bar-fill { transition: none; }
+}
+@media (max-width: 600px) {
+  .game-combat-arena { gap: 8px; padding: 14px 8px; grid-template-columns: minmax(56px, 1fr) minmax(110px, 2fr) minmax(56px, 1fr); }
+  .game-combat-emblem { width: 48px; height: 48px; border-radius: 14px; }
+  .game-combat-feedback { font-size: .78rem; }
+  .game-combat-center > small { display: none; }
+}
+
 .game-battle-overlay .text-display {
   margin-bottom: 0;
   box-shadow: 0 20px 44px rgba(0, 0, 0, 0.28);
@@ -2047,3 +2141,42 @@
 .game-map-node.miniboss {
   border-color: color-mix(in srgb, #ef4444 40%, var(--surface3));
 }
+
+/* Expedition map: compare the next step and its onward branches. */
+.game-map-title-row { flex-direction: column; align-items: stretch; gap: 12px; }
+.game-map-shell { --region-color: var(--accent); }
+.game-map-region--grove { --region-color: var(--green, #78ad83); }
+.game-map-region--archive { --region-color: var(--blue, #86a8ce); }
+.game-map-region--forge { --region-color: var(--accent); }
+.game-map-region--rift { --region-color: var(--mauve, #ba92cf); }
+.game-map-title { color: var(--region-color); }
+.game-route-choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+  gap: 8px;
+  max-height: 230px;
+  overflow-y: auto;
+}
+.game-route-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 11px 12px;
+  text-align: left;
+  border: 1px solid var(--surface3);
+  border-radius: 10px;
+  background: var(--surface2);
+  color: var(--text);
+  cursor: pointer;
+}
+.game-route-choice strong { display: flex; align-items: center; gap: 7px; font-size: 0.85rem; }
+.game-route-choice span, .game-route-choice small { font-size: 0.72rem; line-height: 1.4; color: var(--subtext); }
+.game-route-choice:hover, .game-route-choice:focus-visible { border-color: var(--region-color); outline: 2px solid var(--region-color); outline-offset: 1px; }
+.game-route-choice.kind-elite strong, .game-route-choice.kind-miniboss strong, .game-route-choice.kind-risk strong { color: var(--red, #ed7373); }
+.game-route-choice.kind-rest strong { color: var(--green, #78ad83); }
+.game-map-lines line.preview { stroke: var(--region-color); stroke-width: 3; opacity: 1; }
+.game-map-node.kind-elite .game-map-node-icon { color: var(--red, #ed7373); }
+.game-map-node.kind-miniboss .game-map-node-icon { color: var(--mauve, #ba92cf); }
+
+/* Keep the route graph usable when inventory or route cards need more space. */
+.game-page .game-map-stage { min-height: 680px; flex: 1 0 680px; }

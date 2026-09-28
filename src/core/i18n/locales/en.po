@@ -6,6 +6,435 @@ msgstr ""
 "X-Language-Label: English\n"
 "X-Language-Native-Label: English\n"
 
+msgid "adventure.kicker"
+msgstr "A KEYBOARD ADVENTURE"
+
+msgid "adventure.title"
+msgstr "Wordkeeper"
+
+msgid "adventure.storyKicker"
+msgstr "CHAPTER I · THE FADING ARCHIVE"
+
+msgid "adventure.storyTitle"
+msgstr "Give the world its voice."
+
+msgid "adventure.story"
+msgstr "Three forgotten realms. One keeper. Turn words into spells, gather relics and reach the Heart of Silence."
+
+msgid "adventure.menu"
+msgstr "Camp"
+
+msgid "adventure.pause"
+msgstr "Pause"
+
+msgid "adventure.paused"
+msgstr "Taking a breath"
+
+msgid "adventure.pauseHint"
+msgstr "Your journey is saved. Continue when you are ready."
+
+msgid "adventure.sound"
+msgstr "Sound effects"
+
+msgid "adventure.fullscreen"
+msgstr "Fullscreen"
+
+msgid "adventure.resume"
+msgstr "Continue journey"
+
+msgid "adventure.best"
+msgstr "Best journey: {{value}}/15"
+
+msgid "adventure.victories"
+msgstr "Victories: {{value}}"
+
+msgid "adventure.shards"
+msgstr "shards"
+
+msgid "adventure.chooseRole"
+msgstr "Who will you become?"
+
+msgid "adventure.roleHint"
+msgstr "Three ways to fight"
+
+msgid "adventure.role.warden"
+msgstr "Warden"
+
+msgid "adventure.role.wardenDesc"
+msgstr "+25 health. Guard words grant 5 extra shield. Endure heavy attacks and recover from mistakes."
+
+msgid "adventure.role.mage"
+msgstr "Mage"
+
+msgid "adventure.role.mageDesc"
+msgstr "Starts with 3 mana. Spells deal 6 extra damage to every enemy."
+
+msgid "adventure.role.ranger"
+msgstr "Ranger"
+
+msgid "adventure.role.rangerDesc"
+msgstr "Critical hits deal ×2.3 damage instead of ×1.8. Keep your flawless word streak alive."
+
+msgid "adventure.difficulty"
+msgstr "Difficulty"
+
+msgid "adventure.normal"
+msgstr "Adventure"
+
+msgid "adventure.storyMode"
+msgstr "Story · gentler"
+
+msgid "adventure.begin"
+msgstr "Begin expedition"
+
+msgid "adventure.classic"
+msgstr "Classic mode"
+
+msgid "adventure.backAdventure"
+msgstr "Back to adventure"
+
+msgid "adventure.savedRun"
+msgstr "Your expedition awaits"
+
+msgid "adventure.replaceRun"
+msgstr "Replace the current expedition? Its relics and route will be lost. Shards and permanent upgrades remain."
+
+msgid "adventure.cancel"
+msgstr "Cancel"
+
+msgid "adventure.legacyTitle"
+msgstr "Keeper’s legacy"
+
+msgid "adventure.legacyHint"
+msgstr "Battle shards strengthen future runs. Purchase upgrades between expeditions."
+
+msgid "adventure.vitality"
+msgstr "Vitality"
+
+msgid "adventure.vitalityDesc"
+msgstr "+5 HP in a new run"
+
+msgid "adventure.might"
+msgstr "Might"
+
+msgid "adventure.mightDesc"
+msgstr "+1 power in a new run"
+
+msgid "adventure.howTo"
+msgstr "How to play"
+
+msgid "adventure.instructions"
+msgstr "Choose a route, an action and a target. Type the shown word: its last character executes your action. Keys 1/2/3 change actions before a word starts. Mistakes weaken the word and break the streak. Each completed word advances enemy intentions. Guard before heavy attacks, earn mana with flawless words and cast spells against groups. Every fifth flawless word is a critical hit. Defeat three bosses and restore the Archive. Escape pauses combat."
+
+msgid "adventure.depth"
+msgstr "Node {{value}} / 15"
+
+msgid "adventure.scene.depth"
+msgstr "Node"
+
+msgid "adventure.region.0"
+msgstr "Whispering Grove"
+
+msgid "adventure.region.1"
+msgstr "Moonlit Archive"
+
+msgid "adventure.region.2"
+msgstr "Ashen Rift"
+
+msgid "adventure.scene.slime"
+msgstr "Inkling"
+
+msgid "adventure.scene.wisp"
+msgstr "Wandering Spark"
+
+msgid "adventure.scene.sentinel"
+msgstr "Archive Sentinel"
+
+msgid "adventure.scene.stalker"
+msgstr "Word Devourer"
+
+msgid "adventure.scene.boss"
+msgstr "Seal Guardian"
+
+msgid "adventure.scene.attack"
+msgstr "Strike"
+
+msgid "adventure.scene.heavy"
+msgstr "Heavy strike"
+
+msgid "adventure.scene.drain"
+msgstr "Mana drain"
+
+msgid "adventure.scene.ward"
+msgstr "Armor ward"
+
+msgid "adventure.scene.battle"
+msgstr "Skirmish"
+
+msgid "adventure.scene.elite"
+msgstr "Elite patrol"
+
+msgid "adventure.scene.camp"
+msgstr "Quiet camp"
+
+msgid "adventure.scene.shop"
+msgstr "Wandering smith"
+
+msgid "adventure.scene.event"
+msgstr "Forgotten story"
+
+msgid "adventure.battleTitle"
+msgstr "WORDS BECOME POWER"
+
+msgid "adventure.typeToAct"
+msgstr "Choose an action. Type a word."
+
+msgid "adventure.combo"
+msgstr "Streak ×{{value}}"
+
+msgid "adventure.critHint"
+msgstr "Critical every {{value}} flawless words"
+
+msgid "adventure.intent"
+msgstr "{{action}} in {{turns}} words · {{damage}} damage"
+
+msgid "adventure.wardIntent"
+msgstr "Armor +2 in {{turns}} words"
+
+msgid "adventure.action.strike"
+msgstr "Strike"
+
+msgid "adventure.action.strikeDesc"
+msgstr "12 damage · flawless word +1 mana"
+
+msgid "adventure.action.guard"
+msgstr "Guard"
+
+msgid "adventure.action.guardDesc"
+msgstr "+12 shield · +1 mana if flawless · no attack"
+
+msgid "adventure.action.spell"
+msgstr "Burst"
+
+msgid "adventure.action.spellDesc"
+msgstr "20 damage to all · costs 3 mana"
+
+msgid "adventure.typeWord"
+msgstr "Type: {{word}}"
+
+msgid "adventure.miss"
+msgstr "Wrong character. Try again — you can still finish the word."
+
+msgid "adventure.typingHint"
+msgstr "Last letter executes action · 1 / 2 / 3 — action · Esc — pause"
+
+msgid "adventure.routeTitle"
+msgstr "Choose your next step"
+
+msgid "adventure.routeHint"
+msgstr "Adjacent paths are reachable. A boss awaits at every fifth node."
+
+msgid "adventure.lane.0"
+msgstr "THE RESTFUL PATH"
+
+msgid "adventure.lane.1"
+msgstr "THE WANDERER’S PATH"
+
+msgid "adventure.lane.2"
+msgstr "THE TRIAL PATH"
+
+msgid "adventure.room.battle"
+msgstr "Common foes, gold and a reward choice."
+
+msgid "adventure.room.elite"
+msgstr "Two stronger enemies. More gold for victory."
+
+msgid "adventure.room.camp"
+msgstr "Recover 35 health or improve power and mana."
+
+msgid "adventure.room.shop"
+msgstr "Trade gold for relics, healing and power."
+
+msgid "adventure.room.event"
+msgstr "Take a safe gift or pay for a rare discovery."
+
+msgid "adventure.room.boss"
+msgstr "The guardian enrages at half health. Victory heals and strengthens you."
+
+msgid "adventure.nextBiome"
+msgstr "Realm: {{value}}"
+
+msgid "adventure.rewardTitle"
+msgstr "Victory. What will you take?"
+
+msgid "adventure.rewardHint"
+msgstr "Choose one reward"
+
+msgid "adventure.heal"
+msgstr "Recovery"
+
+msgid "adventure.power"
+msgstr "Battle mastery"
+
+msgid "adventure.powerDesc"
+msgstr "+1 power for this expedition"
+
+msgid "adventure.campTitle"
+msgstr "The fire still burns"
+
+msgid "adventure.campHint"
+msgstr "One choice before the journey continues."
+
+msgid "adventure.rest"
+msgstr "Rest"
+
+msgid "adventure.train"
+msgstr "Train"
+
+msgid "adventure.trainDesc"
+msgstr "+2 power · +2 mana"
+
+msgid "adventure.shopTitle"
+msgstr "The smith has something for you"
+
+msgid "adventure.leave"
+msgstr "Continue journey"
+
+msgid "adventure.potion"
+msgstr "Living tonic"
+
+msgid "adventure.potionDesc"
+msgstr "Restores 30 HP"
+
+msgid "adventure.forge"
+msgstr "Sharpen the quill"
+
+msgid "adventure.forgeDesc"
+msgstr "+2 power for this expedition"
+
+msgid "adventure.eventKicker"
+msgstr "AN ENCOUNTER"
+
+msgid "adventure.event.0"
+msgstr "A voice in the well"
+
+msgid "adventure.event.0Desc"
+msgstr "An unseen wanderer offers a trade. Take supplies, sacrifice life for a relic, or offer gold for a blessing."
+
+msgid "adventure.event.1"
+msgstr "The library beneath the roots"
+
+msgid "adventure.event.1Desc"
+msgstr "The books remember your name. Supplies, a dangerous relic and a strengthening scroll await."
+
+msgid "adventure.event.2"
+msgstr "The broken caravan"
+
+msgid "adventure.event.2Desc"
+msgstr "Supplies survived the wreck. A relic glows deeper inside; the caravan spirit offers health for gold."
+
+msgid "adventure.safe"
+msgstr "Take supplies"
+
+msgid "adventure.risk"
+msgstr "Retrieve the relic"
+
+msgid "adventure.riskDesc"
+msgstr "−15 HP · relic · +20 gold"
+
+msgid "adventure.blessing"
+msgstr "Receive a blessing"
+
+msgid "adventure.blessingDesc"
+msgstr "−20 gold · +12 current and maximum HP"
+
+msgid "adventure.won"
+msgstr "The Archive sings again"
+
+msgid "adventure.wonDesc"
+msgstr "Three seals are broken. Your shards will help the next keeper walk their path."
+
+msgid "adventure.lost"
+msgstr "Silence prevailed. For now."
+
+msgid "adventure.lostDesc"
+msgstr "The journey ends, but your shards remain. Strengthen your legacy and try another path or class."
+
+msgid "adventure.returnCamp"
+msgstr "Return to camp"
+
+msgid "adventure.words"
+msgstr "Words: {{value}}"
+
+msgid "adventure.relics"
+msgstr "Relics"
+
+msgid "adventure.keyboard"
+msgstr "On-screen keyboard"
+
+msgid "adventure.noUnlockedLetters"
+msgstr "This layout has no unlocked letters yet. Check your layout and practice progress."
+
+msgid "adventure.autosave"
+msgstr "Journey saved after every action"
+
+msgid "adventure.seed"
+msgstr "World {{value}}"
+
+msgid "adventure.languageMismatch"
+msgstr "Select this run’s original language and {{layout}} layout in settings."
+
+msgid "adventure.graphicsFallback"
+msgstr "The visual scene could not start. Combat and route controls remain available below."
+
+msgid "adventure.relic.ember"
+msgstr "Phoenix Ember"
+
+msgid "adventure.relic.emberDesc"
+msgstr "+3 power for every action."
+
+msgid "adventure.relic.shell"
+msgstr "Moon Shell"
+
+msgid "adventure.relic.shellDesc"
+msgstr "Guard words grant 5 additional shield."
+
+msgid "adventure.relic.moss"
+msgstr "Living Branch"
+
+msgid "adventure.relic.mossDesc"
+msgstr "Restore 8 health after each victory."
+
+msgid "adventure.relic.lens"
+msgstr "Lens of Precision"
+
+msgid "adventure.relic.lensDesc"
+msgstr "Critical hits every 3 flawless words instead of 5."
+
+msgid "adventure.relic.coin"
+msgstr "Wanderer’s Coin"
+
+msgid "adventure.relic.coinDesc"
+msgstr "10 extra gold after every victory."
+
+msgid "adventure.relic.fang"
+msgstr "Dawn Fang"
+
+msgid "adventure.relic.fangDesc"
+msgstr "All attacks ignore enemy armor."
+
+msgid "adventure.relic.well"
+msgstr "Vessel of Sparks"
+
+msgid "adventure.relic.wellDesc"
+msgstr "Recover 1 mana every 4 actions."
+
+msgid "adventure.relic.echo"
+msgstr "Oath Echo"
+
+msgid "adventure.relic.echoDesc"
+msgstr "Every third flawless word grants 6 shield."
+
 msgid "app.loading"
 msgstr "Loading…"
 
@@ -650,6 +1079,9 @@ msgstr "No catalog entries available yet."
 
 msgid "addons.catalog.emptySubtitle"
 msgstr "Sync a source with cached lists to populate this catalog."
+
+msgid "addons.catalog.issue.localModFolderOnly"
+msgstr "Install this mod from its folder: open Installed → Install mod… and select its manifest.json."
 
 msgid "addons.catalog.noDescription"
 msgstr "This catalog entry did not provide a description."
@@ -4963,7 +5395,7 @@ msgid "settings.cards.presets.import"
 msgstr "Import"
 
 msgid "settings.cards.presets.applyPresetTitle"
-msgstr "Apply preset “{name}”"
+msgstr "Apply preset “{{name}}”"
 
 msgid "settings.cards.presets.delete"
 msgstr "Delete"
@@ -4987,7 +5419,7 @@ msgid "settings.cards.modeProfiles.clear"
 msgstr "Clear profile"
 
 msgid "settings.cards.modeProfiles.saveForModeTitle"
-msgstr "Save current settings for the “{mode}” mode"
+msgstr "Save current settings for the “{{mode}}” mode"
 
 msgid "settings.cards.progress.title"
 msgstr "Progress"
@@ -5602,49 +6034,49 @@ msgid "game.core.items.catalog.lucky-die.description"
 msgstr "Durable item. Boosts crit chance by 12% and boosts damage coefficient by 10%."
 
 msgid "game.core.items.effects.speed.default"
-msgstr "-{value}% required pace"
+msgstr "-{{value}}% required pace"
 
 msgid "game.core.items.effects.speed.bossOnly"
-msgstr "-{value}% required pace on boss fights"
+msgstr "-{{value}}% required pace on boss fights"
 
 msgid "game.core.items.effects.accuracy.default"
-msgstr "-{value}% required accuracy"
+msgstr "-{{value}}% required accuracy"
 
 msgid "game.core.items.effects.accuracy.bossOnly"
-msgstr "-{value}% required accuracy on boss fights"
+msgstr "-{{value}}% required accuracy on boss fights"
 
 msgid "game.core.items.effects.timer.default"
-msgstr "+{value}s boss timer"
+msgstr "+{{value}}s boss timer"
 
 msgid "game.core.items.effects.enemyAttack.default"
-msgstr "-{value} enemy hit chance"
+msgstr "-{{value}} enemy hit chance"
 
 msgid "game.core.items.effects.enemyDefense.default"
-msgstr "-{value} enemy defense"
+msgstr "-{{value}} enemy defense"
 
 msgid "game.core.items.effects.dodge.default"
-msgstr "+{value}% dodge"
+msgstr "+{{value}}% dodge"
 
 msgid "game.core.items.effects.playerAttack.default"
-msgstr "+{value}% hit chance"
+msgstr "+{{value}}% hit chance"
 
 msgid "game.core.items.effects.playerAttack.bossOnly"
-msgstr "+{value}% hit chance against bosses"
+msgstr "+{{value}}% hit chance against bosses"
 
 msgid "game.core.items.effects.playerDamage.default"
-msgstr "+{value} flat damage"
+msgstr "+{{value}} flat damage"
 
 msgid "game.core.items.effects.playerDamage.bossOnly"
-msgstr "+{value} flat damage against bosses"
+msgstr "+{{value}} flat damage against bosses"
 
 msgid "game.core.items.effects.dmgCoeff.default"
-msgstr "+{value}% damage coefficient"
+msgstr "+{{value}}% damage coefficient"
 
 msgid "game.core.items.effects.defCoeff.default"
-msgstr "+{value}% defense coefficient"
+msgstr "+{{value}}% defense coefficient"
 
 msgid "game.core.items.effects.critBonus.default"
-msgstr "+{value}% crit chance"
+msgstr "+{{value}}% crit chance"
 
 msgid "common.actions.back"
 msgstr "Back"
@@ -6019,7 +6451,7 @@ msgid "onboarding.modeGuide.lessons.steps.trial.body"
 msgstr "Collect the three parts of the learning cycle."
 
 msgid "onboarding.modeGuide.game.description"
-msgstr "A roguelike run with a map, items, events, and bosses."
+msgstr "Wordkeeper adventure: three classes, branching routes, relics and three bosses."
 
 msgid "onboarding.modeGuide.game.finish"
 msgstr "Go to game"
@@ -6046,25 +6478,25 @@ msgid "onboarding.modeGuide.game.steps.flow.title"
 msgstr "What happens"
 
 msgid "onboarding.modeGuide.game.steps.flow.body"
-msgstr "Game turns training into a route: choose nodes, clear battles, and collect items."
+msgstr "Choose a class and clear 15 rooms across three regions. The map reveals future branches; every fifth room holds a boss."
 
 msgid "onboarding.modeGuide.game.steps.flow.checklist.runMap"
 msgstr "run map"
 
 msgid "onboarding.modeGuide.game.steps.flow.checklist.levelsAndBosses"
-msgstr "regular levels and bosses"
+msgstr "15 rooms and three bosses"
 
 msgid "onboarding.modeGuide.game.steps.flow.checklist.inventoryRewards"
-msgstr "inventory and rewards"
+msgstr "relics and permanent upgrades"
 
 msgid "onboarding.modeGuide.game.steps.orientation.title"
 msgstr "How not to get lost"
 
 msgid "onboarding.modeGuide.game.steps.orientation.body"
-msgstr "Choose a comfortable speed goal first, then watch health and item effects."
+msgstr "Type a word to act: 1 selects strike, 2 guard, 3 a mana-powered spell. Enemies act after the displayed number of words. Mistakes weaken attacks; accuracy builds mana and combos. The previous game is available under Classic mode."
 
 msgid "onboarding.modeGuide.game.steps.orientation.checklist.speedGoal"
-msgstr "speed goal"
+msgstr "enemy intentions and mana"
 
 msgid "onboarding.modeGuide.game.steps.orientation.checklist.health"
 msgstr "health"
@@ -6149,3 +6581,291 @@ msgstr "Unknown configuration type"
 
 msgid "settings.cards.language.importPoDialogTitle"
 msgstr "Import interface translation"
+
+msgid "game.combat.player"
+msgstr "You"
+
+msgid "game.combat.typingHint"
+msgstr "Accurate typing strengthens attacks and guard"
+
+msgid "game.combat.armor"
+msgstr "Armor {{value}}%"
+
+msgid "game.combat.nextRound"
+msgstr "Next round…"
+
+msgid "game.combat.feedback.ready"
+msgstr "Type the text to attack"
+
+msgid "game.combat.feedback.hit"
+msgstr "Hit · −{{damage}} HP"
+
+msgid "game.combat.feedback.critical"
+msgstr "Critical hit · −{{damage}} HP"
+
+msgid "game.combat.feedback.miss"
+msgstr "Attack missed"
+
+msgid "game.combat.feedback.guard"
+msgstr "Guard {{guard}} · {{damage}} HP lost"
+
+msgid "game.combat.feedback.dodge"
+msgstr "Dodged · no HP lost"
+
+msgid "game.core.items.catalog.metronome-heart.name"
+msgstr "Metronome Heart"
+
+msgid "game.core.items.catalog.metronome-heart.shortName"
+msgstr "Metronome"
+
+msgid "game.core.items.catalog.metronome-heart.description"
+msgstr "Steady rhythm helps land critical hits. +8% damage and +3.5 percentage points to base critical chance."
+
+msgid "game.core.items.catalog.mist-step.name"
+msgstr "Mist Step"
+
+msgid "game.core.items.catalog.mist-step.shortName"
+msgstr "Mist Step"
+
+msgid "game.core.items.catalog.mist-step.description"
+msgstr "+8 percentage points to dodge chance and +8% guard strength. A dodge prevents all hit damage."
+
+msgid "game.core.items.catalog.piercing-quill.name"
+msgstr "Piercing Quill"
+
+msgid "game.core.items.catalog.piercing-quill.shortName"
+msgstr "Quill"
+
+msgid "game.core.items.catalog.piercing-quill.description"
+msgstr "Reduces enemy armor by 6 percentage points and adds 1 damage before armor."
+
+msgid "game.expedition.regions.grove.title"
+msgstr "Grove of first signs"
+
+msgid "game.expedition.regions.grove.description"
+msgstr "Quiet trails and springs. The upper path offers recovery."
+
+msgid "game.expedition.regions.archive.title"
+msgstr "Lost archive"
+
+msgid "game.expedition.regions.archive.description"
+msgstr "Relics among the ruins. The lower path is dangerous but offers loot."
+
+msgid "game.expedition.regions.forge.title"
+msgstr "Clockwork forge"
+
+msgid "game.expedition.regions.forge.description"
+msgstr "Workshops, repairs and strong guards. Prepare for the boss ahead."
+
+msgid "game.expedition.regions.rift.title"
+msgstr "Storm rift"
+
+msgid "game.expedition.regions.rift.description"
+msgstr "Deals with consequences. Weigh each boost against its cost."
+
+msgid "game.expedition.chooseRoute"
+msgstr "Choose your route"
+
+msgid "game.expedition.after"
+msgstr "Then"
+
+msgid "game.expedition.eliteRewardTitle"
+msgstr "Dangerous encounter spoils — choose one"
+
+msgid "game.expedition.recovery.title"
+msgstr "Field supplies"
+
+msgid "game.expedition.recovery.description"
+msgstr "Recover {{hp}} HP instead of taking an item."
+
+msgid "game.expedition.events.spring.title"
+msgstr "Memory spring"
+
+msgid "game.expedition.events.spring.description"
+msgstr "Healing, more health or preparation for the next battles."
+
+msgid "game.expedition.events.spring.option0.title"
+msgstr "Drink"
+
+msgid "game.expedition.events.spring.option0.description"
+msgstr "Restore 25 HP."
+
+msgid "game.expedition.events.spring.option1.title"
+msgstr "Fill a flask"
+
+msgid "game.expedition.events.spring.option1.description"
+msgstr "+5 maximum and current HP."
+
+msgid "game.expedition.events.spring.option2.title"
+msgstr "Find your rhythm"
+
+msgid "game.expedition.events.spring.option2.description"
+msgstr "For 3 battles: +10% guard coefficient and −5% required speed."
+
+msgid "game.expedition.events.sanctuary.title"
+msgstr "Sleepy sanctuary"
+
+msgid "game.expedition.events.sanctuary.description"
+msgstr "Strong healing comes at a cost. Regeneration or repairs are alternatives."
+
+msgid "game.expedition.events.sanctuary.option0.title"
+msgstr "Deep sleep"
+
+msgid "game.expedition.events.sanctuary.option0.description"
+msgstr "+50 HP, but +8% required speed for 2 battles."
+
+msgid "game.expedition.events.sanctuary.option1.title"
+msgstr "Herbal infusion"
+
+msgid "game.expedition.events.sanctuary.option1.description"
+msgstr "Restore 10 HP after each of the next 3 victories."
+
+msgid "game.expedition.events.sanctuary.option2.title"
+msgstr "Repair gear"
+
+msgid "game.expedition.events.sanctuary.option2.description"
+msgstr "+2 durability to equipped items."
+
+msgid "game.expedition.events.library.title"
+msgstr "Forgotten library"
+
+msgid "game.expedition.events.library.description"
+msgstr "Take a relic, study a combat technique or gain health."
+
+msgid "game.expedition.events.library.option0.title"
+msgstr "Take a relic"
+
+msgid "game.expedition.events.library.option0.description"
+msgstr "Receive a permanent item. Equip it to use its effects."
+
+msgid "game.expedition.events.library.option1.title"
+msgstr "Study precise strikes"
+
+msgid "game.expedition.events.library.option1.description"
+msgstr "For 3 battles: +10% damage coefficient and +3 percentage points base critical chance."
+
+msgid "game.expedition.events.library.option2.title"
+msgstr "Read the book of resolve"
+
+msgid "game.expedition.events.library.option2.description"
+msgstr "+5 maximum and current HP."
+
+msgid "game.expedition.events.wreck.title"
+msgstr "Caravan wreck"
+
+msgid "game.expedition.events.wreck.description"
+msgstr "Artifacts, spare parts and supplies remain in the wreckage."
+
+msgid "game.expedition.events.wreck.option0.title"
+msgstr "Open the safe"
+
+msgid "game.expedition.events.wreck.option0.description"
+msgstr "Receive an artifact with durability."
+
+msgid "game.expedition.events.wreck.option1.title"
+msgstr "Collect spare parts"
+
+msgid "game.expedition.events.wreck.option1.description"
+msgstr "+3 durability to equipped items."
+
+msgid "game.expedition.events.wreck.option2.title"
+msgstr "Take supplies"
+
+msgid "game.expedition.events.wreck.option2.description"
+msgstr "Restore 15 HP."
+
+msgid "game.expedition.events.smith.title"
+msgstr "Echo smith"
+
+msgid "game.expedition.events.smith.description"
+msgstr "The smith trades artifacts for health. Repairs are free."
+
+msgid "game.expedition.events.smith.option0.title"
+msgstr "Buy an artifact"
+
+msgid "game.expedition.events.smith.option0.description"
+msgstr "Spend 12 HP to receive an artifact with durability."
+
+msgid "game.expedition.events.smith.option1.title"
+msgstr "Sharpen the quill"
+
+msgid "game.expedition.events.smith.option1.description"
+msgstr "Spend 8 HP: enemy armor −8 percentage points for 3 battles."
+
+msgid "game.expedition.events.smith.option2.title"
+msgstr "Repair"
+
+msgid "game.expedition.events.smith.option2.description"
+msgstr "+2 durability to equipped items and +5 HP."
+
+msgid "game.expedition.events.alchemist.title"
+msgstr "Travelling alchemist"
+
+msgid "game.expedition.events.alchemist.description"
+msgstr "Immediate healing, stored regeneration or a small health boost."
+
+msgid "game.expedition.events.alchemist.option0.title"
+msgstr "Drink a fragile elixir"
+
+msgid "game.expedition.events.alchemist.option0.description"
+msgstr "+35 HP, but −15% guard coefficient for 2 battles."
+
+msgid "game.expedition.events.alchemist.option1.title"
+msgstr "Buy an infusion"
+
+msgid "game.expedition.events.alchemist.option1.description"
+msgstr "Spend 8 HP; restore 10 HP after each of the next 4 victories."
+
+msgid "game.expedition.events.alchemist.option2.title"
+msgstr "Take vitamins"
+
+msgid "game.expedition.events.alchemist.option2.description"
+msgstr "+5 maximum and current HP."
+
+msgid "game.expedition.events.altar.title"
+msgstr "Altar of two oaths"
+
+msgid "game.expedition.events.altar.description"
+msgstr "Sacrifice health for power, or walk away safely."
+
+msgid "game.expedition.events.altar.option0.title"
+msgstr "Oath of fury"
+
+msgid "game.expedition.events.altar.option0.description"
+msgstr "−10 HP. For 3 battles: +35% damage and −15% guard coefficients."
+
+msgid "game.expedition.events.altar.option1.title"
+msgstr "Oath of mist"
+
+msgid "game.expedition.events.altar.option1.description"
+msgstr "−8 HP. For 3 battles: +10 percentage points dodge, +10% guard coefficient."
+
+msgid "game.expedition.events.altar.option2.title"
+msgstr "Decline the oath"
+
+msgid "game.expedition.events.altar.option2.description"
+msgstr "Continue without changes."
+
+msgid "game.expedition.events.storm.title"
+msgstr "Storm resonator"
+
+msgid "game.expedition.events.storm.description"
+msgstr "An amplifier changes your next battles. Effects are shown in advance."
+
+msgid "game.expedition.events.storm.option0.title"
+msgstr "Overload the resonator"
+
+msgid "game.expedition.events.storm.option0.description"
+msgstr "For 3 battles: +45% damage coefficient, +10% required speed."
+
+msgid "game.expedition.events.storm.option1.title"
+msgstr "Take a ward charge"
+
+msgid "game.expedition.events.storm.option1.description"
+msgstr "−10 HP. For 3 battles: enemy armor −8 percentage points, incoming attack −2 HP."
+
+msgid "game.expedition.events.storm.option2.title"
+msgstr "Leave the device"
+
+msgid "game.expedition.events.storm.option2.description"
+msgstr "Continue without changes."

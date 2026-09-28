@@ -37,6 +37,7 @@ import {
   migrateProgressData,
   normalizeProgressForSave,
 } from '../core/progress/migrations';
+import { startAutoUpdates } from './autoUpdates';
 
 /* ── User data paths ─────────────────────────────────────── */
 // При упакованном приложении аддоны/моды рядом с exe, при разработке в папке проекта
@@ -469,6 +470,7 @@ app.whenReady().then(async () => {
     console.error('[ExtensionSources] Startup sync failed:', error);
   });
   createWindow();
+  startAutoUpdates(() => win);
 });
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();

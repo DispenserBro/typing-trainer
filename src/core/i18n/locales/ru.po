@@ -6,6 +6,435 @@ msgstr ""
 "X-Language-Label: Russian\n"
 "X-Language-Native-Label: Русский\n"
 
+msgid "adventure.kicker"
+msgstr "ПРИКЛЮЧЕНИЕ НА КЛАВИАТУРЕ"
+
+msgid "adventure.title"
+msgstr "Хранитель слов"
+
+msgid "adventure.storyKicker"
+msgstr "ГЛАВА I · УГАСАЮЩИЙ АРХИВ"
+
+msgid "adventure.storyTitle"
+msgstr "Верни миру его голос."
+
+msgid "adventure.story"
+msgstr "Три забытых края. Один хранитель. Превращай слова в заклинания, собирай реликвии и доберись до Сердца тишины."
+
+msgid "adventure.menu"
+msgstr "Лагерь"
+
+msgid "adventure.pause"
+msgstr "Пауза"
+
+msgid "adventure.paused"
+msgstr "Привал"
+
+msgid "adventure.pauseHint"
+msgstr "Твой путь сохранён. Продолжай, когда будешь готов."
+
+msgid "adventure.sound"
+msgstr "Звуковые эффекты"
+
+msgid "adventure.fullscreen"
+msgstr "Полный экран"
+
+msgid "adventure.resume"
+msgstr "Продолжить путь"
+
+msgid "adventure.best"
+msgstr "Лучший путь: {{value}}/15"
+
+msgid "adventure.victories"
+msgstr "Побед: {{value}}"
+
+msgid "adventure.shards"
+msgstr "осколков"
+
+msgid "adventure.chooseRole"
+msgstr "Кем ты отправишься в путь?"
+
+msgid "adventure.roleHint"
+msgstr "Три разных стиля боя"
+
+msgid "adventure.role.warden"
+msgstr "Страж"
+
+msgid "adventure.role.wardenDesc"
+msgstr "+25 здоровья. Защитное слово даёт ещё 5 щита. Прощает ошибки и выдерживает тяжёлые атаки."
+
+msgid "adventure.role.mage"
+msgstr "Чародей"
+
+msgid "adventure.role.mageDesc"
+msgstr "Начинает с 3 маны. Заклинания наносят на 6 больше урона каждому врагу."
+
+msgid "adventure.role.ranger"
+msgstr "Следопыт"
+
+msgid "adventure.role.rangerDesc"
+msgstr "Критические удары наносят ×2,3 урона вместо ×1,8. Поддерживай серию точных слов."
+
+msgid "adventure.difficulty"
+msgstr "Сложность"
+
+msgid "adventure.normal"
+msgstr "Приключение"
+
+msgid "adventure.storyMode"
+msgstr "История · мягче"
+
+msgid "adventure.begin"
+msgstr "Начать экспедицию"
+
+msgid "adventure.classic"
+msgstr "Классический режим"
+
+msgid "adventure.backAdventure"
+msgstr "Вернуться в приключение"
+
+msgid "adventure.savedRun"
+msgstr "Твоя экспедиция ждёт"
+
+msgid "adventure.replaceRun"
+msgstr "Начать новую экспедицию вместо текущей? Реликвии и маршрут этого забега будут потеряны. Осколки и постоянные улучшения сохранятся."
+
+msgid "adventure.cancel"
+msgstr "Отмена"
+
+msgid "adventure.legacyTitle"
+msgstr "Наследие хранителя"
+
+msgid "adventure.legacyHint"
+msgstr "Осколки за победы улучшают будущие забеги. Покупки доступны между экспедициями."
+
+msgid "adventure.vitality"
+msgstr "Стойкость"
+
+msgid "adventure.vitalityDesc"
+msgstr "+5 HP в новом забеге"
+
+msgid "adventure.might"
+msgstr "Сила"
+
+msgid "adventure.mightDesc"
+msgstr "+1 силы в новом забеге"
+
+msgid "adventure.howTo"
+msgstr "Как играть"
+
+msgid "adventure.instructions"
+msgstr "Выбери маршрут, затем действие и врага. Напечатай показанное слово: последний символ выполняет действие. Клавиши 1/2/3 меняют приём до начала слова. Ошибка снижает силу слова и сбрасывает серию. Каждое завершённое слово приближает ответ врагов; намерение видно заранее. Защищайся перед тяжёлым ударом, копи ману точными словами и используй заклинания против группы. Каждое пятое точное слово — критический удар. Победи трёх боссов и верни голос Архиву. Escape ставит бой на паузу."
+
+msgid "adventure.depth"
+msgstr "Узел {{value}} / 15"
+
+msgid "adventure.scene.depth"
+msgstr "Узел"
+
+msgid "adventure.region.0"
+msgstr "Шепчущая роща"
+
+msgid "adventure.region.1"
+msgstr "Лунный архив"
+
+msgid "adventure.region.2"
+msgstr "Пепельный разлом"
+
+msgid "adventure.scene.slime"
+msgstr "Чернильник"
+
+msgid "adventure.scene.wisp"
+msgstr "Блуждающая искра"
+
+msgid "adventure.scene.sentinel"
+msgstr "Страж архива"
+
+msgid "adventure.scene.stalker"
+msgstr "Пожиратель слов"
+
+msgid "adventure.scene.boss"
+msgstr "Хранитель печати"
+
+msgid "adventure.scene.attack"
+msgstr "Удар"
+
+msgid "adventure.scene.heavy"
+msgstr "Тяжёлый удар"
+
+msgid "adventure.scene.drain"
+msgstr "Поглощение маны"
+
+msgid "adventure.scene.ward"
+msgstr "Укрепление брони"
+
+msgid "adventure.scene.battle"
+msgstr "Схватка"
+
+msgid "adventure.scene.elite"
+msgstr "Элитный отряд"
+
+msgid "adventure.scene.camp"
+msgstr "Тихий лагерь"
+
+msgid "adventure.scene.shop"
+msgstr "Странствующий кузнец"
+
+msgid "adventure.scene.event"
+msgstr "Забытая история"
+
+msgid "adventure.battleTitle"
+msgstr "СЛОВА СТАНОВЯТСЯ СИЛОЙ"
+
+msgid "adventure.typeToAct"
+msgstr "Выбери приём. Напечатай слово."
+
+msgid "adventure.combo"
+msgstr "Серия ×{{value}}"
+
+msgid "adventure.critHint"
+msgstr "Крит каждые {{value}} точных слов"
+
+msgid "adventure.intent"
+msgstr "{{action}} через {{turns}} слов · {{damage}} урона"
+
+msgid "adventure.wardIntent"
+msgstr "Усиление брони +2 через {{turns}} слов"
+
+msgid "adventure.action.strike"
+msgstr "Удар"
+
+msgid "adventure.action.strikeDesc"
+msgstr "12 урона · точное слово +1 маны"
+
+msgid "adventure.action.guard"
+msgstr "Защита"
+
+msgid "adventure.action.guardDesc"
+msgstr "+12 щита · +1 маны без ошибок · без атаки"
+
+msgid "adventure.action.spell"
+msgstr "Вспышка"
+
+msgid "adventure.action.spellDesc"
+msgstr "20 урона всем · цена 3 маны"
+
+msgid "adventure.typeWord"
+msgstr "Напечатай: {{word}}"
+
+msgid "adventure.miss"
+msgstr "Не тот символ. Попробуй ещё раз — слово можно закончить."
+
+msgid "adventure.typingHint"
+msgstr "Последняя буква выполняет действие · 1 / 2 / 3 — приём · Esc — пауза"
+
+msgid "adventure.routeTitle"
+msgstr "Выбери следующий шаг"
+
+msgid "adventure.routeHint"
+msgstr "Соседние тропы доступны. Босс ждёт на каждом пятом узле."
+
+msgid "adventure.lane.0"
+msgstr "ТРОПА ВОССТАНОВЛЕНИЯ"
+
+msgid "adventure.lane.1"
+msgstr "ТРОПА СТРАННИКА"
+
+msgid "adventure.lane.2"
+msgstr "ТРОПА ИСПЫТАНИЙ"
+
+msgid "adventure.room.battle"
+msgstr "Обычные противники, золото и выбор награды."
+
+msgid "adventure.room.elite"
+msgstr "Два усиленных врага. Больше золота за победу."
+
+msgid "adventure.room.camp"
+msgstr "Восстановить 35 здоровья или усилить атаку и ману."
+
+msgid "adventure.room.shop"
+msgstr "Обменять золото на реликвии, лечение и усиление."
+
+msgid "adventure.room.event"
+msgstr "Выбрать безопасный дар или заплатить за редкую находку."
+
+msgid "adventure.room.boss"
+msgstr "Страж печати впадает в ярость при половине здоровья. Победа лечит и усиливает героя."
+
+msgid "adventure.nextBiome"
+msgstr "Область: {{value}}"
+
+msgid "adventure.rewardTitle"
+msgstr "Победа. Что возьмёшь с собой?"
+
+msgid "adventure.rewardHint"
+msgstr "Выбери одну награду"
+
+msgid "adventure.heal"
+msgstr "Восстановление"
+
+msgid "adventure.power"
+msgstr "Боевое мастерство"
+
+msgid "adventure.powerDesc"
+msgstr "+1 силы до конца экспедиции"
+
+msgid "adventure.campTitle"
+msgstr "Огонь ещё не погас"
+
+msgid "adventure.campHint"
+msgstr "Один выбор перед продолжением пути."
+
+msgid "adventure.rest"
+msgstr "Отдохнуть"
+
+msgid "adventure.train"
+msgstr "Тренироваться"
+
+msgid "adventure.trainDesc"
+msgstr "+2 силы · +2 маны"
+
+msgid "adventure.shopTitle"
+msgstr "У кузнеца найдётся кое-что для тебя"
+
+msgid "adventure.leave"
+msgstr "Продолжить путь"
+
+msgid "adventure.potion"
+msgstr "Живой настой"
+
+msgid "adventure.potionDesc"
+msgstr "Восстанавливает 30 HP"
+
+msgid "adventure.forge"
+msgstr "Заточить перо"
+
+msgid "adventure.forgeDesc"
+msgstr "+2 силы до конца экспедиции"
+
+msgid "adventure.eventKicker"
+msgstr "ВСТРЕЧА НА ПУТИ"
+
+msgid "adventure.event.0"
+msgstr "Голос из колодца"
+
+msgid "adventure.event.0Desc"
+msgstr "Невидимый странник предлагает обмен. Можно взять припасы, отдать часть жизненной силы за реликвию или пожертвовать золото ради благословения."
+
+msgid "adventure.event.1"
+msgstr "Библиотека под корнями"
+
+msgid "adventure.event.1Desc"
+msgstr "Книги помнят твоё имя. На полке ждут припасы, опасная реликвия и свиток укрепления."
+
+msgid "adventure.event.2"
+msgstr "Разбитый караван"
+
+msgid "adventure.event.2Desc"
+msgstr "Среди обломков сохранились припасы. Глубже мерцает реликвия, а дух каравана обменивает золото на здоровье."
+
+msgid "adventure.safe"
+msgstr "Взять припасы"
+
+msgid "adventure.risk"
+msgstr "Достать реликвию"
+
+msgid "adventure.riskDesc"
+msgstr "−15 HP · реликвия · +20 золота"
+
+msgid "adventure.blessing"
+msgstr "Принять благословение"
+
+msgid "adventure.blessingDesc"
+msgstr "−20 золота · +12 к текущему и максимальному HP"
+
+msgid "adventure.won"
+msgstr "Архив снова поёт"
+
+msgid "adventure.wonDesc"
+msgstr "Три печати сняты. Собранные осколки помогут следующему хранителю пройти свой путь."
+
+msgid "adventure.lost"
+msgstr "Тишина победила. Пока."
+
+msgid "adventure.lostDesc"
+msgstr "Путь окончен, но добытые осколки остаются. Усиль наследие и попробуй другой маршрут или класс."
+
+msgid "adventure.returnCamp"
+msgstr "Вернуться в лагерь"
+
+msgid "adventure.words"
+msgstr "Слов: {{value}}"
+
+msgid "adventure.relics"
+msgstr "Реликвии"
+
+msgid "adventure.keyboard"
+msgstr "Экранная клавиатура"
+
+msgid "adventure.noUnlockedLetters"
+msgstr "В этой раскладке пока нет открытых букв. Проверьте раскладку и прогресс практики."
+
+msgid "adventure.autosave"
+msgstr "Путь сохраняется после каждого действия"
+
+msgid "adventure.seed"
+msgstr "Мир {{value}}"
+
+msgid "adventure.languageMismatch"
+msgstr "Для этого забега выбери прежний язык и раскладку {{layout}} в настройках."
+
+msgid "adventure.graphicsFallback"
+msgstr "Не удалось запустить графическую сцену. Управление боем и маршрутом доступно ниже."
+
+msgid "adventure.relic.ember"
+msgstr "Уголь феникса"
+
+msgid "adventure.relic.emberDesc"
+msgstr "+3 силы для всех приёмов."
+
+msgid "adventure.relic.shell"
+msgstr "Лунный панцирь"
+
+msgid "adventure.relic.shellDesc"
+msgstr "Защитное слово даёт ещё 5 щита."
+
+msgid "adventure.relic.moss"
+msgstr "Живая ветвь"
+
+msgid "adventure.relic.mossDesc"
+msgstr "После победы восстанови 8 здоровья."
+
+msgid "adventure.relic.lens"
+msgstr "Око точности"
+
+msgid "adventure.relic.lensDesc"
+msgstr "Критический удар каждые 3 точных слова вместо 5."
+
+msgid "adventure.relic.coin"
+msgstr "Монета странника"
+
+msgid "adventure.relic.coinDesc"
+msgstr "Ещё 10 золота после каждой победы."
+
+msgid "adventure.relic.fang"
+msgstr "Клык рассвета"
+
+msgid "adventure.relic.fangDesc"
+msgstr "Все атаки игнорируют броню противника."
+
+msgid "adventure.relic.well"
+msgstr "Сосуд искр"
+
+msgid "adventure.relic.wellDesc"
+msgstr "Восстанавливает 1 ману каждые 4 действия."
+
+msgid "adventure.relic.echo"
+msgstr "Эхо клятвы"
+
+msgid "adventure.relic.echoDesc"
+msgstr "Каждое третье точное слово даёт 6 щита."
+
 msgid "app.loading"
 msgstr "Загрузка…"
 
@@ -650,6 +1079,9 @@ msgstr "Записей каталога пока нет."
 
 msgid "addons.catalog.emptySubtitle"
 msgstr "Синхронизируйте источник со списками, чтобы заполнить этот каталог."
+
+msgid "addons.catalog.issue.localModFolderOnly"
+msgstr "Этот мод устанавливается из папки. Откройте «Установленные» → «Установить мод…» и выберите его manifest.json."
 
 msgid "addons.catalog.noDescription"
 msgstr "У этой записи каталога нет описания."
@@ -5011,7 +5443,7 @@ msgid "settings.cards.presets.import"
 msgstr "Импорт"
 
 msgid "settings.cards.presets.applyPresetTitle"
-msgstr "Применить пресет «{name}»"
+msgstr "Применить пресет «{{name}}»"
 
 msgid "settings.cards.presets.delete"
 msgstr "Удалить"
@@ -5035,7 +5467,7 @@ msgid "settings.cards.modeProfiles.clear"
 msgstr "Сбросить профиль"
 
 msgid "settings.cards.modeProfiles.saveForModeTitle"
-msgstr "Сохранить текущие настройки для режима «{mode}»"
+msgstr "Сохранить текущие настройки для режима «{{mode}}»"
 
 msgid "settings.cards.progress.title"
 msgstr "Прогресс"
@@ -5650,49 +6082,49 @@ msgid "game.core.items.catalog.lucky-die.description"
 msgstr "Мощный крит и бонус урона. Удача непостоянна."
 
 msgid "game.core.items.effects.speed.default"
-msgstr "-{value}% к требуемой скорости"
+msgstr "-{{value}}% к требуемой скорости"
 
 msgid "game.core.items.effects.speed.bossOnly"
-msgstr "-{value}% к скорости на боссе"
+msgstr "-{{value}}% к скорости на боссе"
 
 msgid "game.core.items.effects.accuracy.default"
-msgstr "-{value}% к требуемой точности"
+msgstr "-{{value}}% к требуемой точности"
 
 msgid "game.core.items.effects.accuracy.bossOnly"
-msgstr "-{value}% к точности на боссе"
+msgstr "-{{value}}% к точности на боссе"
 
 msgid "game.core.items.effects.timer.default"
-msgstr "+{value} сек. к таймеру босса"
+msgstr "+{{value}} сек. к таймеру босса"
 
 msgid "game.core.items.effects.enemyAttack.default"
-msgstr "-{value} к шансу попадания врагов"
+msgstr "-{{value}} к шансу попадания врагов"
 
 msgid "game.core.items.effects.enemyDefense.default"
-msgstr "-{value} к защите врагов"
+msgstr "-{{value}} к защите врагов"
 
 msgid "game.core.items.effects.dodge.default"
-msgstr "+{value}% к уклонению"
+msgstr "+{{value}}% к уклонению"
 
 msgid "game.core.items.effects.playerAttack.default"
-msgstr "+{value}% к шансу попасть"
+msgstr "+{{value}}% к шансу попасть"
 
 msgid "game.core.items.effects.playerAttack.bossOnly"
-msgstr "+{value}% к шансу попасть по боссу"
+msgstr "+{{value}}% к шансу попасть по боссу"
 
 msgid "game.core.items.effects.playerDamage.default"
-msgstr "+{value} к плоскому урону"
+msgstr "+{{value}} к плоскому урону"
 
 msgid "game.core.items.effects.playerDamage.bossOnly"
-msgstr "+{value} к плоскому урону по боссам"
+msgstr "+{{value}} к плоскому урону по боссам"
 
 msgid "game.core.items.effects.dmgCoeff.default"
-msgstr "+{value}% к коэфф. урона"
+msgstr "+{{value}}% к коэфф. урона"
 
 msgid "game.core.items.effects.defCoeff.default"
-msgstr "+{value}% к коэфф. защиты"
+msgstr "+{{value}}% к коэфф. защиты"
 
 msgid "game.core.items.effects.critBonus.default"
-msgstr "+{value}% к шансу крита"
+msgstr "+{{value}}% к шансу крита"
 
 msgid "common.actions.back"
 msgstr "Назад"
@@ -6067,7 +6499,7 @@ msgid "onboarding.modeGuide.lessons.steps.trial.body"
 msgstr "Соберите три части учебного цикла."
 
 msgid "onboarding.modeGuide.game.description"
-msgstr "Рогалик-забег с картой, предметами, событиями и боссами."
+msgstr "Приключение «Хранитель слов»: три класса, карта, реликвии и три босса."
 
 msgid "onboarding.modeGuide.game.finish"
 msgstr "Перейти к игре"
@@ -6094,25 +6526,25 @@ msgid "onboarding.modeGuide.game.steps.flow.title"
 msgstr "Что происходит"
 
 msgid "onboarding.modeGuide.game.steps.flow.body"
-msgstr "Игра превращает тренировку в маршрут: вы выбираете узлы, проходите бои и собираете предметы."
+msgstr "Выберите класс и пройдите 15 узлов в трёх регионах. На карте видны будущие развилки; каждый пятый узел — босс."
 
 msgid "onboarding.modeGuide.game.steps.flow.checklist.runMap"
 msgstr "карта забега"
 
 msgid "onboarding.modeGuide.game.steps.flow.checklist.levelsAndBosses"
-msgstr "обычные уровни и боссы"
+msgstr "15 комнат и три босса"
 
 msgid "onboarding.modeGuide.game.steps.flow.checklist.inventoryRewards"
-msgstr "инвентарь и награды"
+msgstr "реликвии и постоянные улучшения"
 
 msgid "onboarding.modeGuide.game.steps.orientation.title"
 msgstr "Как не потеряться"
 
 msgid "onboarding.modeGuide.game.steps.orientation.body"
-msgstr "Сначала выберите комфортную цель скорости, затем следите за здоровьем и эффектами предметов."
+msgstr "Наберите слово, чтобы выполнить приём: 1 — удар, 2 — защита, 3 — заклинание за ману. Враги действуют после указанного числа слов. Ошибки ослабляют удар; точность накапливает ману и серию. Прежняя игра доступна по кнопке «Классический режим»."
 
 msgid "onboarding.modeGuide.game.steps.orientation.checklist.speedGoal"
-msgstr "цель скорости"
+msgstr "намерения врагов и мана"
 
 msgid "onboarding.modeGuide.game.steps.orientation.checklist.health"
 msgstr "здоровье"
@@ -6197,3 +6629,291 @@ msgstr "Неизвестный тип конфигурации"
 
 msgid "settings.cards.language.importPoDialogTitle"
 msgstr "Импорт перевода интерфейса"
+
+msgid "game.combat.player"
+msgstr "Вы"
+
+msgid "game.combat.typingHint"
+msgstr "Точный набор усиливает удар и защиту"
+
+msgid "game.combat.armor"
+msgstr "Броня {{value}}%"
+
+msgid "game.combat.nextRound"
+msgstr "Следующий раунд…"
+
+msgid "game.combat.feedback.ready"
+msgstr "Наберите текст, чтобы атаковать"
+
+msgid "game.combat.feedback.hit"
+msgstr "Удар · −{{damage}} HP"
+
+msgid "game.combat.feedback.critical"
+msgstr "Критический удар · −{{damage}} HP"
+
+msgid "game.combat.feedback.miss"
+msgstr "Удар не удался"
+
+msgid "game.combat.feedback.guard"
+msgstr "Защита {{guard}} · потеря {{damage}} HP"
+
+msgid "game.combat.feedback.dodge"
+msgstr "Уклонение · без потери HP"
+
+msgid "game.core.items.catalog.metronome-heart.name"
+msgstr "Сердце метронома"
+
+msgid "game.core.items.catalog.metronome-heart.shortName"
+msgstr "Метроном"
+
+msgid "game.core.items.catalog.metronome-heart.description"
+msgstr "Ровный ритм помогает наносить критические удары. Урон +8%, базовый шанс крита +3,5 п.п."
+
+msgid "game.core.items.catalog.mist-step.name"
+msgstr "Шаг сквозь туман"
+
+msgid "game.core.items.catalog.mist-step.shortName"
+msgstr "Туманный шаг"
+
+msgid "game.core.items.catalog.mist-step.description"
+msgstr "Шанс уклонения +8 п.п., сила защиты +8%. Уклонение полностью предотвращает удар."
+
+msgid "game.core.items.catalog.piercing-quill.name"
+msgstr "Пробивающее перо"
+
+msgid "game.core.items.catalog.piercing-quill.shortName"
+msgstr "Перо"
+
+msgid "game.core.items.catalog.piercing-quill.description"
+msgstr "Снижает броню врага на 6 п.п. и добавляет 1 к урону до снижения бронёй."
+
+msgid "game.expedition.regions.grove.title"
+msgstr "Роща первых знаков"
+
+msgid "game.expedition.regions.grove.description"
+msgstr "Тихие тропы и источники. Верхний путь помогает восстановиться."
+
+msgid "game.expedition.regions.archive.title"
+msgstr "Затерянный архив"
+
+msgid "game.expedition.regions.archive.description"
+msgstr "Реликвии среди руин. Нижний путь опаснее, но обещает добычу."
+
+msgid "game.expedition.regions.forge.title"
+msgstr "Механическая кузня"
+
+msgid "game.expedition.regions.forge.description"
+msgstr "Мастерские, ремонт и сильные стражи. Готовьтесь к боссу заранее."
+
+msgid "game.expedition.regions.rift.title"
+msgstr "Грозовой разлом"
+
+msgid "game.expedition.regions.rift.description"
+msgstr "Сделки с последствиями. Сравнивайте усиления и их цену."
+
+msgid "game.expedition.chooseRoute"
+msgstr "Выберите маршрут"
+
+msgid "game.expedition.after"
+msgstr "Дальше"
+
+msgid "game.expedition.eliteRewardTitle"
+msgstr "Трофеи опасного боя — выберите одно"
+
+msgid "game.expedition.recovery.title"
+msgstr "Полевые припасы"
+
+msgid "game.expedition.recovery.description"
+msgstr "Восстановить {{hp}} HP вместо предмета."
+
+msgid "game.expedition.events.spring.title"
+msgstr "Источник памяти"
+
+msgid "game.expedition.events.spring.description"
+msgstr "Лечение, запас здоровья или подготовка к следующим боям."
+
+msgid "game.expedition.events.spring.option0.title"
+msgstr "Напиться"
+
+msgid "game.expedition.events.spring.option0.description"
+msgstr "Восстановить 25 HP."
+
+msgid "game.expedition.events.spring.option1.title"
+msgstr "Наполнить флягу"
+
+msgid "game.expedition.events.spring.option1.description"
+msgstr "+5 к максимальному и текущему HP."
+
+msgid "game.expedition.events.spring.option2.title"
+msgstr "Поймать ритм"
+
+msgid "game.expedition.events.spring.option2.description"
+msgstr "На 3 боя: +10% к коэффициенту защиты и −5% к требуемой скорости."
+
+msgid "game.expedition.events.sanctuary.title"
+msgstr "Сонное святилище"
+
+msgid "game.expedition.events.sanctuary.description"
+msgstr "Сильное лечение имеет цену. Можно выбрать регенерацию или ремонт."
+
+msgid "game.expedition.events.sanctuary.option0.title"
+msgstr "Глубокий сон"
+
+msgid "game.expedition.events.sanctuary.option0.description"
+msgstr "+50 HP, но требуемая скорость +8% на 2 боя."
+
+msgid "game.expedition.events.sanctuary.option1.title"
+msgstr "Травяной настой"
+
+msgid "game.expedition.events.sanctuary.option1.description"
+msgstr "Восстановить по 10 HP после следующих 3 побед."
+
+msgid "game.expedition.events.sanctuary.option2.title"
+msgstr "Починить снаряжение"
+
+msgid "game.expedition.events.sanctuary.option2.description"
+msgstr "+2 прочности экипированным предметам."
+
+msgid "game.expedition.events.library.title"
+msgstr "Забытая библиотека"
+
+msgid "game.expedition.events.library.description"
+msgstr "Возьмите реликвию, изучите боевой приём или укрепите здоровье."
+
+msgid "game.expedition.events.library.option0.title"
+msgstr "Забрать реликвию"
+
+msgid "game.expedition.events.library.option0.description"
+msgstr "Получить постоянный предмет. Его нужно экипировать."
+
+msgid "game.expedition.events.library.option1.title"
+msgstr "Изучить точный удар"
+
+msgid "game.expedition.events.library.option1.description"
+msgstr "На 3 боя: +10% к коэффициенту урона и +3 п.п. к базовому шансу крита."
+
+msgid "game.expedition.events.library.option2.title"
+msgstr "Прочесть книгу стойкости"
+
+msgid "game.expedition.events.library.option2.description"
+msgstr "+5 к максимальному и текущему HP."
+
+msgid "game.expedition.events.wreck.title"
+msgstr "Обломки каравана"
+
+msgid "game.expedition.events.wreck.description"
+msgstr "Среди обломков остались артефакты, запчасти и припасы."
+
+msgid "game.expedition.events.wreck.option0.title"
+msgstr "Открыть сейф"
+
+msgid "game.expedition.events.wreck.option0.description"
+msgstr "Получить артефакт с прочностью."
+
+msgid "game.expedition.events.wreck.option1.title"
+msgstr "Собрать запчасти"
+
+msgid "game.expedition.events.wreck.option1.description"
+msgstr "+3 прочности экипированным предметам."
+
+msgid "game.expedition.events.wreck.option2.title"
+msgstr "Забрать припасы"
+
+msgid "game.expedition.events.wreck.option2.description"
+msgstr "Восстановить 15 HP."
+
+msgid "game.expedition.events.smith.title"
+msgstr "Кузнец эха"
+
+msgid "game.expedition.events.smith.description"
+msgstr "За новые артефакты кузнец берёт здоровье. Ремонт бесплатный."
+
+msgid "game.expedition.events.smith.option0.title"
+msgstr "Купить артефакт"
+
+msgid "game.expedition.events.smith.option0.description"
+msgstr "Потратить 12 HP и получить артефакт с прочностью."
+
+msgid "game.expedition.events.smith.option1.title"
+msgstr "Заточить перо"
+
+msgid "game.expedition.events.smith.option1.description"
+msgstr "Потратить 8 HP: броня врагов −8 п.п. на 3 боя."
+
+msgid "game.expedition.events.smith.option2.title"
+msgstr "Отремонтировать"
+
+msgid "game.expedition.events.smith.option2.description"
+msgstr "+2 прочности экипированным предметам и +5 HP."
+
+msgid "game.expedition.events.alchemist.title"
+msgstr "Походный алхимик"
+
+msgid "game.expedition.events.alchemist.description"
+msgstr "Быстрое лечение, запас регенерации или небольшое укрепление."
+
+msgid "game.expedition.events.alchemist.option0.title"
+msgstr "Выпить хрупкий эликсир"
+
+msgid "game.expedition.events.alchemist.option0.description"
+msgstr "+35 HP, но коэффициент защиты −15% на 2 боя."
+
+msgid "game.expedition.events.alchemist.option1.title"
+msgstr "Купить настой"
+
+msgid "game.expedition.events.alchemist.option1.description"
+msgstr "Потратить 8 HP; восстановить по 10 HP после следующих 4 побед."
+
+msgid "game.expedition.events.alchemist.option2.title"
+msgstr "Принять витамины"
+
+msgid "game.expedition.events.alchemist.option2.description"
+msgstr "+5 к максимальному и текущему HP."
+
+msgid "game.expedition.events.altar.title"
+msgstr "Алтарь двух клятв"
+
+msgid "game.expedition.events.altar.description"
+msgstr "Пожертвуйте здоровьем ради силы или осторожно пройдите мимо."
+
+msgid "game.expedition.events.altar.option0.title"
+msgstr "Клятва ярости"
+
+msgid "game.expedition.events.altar.option0.description"
+msgstr "−10 HP. На 3 боя: урон +35%, защита −15% к базовым коэффициентам."
+
+msgid "game.expedition.events.altar.option1.title"
+msgstr "Клятва тумана"
+
+msgid "game.expedition.events.altar.option1.description"
+msgstr "−8 HP. На 3 боя: уклонение +10 п.п., коэффициент защиты +10%."
+
+msgid "game.expedition.events.altar.option2.title"
+msgstr "Отказаться от клятвы"
+
+msgid "game.expedition.events.altar.option2.description"
+msgstr "Продолжить путь без изменений."
+
+msgid "game.expedition.events.storm.title"
+msgstr "Грозовой резонатор"
+
+msgid "game.expedition.events.storm.description"
+msgstr "Усилитель меняет условия следующих схваток. Эффекты указаны заранее."
+
+msgid "game.expedition.events.storm.option0.title"
+msgstr "Перегрузить резонатор"
+
+msgid "game.expedition.events.storm.option0.description"
+msgstr "На 3 боя: коэффициент урона +45%, требуемая скорость +10%."
+
+msgid "game.expedition.events.storm.option1.title"
+msgstr "Забрать защитный заряд"
+
+msgid "game.expedition.events.storm.option1.description"
+msgstr "−10 HP. На 3 боя: броня врагов −8 п.п., входящая атака −2 HP."
+
+msgid "game.expedition.events.storm.option2.title"
+msgstr "Оставить устройство"
+
+msgid "game.expedition.events.storm.option2.description"
+msgstr "Продолжить путь без изменений."

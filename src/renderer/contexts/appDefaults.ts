@@ -172,6 +172,7 @@ export function defaultGameState(game?: Partial<GameState>): GameState {
     currentRun: game?.currentRun ?? null,
     ghostRun: game?.ghostRun ?? null,
     dailyRun: game?.dailyRun ?? null,
+    adventure: game?.adventure,
   };
 }
 
