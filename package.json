@@ -1,6 +1,6 @@
 {
   "name": "typing-trainer",
-  "version": "3.2.0",
+  "version": "3.2.1",
   "description": "Клавиатурный тренажёр с поддержкой русского и английского языков",
   "author": {
     "name": "DispenserBro",
@@ -9,6 +9,7 @@
   "main": "dist/main/main.js",
   "scripts": {
     "postinstall": "node scripts/patch-electron-builder.mjs",
+    "render:icon": "electron scripts/render-app-icon.cjs",
     "clean": "node scripts/clean.mjs",
     "build:main": "tsc -p tsconfig.json && node scripts/copy-built-in-locales.mjs dist",
     "build:debug-tools": "tsc -p tsconfig.debug.json",

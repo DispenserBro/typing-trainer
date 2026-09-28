@@ -50,7 +50,7 @@ npm run build:linux
 npm run build:mac
 ```
 
-Готовые артефакты создаются в `dist-build`.
+Готовые артефакты создаются в `dist-build`. Значок `data/app-icon.png` должен быть квадратным и не меньше 512×512 для macOS. Команда `npm run render:icon` формирует PNG 1024×1024 из исходного `data/app-icon.svg`.
 
 Перед релизом локально должен проходить полный gate:
 

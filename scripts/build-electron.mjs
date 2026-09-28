@@ -447,7 +447,15 @@ function assertPackagingReadiness(targets, electronBuilderCli) {
   const scripts = packageJson.scripts ?? {};
   const installerScript = readFileSync('build/installer.nsh', 'utf8');
   const releaseWorkflow = readFileSync('.github/workflows/build.yml', 'utf8');
+  const iconPng = readFileSync('data/app-icon.png');
+  const iconIsPng = iconPng.length >= 24
+    && iconPng.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
   const checks = [
+    {
+      name: 'app PNG icon is square and at least 512x512 for macOS packaging',
+      passed: iconIsPng && iconPng.readUInt32BE(16) >= 512
+        && iconPng.readUInt32BE(16) === iconPng.readUInt32BE(20),
+    },
     ...REQUIRED_PACKAGING_FILES.map(filePath => ({
       name: `required file: ${filePath}`,
       passed: existsSync(filePath),
