@@ -9,7 +9,6 @@ export type AppDataPathInput = {
 export type AppDataPaths = {
   addonsDir: string;
   customThemesFile: string;
-  installerThemeFile: string;
   modsDir: string;
   progressFile: string;
   setupPreferencesFile: string;
@@ -26,7 +25,6 @@ export function resolveAppDataPaths(input: AppDataPathInput): AppDataPaths {
     userDataPath,
     progressFile: path.join(userDataPath, 'progress.json'),
     customThemesFile: path.join(userDataPath, 'custom-themes.json'),
-    installerThemeFile: path.join(userDataPath, 'installer-theme.ini'),
     setupPreferencesFile: path.join(userDataPath, 'setup-preferences.json'),
     addonsDir: path.join(userDataPath, 'addons'),
     modsDir: path.join(userDataPath, 'mods'),

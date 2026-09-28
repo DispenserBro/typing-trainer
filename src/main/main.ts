@@ -1,7 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain, nativeImage } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
-import type { CustomThemeColors, CustomThemes, Progress } from '../shared/types';
+import type { CustomThemes, Progress } from '../shared/types';
 import {
   scanAddons,
   installAddonFromJSON,
@@ -49,71 +49,12 @@ const appDataPaths = resolveAppDataPaths({
 const {
   addonsDir,
   customThemesFile,
-  installerThemeFile,
   modsDir,
   progressFile,
   setupPreferencesFile,
   themesDir,
   userDataPath,
 } = appDataPaths;
-
-type InstallerThemeColors = {
-  bg: string;
-  surface: string;
-  surface2: string;
-  surface3: string;
-  text: string;
-  subtext: string;
-  accent: string;
-};
-
-const BUILT_IN_INSTALLER_THEMES: Record<string, InstallerThemeColors> = {
-  'dark-orange': {
-    bg: '181818',
-    surface: '1F1F1F',
-    surface2: '2A2A2A',
-    surface3: '333333',
-    text: 'F4F4F4',
-    subtext: 'B8B8B8',
-    accent: 'E8751A',
-  },
-  catppuccin: {
-    bg: '1E1E2E',
-    surface: '2A2A3C',
-    surface2: '35354A',
-    surface3: '3E3E56',
-    text: 'CDD6F4',
-    subtext: 'A6ADC8',
-    accent: '89B4FA',
-  },
-  nord: {
-    bg: '2E3440',
-    surface: '3B4252',
-    surface2: '434C5E',
-    surface3: '4C566A',
-    text: 'ECEFF4',
-    subtext: 'D8DEE9',
-    accent: '88C0D0',
-  },
-  monokai: {
-    bg: '272822',
-    surface: '3E3D32',
-    surface2: '49483E',
-    surface3: '5A5947',
-    text: 'F8F8F2',
-    subtext: 'CFCFC2',
-    accent: 'F92672',
-  },
-  light: {
-    bg: 'F5F5F5',
-    surface: 'FFFFFF',
-    surface2: 'EEEEEE',
-    surface3: 'DDDDDD',
-    text: '222222',
-    subtext: '666666',
-    accent: 'E8751A',
-  },
-};
 
 function loadJSON<T>(filePath: string, fallback: T): T {
   try {
@@ -156,63 +97,6 @@ function runPlatformSmoke(): void {
   console.log(`[PlatformSmoke] Writable user data path verified: ${userDataPath}`);
 }
 
-function normalizeInstallerColor(value?: string): string | null {
-  const normalized = value?.trim().replace(/^#/, '').toUpperCase();
-  return normalized && /^[0-9A-F]{6}$/.test(normalized) ? normalized : null;
-}
-
-function toInstallerThemeColors(colors?: Partial<CustomThemeColors>): InstallerThemeColors | null {
-  const bg = normalizeInstallerColor(colors?.bg);
-  const surface = normalizeInstallerColor(colors?.surface);
-  const surface2 = normalizeInstallerColor(colors?.surface2);
-  const surface3 = normalizeInstallerColor(colors?.surface3) ?? surface2;
-  const text = normalizeInstallerColor(colors?.text);
-  const subtext = normalizeInstallerColor(colors?.textDim) ?? normalizeInstallerColor(colors?.subtext);
-  const accent = normalizeInstallerColor(colors?.accent);
-
-  if (!bg || !surface || !surface2 || !surface3 || !text || !subtext || !accent) {
-    return null;
-  }
-
-  return { bg, surface, surface2, surface3, text, subtext, accent };
-}
-
-function resolveInstallerThemeColors(themeId: string): InstallerThemeColors {
-  const builtIn = BUILT_IN_INSTALLER_THEMES[themeId];
-  if (builtIn) return builtIn;
-
-  const customThemes = loadJSON<CustomThemes>(customThemesFile, {});
-  const customTheme = toInstallerThemeColors(customThemes[themeId]);
-  if (customTheme) return customTheme;
-
-  const installedTheme = scanThemes(themesDir).find(theme => theme.id === themeId);
-  const installedThemeColors = toInstallerThemeColors(
-    installedTheme?.manifest.style.colors ?? installedTheme?.manifest.preview,
-  );
-
-  return installedThemeColors ?? BUILT_IN_INSTALLER_THEMES['dark-orange'];
-}
-
-function saveInstallerThemeSnapshot(progress: { settings?: { theme?: string } }): void {
-  const themeId = progress.settings?.theme ?? 'dark-orange';
-  const colors = resolveInstallerThemeColors(themeId);
-  const lines = [
-    '[Theme]',
-    `id=${themeId}`,
-    `bg=${colors.bg}`,
-    `surface=${colors.surface}`,
-    `surface2=${colors.surface2}`,
-    `surface3=${colors.surface3}`,
-    `text=${colors.text}`,
-    `subtext=${colors.subtext}`,
-    `accent=${colors.accent}`,
-    '',
-  ];
-
-  fs.mkdirSync(path.dirname(installerThemeFile), { recursive: true });
-  fs.writeFileSync(installerThemeFile, lines.join('\n'), 'utf-8');
-}
-
 function loadDataFile(rel: string): unknown {
   return JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', rel), 'utf-8'));
 }
@@ -231,7 +115,6 @@ async function applyPendingSetupPreferences(): Promise<void> {
 
   if (nextProgress !== progress) {
     saveProgressFile(nextProgress);
-    saveInstallerThemeSnapshot(nextProgress);
   }
 
   const manifestPaths = resolveSetupPreferenceExtensionSourceManifestPaths(app.getAppPath(), setupPreferences);
@@ -266,7 +149,6 @@ ipcMain.handle('get-progress', () => loadProgressFile());
 ipcMain.handle('save-progress', (_e: Electron.IpcMainInvokeEvent, data: Progress) => {
   const nextProgress = normalizeProgressForSave(data, app.getVersion());
   saveProgressFile(nextProgress);
-  saveInstallerThemeSnapshot(nextProgress);
   return true;
 });
 ipcMain.handle('get-custom-themes', () => loadJSON<CustomThemes>(customThemesFile, {}));

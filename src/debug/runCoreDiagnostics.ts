@@ -4077,7 +4077,6 @@ function runAppDataPathChecks(): DiagnosticCheck[] {
       packagedPaths.userDataPath.replace(/\\/g, '/') === 'C:/Program Files/Typing Trainer/data'
         && packagedPaths.progressFile.replace(/\\/g, '/') === 'C:/Program Files/Typing Trainer/data/progress.json'
         && packagedPaths.customThemesFile.replace(/\\/g, '/') === 'C:/Program Files/Typing Trainer/data/custom-themes.json'
-        && packagedPaths.installerThemeFile.replace(/\\/g, '/') === 'C:/Program Files/Typing Trainer/data/installer-theme.ini'
         && packagedPaths.setupPreferencesFile.replace(/\\/g, '/') === 'C:/Program Files/Typing Trainer/data/setup-preferences.json',
       `Packaged data=${packagedPaths.userDataPath.replace(/\\/g, '/')}.`,
     ),

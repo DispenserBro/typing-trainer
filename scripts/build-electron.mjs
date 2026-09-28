@@ -12,7 +12,6 @@ const REQUIRED_PACKAGING_FILES = [
   'build/installer.nsh',
   'data/app-icon.ico',
   'data/app-icon.png',
-  'data/installer-theme.ini',
   'data/layouts.json',
   'data/words_en.json',
   'data/words_ru.json',
@@ -25,12 +24,6 @@ const REQUIRED_PACKAGING_FILES = [
 ];
 
 const REQUIRED_INSTALLER_SNIPPETS = [
-  '!macro customWelcomePage',
-  '!macro customInstall',
-  'setup-preferences.json',
-  'interfaceLanguage',
-  'local-extension-sources/tech-english-source/manifest.json',
-  'local-extension-sources/hardcore-mode-source/manifest.json',
   '!macro customUnWelcomePage',
   'UninstallDeleteUserData',
   '--delete-app-data',
@@ -72,35 +65,6 @@ const REQUIRED_RELEASE_WORKFLOW_SNIPPETS = [
   'dist-build/**/*.zip',
   'dist-build/**/latest*.yml',
   'dist-build/**/*.blockmap',
-];
-
-const FIRST_RUN_SETUP_CONTRACT = {
-  defaultLocale: 'ru',
-  defaultLanguage: 'ru',
-  defaultLayout: 'йцукен',
-  defaultSourcePreset: 'all',
-  languages: ['en', 'ru'],
-  layouts: ['qwerty', 'dvorak', 'йцукен', 'яверты'],
-  sourceRefs: [
-    'data/local-extension-sources/tech-english-source/manifest.json',
-    'data/local-extension-sources/hardcore-mode-source/manifest.json',
-  ],
-  sourcePresets: ['tech', 'hardcore', 'all', 'none'],
-  themes: ['dark-orange', 'catppuccin', 'nord', 'monokai', 'light'],
-};
-
-const REQUIRED_FIRST_RUN_SETUP_SNIPPETS = [
-  'IfFileExists "$INSTDIR\\data\\progress.json" setupPreferencesDone 0',
-  'IfFileExists "$INSTDIR\\data\\progress.json" 0 +2',
-  'StrCpy $SetupLocale "ru"',
-  'StrCpy $SetupLanguage "ru"',
-  'StrCpy $SetupLayout "йцукен"',
-  'StrCpy $SetupSourcePreset "all"',
-  '"interfaceLanguage": "$SetupLocale"',
-  '"language": "$SetupLanguage"',
-  '"layout": "$SetupLayout"',
-  '"theme": "$SetupTheme"',
-  '"onboardingCompleted": true',
 ];
 
 const USER_DATA_PRESERVATION_CONTRACT = {
@@ -217,154 +181,6 @@ function hasBuildTarget(targetConfig, expectedTarget) {
     if (typeof item === 'string') return item === expectedTarget;
     return item && typeof item === 'object' && item.target === expectedTarget;
   });
-}
-
-function buildFirstRunSetupChecks(installerScript) {
-  const layoutsData = readJsonFile('data/layouts.json');
-  const rendererDefaults = readFileSync('src/renderer/contexts/appDefaults.ts', 'utf8');
-  const rendererThemeStyles = readFileSync('src/renderer/styles/_base.scss', 'utf8');
-  const languageIds = new Set((layoutsData.languages ?? []).map(language => language.id));
-  const layoutIds = new Set(Object.keys(layoutsData.layouts ?? {}));
-
-  return [
-    ...REQUIRED_FIRST_RUN_SETUP_SNIPPETS.map(snippet => ({
-      name: `first-run setup contract: ${snippet}`,
-      passed: installerScript.includes(snippet),
-    })),
-    {
-      name: 'first-run setup default locale exists in layouts data',
-      passed: languageIds.has(FIRST_RUN_SETUP_CONTRACT.defaultLocale)
-        && languageIds.has(FIRST_RUN_SETUP_CONTRACT.defaultLanguage),
-    },
-    {
-      name: 'first-run setup default layout exists in layouts data',
-      passed: layoutIds.has(FIRST_RUN_SETUP_CONTRACT.defaultLayout),
-    },
-    {
-      name: 'first-run setup installer languages are backed by layouts data',
-      passed: FIRST_RUN_SETUP_CONTRACT.languages.every(languageId => languageIds.has(languageId)),
-    },
-    {
-      name: 'first-run setup installer layouts are backed by layouts data',
-      passed: FIRST_RUN_SETUP_CONTRACT.layouts.every(layoutId => layoutIds.has(layoutId)),
-    },
-    {
-      name: 'first-run setup installer theme options are handled',
-      passed: FIRST_RUN_SETUP_CONTRACT.themes.every(themeId => installerScript.includes(`"${themeId}"`)),
-    },
-    {
-      name: 'first-run setup theme options are backed by renderer defaults',
-      passed: FIRST_RUN_SETUP_CONTRACT.themes.every(themeId => rendererDefaults.includes(`'${themeId}'`)),
-    },
-    {
-      name: 'first-run setup theme options are backed by renderer styles',
-      passed: FIRST_RUN_SETUP_CONTRACT.themes.every(themeId => rendererThemeStyles.includes(`[data-theme="${themeId}"]`)),
-    },
-    {
-      name: 'first-run setup source presets are handled',
-      passed: FIRST_RUN_SETUP_CONTRACT.sourcePresets.every(preset => installerScript.includes(`$SetupSourcePreset == "${preset}"`)
-        || installerScript.includes(`StrCpy $SetupSourcePreset "${preset}"`)),
-    },
-    {
-      name: 'first-run setup bundled source manifests exist',
-      passed: FIRST_RUN_SETUP_CONTRACT.sourceRefs.every(sourceRef => existsSync(sourceRef)),
-    },
-    {
-      name: 'first-run setup source refs are written by installer',
-      passed: FIRST_RUN_SETUP_CONTRACT.sourceRefs.every(sourceRef => installerScript.includes(sourceRef)),
-    },
-  ];
-}
-
-function buildSetupPreferencesPreview(sourcePreset) {
-  const extensionSources = [];
-
-  if (sourcePreset === 'tech' || sourcePreset === 'all') {
-    extensionSources.push('data/local-extension-sources/tech-english-source/manifest.json');
-  }
-
-  if (sourcePreset === 'hardcore' || sourcePreset === 'all') {
-    extensionSources.push('data/local-extension-sources/hardcore-mode-source/manifest.json');
-  }
-
-  return {
-    settings: {
-      interfaceLanguage: FIRST_RUN_SETUP_CONTRACT.defaultLocale,
-      language: FIRST_RUN_SETUP_CONTRACT.defaultLanguage,
-      layout: FIRST_RUN_SETUP_CONTRACT.defaultLayout,
-      theme: 'dark-orange',
-      onboardingCompleted: true,
-    },
-    extensionSources,
-  };
-}
-
-function buildFirstRunSetupJsonChecks(installerScript) {
-  const presetPreviews = FIRST_RUN_SETUP_CONTRACT.sourcePresets.map(sourcePreset => ({
-    sourcePreset,
-    value: buildSetupPreferencesPreview(sourcePreset),
-  }));
-
-  return [
-    {
-      name: 'first-run setup JSON previews are parseable for every source preset',
-      passed: presetPreviews.every(({ value }) => {
-        try {
-          JSON.parse(JSON.stringify(value));
-          return true;
-        } catch {
-          return false;
-        }
-      }),
-    },
-    {
-      name: 'first-run setup source preset previews match bundled source refs',
-      passed: presetPreviews.every(({ sourcePreset, value }) => {
-        if (sourcePreset === 'none') return value.extensionSources.length === 0;
-        if (sourcePreset === 'tech') return value.extensionSources.join('|') === FIRST_RUN_SETUP_CONTRACT.sourceRefs[0];
-        if (sourcePreset === 'hardcore') return value.extensionSources.join('|') === FIRST_RUN_SETUP_CONTRACT.sourceRefs[1];
-        if (sourcePreset === 'all') return value.extensionSources.join('|') === FIRST_RUN_SETUP_CONTRACT.sourceRefs.join('|');
-        return false;
-      }),
-    },
-    {
-      name: 'first-run setup all-sources branch writes valid comma-separated JSON array',
-      passed: appearsInOrder(installerScript, [
-        '${ElseIf} $SetupSourcePreset == "all"',
-        '"data/local-extension-sources/tech-english-source/manifest.json",$\\r$\\n',
-        '"data/local-extension-sources/hardcore-mode-source/manifest.json"$\\r$\\n',
-        '${EndIf}',
-        'FileWrite $9 `  ]$\\r$\\n`',
-      ]),
-    },
-  ];
-}
-
-function buildFirstRunSetupWriteOrderChecks(installerScript) {
-  return [
-    {
-      name: 'first-run setup write order preserves existing progress before touching setup preferences',
-      passed: appearsInOrder(installerScript, [
-        'IfFileExists "$INSTDIR\\data\\progress.json" setupPreferencesDone 0',
-        'CreateDirectory "$INSTDIR\\data"',
-        'IfFileExists "$INSTDIR\\data\\setup-preferences.json" 0 +2',
-        'Delete "$INSTDIR\\data\\setup-preferences.json"',
-        'FileOpen $9 "$INSTDIR\\data\\setup-preferences.json" w',
-        'FileWrite $9 `{$\\r$\\n`',
-        'setupPreferencesDone:',
-      ]),
-    },
-    {
-      name: 'first-run setup writes and closes preferences before leaving custom install macro',
-      passed: appearsInOrder(installerScript, [
-        'FileOpen $9 "$INSTDIR\\data\\setup-preferences.json" w',
-        'FileWrite $9 `}$\\r$\\n`',
-        'FileClose $9',
-        'setupPreferencesDone:',
-        '!macroend',
-      ]),
-    },
-  ];
 }
 
 function buildNpmScriptRoutingChecks(scripts) {
@@ -514,9 +330,17 @@ function assertPackagingReadiness(targets, electronBuilderCli) {
       name: `installer contract: ${snippet}`,
       passed: installerScript.includes(snippet),
     })),
-    ...buildFirstRunSetupChecks(installerScript),
-    ...buildFirstRunSetupJsonChecks(installerScript),
-    ...buildFirstRunSetupWriteOrderChecks(installerScript),
+    {
+      name: 'standard NSIS wizard uses system colors and app onboarding',
+      passed: buildConfig.nsis?.oneClick === false
+        && buildConfig.nsis?.allowToChangeInstallationDirectory === true
+        && !/SetCtlColors|MUI_BGCOLOR|MUI_TEXTCOLOR|InstallerTheme|SetupTheme|customWelcomePage|customInstall|setup-preferences\.json/.test(installerScript),
+    },
+    {
+      name: 'first launch keeps onboarding inside the app',
+      passed: readFileSync('src/renderer/App.tsx', 'utf8').includes('!settings.onboardingCompleted')
+        && readFileSync('src/renderer/contexts/appDefaults.ts', 'utf8').includes('onboardingCompleted: s?.onboardingCompleted ?? false'),
+    },
     ...buildUserDataPreservationChecks(installerScript),
     ...REQUIRED_RELEASE_WORKFLOW_SNIPPETS.map(snippet => ({
       name: `release workflow contract: ${snippet}`,
