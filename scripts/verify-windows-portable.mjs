@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { existsSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { setTimeout as delay } from 'node:timers/promises';
 import { createRequire } from 'node:module';
 import { portableMarker, runPortableTool } from './build-windows-portable.mjs';
 
@@ -23,7 +24,16 @@ try {
   const progress = JSON.parse(readFileSync(progressFile, 'utf8'));
   progress.settings = { ...progress.settings, fontSize: 27 };
   writeFileSync(progressFile, JSON.stringify(progress));
-  renameSync(unpacked, moved);
+  // Windows scanners and Electron child processes may briefly retain file handles.
+  for (let attempt = 0; ; attempt++) {
+    try {
+      renameSync(unpacked, moved);
+      break;
+    } catch (error) {
+      if (attempt >= 20 || !['EPERM', 'EACCES', 'EBUSY'].includes(error.code)) throw error;
+      await delay(250);
+    }
+  }
   await run(moved);
   const restored = JSON.parse(readFileSync(path.join(moved, 'data', 'progress.json'), 'utf8'));
   const smoke = JSON.parse(readFileSync(path.join(moved, 'data', 'platform-smoke.json'), 'utf8'));
@@ -37,5 +47,5 @@ try {
   if (path.dirname(resolved) !== parent || !path.basename(resolved).startsWith('portable-smoke-')) {
     throw new Error('Unsafe portable smoke cleanup path');
   }
-  rmSync(resolved, { recursive: true, force: true });
+  rmSync(resolved, { recursive: true, force: true, maxRetries: 20, retryDelay: 250 });
 }
