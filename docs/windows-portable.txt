@@ -1,0 +1,32 @@
+Typing Trainer — Windows portable
+
+1. Полностью распакуйте ZIP в отдельную папку, доступную для записи.
+   Например: Документы\TypingTrainer. Не запускайте EXE прямо из архива.
+2. Запустите Typing Trainer.exe. Установка и права администратора не нужны.
+3. Прогресс, настройки и расширения сохраняются в папке data рядом с EXE.
+   Для переноса приложения копируйте всю папку, включая data.
+4. Обновления portable устанавливаются вручную:
+   - закройте приложение;
+   - скачайте новый portable ZIP: https://github.com/DispenserBro/typing-trainer/releases/latest
+   - распакуйте его в новую отдельную папку;
+   - скопируйте data из прежней папки в новую;
+   - запустите новую версию и проверьте прогресс;
+   - сохраните старую папку как резервную копию до успешной проверки.
+5. При переходе с установленной версии скопируйте data рядом с её EXE
+   в распакованную папку portable. Предварительно закройте обе версии.
+6. Для удаления закройте приложение и удалите его папку.
+   Сохраните копию data, если нужен прогресс.
+
+Не удаляйте typing-trainer-portable.json: он отключает установочные автообновления.
+Portable-архив не устанавливает ярлыки и не добавляет приложение в список удаления.
+Отсутствие установщика не гарантирует отсутствия предупреждения Windows SmartScreen.
+
+English
+Extract the entire ZIP to a writable folder, then run Typing Trainer.exe.
+Your progress, settings and extensions are stored in data beside the executable.
+To update: close the app, extract the new portable ZIP into a new folder, copy
+your old data folder into it, then launch and verify your progress.
+Keep a backup until verification succeeds. Keep typing-trainer-portable.json:
+portable builds do not download or install NSIS updates automatically.
+To uninstall, close the app and remove its folder, keeping data if needed.
+Windows SmartScreen may still warn about an unsigned executable.

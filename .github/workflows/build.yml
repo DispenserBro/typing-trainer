@@ -143,6 +143,17 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
           TYPING_TRAINER_SDK_DIR: SDK
 
+      - name: Verify Windows portable archive
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $archives = @(Get-ChildItem -Path dist-build -Recurse -File -Filter 'Typing-Trainer-*-win-*-portable.zip')
+          if ($archives.Count -eq 0) { throw 'Windows portable ZIP is missing.' }
+          foreach ($archive in $archives) {
+            node scripts/verify-windows-portable.mjs $archive.FullName
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+
       - name: Verify Windows signatures
         if: matrix.os == 'windows-latest' && startsWith(github.ref, 'refs/tags/')
         shell: pwsh
@@ -171,6 +182,13 @@ jobs:
         with:
           name: dist-${{ env.APP_NAME_SLUG }}-exe
           path: dist-build/**/Typing-Trainer-*.exe
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v6
+        if: matrix.os == 'windows-latest'
+        with:
+          name: dist-${{ env.APP_NAME_SLUG }}-win-portable
+          path: dist-build/**/Typing-Trainer-*-win-*-portable.zip
           if-no-files-found: error
 
       - uses: actions/upload-artifact@v6
@@ -255,7 +273,7 @@ jobs:
       - name: Verify complete release artifacts
         shell: pwsh
         run: |
-          $required = @('*.exe', '*.AppImage', '*.deb', '*.rpm', '*.dmg', '*.zip', 'latest.yml', 'latest-linux.yml', 'latest-mac.yml')
+          $required = @('*.exe', '*.AppImage', '*.deb', '*.rpm', '*.dmg', '*-mac-*.zip', '*-win-*-portable.zip', 'latest.yml', 'latest-linux.yml', 'latest-mac.yml')
           foreach ($pattern in $required) {
             $matches = Get-ChildItem -Path release-artifacts -Recurse -File -Filter $pattern
             if (-not $matches) {

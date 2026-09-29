@@ -120,7 +120,7 @@ function buildChecks(): Check[] {
     ),
     makeCheck(
       'GitHub Releases auto-update coverage',
-      'Packaged apps check GitHub Releases on startup and release publishing includes update metadata for Windows, Linux and macOS.',
+      'Installed apps check GitHub Releases; Windows portable archives disable installation updates and are verified before publishing.',
       includesAll(packageJson, [
         '"electron-updater"',
         '"provider": "github"',
@@ -132,6 +132,7 @@ function buildChecks(): Check[] {
         'autoUpdater.autoInstallOnAppQuit = true',
         'autoUpdater.quitAndInstall(false, true)',
         'app.isPackaged',
+        'typing-trainer-portable.json',
       ]) && includesAll(mainProcess, [
         "import { startAutoUpdates } from './autoUpdates';",
         'startAutoUpdates(() => win)',
@@ -141,6 +142,8 @@ function buildChecks(): Check[] {
         'latest-mac.yml',
         'release-artifacts/**/latest*.yml',
         'release-artifacts/**/*.blockmap',
+        'dist-build/**/Typing-Trainer-*-win-*-portable.zip',
+        'scripts/verify-windows-portable.mjs',
         'dist-build/**/*.dmg',
         'dist-build/**/*.zip',
       ]),

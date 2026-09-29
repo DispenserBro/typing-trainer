@@ -1,10 +1,15 @@
 import { app, BrowserWindow, dialog, type MessageBoxOptions } from 'electron';
 import { autoUpdater, type UpdateInfo } from 'electron-updater';
+import { existsSync } from 'node:fs';
+import path from 'node:path';
 
 let autoUpdateStarted = false;
 
 function shouldRunAutoUpdates(): boolean {
   return app.isPackaged
+    // Portable ZIPs must never download and launch an NSIS installer.
+    && !(process.platform === 'win32'
+      && existsSync(path.join(path.dirname(app.getPath('exe')), 'typing-trainer-portable.json')))
     && !process.argv.includes('--platform-smoke')
     && process.env.TYPING_TRAINER_DISABLE_AUTO_UPDATE !== '1';
 }

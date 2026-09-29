@@ -3,6 +3,7 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { applyElectronBuilderPatch } from './patch-electron-builder.mjs';
 import { syncSdkExamplesToBundledExtensionSources } from './sync-sdk-examples.mjs';
+import { createWindowsPortableArchives } from './build-windows-portable.mjs';
 
 const PLATFORM_FLAGS = new Set(['win', 'linux', 'mac']);
 
@@ -10,6 +11,8 @@ const REQUIRED_PACKAGING_FILES = [
   'package.json',
   'scripts/electron-builder-before-build.cjs',
   'build/installer.nsh',
+  'scripts/build-windows-portable.mjs',
+  'docs/windows-portable.txt',
   'data/app-icon.ico',
   'data/app-icon.png',
   'data/layouts.json',
@@ -58,6 +61,8 @@ const REQUIRED_RELEASE_WORKFLOW_SNIPPETS = [
   'fail_on_unmatched_files: true',
   'npm run build:electron -- --${{ matrix.target }}',
   'dist-build/**/Typing-Trainer-*.exe',
+  'dist-build/**/Typing-Trainer-*-win-*-portable.zip',
+  'scripts/verify-windows-portable.mjs',
   'dist-build/**/*.AppImage',
   'dist-build/**/*.deb',
   'dist-build/**/*.rpm',
@@ -386,3 +391,6 @@ if (dryRun) {
 await runCommand(process.execPath, [npmCli, 'run', 'build']);
 applyElectronBuilderPatch();
 await runCommand(process.execPath, electronBuilderArgs);
+if (targets.includes('win')) {
+  await createWindowsPortableArchives(outputDir, readJsonFile('package.json').version);
+}

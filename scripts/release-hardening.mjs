@@ -14,6 +14,13 @@ const RELEASE_HARDENING_STEPS = [
     kind: 'npm',
   },
   {
+    args: ['run', 'diagnostics:auto-updates'],
+    command: 'diagnostics:auto-updates',
+    cwd: APP_ROOT,
+    description: 'Portable and installed auto-update behavior',
+    kind: 'npm',
+  },
+  {
     args: ['run', 'build:debug-tools'],
     command: 'build:debug-tools',
     cwd: APP_ROOT,
